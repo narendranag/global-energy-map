@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-15T21:10:00Z",
+  "generated_at": "2026-05-15T21:15:00Z",
   "entries": [
     {
       "id": "ei_country_year",
@@ -56,6 +56,17 @@
       "license": "Public (US government)",
       "as_of": "2025-06-01",
       "layers": ["scenario:hormuz"]
+    },
+    {
+      "id": "disruption_route",
+      "label": "Disruption routing shares (chokepoints + pipelines)",
+      "path": "/data/disruption_route.parquet",
+      "format": "parquet",
+      "source_name": "EIA World Oil Transit Chokepoints / EIA-IEA pipeline analysis",
+      "source_url": "https://www.eia.gov/international/analysis/special-topics/World_Oil_Transit_Chokepoints",
+      "license": "Public (US government) / Academic",
+      "as_of": "2026-05-15",
+      "layers": ["scenario:hormuz", "scenario:druzhba", "scenario:btc", "scenario:cpc"]
     },
     {
       "id": "natural_earth_countries",

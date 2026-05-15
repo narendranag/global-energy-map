@@ -4,9 +4,10 @@ import type { PickingInfo } from "@deck.gl/core";
 import { MapShell } from "@/components/map/MapShell";
 import { useReservesChoropleth } from "@/components/layers/ReservesChoropleth";
 import { useExtractionPoints } from "@/components/layers/ExtractionPoints";
+import { YearSlider } from "@/components/time-slider/YearSlider";
 
 export default function Home() {
-  const [year] = useState(2020);
+  const [year, setYear] = useState(2020);
   const reserves = useReservesChoropleth({ year });
   const extraction = useExtractionPoints();
   const layers = [reserves, extraction].filter((x) => x !== null);
@@ -29,8 +30,9 @@ export default function Home() {
     return null;
   }, []);
   return (
-    <main className="h-screen w-screen">
+    <main className="relative h-screen w-screen">
       <MapShell layers={layers} getTooltip={getTooltip} />
+      <YearSlider min={1990} max={2020} value={year} onChange={setYear} />
     </main>
   );
 }

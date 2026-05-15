@@ -34,6 +34,17 @@
       "license": "Free for academic/research use; see CEPII terms",
       "as_of": "2026-01",
       "layers": ["trade", "scenario:hormuz"]
+    },
+    {
+      "id": "chokepoint_route",
+      "label": "Chokepoint routing shares",
+      "path": "/data/chokepoint_route.parquet",
+      "format": "parquet",
+      "source_name": "EIA World Oil Transit Chokepoints",
+      "source_url": "https://www.eia.gov/international/analysis/special-topics/World_Oil_Transit_Chokepoints",
+      "license": "Public (US government)",
+      "as_of": "2025-06-01",
+      "layers": ["scenario:hormuz"]
     }
   ]
 }

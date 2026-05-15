@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-15T15:20:00Z",
+  "generated_at": "2026-05-15T16:00:00Z",
   "entries": [
     {
       "id": "ei_country_year",
@@ -23,6 +23,17 @@
       "license": "CC BY 4.0",
       "as_of": "2023-07-01",
       "layers": ["extraction"]
+    },
+    {
+      "id": "baci_2709",
+      "label": "Crude oil bilateral trade (HS 2709)",
+      "path": "/data/trade_flow.parquet",
+      "format": "parquet",
+      "source_name": "BACI (CEPII)",
+      "source_url": "https://www.cepii.fr/CEPII/en/bdd_modele/bdd_modele_item.asp?id=37",
+      "license": "Free for academic/research use; see CEPII terms",
+      "as_of": "2026-01",
+      "layers": ["trade", "scenario:hormuz"]
     }
   ]
 }

@@ -206,6 +206,11 @@ def build() -> pd.DataFrame:
         [None] * len(assets), dtype=pd.Int32Dtype()
     )
 
+    # Enforce forward-compatible dtypes for currently-all-null columns
+    # to avoid Pandas inferring wrong types when writing to Parquet
+    assets["capacity"] = assets["capacity"].astype("Float64")  # nullable float
+    assets["capacity_unit"] = assets["capacity_unit"].astype(pd.StringDtype())  # nullable string
+
     return assets.reset_index(drop=True)
 
 

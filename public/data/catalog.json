@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "generated_at": "2026-05-15T19:00:00Z",
+  "entries": [
+    {
+      "id": "ei_country_year",
+      "label": "Country-year reserves + production",
+      "path": "/data/country_year_series.parquet",
+      "format": "parquet",
+      "source_name": "Energy Institute Statistical Review of World Energy",
+      "source_url": "https://www.energyinst.org/statistical-review/resources-and-data-downloads",
+      "license": "Free; see Energy Institute terms",
+      "as_of": "2025-06-26",
+      "layers": ["reserves", "production"]
+    },
+    {
+      "id": "gem_extraction",
+      "label": "Oil & gas extraction sites (GEM)",
+      "path": "/data/assets.parquet",
+      "format": "parquet",
+      "source_name": "Global Energy Monitor",
+      "source_url": "https://globalenergymonitor.org/projects/global-oil-gas-extraction-tracker/",
+      "license": "CC BY 4.0",
+      "as_of": "2023-07-01",
+      "layers": ["extraction"]
+    },
+    {
+      "id": "baci_2709",
+      "label": "Crude oil bilateral trade (HS 2709)",
+      "path": "/data/trade_flow.parquet",
+      "format": "parquet",
+      "source_name": "BACI (CEPII)",
+      "source_url": "https://www.cepii.fr/CEPII/en/bdd_modele/bdd_modele_item.asp?id=37",
+      "license": "Free for academic/research use; see CEPII terms",
+      "as_of": "2026-01",
+      "layers": ["trade", "scenario:hormuz"]
+    },
+    {
+      "id": "chokepoint_route",
+      "label": "Chokepoint routing shares",
+      "path": "/data/chokepoint_route.parquet",
+      "format": "parquet",
+      "source_name": "EIA World Oil Transit Chokepoints",
+      "source_url": "https://www.eia.gov/international/analysis/special-topics/World_Oil_Transit_Chokepoints",
+      "license": "Public (US government)",
+      "as_of": "2025-06-01",
+      "layers": ["scenario:hormuz"]
+    },
+    {
+      "id": "natural_earth_countries",
+      "label": "Country geometries (1:110m admin-0)",
+      "path": "/data/countries.geojson",
+      "format": "json",
+      "source_name": "Natural Earth",
+      "source_url": "https://www.naturalearthdata.com/downloads/110m-cultural-vectors/110m-admin-0-countries/",
+      "license": "Public domain",
+      "as_of": "2024-10-01",
+      "layers": ["basemap", "reserves"]
+    }
+  ]
+}

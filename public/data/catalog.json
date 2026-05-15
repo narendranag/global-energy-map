@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-15T14:55:00Z",
+  "generated_at": "2026-05-15T15:20:00Z",
   "entries": [
     {
       "id": "ei_country_year",
@@ -12,6 +12,17 @@
       "license": "Free; see Energy Institute terms",
       "as_of": "2025-06-26",
       "layers": ["reserves", "production"]
+    },
+    {
+      "id": "gem_extraction",
+      "label": "Oil & gas extraction sites (GEM)",
+      "path": "/data/assets.parquet",
+      "format": "parquet",
+      "source_name": "Global Energy Monitor",
+      "source_url": "https://globalenergymonitor.org/projects/global-oil-gas-extraction-tracker/",
+      "license": "CC BY 4.0",
+      "as_of": "2023-07-01",
+      "layers": ["extraction"]
     }
   ]
 }

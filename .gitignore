@@ -46,3 +46,8 @@ __pycache__/
 *.pyc
 .ruff_cache/
 .pytest_cache/
+
+# Raw data files (large; downloaded by ingest scripts)
+data/raw/**/*.xlsx
+data/raw/**/*.csv
+data/raw/**/*.zip

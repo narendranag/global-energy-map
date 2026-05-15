@@ -51,3 +51,5 @@ __pycache__/
 data/raw/**/*.xlsx
 data/raw/**/*.csv
 data/raw/**/*.zip
+data/raw/**/*.json
+data/raw/**/*.geojson

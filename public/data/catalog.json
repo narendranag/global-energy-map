@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-15T21:00:00Z",
+  "generated_at": "2026-05-15T21:10:00Z",
   "entries": [
     {
       "id": "ei_country_year",
@@ -23,6 +23,17 @@
       "license": "CC BY 4.0",
       "as_of": "2023-07-01",
       "layers": ["extraction"]
+    },
+    {
+      "id": "osm_refineries",
+      "label": "Oil refineries (OpenStreetMap)",
+      "path": "/data/assets.parquet",
+      "format": "parquet",
+      "source_name": "OpenStreetMap",
+      "source_url": "https://www.openstreetmap.org/",
+      "license": "ODbL (Open Database License)",
+      "as_of": "2026-05-15T21:05:41.690437+00:00",
+      "layers": ["refineries"]
     },
     {
       "id": "baci_2709",

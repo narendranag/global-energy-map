@@ -29,7 +29,7 @@ export function useHormuzScenario(year: number, enabled: boolean) {
       // CRITICAL: BACI has null qty for many rows. COALESCE here so the engine
       // (which sums row.qty directly) never sees NaN.
       const flows = await query<FlowRow>(
-        `SELECT year, importer_iso3, exporter_iso3, COALESCE(qty, 0) AS qty
+        `SELECT CAST(year AS INTEGER) AS year, importer_iso3, exporter_iso3, COALESCE(qty, 0) AS qty
          FROM read_parquet('/data/trade_flow.parquet')
          WHERE year = ? AND hs_code = '2709'`,
         [year],

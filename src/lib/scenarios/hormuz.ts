@@ -20,7 +20,9 @@ export function computeHormuzImpact(input: HormuzInput): ScenarioResult {
   const totals = new Map<string, number>();
   const atRisk = new Map<string, number>();
   for (const row of input.tradeFlows) {
-    if (row.year !== input.year) continue;
+    // Coerce via unknown to handle BigInt values that Arrow may return for BIGINT parquet columns.
+    // The TypeScript type says `number` but Apache Arrow deserialises BIGINT as BigInt at runtime.
+    if ((row.year as unknown as number | bigint) != input.year) continue; // == intentional: coerces BigInt
     totals.set(row.importer_iso3, (totals.get(row.importer_iso3) ?? 0) + row.qty);
     const share = shareByExporter.get(row.exporter_iso3) ?? 0;
     if (share > 0) {

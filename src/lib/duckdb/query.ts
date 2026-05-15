@@ -26,13 +26,17 @@ export async function query<TRow extends Record<string, unknown>>(
   const resolvedSql = resolveParquetPaths(sql);
   try {
     const stmt = await conn.prepare(resolvedSql);
-    // DuckDB-WASM bundles apache-arrow@17 internally while the project uses
-    // apache-arrow@21. The two Table types are structurally incompatible at the
-    // symbol level. We cast via `unknown` to bridge the version mismatch —
-    // the runtime shape is identical and toArray() works correctly.
-    const arrow = (await stmt.query(...params)) as unknown as Table;
-    const rows = arrow.toArray() as TRow[];
-    return { rows, count: rows.length };
+    try {
+      // DuckDB-WASM bundles apache-arrow@17 internally while the project uses
+      // apache-arrow@21. The two Table types are structurally incompatible at the
+      // symbol level. We cast via `unknown` to bridge the version mismatch —
+      // the runtime shape is identical and toArray() works correctly.
+      const arrow = (await stmt.query(...params)) as unknown as Table;
+      const rows = arrow.toArray() as TRow[];
+      return { rows, count: rows.length };
+    } finally {
+      await stmt.close();
+    }
   } finally {
     await conn.close();
   }

@@ -2,7 +2,7 @@
 
 > An interactive OSINT visualization of the world's hydrocarbon energy system — reserves, extraction, transport, refining, distribution — for academics, energy-policy researchers, and IR/economics scholars who think in systems.
 >
-> Status: Phase 1 not yet implemented. Project scaffold pending. See `docs/superpowers/specs/2026-05-15-global-energy-map-design.md` for the full design and `docs/superpowers/plans/` for the active implementation plan.
+> Status: Phase 1 shipped (live at https://global-energy-map-one.vercel.app). See `docs/superpowers/specs/2026-05-15-global-energy-map-design.md` for the full design and `docs/superpowers/plans/` for the active implementation plan.
 
 ## One-liner
 
@@ -11,7 +11,7 @@ A public web app that lets serious analysts interrogate global energy dependenci
 ## Tech stack at a glance
 
 **App**
-- Next.js 15 (App Router) · React 19 · TypeScript strict (ES2022) · `@/*` → `./src/*`
+- Next.js 16 (App Router) · React 19 · TypeScript strict (ES2022) · `@/*` → `./src/*`
 - pnpm 10.x · Tailwind v4
 - ESLint flat config (`typescript-eslint` strictTypeChecked + `next/core-web-vitals`)
 - Vitest (unit) · Playwright (e2e)
@@ -90,12 +90,12 @@ All artifacts indexed in `public/data/catalog.json` (path, version, license, sou
 |---|---|---|---|
 | Reserves (country-year) | Energy Institute Statistical Review | Free, terms on site | Canonical, back to 1965 |
 | Reserves (basin polygons) | USGS World Petroleum Assessment | Public domain (US gov) | Shapefiles, 2000–2012 vintage |
-| Production / consumption | EIA International API | Public, free key | Country time-series 1980+ |
+| Production / consumption | Energy Institute Statistical Review (xlsx, wide format) | Free, terms on site | Reserves data caps at 2020; production runs through 2024 |
 | Extraction (asset) | GEM Oil & Gas Extraction Tracker | **CC BY 4.0** | Attribution required |
 | Pipelines (oil) | GEM Global Oil Infrastructure Tracker | **CC BY 4.0** | Phase 2 |
 | Pipelines (gas) + LNG | GEM Global Gas Infrastructure Tracker | **CC BY 4.0** | Phase 3 |
 | Coal | GEM Coal Plant + Mine Trackers | **CC BY 4.0** | Phase 5 |
-| Crude trade flows | UN Comtrade HS 2709 | Public, free key | 500 calls/day, 100K records/call |
+| Crude trade flows | BACI (CEPII), HS 2709 | Free for academic/research use; see CEPII terms | Substituted for Comtrade in Phase 1 — no API key required |
 | Chokepoints | EIA World Oil Transit Chokepoints | Public, free | 6 named chokepoints |
 | Basemap | Natural Earth + Protomaps PMTiles | Public domain / OSM ODbL | |
 | Tankers / AIS | **Deferred to Phase 4** | Paid for historical | TankerMap free for live snapshot |
@@ -129,7 +129,8 @@ vercel --prod                  # production
 
 - **TDD where it pays:** scenario engine, data transforms, query helpers — write failing test first. UI components covered by Playwright e2e smoke tests, not unit-tested by default.
 - **Pure functions for scenarios:** `src/lib/scenarios/` exports pure functions that take in baseline data + scenario params and return derived layer styling. No side effects, no map handles. Easy to unit-test.
-- **Data via catalog, not magic paths:** Every Parquet/GeoParquet read goes through `lib/data-catalog/` so the methodology page and the runtime see the same manifest. No raw `fetch('/data/foo.parquet')` calls.
+- **Catalog manifest is the source of truth for `/about` and pipeline metadata** (license, source URL, as-of date). The methodology page (`src/app/about/page.tsx`) reads `public/data/catalog.json` at build time and renders the source table from it.
+- **Runtime data paths are hardcoded by design.** Layer hooks call `read_parquet('/data/<file>.parquet')` directly in DuckDB SQL. Do not try to thread catalog `path` fields through the runtime — the catalog is metadata, not a config table. When you add a new layer, add a `public/data/catalog.json` entry AND hardcode the path in the SQL.
 - **Geometry: GeoParquet, not GeoJSON, for anything > a few hundred features.** DuckDB-WASM reads it natively via the `spatial` extension.
 - **Citations:** Every layer must register a source entry in `catalog.json` (source URL, license, version/as-of). The `/about` page enumerates them — no manual list.
 - **GEM data attribution:** All GEM outputs require visible "Data: Global Energy Monitor, CC BY 4.0" attribution in the methodology page and any layer-level metadata UI.
@@ -149,7 +150,7 @@ vercel --prod                  # production
 
 ## Phase status
 
-- **Phase 1** — _planning complete_ (reserves + extraction + time slider + Hormuz scenario). See `docs/superpowers/plans/2026-05-15-global-energy-map-phase-1.md`.
+- **Phase 1** — _shipped 2026-05-15_ (reserves + extraction + time slider + Hormuz scenario). Live: https://global-energy-map-one.vercel.app
 - **Phase 2** — pending (crude pipelines + refineries).
 - **Phase 3** — pending (gas + LNG).
 - **Phase 4** — pending (distribution + tankers).

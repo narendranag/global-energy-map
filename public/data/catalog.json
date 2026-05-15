@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-15T16:00:00Z",
+  "generated_at": "2026-05-15T19:00:00Z",
   "entries": [
     {
       "id": "ei_country_year",
@@ -45,6 +45,17 @@
       "license": "Public (US government)",
       "as_of": "2025-06-01",
       "layers": ["scenario:hormuz"]
+    },
+    {
+      "id": "natural_earth_countries",
+      "label": "Country geometries (1:110m admin-0)",
+      "path": "/data/countries.geojson",
+      "format": "json",
+      "source_name": "Natural Earth",
+      "source_url": "https://www.naturalearthdata.com/downloads/110m-cultural-vectors/110m-admin-0-countries/",
+      "license": "Public domain",
+      "as_of": "2024-10-01",
+      "layers": ["basemap", "reserves"]
     }
   ]
 }

@@ -1,5 +1,17 @@
 {
   "version": 1,
-  "generated_at": "2026-05-15T00:00:00Z",
-  "entries": []
+  "generated_at": "2026-05-15T14:55:00Z",
+  "entries": [
+    {
+      "id": "ei_country_year",
+      "label": "Country-year reserves + production",
+      "path": "/data/country_year_series.parquet",
+      "format": "parquet",
+      "source_name": "Energy Institute Statistical Review of World Energy",
+      "source_url": "https://www.energyinst.org/statistical-review/resources-and-data-downloads",
+      "license": "Free; see Energy Institute terms",
+      "as_of": "2025-06-26",
+      "layers": ["reserves", "production"]
+    }
+  ]
 }

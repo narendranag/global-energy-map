@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-15T19:00:00Z",
+  "generated_at": "2026-05-15T21:00:00Z",
   "entries": [
     {
       "id": "ei_country_year",
@@ -56,6 +56,17 @@
       "license": "Public domain",
       "as_of": "2024-10-01",
       "layers": ["basemap", "reserves"]
+    },
+    {
+      "id": "gem_oil_pipelines",
+      "label": "Crude/NGL pipelines (GEM)",
+      "path": "/data/pipelines.parquet",
+      "format": "geoparquet",
+      "source_name": "Global Energy Monitor",
+      "source_url": "https://globalenergymonitor.org/projects/global-oil-infrastructure-tracker/",
+      "license": "CC BY 4.0",
+      "as_of": "2025-04-09",
+      "layers": ["pipelines"]
     }
   ]
 }

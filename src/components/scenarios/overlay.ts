@@ -1,4 +1,4 @@
-import type { RefineryImpact, ScenarioResult } from "@/lib/scenarios/types";
+import type { LngImportImpact, RefineryImpact, ScenarioResult } from "@/lib/scenarios/types";
 
 export function importerOverlay(r: ScenarioResult | null) {
   if (!r) return undefined;
@@ -19,4 +19,11 @@ export function refineryImpactMap(r: ScenarioResult | null): ReadonlyMap<string,
   const m = new Map<string, RefineryImpact>();
   for (const imp of r.byRefinery) m.set(imp.asset_id, imp);
   return m;
+}
+
+export function lngImportImpactMap(
+  result: ScenarioResult | null,
+): ReadonlyMap<string, LngImportImpact> | undefined {
+  if (!result || result.byLngImport.length === 0) return undefined;
+  return new Map(result.byLngImport.map((i) => [i.asset_id, i]));
 }

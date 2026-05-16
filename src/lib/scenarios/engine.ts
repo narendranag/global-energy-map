@@ -9,6 +9,7 @@ import type {
   TradeFlowRow,
 } from "./types";
 import { computeRefineryImpacts } from "./refinery";
+import { computeLngImportImpacts } from "./lng";
 
 export * from "./types";
 
@@ -81,6 +82,16 @@ export function computeScenarioImpact(input: ScenarioInput): ScenarioResult {
       : [];
   const rankedRefineries = [...byRefinery].sort((a, b) => b.atRiskQty - a.atRiskQty);
 
+  const byLngImport =
+    input.lngImports && input.lngImports.length > 0
+      ? computeLngImportImpacts({
+          lngImports: input.lngImports,
+          flowsByImporter,
+          lookupShare,
+        })
+      : [];
+  const rankedLngImports = [...byLngImport].sort((a, b) => b.atRiskQty - a.atRiskQty);
+
   return {
     scenarioId: input.scenarioId,
     commodity: input.commodity,
@@ -89,10 +100,9 @@ export function computeScenarioImpact(input: ScenarioInput): ScenarioResult {
     rankedImporters,
     byRefinery,
     rankedRefineries,
-    // LNG math stubs — implementation comes in Task 11/12
-    byLngImport: [],
-    rankedLngImports: [],
-    // Back-compat shims for Phase 1's ScenarioPanel:
+    byLngImport,
+    rankedLngImports,
+    // Back-compat shims for Phase 1's older ScenarioPanel:
     chokepoint_id: input.scenarioId,
     ranked: rankedImporters,
   };

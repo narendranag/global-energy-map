@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-15T19:00:00Z",
+  "generated_at": "2026-05-15T21:15:00Z",
   "entries": [
     {
       "id": "ei_country_year",
@@ -25,6 +25,17 @@
       "layers": ["extraction"]
     },
     {
+      "id": "osm_refineries",
+      "label": "Oil refineries (OpenStreetMap)",
+      "path": "/data/assets.parquet",
+      "format": "parquet",
+      "source_name": "OpenStreetMap",
+      "source_url": "https://www.openstreetmap.org/",
+      "license": "ODbL (Open Database License)",
+      "as_of": "2026-05-15T21:05:41.690437+00:00",
+      "layers": ["refineries"]
+    },
+    {
       "id": "baci_2709",
       "label": "Crude oil bilateral trade (HS 2709)",
       "path": "/data/trade_flow.parquet",
@@ -47,6 +58,17 @@
       "layers": ["scenario:hormuz"]
     },
     {
+      "id": "disruption_route",
+      "label": "Disruption routing shares (chokepoints + pipelines)",
+      "path": "/data/disruption_route.parquet",
+      "format": "parquet",
+      "source_name": "EIA World Oil Transit Chokepoints / EIA-IEA pipeline analysis",
+      "source_url": "https://www.eia.gov/international/analysis/special-topics/World_Oil_Transit_Chokepoints",
+      "license": "Public (US government) / Academic",
+      "as_of": "2026-05-15",
+      "layers": ["scenario:hormuz", "scenario:druzhba", "scenario:btc", "scenario:cpc"]
+    },
+    {
       "id": "natural_earth_countries",
       "label": "Country geometries (1:110m admin-0)",
       "path": "/data/countries.geojson",
@@ -56,6 +78,17 @@
       "license": "Public domain",
       "as_of": "2024-10-01",
       "layers": ["basemap", "reserves"]
+    },
+    {
+      "id": "gem_oil_pipelines",
+      "label": "Crude/NGL pipelines (GEM)",
+      "path": "/data/pipelines.parquet",
+      "format": "geoparquet",
+      "source_name": "Global Energy Monitor",
+      "source_url": "https://globalenergymonitor.org/projects/global-oil-infrastructure-tracker/",
+      "license": "CC BY 4.0",
+      "as_of": "2025-04-09",
+      "layers": ["pipelines"]
     }
   ]
 }

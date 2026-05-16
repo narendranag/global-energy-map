@@ -25,75 +25,12 @@ from pathlib import Path
 
 import pandas as pd
 
+from scripts.common.iso3 import EI_NAME_TO_ISO3 as NAME_TO_ISO3
+
 XLSX = next(Path("data/raw/ei_statistical_review").glob("*.xlsx"))
 OUT_PATH = Path("public/data/country_year_series.parquet")
 YEAR_MIN = 1990
 SOURCE = "Energy Institute Statistical Review of World Energy 2025"
-
-# ---------------------------------------------------------------------------
-# Country-name → ISO-3166-1 alpha-3 mapping
-# (covers every country present in either EI sheet; skips aggregates/regions)
-# ---------------------------------------------------------------------------
-NAME_TO_ISO3: dict[str, str] = {
-    # North America
-    "Canada": "CAN",
-    "Mexico": "MEX",
-    "US": "USA",
-    # South & Central America
-    "Argentina": "ARG",
-    "Brazil": "BRA",
-    "Colombia": "COL",
-    "Ecuador": "ECU",
-    "Guyana": "GUY",
-    "Peru": "PER",
-    "Trinidad & Tobago": "TTO",
-    "Venezuela": "VEN",
-    # Europe
-    "Denmark": "DNK",
-    "Italy": "ITA",
-    "Norway": "NOR",
-    "Romania": "ROU",
-    "United Kingdom": "GBR",
-    # CIS / Former USSR
-    "Azerbaijan": "AZE",
-    "Kazakhstan": "KAZ",
-    "Russian Federation": "RUS",
-    "Turkmenistan": "TKM",
-    "Uzbekistan": "UZB",
-    # Middle East
-    "Iran": "IRN",
-    "Iraq": "IRQ",
-    "Kuwait": "KWT",
-    "Oman": "OMN",
-    "Qatar": "QAT",
-    "Saudi Arabia": "SAU",
-    "Syria": "SYR",
-    "United Arab Emirates": "ARE",
-    "Yemen": "YEM",
-    # Africa
-    "Algeria": "DZA",
-    "Angola": "AGO",
-    "Chad": "TCD",
-    "Republic of Congo": "COG",
-    "Republic of Congo ": "COG",  # trailing-space variant in production sheet
-    "Egypt": "EGY",
-    "Equatorial Guinea": "GNQ",
-    "Gabon": "GAB",
-    "Libya": "LBY",
-    "Nigeria": "NGA",
-    "South Sudan": "SSD",
-    "Sudan": "SDN",
-    "Tunisia": "TUN",
-    # Asia Pacific
-    "Australia": "AUS",
-    "Brunei": "BRN",
-    "China": "CHN",
-    "India": "IND",
-    "Indonesia": "IDN",
-    "Malaysia": "MYS",
-    "Thailand": "THA",
-    "Vietnam": "VNM",
-}
 
 
 def _is_aggregate(name: str) -> bool:

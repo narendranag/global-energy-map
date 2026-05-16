@@ -69,7 +69,7 @@ global-energy-map/
 └── package.json
 ```
 
-## Schema (Phase 1 outputs)
+## Schema (Phase 1–2 outputs)
 
 Designed so adding a new commodity is a row, not a migration.
 
@@ -77,10 +77,11 @@ Designed so adding a new commodity is a row, not a migration.
 |---|---|---|
 | `country` | iso3, name, region, geom | Natural Earth |
 | `basin` | basin_id, name, type, geom | USGS World Petroleum Assessment |
-| `asset` | asset_id, kind, name, iso3, lon, lat, capacity, ... | GEM trackers |
+| `asset` | asset_id, kind (extraction_site, refinery), name, iso3, lon, lat, capacity, ... | GEM trackers + OpenStreetMap |
+| `pipelines` | pipeline_id, name, status, commodity, capacity_kbpd, operator, geom (LineString) | GEM Global Oil Infrastructure Tracker |
 | `country_year_series` | iso3, year, metric, value, unit | EI Statistical Review, EIA, OPEC ASB |
-| `trade_flow` | year, hs_code, exporter_iso3, importer_iso3, qty | UN Comtrade |
-| `chokepoint` / `chokepoint_route` | flow shares per O-D pair | EIA chokepoints |
+| `trade_flow` | year, hs_code, exporter_iso3, importer_iso3, qty | BACI (CEPII) |
+| `disruption_route` | scenario_id, origin_iso3, destination_iso3, route_share, affected_infrastructure | EIA / IEA scenario analysis |
 
 All artifacts indexed in `public/data/catalog.json` (path, version, license, source URL, as-of) — the methodology page renders straight off this.
 
@@ -92,11 +93,12 @@ All artifacts indexed in `public/data/catalog.json` (path, version, license, sou
 | Reserves (basin polygons) | USGS World Petroleum Assessment | Public domain (US gov) | Shapefiles, 2000–2012 vintage |
 | Production / consumption | Energy Institute Statistical Review (xlsx, wide format) | Free, terms on site | Reserves data caps at 2020; production runs through 2024 |
 | Extraction (asset) | GEM Oil & Gas Extraction Tracker | **CC BY 4.0** | Attribution required |
-| Pipelines (oil) | GEM Global Oil Infrastructure Tracker | **CC BY 4.0** | Phase 2 |
+| Pipelines (oil) | Global Energy Monitor — Oil Infrastructure Tracker | **CC BY 4.0** | Phase 2 — operating + in-construction (2025-04-09 release) |
+| Refineries | OpenStreetMap (Overpass) | **ODbL** | Phase 2 — 168 features; uniform-within-country fallback (no OSM capacity data) |
 | Pipelines (gas) + LNG | GEM Global Gas Infrastructure Tracker | **CC BY 4.0** | Phase 3 |
 | Coal | GEM Coal Plant + Mine Trackers | **CC BY 4.0** | Phase 5 |
-| Crude trade flows | BACI (CEPII), HS 2709 | Free for academic/research use; see CEPII terms | Substituted for Comtrade in Phase 1 — no API key required |
-| Chokepoints | EIA World Oil Transit Chokepoints | Public, free | 6 named chokepoints |
+| Crude trade flows | BACI (CEPII), HS 2709 | Free for academic/research use; see CEPII terms | No API key required; pre-processed & deduplicated |
+| Chokepoints / Disruption Scenarios | EIA World Oil Transit Chokepoints + IEA pipeline reports | Public, free | 4 scenarios: Hormuz, Druzhba, BTC, CPC |
 | Basemap | Natural Earth + Protomaps PMTiles | Public domain / OSM ODbL | |
 | Tankers / AIS | **Deferred to Phase 4** | Paid for historical | TankerMap free for live snapshot |
 
@@ -151,7 +153,7 @@ vercel --prod                  # production
 ## Phase status
 
 - **Phase 1** — _shipped 2026-05-15_ (reserves + extraction + time slider + Hormuz scenario). Live: https://global-energy-map-one.vercel.app
-- **Phase 2** — pending (crude pipelines + refineries).
-- **Phase 3** — pending (gas + LNG).
-- **Phase 4** — pending (distribution + tankers).
+- **Phase 2** — _in progress_ (oil pipelines + refineries + 4 disruption scenarios: Hormuz/Druzhba/BTC/CPC).
+- **Phase 3** — pending (gas pipelines + LNG).
+- **Phase 4** — pending (distribution + tanker tracking).
 - **Phase 5** — pending (coal + cross-commodity scenarios).

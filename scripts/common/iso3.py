@@ -1,0 +1,162 @@
+"""ISO 3166-1 alpha-3 lookup tables for source-specific country name spellings.
+
+EI Statistical Review and GEM use slightly different country name spellings,
+so we keep two separate dicts. Future sources can add their own.
+"""
+
+from __future__ import annotations
+
+# Energy Institute Statistical Review (panel + wide sheets)
+EI_NAME_TO_ISO3: dict[str, str] = {
+    # North America
+    "Canada": "CAN",
+    "Mexico": "MEX",
+    "US": "USA",
+    # South & Central America
+    "Argentina": "ARG",
+    "Brazil": "BRA",
+    "Colombia": "COL",
+    "Ecuador": "ECU",
+    "Guyana": "GUY",
+    "Peru": "PER",
+    "Trinidad & Tobago": "TTO",
+    "Venezuela": "VEN",
+    # Europe
+    "Denmark": "DNK",
+    "Italy": "ITA",
+    "Norway": "NOR",
+    "Romania": "ROU",
+    "United Kingdom": "GBR",
+    # CIS / Former USSR
+    "Azerbaijan": "AZE",
+    "Kazakhstan": "KAZ",
+    "Russian Federation": "RUS",
+    "Turkmenistan": "TKM",
+    "Uzbekistan": "UZB",
+    # Middle East
+    "Iran": "IRN",
+    "Iraq": "IRQ",
+    "Kuwait": "KWT",
+    "Oman": "OMN",
+    "Qatar": "QAT",
+    "Saudi Arabia": "SAU",
+    "Syria": "SYR",
+    "United Arab Emirates": "ARE",
+    "Yemen": "YEM",
+    # Africa
+    "Algeria": "DZA",
+    "Angola": "AGO",
+    "Chad": "TCD",
+    "Republic of Congo": "COG",
+    "Republic of Congo ": "COG",  # trailing-space variant in production sheet
+    "Egypt": "EGY",
+    "Equatorial Guinea": "GNQ",
+    "Gabon": "GAB",
+    "Libya": "LBY",
+    "Nigeria": "NGA",
+    "South Sudan": "SSD",
+    "Sudan": "SDN",
+    "Tunisia": "TUN",
+    # Asia Pacific
+    "Australia": "AUS",
+    "Brunei": "BRN",
+    "China": "CHN",
+    "India": "IND",
+    "Indonesia": "IDN",
+    "Malaysia": "MYS",
+    "Thailand": "THA",
+    "Vietnam": "VNM",
+}
+
+# Global Energy Monitor (extraction tracker, oil infrastructure tracker)
+GEM_NAME_TO_ISO3: dict[str, str] = {
+    # Single-country entries
+    "Algeria": "DZA",
+    "Angola": "AGO",
+    "Argentina": "ARG",
+    "Australia": "AUS",
+    "Austria": "AUT",
+    "Azerbaijan": "AZE",
+    "Bangladesh": "BGD",
+    "Bolivia": "BOL",
+    "Brazil": "BRA",
+    "Brunei": "BRN",
+    "Canada": "CAN",
+    "Chad": "TCD",
+    "China": "CHN",
+    "Colombia": "COL",
+    "Cuba": "CUB",
+    "Cyprus": "CYP",
+    "Côte d'Ivoire": "CIV",
+    "Denmark": "DNK",
+    "Ecuador": "ECU",
+    "Egypt": "EGY",
+    "Ethiopia": "ETH",
+    "France": "FRA",
+    "Germany": "DEU",
+    "Ghana": "GHA",
+    "Guatemala": "GTM",
+    "Guyana": "GUY",
+    "Hungary": "HUN",
+    "India": "IND",
+    "Indonesia": "IDN",
+    "Iran": "IRN",
+    "Iraq": "IRQ",
+    "Ireland": "IRL",
+    "Israel": "ISR",
+    "Italy": "ITA",
+    "Jamaica": "JAM",
+    "Kazakhstan": "KAZ",
+    "Kenya": "KEN",
+    "Kuwait": "KWT",
+    "Libya": "LBY",
+    "Malaysia": "MYS",
+    "Mauritania": "MRT",
+    "Mexico": "MEX",
+    "Morocco": "MAR",
+    "Mozambique": "MOZ",
+    "Myanmar": "MMR",
+    "Namibia": "NAM",
+    "Netherlands": "NLD",
+    "Nigeria": "NGA",
+    "Norway": "NOR",
+    "Oman": "OMN",
+    "Pakistan": "PAK",
+    "Papua New Guinea": "PNG",
+    "Peru": "PER",
+    "Poland": "POL",
+    "Qatar": "QAT",
+    "Romania": "ROU",
+    "Russia": "RUS",
+    "Saudi Arabia": "SAU",
+    "Senegal": "SEN",
+    "South Africa": "ZAF",
+    "South Sudan": "SSD",
+    "Tanzania": "TZA",
+    "Thailand": "THA",
+    "Timor-Leste": "TLS",
+    "Trinidad and Tobago": "TTO",
+    "Türkiye": "TUR",
+    "Uganda": "UGA",
+    "United Arab Emirates": "ARE",
+    "United Kingdom": "GBR",
+    "United States": "USA",
+    "Venezuela": "VEN",
+    "Vietnam": "VNM",
+    # Multi-country / disputed fields — assign to the geographically dominant
+    # or first-named country for the purpose of heat-map aggregation.
+    "Iran-Iraq": "IRN",
+    "Iran-Saudi Arabia": "IRN",
+    "Iran-United Arab Emirates": "IRN",
+    "Kuwait-Saudi Arabia": "KWT",
+    "Russia-Kazakhstan": "RUS",
+    "Saudi Arabia-Iran": "SAU",
+    "Senegal-Mauritania": "SEN",
+    "Thailand-Malaysia": "THA",
+}
+
+
+def lookup(name: str, source: str) -> str | None:
+    """Return iso3 for a name; source in {'ei', 'gem'}."""
+    table = {"ei": EI_NAME_TO_ISO3, "gem": GEM_NAME_TO_ISO3}[source]
+    return table.get(name) or table.get(name.strip())

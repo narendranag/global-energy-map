@@ -34,11 +34,59 @@ The Hormuz scenario applies fixed routing shares based on engineering literature
 
 These shares are static simplifications. Phase 2+ will refine routing allocations using per-year export data (seaborne vs. pipeline shares from EIA, disaggregated by exporter) to better track the evolution of alternative export infrastructure.
 
+## Phase 2: Oil Pipelines & Refineries
+
+Phase 2 extends Phase 1's foundation by adding critical midstream and refining infrastructure, alongside additional disruption scenarios.
+
+### Scope Additions
+
+- **Oil pipelines (operating + in-construction)**: crude oil and NGL fuels transported via land and subsea routes, sourced from Global Energy Monitor's Global Oil Infrastructure Tracker (DigitalOcean CDN release 2025-04-09). Displayed as line features colored by commodity and status. **Attribution: "Data: Global Energy Monitor, CC BY 4.0"** is required.
+- **Oil refineries**: point locations of petroleum refineries worldwide, sourced from OpenStreetMap (via Overpass API). Colored by bilateral feedstock attribution (see caveat below). 168 refineries ingested; geographic distribution skews toward Western Europe and North America.
+- **Four disruption scenarios**:
+  - **Hormuz** (Phase 1): Saudi Arabia and UAE export routes via Strait of Hormuz.
+  - **Druzhba** (Phase 2): Russian crude pipeline to Central and Eastern Europe (DEU 60%, POL 95%, BLR/SVK/HUN 100%, CZE 90% routing shares).
+  - **BTC** (Phase 2): Azerbaijan crude pipeline to Turkey (90% routing share).
+  - **CPC** (Phase 2): Kazakhstan and Russian crude pipeline to the Black Sea (KAZ 80%, RUS 10% routing shares).
+
+### Caveats & Simplifications
+
+#### Refinery Feedstock Attribution is a Country Proxy
+
+When a refinery R is located in country C, the model assigns it a capacity-share of C's bilateral crude import mix (BACI, HS 2709). This is a first-order simplification: actual refinery feedstock depends on API gravity compatibility, long-term contract structures, and per-refinery ownership. The method is informative for identifying which countries' import partners are material to a refinery's energy security, but should not be interpreted as precise accounting of individual-refinery sourcing. Real-world feedstock attribution requires detailed AECO (Association Petrolifère Européenne, etc.) refinery-level data, which is not publicly available at this temporal and geographic resolution.
+
+#### OSM Refinery Coverage is Incomplete
+
+OpenStreetMap's global refinery database, while substantial, underrepresents major refining hubs in China, India, Saudi Arabia, and South Korea. The 168 refineries ingested represent approximately 30–40% of global refining capacity by count; the data skew is geographic (OECD countries overrepresented). As OSM contributors add refinery features in Asia-Pacific and Middle East regions, the engine's completeness will improve without code changes. Current gaps should be noted when interpreting refinery-level scenarios in underrepresented regions.
+
+#### OSM Refinery Capacity Coverage is Zero
+
+OpenStreetMap refinery features rarely include a capacity tag (API key: `output:capacity_*`). The engine therefore falls back to uniform-within-country attribution: each refinery in country C is treated as 1/N of C's import mix, where N is the count of refineries in C. This is a placeholder; once OSM capacity tagging improves (e.g., via GEM data import or regional energy agency contributions), the engine will automatically switch to capacity-weighted attribution with zero code changes.
+
+#### Net-Supplier Countries
+
+Countries with negligible crude imports (Saudi Arabia, Russia, UAE, etc.) show refinery points in base color with a "domestic crude feed — model not informative for scenario analysis" tooltip. The model is most useful for net-importer refineries.
+
+#### Pipeline Route Shares are Fixed Simplifications
+
+Scenario routing shares are static:
+
+- **Druzhba (Russia → Central Europe)**: DEU 60% of Russian crude, POL 95%, BLR/SVK/HUN 100%, CZE 90% — based on EIA and IEA pipeline throughput reports.
+- **BTC (Azerbaijan → Turkey)**: 90% of Azeri crude routed through the Baku-Tbilisi-Ceyhan pipeline.
+- **CPC (Kazakhstan + Russia → Black Sea)**: KAZ 80% routed via Caspian Pipeline Consortium, RUS 10% via CPC (the remainder uses Russian domestic routes not modeled).
+
+Real-world shares vary year-to-year with maintenance, sanctions regimes, and renegotiation of joint-venture operating agreements. Phase 3+ will incorporate per-year EIA export flow data to improve routing allocations dynamically.
+
+#### Pipeline GeoJSON Geometry Coverage
+
+The Global Energy Monitor GeoJSON source includes 1,872 pipeline features, of which 24% lack geometry. After filtering for valid geometries and operational status (in-service or in-construction), 1,185 features are retained. Abandoned or indefinitely deferred pipelines are excluded from the visualization but documented in the raw source for reference.
+
 ## Attribution — Data Sources
 
 Attribution for all datasets used:
 
 - **Global Energy Monitor extraction tracker**: "Data: Global Energy Monitor, CC BY 4.0" (this phrasing is mandatory for licensing compliance).
+- **Global Energy Monitor oil infrastructure tracker**: "Data: Global Energy Monitor, CC BY 4.0" (required for pipelines).
+- **OpenStreetMap** (refineries): "© OpenStreetMap contributors, ODbL 1.0" (required; ODbL allows derivative works with attribution and share-alike).
 - **Energy Institute Statistical Review of World Energy**: Free and public; see Energy Institute terms of use.
 - **BACI (CEPII bilateral trade)**: Free for academic and research use; consult CEPII terms for commercial applications.
 - **UN Comtrade**: Not used in Phase 1 (BACI substituted as a pre-processed, deduplicated alternative).

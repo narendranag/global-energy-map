@@ -1,3 +1,5 @@
+export type ScenarioId = "hormuz" | "druzhba" | "btc" | "cpc";
+
 export interface TradeFlowRow {
   readonly year: number;
   readonly importer_iso3: string;
@@ -5,10 +7,24 @@ export interface TradeFlowRow {
   readonly qty: number;
 }
 
-export interface ChokepointRouteRow {
-  readonly chokepoint_id: string;
+/** Generalizes Phase 1's ChokepointRouteRow. */
+export interface DisruptionRouteRow {
+  readonly disruption_id: ScenarioId;
+  readonly kind: "chokepoint" | "pipeline";
   readonly exporter_iso3: string;
+  /** null = applies to all importers of this exporter */
+  readonly importer_iso3: string | null;
   readonly share: number;
+}
+
+/** Back-compat alias used by Phase 1's hormuz.ts wrapper. */
+export type ChokepointRouteRow = DisruptionRouteRow;
+
+export interface RefineryRow {
+  readonly asset_id: string;
+  readonly country_iso3: string;
+  /** kbpd. May be 0 when OSM doesn't tag capacity — engine falls back to uniform-within-country. */
+  readonly capacity: number;
 }
 
 export interface ImporterImpact {
@@ -18,9 +34,23 @@ export interface ImporterImpact {
   readonly shareAtRisk: number;
 }
 
+export interface RefineryImpact {
+  readonly asset_id: string;
+  readonly iso3: string;
+  readonly capacity: number;
+  readonly atRiskQty: number;
+  readonly shareAtRisk: number;
+  readonly topSources: readonly { iso3: string; qty: number }[];
+}
+
 export interface ScenarioResult {
-  readonly chokepoint_id: string;
+  readonly scenarioId: ScenarioId;
   readonly year: number;
   readonly byImporter: readonly ImporterImpact[];
-  readonly ranked: readonly ImporterImpact[];
+  readonly rankedImporters: readonly ImporterImpact[];
+  readonly byRefinery: readonly RefineryImpact[];
+  readonly rankedRefineries: readonly RefineryImpact[];
+  /** Back-compat shims for Phase 1's ScenarioPanel — to be removed in Task 14. */
+  readonly chokepoint_id?: string;
+  readonly ranked?: readonly ImporterImpact[];
 }

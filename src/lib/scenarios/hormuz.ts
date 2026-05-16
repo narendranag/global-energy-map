@@ -10,6 +10,7 @@ export interface HormuzInput {
 export function computeHormuzImpact(input: HormuzInput): ScenarioResult {
   return computeScenarioImpact({
     scenarioId: "hormuz",
+    commodity: "oil",
     year: input.year,
     tradeFlows: input.tradeFlows,
     routes: input.routes,

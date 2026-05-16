@@ -5,6 +5,7 @@ describe("CPC scenario", () => {
   it("hits Kazakhstan exports at 80% and partial Russia at 10%", () => {
     const r = computeScenarioImpact({
       scenarioId: "cpc",
+      commodity: "oil",
       year: 2023,
       tradeFlows: [
         { year: 2023, importer_iso3: "ITA", exporter_iso3: "KAZ", qty: 100 },

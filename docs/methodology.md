@@ -80,6 +80,38 @@ Real-world shares vary year-to-year with maintenance, sanctions regimes, and ren
 
 The Global Energy Monitor GeoJSON source includes 1,872 pipeline features, of which 24% lack geometry. After filtering for valid geometries and operational status (in-service or in-construction), 1,185 features are retained. Abandoned or indefinitely deferred pipelines are excluded from the visualization but documented in the raw source for reference.
 
+## Phase 3: Natural Gas + LNG Terminals
+
+Phase 3 extends the energy map to natural gas infrastructure and liquefied natural gas (LNG) trade, providing visibility into the second-largest component of the global energy system.
+
+### Gas pipelines + LNG terminals
+
+Source: **Global Energy Monitor — Global Gas Infrastructure Tracker** (CC BY 4.0). Filtered to operating + in-construction. Pipeline capacity is preserved in source units (typically bcm/y); LNG terminal capacity is preserved in mtpa.
+
+Data: Global Energy Monitor, CC BY 4.0. https://globalenergymonitor.org/projects/global-gas-infrastructure-tracker/
+
+### LNG trade flows — HS code choice
+
+BACI HS 271111 (liquefied natural gas) is used for the Hormuz-LNG scenario specifically because the Strait of Hormuz only affects waterborne (liquefied) gas — pipeline gas (HS 271121) does not transit chokepoints. Aggregating to HS 2711 would mix the two and overstate Hormuz's reach.
+
+### LNG terminal feedstock attribution
+
+For each LNG import terminal `T` in country `C`, year `Y`:
+
+```
+terminal_capacity_share     = T.capacity / Σ(capacity of LNG import terminals in C)
+country_lng_imports_from_X  = BACI[271111, Y].importer=C, exporter=X
+historical_lng_from_X(T)    = terminal_capacity_share × country_lng_imports_from_X
+```
+
+With a scenario active, `terminal_at_risk = Σ_X historical_lng_from_X(T) × route_share(scenario, X, C)` and `terminal_share_at_risk = terminal_at_risk / Σ_X historical_lng_from_X(T)`. Terminals in countries with no LNG imports show zero exposure with a tooltip note.
+
+Caveat (mirrors refinery model): contracted-offtake data is not used; attribution is purely capacity-weighted on import volumes. This is the country-proxy approximation, not actual cargo-level allocation.
+
+### Gas reserves
+
+Source: **Energy Institute Statistical Review of World Energy** — sheet `Gas - Proved reserves history`. Unit: trillion cubic metres (Tcm). Same temporal coverage as oil reserves.
+
 ## Attribution — Data Sources
 
 Attribution for all datasets used:

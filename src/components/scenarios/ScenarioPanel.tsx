@@ -1,11 +1,11 @@
 "use client";
-import type { ScenarioId } from "@/lib/scenarios/types";
-import type { ScenarioResult } from "@/lib/scenarios/types";
+import type { Commodity, ScenarioId, ScenarioResult } from "@/lib/scenarios/types";
 import { SCENARIOS, type ScenarioDef } from "@/lib/scenarios/registry";
 
 export interface ScenarioPanelProps {
   readonly active: ScenarioId | null;
   readonly onChange: (id: ScenarioId | null) => void;
+  readonly commodity: Commodity;
   readonly result: ScenarioResult | null;
 }
 
@@ -13,10 +13,18 @@ function findScenario(id: ScenarioId): ScenarioDef | undefined {
   return SCENARIOS.find((s) => s.id === id);
 }
 
-export function ScenarioPanel({ active, onChange, result }: ScenarioPanelProps) {
+export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioPanelProps) {
   const def = active ? findScenario(active) : undefined;
+  // Filter the dropdown to scenarios applicable to the active commodity.
+  const visibleScenarios = SCENARIOS.filter((s) => s.commodities.includes(commodity));
   const topImporters = result?.rankedImporters.slice(0, 6) ?? [];
-  const topRefineries = result?.rankedRefineries.slice(0, 6) ?? [];
+  const showLng = commodity === "gas";
+  const topAssets = showLng
+    ? result?.rankedLngImports.slice(0, 6) ?? []
+    : result?.rankedRefineries.slice(0, 6) ?? [];
+  const assetLabel = showLng ? "Top LNG import terminals at risk" : "Top refineries at risk";
+  const assetUnit = showLng ? "mtpa" : "kbpd";
+
   return (
     <div className="pointer-events-auto absolute right-4 top-4 z-10 w-80 rounded-md bg-white/90 p-3 text-sm shadow-lg backdrop-blur">
       <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-600">Scenario</div>
@@ -29,7 +37,7 @@ export function ScenarioPanel({ active, onChange, result }: ScenarioPanelProps) 
         className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm"
       >
         <option value="">None</option>
-        {SCENARIOS.map((s) => (
+        {visibleScenarios.map((s) => (
           <option key={s.id} value={s.id}>{s.label}</option>
         ))}
       </select>
@@ -53,14 +61,18 @@ export function ScenarioPanel({ active, onChange, result }: ScenarioPanelProps) 
             </ol>
           </div>
           <div className="mt-3">
-            <div className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-600">Top refineries at risk</div>
+            <div className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-600">{assetLabel}</div>
             <ol className="space-y-0.5">
-              {topRefineries.map((r) => (
-                <li key={r.asset_id} className="flex justify-between font-mono text-xs">
-                  <span className="truncate pr-2">{r.iso3} · {r.capacity.toFixed(0)} kbpd</span>
-                  <span>{(r.shareAtRisk * 100).toFixed(1)}%</span>
-                </li>
-              ))}
+              {topAssets.map((r) => {
+                // Both RefineryImpact and LngImportImpact have asset_id, iso3, capacity, shareAtRisk
+                const a = r as { asset_id: string; iso3: string; capacity: number; shareAtRisk: number };
+                return (
+                  <li key={a.asset_id} className="flex justify-between font-mono text-xs">
+                    <span className="truncate pr-2">{a.iso3} · {a.capacity.toFixed(0)} {assetUnit}</span>
+                    <span>{(a.shareAtRisk * 100).toFixed(1)}%</span>
+                  </li>
+                );
+              })}
             </ol>
           </div>
         </>

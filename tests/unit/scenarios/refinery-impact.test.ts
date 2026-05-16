@@ -19,6 +19,7 @@ describe("computeScenarioImpact refinery view", () => {
   it("attributes feedstock by refinery capacity share within country", () => {
     const r = computeScenarioImpact({
       scenarioId: "druzhba",
+      commodity: "oil",
       year: 2022,
       tradeFlows,
       routes,
@@ -38,6 +39,7 @@ describe("computeScenarioImpact refinery view", () => {
   it("ranks refineries by atRiskQty descending", () => {
     const r = computeScenarioImpact({
       scenarioId: "druzhba",
+      commodity: "oil",
       year: 2022,
       tradeFlows,
       routes,
@@ -49,6 +51,7 @@ describe("computeScenarioImpact refinery view", () => {
   it("returns empty topSources when refinery has no historical imports", () => {
     const r = computeScenarioImpact({
       scenarioId: "druzhba",
+      commodity: "oil",
       year: 2022,
       tradeFlows: [],
       routes,
@@ -61,6 +64,7 @@ describe("computeScenarioImpact refinery view", () => {
   it("falls back to uniform-within-country when all refineries have capacity=0 (OSM coverage gap)", () => {
     const r = computeScenarioImpact({
       scenarioId: "druzhba",
+      commodity: "oil",
       year: 2022,
       tradeFlows: [
         { year: 2022, importer_iso3: "DEU", exporter_iso3: "RUS", qty: 100 },

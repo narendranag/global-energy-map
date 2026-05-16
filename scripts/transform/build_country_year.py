@@ -5,11 +5,14 @@ Source sheets used (main "human-readable" xlsx, NOT a panel file):
                                        (= billion barrels), years 1980-2020
   - "Oil Production - barrels"       : total liquids production in thousand barrels
                                        per day (kbd), years 1965-2024
+  - "Gas - Proved reserves history " : gas proved reserves in trillion cubic metres
+                                       (Tcm), years 1980-2020 (trailing space in name)
 
 Output schema  (public/data/country_year_series.parquet):
   iso3   str   3-char ISO 3166-1 alpha-3
   year   int   calendar year
   metric str   "proved_reserves_oil_bbn_bbl" | "production_crude_kbpd"
+               | "proved_reserves_gas_tcm"
   value  float numeric value (original unit as annotated in *unit* column)
   unit   str   human-readable unit label
   source str   attribution string
@@ -162,7 +165,19 @@ def build() -> pd.DataFrame:
         unit="thousand barrels per day",
     )
 
-    combined = pd.concat([df_reserves, df_production], ignore_index=True)
+    # --- Gas Proved Reserves (from 'Gas - Proved reserves history ') ---
+    # Sheet layout: rows 0-3 = disclaimer / title / blank / growth-rate labels,
+    # row 4 = "Trillion cubic metres" + year headers, row 5 = blank,
+    # rows 6+ = country data. Matches oil-reserves layout exactly.
+    df_gas_reserves = _parse_wide_sheet(
+        sheet_name="Gas - Proved reserves history ",
+        header_row=4,
+        data_start_row=6,
+        metric="proved_reserves_gas_tcm",
+        unit="trillion cubic metres",
+    )
+
+    combined = pd.concat([df_reserves, df_production, df_gas_reserves], ignore_index=True)
     combined["year"] = combined["year"].astype(int)
     combined["value"] = combined["value"].astype(float)
     combined = combined.sort_values(["metric", "iso3", "year"]).reset_index(drop=True)

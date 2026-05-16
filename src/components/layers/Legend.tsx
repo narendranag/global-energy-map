@@ -23,6 +23,14 @@ export function Legend() {
         <span className="inline-block h-2 w-2 rounded-full bg-blue-700" />
         <span>Refinery (size = capacity)</span>
       </div>
+      <div className="flex items-center gap-2">
+        <span className="inline-block h-0.5 w-6 bg-cyan-600" />
+        <span>Gas pipeline (operating)</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="inline-block h-2 w-2 rounded-full bg-teal-600" />
+        <span>LNG terminal (size = capacity)</span>
+      </div>
     </div>
   );
 }

@@ -1,26 +1,26 @@
 import type {
+  Commodity,
   DisruptionRouteRow,
   ImporterImpact,
-  RefineryImpact,
+  LngImportRow,
   RefineryRow,
   ScenarioId,
   ScenarioResult,
   TradeFlowRow,
 } from "./types";
+import { computeRefineryImpacts } from "./refinery";
+import { computeLngImportImpacts } from "./lng";
 
 export * from "./types";
 
 export interface ScenarioInput {
   readonly scenarioId: ScenarioId;
+  readonly commodity: Commodity;
   readonly year: number;
   readonly tradeFlows: readonly TradeFlowRow[];
   readonly routes: readonly DisruptionRouteRow[];
   readonly refineries?: readonly RefineryRow[];
-}
-
-interface SrcQty {
-  readonly iso3: string;
-  readonly qty: number;
+  readonly lngImports?: readonly LngImportRow[];
 }
 
 export function computeScenarioImpact(input: ScenarioInput): ScenarioResult {
@@ -44,7 +44,7 @@ export function computeScenarioImpact(input: ScenarioInput): ScenarioResult {
   // Per-importer pass + remember flow rows for refinery view
   const totals = new Map<string, number>();
   const atRisk = new Map<string, number>();
-  const flowsByImporter = new Map<string, SrcQty[]>();
+  const flowsByImporter = new Map<string, { iso3: string; qty: number }[]>();
   for (const row of input.tradeFlows) {
     // Coerce via unknown to handle BigInt values that Arrow may return for BIGINT parquet columns.
     // The TypeScript type says `number` but Apache Arrow deserialises BIGINT as BigInt at runtime.
@@ -72,55 +72,37 @@ export function computeScenarioImpact(input: ScenarioInput): ScenarioResult {
   const rankedImporters = [...byImporter].sort((a, b) => b.atRiskQty - a.atRiskQty);
 
   // Refinery view (only if refineries provided)
-  const byRefinery: RefineryImpact[] = [];
-  if (input.refineries && input.refineries.length > 0) {
-    // Aggregate per country: total capacity + refinery count (for uniform fallback)
-    const countryCap = new Map<string, number>();
-    const countryCount = new Map<string, number>();
-    for (const r of input.refineries) {
-      countryCap.set(r.country_iso3, (countryCap.get(r.country_iso3) ?? 0) + r.capacity);
-      countryCount.set(r.country_iso3, (countryCount.get(r.country_iso3) ?? 0) + 1);
-    }
-
-    for (const r of input.refineries) {
-      const totalCap = countryCap.get(r.country_iso3) ?? 0;
-      const count = countryCount.get(r.country_iso3) ?? 0;
-      // Capacity-weighted when capacity data exists; uniform-within-country fallback when all zero.
-      const refShare = totalCap > 0
-        ? r.capacity / totalCap
-        : (count > 0 ? 1 / count : 0);
-
-      const flows = flowsByImporter.get(r.country_iso3) ?? [];
-      const sources = flows.map((f) => ({ iso3: f.iso3, qty: f.qty * refShare }));
-      const totalFeedstock = sources.reduce((s, x) => s + x.qty, 0);
-
-      let refAtRisk = 0;
-      for (const src of sources) {
-        const share = lookupShare(src.iso3, r.country_iso3);
-        if (share > 0) refAtRisk += src.qty * share;
-      }
-      const topSources = [...sources].sort((a, b) => b.qty - a.qty).slice(0, 5);
-
-      byRefinery.push({
-        asset_id: r.asset_id,
-        iso3: r.country_iso3,
-        capacity: r.capacity,
-        atRiskQty: refAtRisk,
-        shareAtRisk: totalFeedstock > 0 ? refAtRisk / totalFeedstock : 0,
-        topSources,
-      });
-    }
-  }
+  const byRefinery =
+    input.refineries && input.refineries.length > 0
+      ? computeRefineryImpacts({
+          refineries: input.refineries,
+          flowsByImporter,
+          lookupShare,
+        })
+      : [];
   const rankedRefineries = [...byRefinery].sort((a, b) => b.atRiskQty - a.atRiskQty);
+
+  const byLngImport =
+    input.lngImports && input.lngImports.length > 0
+      ? computeLngImportImpacts({
+          lngImports: input.lngImports,
+          flowsByImporter,
+          lookupShare,
+        })
+      : [];
+  const rankedLngImports = [...byLngImport].sort((a, b) => b.atRiskQty - a.atRiskQty);
 
   return {
     scenarioId: input.scenarioId,
+    commodity: input.commodity,
     year: input.year,
     byImporter,
     rankedImporters,
     byRefinery,
     rankedRefineries,
-    // Back-compat shims for Phase 1's ScenarioPanel:
+    byLngImport,
+    rankedLngImports,
+    // Back-compat shims for Phase 1's older ScenarioPanel:
     chokepoint_id: input.scenarioId,
     ranked: rankedImporters,
   };

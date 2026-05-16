@@ -1,19 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import { computeHormuzImpact, type ScenarioResult } from "@/lib/scenarios/engine";
+import { computeHormuzImpact } from "@/lib/scenarios/hormuz";
+import type { ScenarioResult, DisruptionRouteRow, TradeFlowRow } from "@/lib/scenarios/types";
 import { query } from "@/lib/duckdb/query";
 
-interface FlowRow extends Record<string, unknown> {
-  year: number;
-  importer_iso3: string;
-  exporter_iso3: string;
-  qty: number;
-}
-interface RouteRow extends Record<string, unknown> {
-  chokepoint_id: string;
-  exporter_iso3: string;
-  share: number;
-}
+// DuckDB-WASM query rows are Record<string,unknown> at runtime; we cast after fetching.
+type RawRow = Record<string, unknown>;
 
 export function useHormuzScenario(year: number, enabled: boolean) {
   const [result, setResult] = useState<ScenarioResult | null>(null);
@@ -28,23 +20,22 @@ export function useHormuzScenario(year: number, enabled: boolean) {
       }
       // CRITICAL: BACI has null qty for many rows. COALESCE here so the engine
       // (which sums row.qty directly) never sees NaN.
-      const flows = await query<FlowRow>(
+      const flows = await query<RawRow>(
         `SELECT CAST(year AS INTEGER) AS year, importer_iso3, exporter_iso3, COALESCE(qty, 0) AS qty
          FROM read_parquet('/data/trade_flow.parquet')
          WHERE year = ? AND hs_code = '2709'`,
         [year],
       );
-      const routes = await query<RouteRow>(
-        `SELECT chokepoint_id, exporter_iso3, share FROM read_parquet('/data/chokepoint_route.parquet')`,
+      const routes = await query<RawRow>(
+        `SELECT disruption_id, kind, exporter_iso3, importer_iso3, share FROM read_parquet('/data/disruption_route.parquet') WHERE disruption_id = 'hormuz'`,
       );
       if (ctrl.cancelled) return;
-      setResult(
-        computeHormuzImpact({
-          year,
-          tradeFlows: flows.rows,
-          routes: routes.rows,
-        }),
-      );
+      const impact = computeHormuzImpact({
+        year,
+        tradeFlows: flows.rows as unknown as readonly TradeFlowRow[],
+        routes: routes.rows as unknown as readonly DisruptionRouteRow[],
+      });
+      setResult(impact);
     })();
     return () => {
       ctrl.cancelled = true;

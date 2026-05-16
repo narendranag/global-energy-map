@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "generated_at": "2026-05-15T21:15:00Z",
+  "version": 2,
+  "generated_at": "2026-05-16T22:03:21.102969+00:00",
   "entries": [
     {
       "id": "ei_country_year",
@@ -11,7 +11,7 @@
       "source_url": "https://www.energyinst.org/statistical-review/resources-and-data-downloads",
       "license": "Free; see Energy Institute terms",
       "as_of": "2025-06-26",
-      "layers": ["reserves", "production"]
+      "layers": ["reserves", "reserves:gas", "production"]
     },
     {
       "id": "gem_extraction",
@@ -37,14 +37,14 @@
     },
     {
       "id": "baci_2709",
-      "label": "Crude oil bilateral trade (HS 2709)",
+      "label": "Crude oil + LNG bilateral trade (HS 2709 + 271111)",
       "path": "/data/trade_flow.parquet",
       "format": "parquet",
       "source_name": "BACI (CEPII)",
       "source_url": "https://www.cepii.fr/CEPII/en/bdd_modele/bdd_modele_item.asp?id=37",
       "license": "Free for academic/research use; see CEPII terms",
       "as_of": "2026-01",
-      "layers": ["trade", "scenario:hormuz"]
+      "layers": ["trade", "scenario:hormuz", "scenario:hormuz-lng"]
     },
     {
       "id": "chokepoint_route",
@@ -89,6 +89,17 @@
       "license": "CC BY 4.0",
       "as_of": "2025-04-09",
       "layers": ["pipelines"]
+    },
+    {
+      "id": "gem_gas_infrastructure",
+      "label": "Gas pipelines + LNG terminals (GEM)",
+      "path": "/data/pipelines.parquet",
+      "format": "geoparquet",
+      "source_name": "Global Energy Monitor",
+      "source_url": "https://globalenergymonitor.org/projects/global-gas-infrastructure-tracker/",
+      "license": "CC BY 4.0",
+      "as_of": "2026-02-20",
+      "layers": ["gas_pipelines", "lng_terminals"]
     }
   ]
 }

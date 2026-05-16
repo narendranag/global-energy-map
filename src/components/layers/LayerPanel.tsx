@@ -6,6 +6,8 @@ export interface LayerState {
   extraction: boolean;
   pipelines: boolean;
   refineries: boolean;
+  gas_pipelines: boolean;
+  lng_terminals: boolean;
 }
 
 export interface LayerPanelProps {
@@ -16,8 +18,10 @@ export interface LayerPanelProps {
 const ROWS: readonly { key: keyof LayerState; label: string }[] = [
   { key: "reserves", label: "Reserves (country)" },
   { key: "extraction", label: "Extraction sites" },
-  { key: "pipelines", label: "Pipelines" },
+  { key: "pipelines", label: "Oil pipelines" },
   { key: "refineries", label: "Refineries" },
+  { key: "gas_pipelines", label: "Gas pipelines" },
+  { key: "lng_terminals", label: "LNG terminals" },
 ];
 
 export function LayerPanel({ state, onChange }: LayerPanelProps) {

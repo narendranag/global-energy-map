@@ -154,6 +154,6 @@ vercel --prod                  # production
 
 - **Phase 1** — _shipped 2026-05-15_ (reserves + extraction + time slider + Hormuz scenario). Live: https://global-energy-map-one.vercel.app
 - **Phase 2** — _shipped 2026-05-15_ (oil pipelines + refineries + 4 disruption scenarios: Hormuz/Druzhba/BTC/CPC).
-- **Phase 3** — _in progress 2026-05-16_ (gas pipelines + LNG terminals + Hormuz-LNG scenario).
+- **Phase 3** — _shipped 2026-05-16_ (gas pipelines + LNG terminals + Hormuz-LNG scenario). Live: https://global-energy-map-one.vercel.app
 - **Phase 4** — pending (distribution + tanker tracking).
 - **Phase 5** — pending (coal + cross-commodity scenarios).

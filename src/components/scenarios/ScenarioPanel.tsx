@@ -8,7 +8,7 @@ export interface ScenarioPanelProps {
 }
 
 export function ScenarioPanel({ enabled, onToggle, result }: ScenarioPanelProps) {
-  const top = result?.ranked.slice(0, 8) ?? [];
+  const top = result?.ranked?.slice(0, 8) ?? [];
   return (
     <div className="pointer-events-auto absolute right-4 top-4 z-10 w-80 rounded-md bg-white/90 p-3 text-sm shadow-lg backdrop-blur">
       <label className="flex items-center gap-2 font-medium">

@@ -38,6 +38,7 @@ from scripts.common.iso3 import GEM_NAME_TO_ISO3
 
 RAW_DIR = Path("data/raw/gem_oil_infra")
 OUT = Path("public/data/pipelines.parquet")
+OUT_GEOJSON = Path("public/data/pipelines.geojson")
 SOURCE = "Global Energy Monitor — Global Oil Infrastructure Tracker"
 
 # GEM status values we keep (from `status` column), mapped to normalized labels.
@@ -145,6 +146,15 @@ def main() -> None:
         f"statuses={out['status'].value_counts().to_dict()} "
         f"commodities={out['commodity'].value_counts().to_dict()}"
     )
+
+    # GeoJSON sidecar for browser consumption (avoids DuckDB-WASM spatial extension dependency)
+    # Columns kept: only those needed for the map layer + tooltip (drop source metadata).
+    geojson_cols = [
+        "pipeline_id", "name", "status", "commodity",
+        "capacity_kbpd", "operator", "start_year", "geometry",
+    ]
+    out[geojson_cols].to_file(OUT_GEOJSON, driver="GeoJSON")
+    print(f"wrote {OUT_GEOJSON} ({OUT_GEOJSON.stat().st_size // 1024} KB)")
 
 
 if __name__ == "__main__":

@@ -77,8 +77,8 @@ Designed so adding a new commodity is a row, not a migration.
 |---|---|---|
 | `country` | iso3, name, region, geom | Natural Earth |
 | `basin` | basin_id, name, type, geom | USGS World Petroleum Assessment |
-| `asset` | asset_id, kind (extraction_site, refinery), name, iso3, lon, lat, capacity, ... | GEM trackers + OpenStreetMap |
-| `pipelines` | pipeline_id, name, status, commodity, capacity_kbpd, operator, geom (LineString) | GEM Global Oil Infrastructure Tracker |
+| `asset` | asset_id, kind (extraction_site, refinery, lng_export, lng_import), name, iso3, lon, lat, capacity, capacity_unit, ... | GEM trackers + OpenStreetMap |
+| `pipelines` | pipeline_id, name, status, commodity (crude, gas), capacity_kbpd, capacity_unit, operator, geom (LineString) | GEM oil + gas infrastructure trackers |
 | `country_year_series` | iso3, year, metric, value, unit | EI Statistical Review, EIA, OPEC ASB |
 | `trade_flow` | year, hs_code, exporter_iso3, importer_iso3, qty | BACI (CEPII) |
 | `disruption_route` | scenario_id, origin_iso3, destination_iso3, route_share, affected_infrastructure | EIA / IEA scenario analysis |
@@ -154,6 +154,6 @@ vercel --prod                  # production
 
 - **Phase 1** — _shipped 2026-05-15_ (reserves + extraction + time slider + Hormuz scenario). Live: https://global-energy-map-one.vercel.app
 - **Phase 2** — _in progress_ (oil pipelines + refineries + 4 disruption scenarios: Hormuz/Druzhba/BTC/CPC).
-- **Phase 3** — pending (gas pipelines + LNG).
+- **Phase 3** — _in progress 2026-05-16_ (gas pipelines + LNG terminals + Hormuz-LNG scenario).
 - **Phase 4** — pending (distribution + tanker tracking).
 - **Phase 5** — pending (coal + cross-commodity scenarios).

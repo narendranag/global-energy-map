@@ -10,13 +10,13 @@ const tradeFlows = [
   { year: 2024, importer_iso3: "CHN", exporter_iso3: "RUS", qty: 300 },
 ];
 const routes = [
-  { chokepoint_id: "hormuz", exporter_iso3: "SAU", share: 0.88 },
-  { chokepoint_id: "hormuz", exporter_iso3: "IRQ", share: 1.0 },
-  { chokepoint_id: "hormuz", exporter_iso3: "IRN", share: 1.0 },
-  { chokepoint_id: "hormuz", exporter_iso3: "KWT", share: 1.0 },
-  { chokepoint_id: "hormuz", exporter_iso3: "QAT", share: 1.0 },
-  { chokepoint_id: "hormuz", exporter_iso3: "ARE", share: 0.65 },
-  { chokepoint_id: "hormuz", exporter_iso3: "BHR", share: 1.0 },
+  { disruption_id: "hormuz" as const, kind: "chokepoint" as const, exporter_iso3: "SAU", importer_iso3: null, share: 0.88 },
+  { disruption_id: "hormuz" as const, kind: "chokepoint" as const, exporter_iso3: "IRQ", importer_iso3: null, share: 1.0 },
+  { disruption_id: "hormuz" as const, kind: "chokepoint" as const, exporter_iso3: "IRN", importer_iso3: null, share: 1.0 },
+  { disruption_id: "hormuz" as const, kind: "chokepoint" as const, exporter_iso3: "KWT", importer_iso3: null, share: 1.0 },
+  { disruption_id: "hormuz" as const, kind: "chokepoint" as const, exporter_iso3: "QAT", importer_iso3: null, share: 1.0 },
+  { disruption_id: "hormuz" as const, kind: "chokepoint" as const, exporter_iso3: "ARE", importer_iso3: null, share: 0.65 },
+  { disruption_id: "hormuz" as const, kind: "chokepoint" as const, exporter_iso3: "BHR", importer_iso3: null, share: 1.0 },
 ];
 
 describe("computeHormuzImpact", () => {
@@ -46,7 +46,7 @@ describe("computeHormuzImpact", () => {
 
   it("ranks importers by absolute at-risk qty descending", () => {
     const r = computeHormuzImpact({ year: 2024, tradeFlows, routes });
-    expect(r.ranked[0]?.iso3).toBe("CHN"); // 176 > 138
-    expect(r.ranked[1]?.iso3).toBe("IND");
+    expect(r.rankedImporters[0]?.iso3).toBe("CHN"); // 176 > 138
+    expect(r.rankedImporters[1]?.iso3).toBe("IND");
   });
 });

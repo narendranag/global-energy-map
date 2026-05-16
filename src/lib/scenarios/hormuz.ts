@@ -14,7 +14,7 @@ export interface HormuzInput {
 export function computeHormuzImpact(input: HormuzInput): ScenarioResult {
   const shareByExporter = new Map<string, number>();
   for (const r of input.routes) {
-    if (r.chokepoint_id === "hormuz") shareByExporter.set(r.exporter_iso3, r.share);
+    if (r.disruption_id === "hormuz") shareByExporter.set(r.exporter_iso3, r.share);
   }
 
   const totals = new Map<string, number>();
@@ -41,5 +41,14 @@ export function computeHormuzImpact(input: HormuzInput): ScenarioResult {
     });
   }
   const ranked = [...byImporter].sort((a, b) => b.atRiskQty - a.atRiskQty);
-  return { chokepoint_id: "hormuz", year: input.year, byImporter, ranked };
+  return {
+    scenarioId: "hormuz",
+    year: input.year,
+    byImporter,
+    rankedImporters: ranked,
+    byRefinery: [],
+    rankedRefineries: [],
+    chokepoint_id: "hormuz",
+    ranked,
+  };
 }

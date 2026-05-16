@@ -5,6 +5,7 @@ describe("BTC scenario", () => {
   it("hits 90% of Azerbaijani exports regardless of destination", () => {
     const r = computeScenarioImpact({
       scenarioId: "btc",
+      commodity: "oil",
       year: 2023,
       tradeFlows: [
         { year: 2023, importer_iso3: "ITA", exporter_iso3: "AZE", qty: 60 },

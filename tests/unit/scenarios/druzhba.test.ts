@@ -5,6 +5,7 @@ describe("Druzhba scenario", () => {
   it("hits Hungary at ~100%, Germany at ~60%", () => {
     const r = computeScenarioImpact({
       scenarioId: "druzhba",
+      commodity: "oil",
       year: 2022,
       tradeFlows: [
         { year: 2022, importer_iso3: "HUN", exporter_iso3: "RUS", qty: 100 },
@@ -29,6 +30,7 @@ describe("Druzhba scenario", () => {
   it("ignores Hormuz-only routes when Druzhba is active", () => {
     const r = computeScenarioImpact({
       scenarioId: "druzhba",
+      commodity: "oil",
       year: 2022,
       tradeFlows: [{ year: 2022, importer_iso3: "IND", exporter_iso3: "SAU", qty: 100 }],
       routes: [

@@ -1,6 +1,8 @@
 import type {
+  Commodity,
   DisruptionRouteRow,
   ImporterImpact,
+  LngImportRow,
   RefineryImpact,
   RefineryRow,
   ScenarioId,
@@ -12,10 +14,12 @@ export * from "./types";
 
 export interface ScenarioInput {
   readonly scenarioId: ScenarioId;
+  readonly commodity: Commodity;
   readonly year: number;
   readonly tradeFlows: readonly TradeFlowRow[];
   readonly routes: readonly DisruptionRouteRow[];
   readonly refineries?: readonly RefineryRow[];
+  readonly lngImports?: readonly LngImportRow[];
 }
 
 interface SrcQty {
@@ -115,11 +119,15 @@ export function computeScenarioImpact(input: ScenarioInput): ScenarioResult {
 
   return {
     scenarioId: input.scenarioId,
+    commodity: input.commodity,
     year: input.year,
     byImporter,
     rankedImporters,
     byRefinery,
     rankedRefineries,
+    // LNG math stubs — implementation comes in Task 11/12
+    byLngImport: [],
+    rankedLngImports: [],
     // Back-compat shims for Phase 1's ScenarioPanel:
     chokepoint_id: input.scenarioId,
     ranked: rankedImporters,

@@ -1,9 +1,10 @@
-import type { ScenarioId } from "./types";
+import type { Commodity, ScenarioId } from "./types";
 
 export interface ScenarioDef {
   readonly id: ScenarioId;
   readonly label: string;
   readonly kind: "chokepoint" | "pipeline";
+  readonly commodities: readonly Commodity[];
   readonly description: string;
   readonly noteRecentYears?: string;
 }
@@ -13,6 +14,7 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     id: "hormuz",
     label: "Close Strait of Hormuz",
     kind: "chokepoint",
+    commodities: ["oil", "gas"],
     description:
       "Strait between the Persian Gulf and the Gulf of Oman; about 20% of global oil traded by sea transits here. Closure stops nearly all crude exports from Iran, Iraq, Kuwait, Qatar, Bahrain and most from Saudi Arabia and UAE (some bypass via East-West and Fujairah).",
     noteRecentYears:
@@ -22,6 +24,7 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     id: "druzhba",
     label: "Cut Druzhba pipeline",
     kind: "pipeline",
+    commodities: ["oil"],
     description:
       "Soviet-era pipeline carrying Russian crude to Belarus, Poland, Germany (mostly halted 2023), Slovakia, Hungary, and Czechia. Southern branch remains active under EU sanctions exemptions.",
   },
@@ -29,6 +32,7 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     id: "btc",
     label: "Cut Baku-Tbilisi-Ceyhan",
     kind: "pipeline",
+    commodities: ["oil"],
     description:
       "Carries ~90% of Azerbaijani crude from the Caspian to the Mediterranean via Georgia and Turkey, bypassing Russia and the Bosporus.",
   },
@@ -36,6 +40,7 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     id: "cpc",
     label: "Cut Caspian Pipeline Consortium",
     kind: "pipeline",
+    commodities: ["oil"],
     description:
       "Moves ~80% of Kazakh crude (and ~10% of Russian crude) to Novorossiysk on the Black Sea. Has been disrupted multiple times by Russian regulatory and infrastructure decisions.",
   },

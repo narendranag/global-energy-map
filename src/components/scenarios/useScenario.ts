@@ -55,6 +55,7 @@ export function useScenario(scenarioId: ScenarioId | null, year: number) {
       setResult(
         computeScenarioImpact({
           scenarioId,
+          commodity: "oil",
           year,
           tradeFlows: flows.rows,
           routes: routes.rows,

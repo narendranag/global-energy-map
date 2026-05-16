@@ -29,7 +29,7 @@ export function parseCatalog(raw: unknown): Catalog {
     throw new Error("catalog must be object");
   }
   const obj = raw as Record<string, unknown>;
-  if (obj.version !== 1) throw new Error("unsupported catalog version");
+  if (obj.version !== 1 && obj.version !== 2) throw new Error("unsupported catalog version");
   if (typeof obj.generated_at !== "string") {
     throw new Error("generated_at required");
   }

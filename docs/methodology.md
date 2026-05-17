@@ -112,6 +112,39 @@ Caveat (mirrors refinery model): contracted-offtake data is not used; attributio
 
 Source: **Energy Institute Statistical Review of World Energy** — sheet `Gas - Proved reserves history`. Unit: trillion cubic metres (Tcm). Same temporal coverage as oil reserves.
 
+## Phase 4 — NETL basins + storage + ports + URL state
+
+### NETL Global Oil and Gas Infrastructure (GOGI)
+
+Source: **National Energy Technology Laboratory (US Department of Energy)** — Global Oil and Gas Data ArcGIS portal (https://arcgis.netl.doe.gov/portal/home/item.html?id=1e1c13b43dfb4af68040598c6f4baf44). Data accessed via the public ArcGIS REST FeatureServer endpoints. License: **US Government work, public domain (17 USC §105)**.
+
+Three layers ingested in Phase 4:
+- **Basins** — petroleum-bearing geological basins (~1,046 polygons)
+- **Storage hubs** — oil and gas storage facilities globally (~26,100 points; capacity in barrels)
+- **Ports** — oil & gas handling ports (~3,700 points)
+
+The NETL dataset also includes Wells (4.8M features), Power Plants, Mines, Processing Plants, Stations, Railways, Platforms/Pads, and Fields — out of Phase 4 scope, possible Phase 5+ candidates.
+
+### Shareable URL state
+
+The application's full UI state — year, commodity (oil/gas), active scenario, and visible-layer toggles — round-trips through the querystring. Every control change calls `router.replace` to keep the URL in sync without polluting browser history. Bookmarking or sharing a URL preserves the exact view.
+
+Format:
+
+```
+?year=2020&commodity=gas&scenario=hormuz&layers=reserves,basins,gas_pipelines,lng_terminals
+```
+
+The `layers` querystring lists only ENABLED layers. **Forward-compat caveat:** when a future phase adds new layer toggles, URLs bookmarked from Phase 4 will load the new layers in their default-OFF state (since the bookmark's `layers=` list won't mention them). This is intentional — the URL is authoritative — so analysts sharing links know exactly what others will see.
+
+### Basin layer
+
+Basin polygons render as semi-transparent muted-brown fills beneath all point/line layers, with stroke at higher alpha. Tooltip on hover shows basin name, country, area (km²), and region.
+
+### Geometry simplification
+
+NETL's basin polygons are continent-scale and complex; the raw GeoJSON is 63 MB. Phase 4 simplifies basin geometries to ~1 km tolerance before publishing the sidecar (`public/data/basins.geojson` ~7 MB), since the map view at country scale doesn't need pipeline-grade precision for basins.
+
 ## Attribution — Data Sources
 
 Attribution for all datasets used:

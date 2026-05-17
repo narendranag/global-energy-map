@@ -69,16 +69,18 @@ function HomeInner() {
     commodity,
     ...(overlay !== undefined ? { overlayByIso3: overlay } : {}),
   });
-  const extraction = useExtractionPoints();
+  const extraction = useExtractionPoints({ year });
   const oilPipes = usePipelinesLayer({
     visible: layers.pipelines,
     commodityFilter: "crude",
     id: "pipelines-crude",
+    year,
   });
   const gasPipes = usePipelinesLayer({
     visible: layers.gas_pipelines,
     commodityFilter: "gas",
     id: "pipelines-gas",
+    year,
   });
   const refineries = useRefineriesLayer({
     visible: layers.refineries,

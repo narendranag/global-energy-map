@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { GeoJsonLayer } from "@deck.gl/layers";
 import type { Feature, FeatureCollection, LineString, MultiLineString } from "geojson";
+import { isVisibleAtYear } from "@/lib/vintage/filter";
 
 export interface PipelineProps extends Record<string, unknown> {
   pipeline_id: string;
@@ -20,6 +21,7 @@ export interface PipelinesLayerInput {
   readonly visible: boolean;
   readonly commodityFilter?: "crude" | "gas"; // when set, only render features of this commodity
   readonly id?: string;                        // optional id override so we can mount two layers
+  readonly year: number;                       // active year — filter out pipelines built after Y
 }
 
 /**
@@ -58,10 +60,8 @@ async function loadPipelines(): Promise<PipelineCollection> {
  * Opacity distinguishes status without a separate color, keeping the palette
  * consistent for analysts.
  */
-export function usePipelinesLayer(input: PipelinesLayerInput | boolean): GeoJsonLayer | null {
-  const cfg: PipelinesLayerInput =
-    typeof input === "boolean" ? { visible: input } : input;
-  const { visible, commodityFilter, id } = cfg;
+export function usePipelinesLayer(input: PipelinesLayerInput): GeoJsonLayer | null {
+  const { visible, commodityFilter, id, year } = input;
 
   const [layer, setLayer] = useState<GeoJsonLayer | null>(null);
 
@@ -82,10 +82,13 @@ export function usePipelinesLayer(input: PipelinesLayerInput | boolean): GeoJson
         const fc = await loadPipelines();
         if (ctrl.cancelled) return;
 
-        // Filter features by commodity if requested; cache always holds all features.
-        const features = commodityFilter
-          ? fc.features.filter((f) => f.properties.commodity === commodityFilter)
-          : fc.features;
+        // Filter features by commodity and active year; cache always holds all features.
+        const features = fc.features.filter((f) => {
+          if (commodityFilter && f.properties.commodity !== commodityFilter) {
+            return false;
+          }
+          return isVisibleAtYear(f.properties.start_year, year);
+        });
         const filtered = { ...fc, features };
 
         const isGas = commodityFilter === "gas";
@@ -120,7 +123,7 @@ export function usePipelinesLayer(input: PipelinesLayerInput | boolean): GeoJson
     return () => {
       ctrl.cancelled = true;
     };
-  }, [visible, commodityFilter, id]);
+  }, [visible, commodityFilter, id, year]);
 
   return layer;
 }

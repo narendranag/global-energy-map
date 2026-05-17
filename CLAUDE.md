@@ -2,7 +2,7 @@
 
 > An interactive OSINT visualization of the world's hydrocarbon energy system — reserves, extraction, transport, refining, distribution — for academics, energy-policy researchers, and IR/economics scholars who think in systems.
 >
-> Status: Phases 1–3 shipped (live at https://global-energy-map-one.vercel.app). See `docs/superpowers/specs/2026-05-15-global-energy-map-design.md` for the full design and `docs/superpowers/plans/` for per-phase plans.
+> Status: Phases 1–3 shipped (live at https://global-energy-map-one.vercel.app). Phase 4 in progress. See `docs/superpowers/specs/2026-05-15-global-energy-map-design.md` for the full design and `docs/superpowers/plans/` for per-phase plans.
 
 ## One-liner
 
@@ -76,8 +76,8 @@ Designed so adding a new commodity is a row, not a migration.
 | Table | Shape | Source |
 |---|---|---|
 | `country` | iso3, name, region, geom | Natural Earth |
-| `basin` | basin_id, name, type, geom | USGS World Petroleum Assessment |
-| `asset` | asset_id, kind (extraction_site, refinery, lng_export, lng_import), name, iso3, lon, lat, capacity, capacity_unit, ... | GEM trackers + OpenStreetMap |
+| `basin` | basin_id, name, country_iso3, area_km2, region, geometry | NETL Global Oil and Gas Infrastructure |
+| `asset` | asset_id, kind (extraction_site, refinery, lng_export, lng_import, storage, port), name, iso3, lon, lat, capacity, capacity_unit, ... | GEM trackers + OpenStreetMap + NETL GOGI |
 | `pipelines` | pipeline_id, name, status, commodity (crude, gas), capacity_kbpd, capacity_unit, operator, geom (LineString) | GEM oil + gas infrastructure trackers |
 | `country_year_series` | iso3, year, metric, value, unit | EI Statistical Review, EIA, OPEC ASB |
 | `trade_flow` | year, hs_code, exporter_iso3, importer_iso3, qty | BACI (CEPII) |
@@ -100,7 +100,8 @@ All artifacts indexed in `public/data/catalog.json` (path, version, license, sou
 | Crude trade flows | BACI (CEPII), HS 2709 | Free for academic/research use; see CEPII terms | No API key required; pre-processed & deduplicated |
 | Chokepoints / Disruption Scenarios | EIA World Oil Transit Chokepoints + IEA pipeline reports | Public, free | 4 scenarios: Hormuz, Druzhba, BTC, CPC |
 | Basemap | Natural Earth + Protomaps PMTiles | Public domain / OSM ODbL | |
-| Tankers / AIS | **Deferred to Phase 4** | Paid for historical | TankerMap free for live snapshot |
+| Basins / storage / ports | NETL Global Oil & Gas Infrastructure (US DOE) | **Public domain** (US Gov work, 17 USC §105) | Phase 4 — 1,046 basins + ~26k storage + ~3.7k ports |
+| Tankers / AIS | **Deferred to Phase 5** | Paid for historical | TankerMap free for live snapshot |
 
 API keys live in `~/.config/secrets.env` (already present: `EIA_API_KEY` is registered separately; Comtrade key needed). Never commit secrets.
 
@@ -155,5 +156,5 @@ vercel --prod                  # production
 - **Phase 1** — _shipped 2026-05-15_ (reserves + extraction + time slider + Hormuz scenario). Live: https://global-energy-map-one.vercel.app
 - **Phase 2** — _shipped 2026-05-15_ (oil pipelines + refineries + 4 disruption scenarios: Hormuz/Druzhba/BTC/CPC).
 - **Phase 3** — _shipped 2026-05-16_ (gas pipelines + LNG terminals + Hormuz-LNG scenario). Live: https://global-energy-map-one.vercel.app
-- **Phase 4** — pending (distribution + tanker tracking).
+- **Phase 4** — _in progress 2026-05-17_ (NETL basins + storage + ports + shareable URL state).
 - **Phase 5** — pending (coal + cross-commodity scenarios).

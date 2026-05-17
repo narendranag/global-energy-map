@@ -1,6 +1,6 @@
 {
-  "version": 2,
-  "generated_at": "2026-05-16T22:03:21.102969+00:00",
+  "version": 3,
+  "generated_at": "2026-05-17T13:28:26.927215+00:00",
   "entries": [
     {
       "id": "ei_country_year",
@@ -100,6 +100,17 @@
       "license": "CC BY 4.0",
       "as_of": "2026-02-20",
       "layers": ["gas_pipelines", "lng_terminals"]
+    },
+    {
+      "id": "netl_gogi",
+      "label": "NETL Global Oil & Gas Infrastructure (basins, storage, ports)",
+      "path": "/data/basins.parquet",
+      "format": "geoparquet",
+      "source_name": "National Energy Technology Laboratory (US DOE)",
+      "source_url": "https://arcgis.netl.doe.gov/portal/home/item.html?id=1e1c13b43dfb4af68040598c6f4baf44",
+      "license": "US Government work, public domain (17 USC §105)",
+      "as_of": "2026-05-17",
+      "layers": ["basins", "storage", "ports"]
     }
   ]
 }

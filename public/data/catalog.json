@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "generated_at": "2026-05-17T13:28:26.927215+00:00",
   "entries": [
     {
@@ -26,7 +26,7 @@
     },
     {
       "id": "osm_refineries",
-      "label": "Oil refineries (OpenStreetMap)",
+      "label": "Oil refineries (OpenStreetMap, supplement to NETL)",
       "path": "/data/assets.parquet",
       "format": "parquet",
       "source_name": "OpenStreetMap",
@@ -87,7 +87,7 @@
       "source_name": "Global Energy Monitor",
       "source_url": "https://globalenergymonitor.org/projects/global-oil-infrastructure-tracker/",
       "license": "CC BY 4.0",
-      "as_of": "2025-04-09",
+      "as_of": "2026-05-17",
       "layers": ["pipelines"]
     },
     {
@@ -100,6 +100,17 @@
       "license": "CC BY 4.0",
       "as_of": "2026-02-20",
       "layers": ["gas_pipelines", "lng_terminals"]
+    },
+    {
+      "id": "netl_refineries",
+      "label": "Oil refineries (NETL GOGI)",
+      "path": "/data/assets.parquet",
+      "format": "parquet",
+      "source_name": "National Energy Technology Laboratory (US DOE)",
+      "source_url": "https://prod.arcgis.netl.doe.gov/server/rest/services/Hosted/Refineries/FeatureServer",
+      "license": "US Government work, public domain (17 USC §105)",
+      "as_of": "2026-05-17",
+      "layers": ["refineries"]
     },
     {
       "id": "netl_gogi",

@@ -168,3 +168,42 @@ Data ingestion and transformation follow a reproducible workflow:
 4. Build logs and transformation scripts are version-controlled in the repository for audit.
 
 All processing is deterministic and re-runnable. Data dependencies are minimal and explicitly declared.
+
+## Phase 5 — Data quality polish
+
+Phase 5 strengthens existing layers with three independent improvements: pipeline sidecar simplification, NETL refineries augmentation, and vintage-aware time filtering. No new commodity, no new scenarios.
+
+### NETL Refineries augmentation
+
+Source: **NETL Global Oil & Gas Infrastructure (US Department of Energy)** — `Refineries` FeatureServer. License: US Government work, public domain (17 USC §105). Adds ~2,272 refineries to the existing 168 OpenStreetMap features.
+
+NETL is the primary source; OpenStreetMap is the supplement. For each OSM refinery, the build checks whether any NETL refinery falls within 2 km in the same country — if yes, the OSM record is dropped (NETL covers it). The 2 km threshold is the empirical knee of the OSM↔NETL nearest-neighbor distance distribution: matches ≤ 2 km are virtually always the same facility (Joliet/Joliet 0.12 km, Pembroke 0.02 km), while > 2 km may legitimately be distinct neighbors (e.g., Marcus Hook / Trainer in the Philadelphia refinery cluster).
+
+NETL's `capacity` field is a string. A parser (`scripts/transform/_refinery_capacity.py`) handles both observed patterns — 97% pure numbers (e.g., `"59000"`) and 3% HTML-wrapped (e.g., `"<td>150,000 bpd crude capacity</td>"`). Unparseable / blank values produce NULL capacity; the scenario engine falls back to uniform-within-country attribution.
+
+`source` column added to refinery rows: `"National Energy Technology Laboratory (US DOE) — GOGI Refineries"` or `"OpenStreetMap (Overpass)"`.
+
+Capacity coverage improves from 0% (OSM-only) to ~15% (NETL's populated subset). Geographic skew shifts from OECD-heavy (OSM bias) toward global coverage (NETL includes major refineries in China, India, Saudi Arabia, South Korea that OSM under-tags).
+
+### Vintage-aware time filtering
+
+Pipelines and extraction sites become time-aware: the year slider now hides features whose build year is after the active year. A pipeline built in 2020 no longer appears on the 1990 map; an extraction site commissioned in 2015 no longer appears in 1990.
+
+Coverage of vintage data in source:
+
+| Layer | Vintage field | Populated |
+|---|---|---|
+| Oil + gas pipelines | `start_year` | 71% |
+| Extraction sites | `commissioned_year` | 22% |
+| Refineries | — | 0% |
+| LNG terminals | — | 0% |
+| Storage hubs | — | 0% |
+| Ports | — | 0% |
+
+Features without populated vintage data appear in all years (preserves prior behavior). The 29% of pipelines and 78% of extraction sites without dates are always-visible regardless of slider position. Refineries, LNG terminals, storage hubs, and ports have no vintage data in source and remain always-visible.
+
+`decommissioned_year` is 0% populated across all asset types; no decommission filtering is applied.
+
+### Pipelines GeoJSON sidecar simplification
+
+`public/data/pipelines.geojson` is simplified at `tolerance=0.005` (Shapely `simplify(tol, preserve_topology=True)`, corresponding to roughly 500 m in lon/lat units). This reduces the sidecar from ~73 MB to ~13 MB, clearing the 25 MB single-file ceiling without requiring Vercel Blob hosting. Full-resolution geometry is preserved in `pipelines.parquet`.

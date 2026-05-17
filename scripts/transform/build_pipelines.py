@@ -297,14 +297,26 @@ def main() -> None:
         f"capacity_units={combined['capacity_unit'].value_counts().to_dict()}"
     )
 
-    # GeoJSON sidecar — columns needed for map layer + tooltip
+    # GeoJSON sidecar — columns needed for map layer + tooltip.
+    # Geometry is simplified to keep the sidecar under the 25 MB single-file
+    # ceiling (raw ~73 MB → ~13 MB at tolerance 0.005, which corresponds to
+    # roughly 500 m and is well below typical pixel resolution at country zoom).
+    # Full-resolution geometry is preserved in pipelines.parquet.
+    SIMPLIFY_TOLERANCE_DEG = 0.005
     geojson_cols = [
         "pipeline_id", "name", "status", "commodity",
         "capacity_kbpd", "capacity_unit", "start_country_iso3", "end_country_iso3",
         "operator", "start_year", "geometry",
     ]
-    combined[geojson_cols].to_file(OUT_GEOJSON, driver="GeoJSON")
-    print(f"wrote {OUT_GEOJSON} ({OUT_GEOJSON.stat().st_size // 1024} KB)")
+    sidecar = combined[geojson_cols].copy()
+    sidecar["geometry"] = sidecar.geometry.simplify(
+        tolerance=SIMPLIFY_TOLERANCE_DEG, preserve_topology=True
+    )
+    sidecar.to_file(OUT_GEOJSON, driver="GeoJSON")
+    print(
+        f"wrote {OUT_GEOJSON} ({OUT_GEOJSON.stat().st_size // 1024} KB; "
+        f"simplified at tolerance={SIMPLIFY_TOLERANCE_DEG})"
+    )
 
 
 if __name__ == "__main__":

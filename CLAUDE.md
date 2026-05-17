@@ -77,7 +77,7 @@ Designed so adding a new commodity is a row, not a migration.
 |---|---|---|
 | `country` | iso3, name, region, geom | Natural Earth |
 | `basin` | basin_id, name, country_iso3, area_km2, region, geometry | NETL Global Oil and Gas Infrastructure |
-| `asset` | asset_id, kind (extraction_site, refinery, lng_export, lng_import, storage, port), name, iso3, lon, lat, capacity, capacity_unit, ... | GEM trackers + OpenStreetMap + NETL GOGI |
+| `asset` | asset_id, kind (extraction_site, refinery, lng_export, lng_import, storage, port), name, iso3, lon, lat, capacity, capacity_unit, source, ... | GEM trackers + NETL GOGI + OpenStreetMap |
 | `pipelines` | pipeline_id, name, status, commodity (crude, gas), capacity_kbpd, capacity_unit, operator, geom (LineString) | GEM oil + gas infrastructure trackers |
 | `country_year_series` | iso3, year, metric, value, unit | EI Statistical Review, EIA, OPEC ASB |
 | `trade_flow` | year, hs_code, exporter_iso3, importer_iso3, qty | BACI (CEPII) |
@@ -94,7 +94,7 @@ All artifacts indexed in `public/data/catalog.json` (path, version, license, sou
 | Production / consumption | Energy Institute Statistical Review (xlsx, wide format) | Free, terms on site | Reserves data caps at 2020; production runs through 2024 |
 | Extraction (asset) | GEM Oil & Gas Extraction Tracker | **CC BY 4.0** | Attribution required |
 | Pipelines (oil) | Global Energy Monitor — Oil Infrastructure Tracker | **CC BY 4.0** | Phase 2 — operating + in-construction (2025-04-09 release) |
-| Refineries | OpenStreetMap (Overpass) | **ODbL** | Phase 2 — 168 features; uniform-within-country fallback (no OSM capacity data) |
+| Refineries | NETL GOGI (primary) + OpenStreetMap (supplement) | Public domain / ODbL | Phase 5 — NETL ~2,272 + OSM-only ~88 after 2 km dedup; NETL capacity parsed for ~15% |
 | Pipelines (gas) + LNG | GEM Global Gas Infrastructure Tracker | **CC BY 4.0** | Phase 3 |
 | Coal | GEM Coal Plant + Mine Trackers | **CC BY 4.0** | Phase 5 |
 | Crude trade flows | BACI (CEPII), HS 2709 | Free for academic/research use; see CEPII terms | No API key required; pre-processed & deduplicated |

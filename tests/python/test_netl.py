@@ -6,12 +6,17 @@ scripts themselves (Tasks 3-5).
 """
 from __future__ import annotations
 
+import json
+import re
+import tempfile
+from pathlib import Path
 from unittest.mock import patch
 
 from scripts.common.netl import (
     NETL_BASE,
     PAGE_SIZE,
     build_query_url,
+    fetch_netl_layer,
     paginate_features,
 )
 
@@ -98,3 +103,33 @@ def test_paginate_features_stops_at_short_page():
     with patch("scripts.common.netl.httpx.get", side_effect=fake_get):
         out = paginate_features("Storage")
     assert len(out) == 2001
+
+
+def test_fetch_netl_layer_stamps_fetched_at():
+    """fetch_netl_layer must write a FeatureCollection with _fetched_at as an ISO timestamp."""
+    page = {"type": "FeatureCollection", "features": [{"id": 1}, {"id": 2}]}
+
+    def fake_get(url, timeout):
+        class R:
+            status_code = 200
+
+            def json(self):
+                return page
+
+            def raise_for_status(self):
+                pass
+
+        return R()
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        out = Path(tmpdir) / "test.geojson"
+        with patch("scripts.common.netl.httpx.get", side_effect=fake_get):
+            count = fetch_netl_layer("Refineries", out)
+
+        assert count == 2
+        fc = json.loads(out.read_text())
+        assert "_fetched_at" in fc, "_fetched_at key must be present in FeatureCollection"
+        # Must match ISO 8601 with timezone offset (e.g. 2026-05-17T18:37:35+00:00)
+        assert re.match(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}", fc["_fetched_at"]), (
+            f"_fetched_at must be an ISO timestamp, got: {fc['_fetched_at']}"
+        )

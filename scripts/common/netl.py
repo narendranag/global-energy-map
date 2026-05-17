@@ -17,6 +17,7 @@ License: NETL data is US Government work (17 USC §105), public domain.
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urlencode
 
@@ -69,7 +70,11 @@ def fetch_netl_layer(layer: str, out_path: Path) -> int:
     Returns the feature count written.
     """
     feats = paginate_features(layer)
-    fc = {"type": "FeatureCollection", "features": feats}
+    fc = {
+        "type": "FeatureCollection",
+        "_fetched_at": datetime.now(UTC).isoformat(),
+        "features": feats,
+    }
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("w") as f:
         json.dump(fc, f)

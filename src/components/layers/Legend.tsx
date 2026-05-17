@@ -8,6 +8,10 @@ export function Legend() {
         <span>Reserves: low → high</span>
       </div>
       <div className="flex items-center gap-2">
+        <span className="inline-block h-2 w-6 rounded bg-[#78645050]" />
+        <span>Basins</span>
+      </div>
+      <div className="flex items-center gap-2">
         <span className="inline-block h-2 w-2 rounded-full bg-red-600" />
         <span>Extraction site</span>
       </div>
@@ -22,6 +26,14 @@ export function Legend() {
       <div className="flex items-center gap-2">
         <span className="inline-block h-2 w-2 rounded-full bg-blue-700" />
         <span>Refinery (size = capacity)</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="inline-block h-2 w-2 rounded-full bg-[#aa6428]" />
+        <span>Storage hub</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="inline-block w-6 text-center text-slate-500">⚓</span>
+        <span>Port</span>
       </div>
       <div className="flex items-center gap-2">
         <span className="inline-block h-0.5 w-6 bg-cyan-600" />

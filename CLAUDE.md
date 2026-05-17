@@ -2,7 +2,7 @@
 
 > An interactive OSINT visualization of the world's hydrocarbon energy system — reserves, extraction, transport, refining, distribution — for academics, energy-policy researchers, and IR/economics scholars who think in systems.
 >
-> Status: Phases 1–3 shipped (live at https://global-energy-map-one.vercel.app). Phase 4 in progress. See `docs/superpowers/specs/2026-05-15-global-energy-map-design.md` for the full design and `docs/superpowers/plans/` for per-phase plans.
+> Status: Phases 1–4 shipped (live at https://global-energy-map-one.vercel.app). See `docs/superpowers/specs/2026-05-15-global-energy-map-design.md` for the full design and `docs/superpowers/plans/` for per-phase plans.
 
 ## One-liner
 
@@ -156,5 +156,5 @@ vercel --prod                  # production
 - **Phase 1** — _shipped 2026-05-15_ (reserves + extraction + time slider + Hormuz scenario). Live: https://global-energy-map-one.vercel.app
 - **Phase 2** — _shipped 2026-05-15_ (oil pipelines + refineries + 4 disruption scenarios: Hormuz/Druzhba/BTC/CPC).
 - **Phase 3** — _shipped 2026-05-16_ (gas pipelines + LNG terminals + Hormuz-LNG scenario). Live: https://global-energy-map-one.vercel.app
-- **Phase 4** — _in progress 2026-05-17_ (NETL basins + storage + ports + shareable URL state).
+- **Phase 4** — _shipped 2026-05-17_ (NETL basins + storage + ports + shareable URL state). Live: https://global-energy-map-one.vercel.app
 - **Phase 5** — pending (coal + cross-commodity scenarios).

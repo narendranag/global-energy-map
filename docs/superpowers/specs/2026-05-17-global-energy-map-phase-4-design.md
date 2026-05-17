@@ -256,6 +256,8 @@ Reads from `assets.parquet` WHERE kind='port'. IconLayer with an inline SVG anch
 - **Replacing OSM refineries with NETL refineries** — meaningful improvement (168 → 2272) but regresses Phase 2 data; deserves its own phase
 - **Replacing/merging GEM LNG terminals with NETL LNG** — different counting conventions need comparison work
 - **NETL Power Plants, Mines, Processing Plants, Stations, Railways, Platforms/Pads, Fields** — out of Phase 4 scope; candidates for Phase 5 or beyond
+- **GEM GOGPT (Global Oil and Gas Plant Tracker)** — 14,746 fossil-fuel electricity-generation plants in CC BY 4.0 XLSX form, surfaced during Phase 4 brainstorming. Standalone future phase; will compare against NETL Power Plants to pick a primary source before adoption.
+- **GOIT-XLSX re-ingest (richer 51-col schema)** — current pipelines.parquet uses the GeoJSON form (~25 properties); the XLSX has ProposalYear, ConstructionYear, more capacity-detail fields, parent corporations, and 26 LPG-fuel rows our current filter drops. Phase 2 data-refresh opportunity; track as low-priority cleanup, ships when we next touch pipelines.
 - **Storage participating in scenarios** (days-of-cover, provenance attribution) — no provenance data available even in NETL
 - **Storage clustering at small zoom** — defer unless 26k points cause real FPS issues
 - **Per-basin-type coloring** — defer to a v2 once we see whether NETL tags basins by oil/gas/mixed cleanly

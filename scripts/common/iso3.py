@@ -368,6 +368,26 @@ NETL_NAME_TO_ISO3: dict[str, str] = {
     "Venezuela, Bolivarian Republic of": "VEN",
     "Viet Nam": "VNM",
     "Yemen": "YEM",
+    # Added in Task 8 (ports coverage)
+    "Bosnia and Herzegovina": "BIH",
+    "Grenada": "GRD",
+    "Guinea Bissau": "GNB",
+    "Kiribati": "KIR",
+    "Liberia": "LBR",
+    "Maldives": "MDV",
+    "Marshall Islands": "MHL",
+    "Mauritania": "MRT",
+    "Micronesia (Federated States of)": "FSM",
+    "Monaco": "MCO",
+    "Nauru": "NRU",
+    "Palau": "PLW",
+    "Saint Lucia": "LCA",
+    "Saint Vincent and the Grenadines": "VCT",
+    "Samoa": "WSM",
+    "Suriname": "SUR",
+    "Timor-Leste": "TLS",
+    "Tonga": "TON",
+    "Tuvalu": "TUV",
 }
 
 

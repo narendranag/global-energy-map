@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "generated_at": "2026-05-17T13:28:26.927215+00:00",
   "entries": [
     {
@@ -92,7 +92,7 @@
     },
     {
       "id": "gem_gas_infrastructure",
-      "label": "Gas pipelines + LNG terminals (GEM)",
+      "label": "Gas pipelines (GEM); LNG terminals (supplement to LNG-T3)",
       "path": "/data/pipelines.parquet",
       "format": "geoparquet",
       "source_name": "Global Energy Monitor",
@@ -100,6 +100,28 @@
       "license": "CC BY 4.0",
       "as_of": "2026-02-20",
       "layers": ["gas_pipelines", "lng_terminals"]
+    },
+    {
+      "id": "lng_t3_terminals",
+      "label": "LNG terminals (LNG-T3 primary)",
+      "path": "/data/assets.parquet",
+      "format": "parquet",
+      "source_name": "Zhou et al. 2026, LNG-T3 (Zenodo)",
+      "source_url": "https://doi.org/10.5281/zenodo.19571058",
+      "license": "CC BY 4.0",
+      "as_of": "2026-04-01",
+      "layers": ["lng_terminals"]
+    },
+    {
+      "id": "lng_t3_voyages",
+      "label": "LNG carrier voyages + daily flows (LNG-T3)",
+      "path": "/data/lng_voyage.parquet",
+      "format": "parquet",
+      "source_name": "Zhou et al. 2026, LNG-T3 (Zenodo)",
+      "source_url": "https://doi.org/10.5281/zenodo.19571058",
+      "license": "CC BY 4.0",
+      "as_of": "2026-04-01",
+      "layers": ["lng_voyages", "scenario:hormuz-lng"]
     },
     {
       "id": "netl_refineries",

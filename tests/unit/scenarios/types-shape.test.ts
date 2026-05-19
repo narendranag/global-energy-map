@@ -28,6 +28,7 @@ describe("Phase 3 type extensions", () => {
       atRiskQty: 0,
       shareAtRisk: 0,
       topSources: [],
+      dataSource: "baci",
     };
     expect(impact.shareAtRisk).toBe(0);
   });

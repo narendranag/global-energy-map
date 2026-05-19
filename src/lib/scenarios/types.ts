@@ -36,6 +36,30 @@ export interface LngImportRow {
   readonly capacity: number;
 }
 
+/** Phase 6: LNG-T3 voyage row used for per-terminal disaggregation. */
+export interface LngVoyageRow {
+  readonly start_date: string;  // ISO date (YYYY-MM-DD)
+  readonly end_date: string;
+  readonly imo: number;
+  readonly voyage_type: "export" | "return";
+  readonly from_terminal: string;
+  readonly to_terminal: string;
+  readonly from_country_iso3: string;
+  readonly to_country_iso3: string;
+  readonly amount_cbm: number;
+  readonly confidence_score: number;  // 1-5
+}
+
+/** Phase 6: LNG-T3 daily country-pair trade row. */
+export interface LngTradeDailyRow {
+  readonly date: string;  // ISO date
+  readonly type: "arrival" | "departure";
+  readonly from_country_iso3: string;
+  readonly to_country_iso3: string;
+  readonly amount_cbm: number;
+  readonly confidence_score: number;
+}
+
 export interface LngImportImpact {
   readonly asset_id: string;
   readonly iso3: string;
@@ -43,6 +67,8 @@ export interface LngImportImpact {
   readonly atRiskQty: number;
   readonly shareAtRisk: number;
   readonly topSources: readonly { iso3: string; qty: number }[];
+  /** Phase 6: which engine path produced this impact. */
+  readonly dataSource: "baci" | "lng-t3";
 }
 
 export interface ImporterImpact {

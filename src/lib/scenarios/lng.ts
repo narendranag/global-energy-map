@@ -47,6 +47,7 @@ export function computeLngImportImpacts({
       atRiskQty: termAtRisk,
       shareAtRisk: totalSupply > 0 ? termAtRisk / totalSupply : 0,
       topSources,
+      dataSource: "baci",
     });
   }
   return out;

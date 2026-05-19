@@ -1,6 +1,15 @@
 # Global Energy Map — Design Spec
 
-> Status: approved 2026-05-15. Phase 1 implementation plan: `docs/superpowers/plans/2026-05-15-global-energy-map-phase-1.md`.
+> **Status (2026-05-19):** Historical record. Phases 1–5 shipped; Phase 6+ in planning. The original "five vertical slices" plan below has been delivered with some scope changes (Phase 5 became "infra + polish" — NETL refineries augmentation, vintage-aware filtering, geometry simplification — rather than the originally-sketched coal sector; coal moved to Phase 6+).
+>
+> For the current state of the system, see:
+> - `CLAUDE.md` — tech stack, schema, data sources, conventions
+> - `docs/data-sources.md` — researcher inventory (in-production / rejected / Phase 6+ candidates)
+> - `docs/methodology.md` — chronological narrative rendered into `/about`
+> - `docs/superpowers/specs/2026-05-*-phase-N-design.md` — per-phase design specs
+> - `docs/superpowers/plans/2026-05-*-phase-N.md` — per-phase implementation plans
+>
+> Original status: approved 2026-05-15. Phase 1 implementation plan: `docs/superpowers/plans/2026-05-15-global-energy-map-phase-1.md`.
 
 ## Context
 

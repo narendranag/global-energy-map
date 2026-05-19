@@ -127,22 +127,43 @@ Categories:
 
 ---
 
-### OpenStreetMap — Refineries
+### NETL GOGI Refineries _(primary refinery source as of Phase 5)_
+
+- **URL:** https://prod.arcgis.netl.doe.gov/server/rest/services/Hosted/Refineries/FeatureServer
+- **License:** US Government work, public domain (17 USC §105)
+- **As-of:** 2026-05-17
+- **Where it lands:** `assets.parquet` rows where `kind = 'refinery'` and `source = 'National Energy Technology Laboratory (US DOE) — GOGI Refineries'`
+- **Layers/scenarios using it:** refineries point layer; refinery feedstock attribution math
+
+**What we ingest:** All 2,272 refinery point features. Per-refinery: location, country (via `NETL_NAME_TO_ISO3`), facility name (75% populated), operator (80% populated), capacity (15% populated — parsed from string field via `scripts/transform/_refinery_capacity.py`), status (14% populated; nulls default to `"operating"` since the source layer's purpose is current infrastructure).
+
+**Coverage:**
+- 13× more refineries than the prior OSM-only source.
+- Strong coverage of major refining hubs that OSM under-tagged: China (192), USA (166), Russia (119), Canada (117), Japan (105) lead the count.
+- Capacity coverage rises from 0% (OSM-only) to ~15% (NETL's populated subset). Records without parseable capacity fall back to uniform-within-country attribution in the scenario engine.
+
+**Coverage gaps:**
+- Field names truncated to ~10 chars (legacy shapefile import); fields use metadata-database conventions (`md_country`, `md_source`, `facility_n`).
+- `facility_n` is often blank precisely for the most analytically important refineries (US/Russia/Saudi/China majors) — the label-fallback chain is `facility_n || operator || "Refinery"`.
+- `decommissioned_year` is 0% populated; assume all listed refineries are operating.
+
+---
+
+### OpenStreetMap — Refineries _(supplement to NETL as of Phase 5)_
 
 - **URL:** https://www.openstreetmap.org/
 - **License:** ODbL (Open Database License) — derivative works permitted with attribution and share-alike
-- **As-of:** 2026-05-15
-- **Where it lands:** `assets.parquet` rows where `kind = 'refinery'`
+- **As-of:** 2026-05-15 (Overpass snapshot)
+- **Where it lands:** `assets.parquet` rows where `kind = 'refinery'` and `source = 'OpenStreetMap (Overpass)'`
 - **Layers/scenarios using it:** refineries point layer; refinery feedstock attribution math
 
-**What we ingest:** 168 refineries via Overpass API query for `industrial=oil_refinery`, `industrial=oil`, `man_made=works + product=oil`. Per-refinery: name, country, operator, commissioned year, source URL.
+**What we ingest:** Refinery features via Overpass API query for `industrial=oil_refinery`, `industrial=oil`, and `man_made=works + product=oil` (with multilingual name keyword filtering for the looser tags). Raw set: 168 refineries. After Phase 5's 2 km same-country dedup against NETL, **88 OSM-only refineries** remain in production as supplements; the other 80 collapse into matching NETL records.
+
+**Why we keep OSM as a supplement:** OSM's curated facility names are high-quality for major OECD refineries (e.g., "MiRO Mineralölraffinerie Oberrhein," "Fawley Oil Refinery") where NETL's `facility_n` is sometimes blank. The 2 km dedup keeps OSM only where it complements rather than duplicates.
 
 **Coverage gaps:**
-- **OSM refinery coverage is geographically skewed** — overrepresented in OECD countries, underrepresented in China, India, Saudi Arabia, South Korea. The 168 features represent an estimated 30–40% of global refining capacity by count.
-- **Zero refineries have capacity data.** The refinery feedstock attribution falls back to uniform-within-country logic (each refinery = 1/N of country's import mix) for all 168.
-- OSM tagging quality varies by country and contributor activity.
-
-**Why we keep OSM despite NETL having 2,272 refineries:** OSM's curated naming quality is high for major OECD refineries (e.g., "MiRO Mineralölraffinerie Oberrhein," "Fawley Oil Refinery"). NETL's facility_n is blank for 25% of records and often blank precisely for the most analytically important refineries. Phase 5 plans augment OSM with NETL records that don't proximity-match OSM (2 km threshold, same country).
+- Zero capacity coverage in source — OSM contributors rarely tag refinery capacity. OSM-supplement records fall back to uniform-within-country attribution.
+- Geographic skew toward OECD; little contribution beyond what NETL already provides.
 
 ---
 
@@ -293,14 +314,14 @@ Surfaced via Tavily/Exa research. Listed roughly in order of analytical value ×
 - **URL:** https://globalenergymonitor.org/projects/
 - **License:** CC BY 4.0
 - **What it offers:** Global coal mines and coal-fired power plants, CC BY 4.0, GEM tracker quality.
-- **Why it matters:** Coal is the missing fossil fuel in the project's current commodity axis. Phase 5+ candidate for the coal-sector + cross-commodity scenarios slice.
+- **Why it matters:** Coal is the missing fossil fuel in the project's current commodity axis. Phase 6+ candidate for the coal-sector + cross-commodity scenarios slice.
 
 ### GEM Global Oil & Gas Plant Tracker (GOGPT) vs NETL Power Plants
 
 - **URL:** https://globalenergymonitor.org/projects/global-oil-gas-plant-tracker/ + NETL `Power_Plants` FeatureServer
 - **License:** GEM = CC BY 4.0; NETL = public domain
 - **What it offers:** Two complementary global power-plant datasets. GEM tracks ~14,700 fossil-fuel power units; NETL has its own counterpart.
-- **Why it matters:** Adds the demand-side (electricity generation) layer over existing fuel supply chains. Phase 5+ candidate; needs a comparison + primary-source pick.
+- **Why it matters:** Adds the demand-side (electricity generation) layer over existing fuel supply chains. Phase 6+ candidate; needs a comparison + primary-source pick.
 
 ### Tanker / LNG carrier AIS
 

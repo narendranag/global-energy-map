@@ -1,8 +1,14 @@
 # Global Energy Map — Methodology
 
+> This page is a chronological record of what shipped in each phase and the simplifications behind each layer. For a flat researcher-oriented inventory of current data sources, see `docs/data-sources.md`. For current totals (refinery count, layer counts, etc.) the live `/about` page renders from `public/data/catalog.json` at build time.
+
 ## Scope & Approach
 
-Global Energy Map presents a multidimensional view of crude oil reserves, production, trade, and critical infrastructure. Phase 1 focuses on foundational layers:
+Global Energy Map presents a multidimensional view of the world's hydrocarbon energy system — reserves, extraction, pipelines, refining, LNG, storage, ports, and bilateral trade — with chokepoint/pipeline disruption scenarios overlaid on the map. Phases 1–5 are shipped; Phase 6+ is in planning.
+
+The narrative below preserves what each phase shipped with the caveats that applied AT THAT TIME. Where a later phase has materially changed a Phase N claim (e.g., Phase 5's refinery augmentation supersedes Phase 2's OSM-only counts), the original phase section keeps its historical claim and the later phase documents the upgrade. Cross-references are inline.
+
+Phase 1 focuses on foundational layers:
 
 - **Reserves choropleth (1990–2020)**: country-level proven crude reserves from Energy Institute Statistical Review, visualized as fill color on world map.
 - **Extraction sites**: point locations of operating oil and gas fields from Global Energy Monitor, with capacity and status metadata.
@@ -54,13 +60,13 @@ Phase 2 extends Phase 1's foundation by adding critical midstream and refining i
 
 When a refinery R is located in country C, the model assigns it a capacity-share of C's bilateral crude import mix (BACI, HS 2709). This is a first-order simplification: actual refinery feedstock depends on API gravity compatibility, long-term contract structures, and per-refinery ownership. The method is informative for identifying which countries' import partners are material to a refinery's energy security, but should not be interpreted as precise accounting of individual-refinery sourcing. Real-world feedstock attribution requires detailed AECO (Association Petrolifère Européenne, etc.) refinery-level data, which is not publicly available at this temporal and geographic resolution.
 
-#### OSM Refinery Coverage is Incomplete
+#### OSM Refinery Coverage is Incomplete _(superseded by Phase 5)_
 
-OpenStreetMap's global refinery database, while substantial, underrepresents major refining hubs in China, India, Saudi Arabia, and South Korea. The 168 refineries ingested represent approximately 30–40% of global refining capacity by count; the data skew is geographic (OECD countries overrepresented). As OSM contributors add refinery features in Asia-Pacific and Middle East regions, the engine's completeness will improve without code changes. Current gaps should be noted when interpreting refinery-level scenarios in underrepresented regions.
+At Phase 2 time, OpenStreetMap's global refinery database underrepresented major refining hubs in China, India, Saudi Arabia, and South Korea. The 168 refineries ingested represented approximately 30–40% of global refining capacity by count, with the data skew being geographic (OECD countries overrepresented). **Phase 5 added NETL GOGI Refineries (2,272 features, US Government public domain) as the primary source with OSM kept as a 2 km same-country supplement.** The merged refinery layer is 2,360 features with much-improved coverage of Asian and Middle-Eastern hubs. See the Phase 5 section below.
 
-#### OSM Refinery Capacity Coverage is Zero
+#### OSM Refinery Capacity Coverage is Zero _(partially superseded by Phase 5)_
 
-OpenStreetMap refinery features rarely include a capacity tag (API key: `output:capacity_*`). The engine therefore falls back to uniform-within-country attribution: each refinery in country C is treated as 1/N of C's import mix, where N is the count of refineries in C. This is a placeholder; once OSM capacity tagging improves (e.g., via GEM data import or regional energy agency contributions), the engine will automatically switch to capacity-weighted attribution with zero code changes.
+OpenStreetMap refinery features rarely include a capacity tag (API key: `output:capacity_*`). At Phase 2 time, all 168 OSM refineries fell back to uniform-within-country attribution: each refinery in country C is treated as 1/N of C's import mix. **Phase 5's NETL augmentation lifts global refinery capacity coverage from 0% to ~15%** (NETL's `capacity` field is populated for 355 / 2,272 records and parsed via a TDD'd helper). The remaining ~85% still uses the uniform-within-country fallback.
 
 #### Net-Supplier Countries
 
@@ -76,9 +82,9 @@ Scenario routing shares are static:
 
 Real-world shares vary year-to-year with maintenance, sanctions regimes, and renegotiation of joint-venture operating agreements. Phase 3+ will incorporate per-year EIA export flow data to improve routing allocations dynamically.
 
-#### Pipeline GeoJSON Geometry Coverage
+#### Pipeline GeoJSON Geometry Coverage _(at Phase 2 ship)_
 
-The Global Energy Monitor GeoJSON source includes 1,872 pipeline features, of which 24% lack geometry. After filtering for valid geometries and operational status (in-service or in-construction), 1,185 features are retained. Abandoned or indefinitely deferred pipelines are excluded from the visualization but documented in the raw source for reference.
+At Phase 2 ship, the Global Energy Monitor oil pipeline GeoJSON source included 1,872 pipeline features, of which 24% lacked geometry. After filtering for valid geometries and operational status (in-service or in-construction), 1,185 features were retained. Abandoned or indefinitely deferred pipelines are excluded from the visualization but documented in the raw source for reference. **Phase 3 added gas pipelines (GGIT) on the same filtering rules**; the combined oil + gas pipelines table is now ~3,957 features. **Phase 5 simplified the GeoJSON sidecar from 73 MB to 14 MB at tolerance 0.005** (full-resolution geometry kept in `pipelines.parquet`).
 
 ## Phase 3: Natural Gas + LNG Terminals
 

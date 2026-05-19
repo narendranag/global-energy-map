@@ -18,8 +18,8 @@ A public web app that lets serious analysts interrogate global energy dependenci
 
 **Map / viz**
 - `deck.gl` for data layers (points, choropleths, animated flows)
-- `maplibre-gl` for basemap, fed by `pmtiles` (single-file vector tiles — no tile server)
-- Natural Earth admin-0 polygons (public domain)
+- `maplibre-gl` for basemap, currently served by CARTO raster tiles (`light_all`) via `src/components/map/style.ts` — no API key, no local tile server. PMTiles is on the roadmap but not in use today.
+- Natural Earth admin-0 polygons (public domain) for the reserves choropleth
 
 **In-browser data layer**
 - `@duckdb/duckdb-wasm` runs SQL over Parquet/GeoParquet served from the CDN
@@ -32,40 +32,46 @@ A public web app that lets serious analysts interrogate global energy dependenci
 - Outputs versioned Parquet/GeoParquet under `public/data/`
 
 **Hosting**
-- Vercel for the app
-- Vercel Blob (or Cloudflare R2 if size demands) for any data exceeding ~25MB single-file / ~100MB total
-- PMTiles basemap shipped under `public/basemap/`
+- Vercel for the app, auto-deploys on push to `main`
+- Vercel Blob (or Cloudflare R2 if size demands) for any data exceeding ~25 MB single-file / ~100 MB total. Not in use yet — Phase 5 cleared the largest sidecar (pipelines.geojson) to 14 MB via geometry simplification.
 
 ## Repo layout
 
 ```
 global-energy-map/
 ├── src/
-│   ├── app/                       # Next.js App Router
+│   ├── app/                       # Next.js App Router (page.tsx, about/)
 │   ├── components/
-│   │   ├── map/                   # MapLibre + Deck.gl shell
-│   │   ├── layers/                # one file per asset/data layer
+│   │   ├── map/                   # MapLibre + Deck.gl shell + CARTO basemap style
+│   │   ├── layers/                # one file per data layer (Reserves, Extraction, Pipelines, Refineries, LngTerminals, BasinPolygons, Storage, Ports, LayerPanel, Legend)
 │   │   ├── time-slider/
-│   │   ├── scenarios/
+│   │   ├── scenarios/             # ScenarioPanel, overlay, useScenario hook
 │   │   └── ui/
 │   └── lib/
 │       ├── duckdb/                # WASM bootstrap, query helpers
 │       ├── data-catalog/          # typed access to catalog.json
-│       ├── scenarios/             # pure-function scenario engine
+│       ├── scenarios/             # pure-function scenario engine (oil + gas axes, refinery/LNG attribution)
+│       ├── url-state/             # encode/decode + useUrlState hook (shareable URLs)
+│       ├── vintage/               # vintage filter predicate for time-aware layers
 │       └── geo/
 ├── public/
-│   ├── data/                      # built Parquet/GeoParquet + catalog.json
-│   └── basemap/                   # PMTiles
+│   └── data/                      # built Parquet/GeoParquet + catalog.json + GeoJSON sidecars
 ├── scripts/
+│   ├── common/                    # iso3 mappings, NETL REST helper, secrets loader
 │   ├── ingest/                    # one script per source
-│   ├── transform/                 # joins / harmonization → Parquet
-│   └── publish/
-├── tests/unit/ tests/e2e/
+│   └── transform/                 # joins / harmonization → Parquet
+├── tests/
+│   ├── unit/                      # Vitest (TS) — scenarios, url-state, vintage filter, data-catalog
+│   ├── python/                    # pytest — NETL helper, ISO3, refinery capacity parser, dedup
+│   └── e2e/                       # Playwright smoke
 ├── docs/
-│   ├── superpowers/specs/         # design specs
-│   ├── superpowers/plans/         # implementation plans
-│   └── methodology.md             # rendered into /about
+│   ├── data-sources.md            # researcher-facing source inventory
+│   ├── methodology.md             # rendered into /about
+│   └── superpowers/
+│       ├── specs/                 # design specs (per phase + master)
+│       └── plans/                 # implementation plans (per phase)
 ├── pyproject.toml
+├── README.md
 └── package.json
 ```
 
@@ -77,33 +83,35 @@ Designed so adding a new commodity is a row, not a migration.
 |---|---|---|
 | `country` | iso3, name, region, geom | Natural Earth |
 | `basin` | basin_id, name, country_iso3, area_km2, region, geometry | NETL Global Oil and Gas Infrastructure |
-| `asset` | asset_id, kind (extraction_site, refinery, lng_export, lng_import, storage, port), name, iso3, lon, lat, capacity, capacity_unit, source, ... | GEM trackers + NETL GOGI + OpenStreetMap |
-| `pipelines` | pipeline_id, name, status, commodity (crude, gas), capacity_kbpd, capacity_unit, operator, geom (LineString) | GEM oil + gas infrastructure trackers |
-| `country_year_series` | iso3, year, metric, value, unit | EI Statistical Review, EIA, OPEC ASB |
-| `trade_flow` | year, hs_code, exporter_iso3, importer_iso3, qty | BACI (CEPII) |
-| `disruption_route` | scenario_id, origin_iso3, destination_iso3, route_share, affected_infrastructure | EIA / IEA scenario analysis |
+| `asset` | asset_id, kind (extraction_site, refinery, lng_export, lng_import, storage, port), name, iso3, lon, lat, capacity, capacity_unit, operator, status, commissioned_year, decommissioned_year, source, source_version | GEM trackers + NETL GOGI + OpenStreetMap |
+| `pipelines` | pipeline_id, name, status, commodity (crude, ngl, crude+ngl, gas), capacity_kbpd, capacity_unit, start_country_iso3, end_country_iso3, operator, start_year, geometry (LineString / MultiLineString) | GEM oil + gas infrastructure trackers |
+| `country_year_series` | iso3, year (1990–2024), metric (production_crude_kbpd, proved_reserves_oil_bbn_bbl, proved_reserves_gas_tcm), value, unit | EI Statistical Review |
+| `trade_flow` | year, hs_code (2709 crude, 271111 LNG), exporter_iso3, importer_iso3, qty | BACI (CEPII) |
+| `chokepoint_route`, `disruption_route` | scenario_id, origin_iso3, destination_iso3, route_share, affected_infrastructure | EIA / IEA scenario analysis |
 
 All artifacts indexed in `public/data/catalog.json` (path, version, license, source URL, as-of) — the methodology page renders straight off this.
 
 ## Data sources (verified, public)
 
+For a researcher-facing inventory (with coverage gaps, evaluated-and-rejected sources, and Phase 6+ candidates) see `docs/data-sources.md`. The table below is the quick reference.
+
 | Layer | Source | License | Notes |
 |---|---|---|---|
-| Reserves (country-year) | Energy Institute Statistical Review | Free, terms on site | Canonical, back to 1965 |
-| Reserves (basin polygons) | USGS World Petroleum Assessment | Public domain (US gov) | Shapefiles, 2000–2012 vintage |
-| Production / consumption | Energy Institute Statistical Review (xlsx, wide format) | Free, terms on site | Reserves data caps at 2020; production runs through 2024 |
-| Extraction (asset) | GEM Oil & Gas Extraction Tracker | **CC BY 4.0** | Attribution required |
-| Pipelines (oil) | Global Energy Monitor — Oil Infrastructure Tracker | **CC BY 4.0** | Phase 2 — operating + in-construction (2025-04-09 release) |
-| Refineries | NETL GOGI (primary) + OpenStreetMap (supplement) | Public domain / ODbL | Phase 5 — NETL ~2,272 + OSM-only ~88 after 2 km dedup; NETL capacity parsed for ~15% |
-| Pipelines (gas) + LNG | GEM Global Gas Infrastructure Tracker | **CC BY 4.0** | Phase 3 |
-| Coal | GEM Coal Plant + Mine Trackers | **CC BY 4.0** | Phase 5 |
-| Crude trade flows | BACI (CEPII), HS 2709 | Free for academic/research use; see CEPII terms | No API key required; pre-processed & deduplicated |
-| Chokepoints / Disruption Scenarios | EIA World Oil Transit Chokepoints + IEA pipeline reports | Public, free | 4 scenarios: Hormuz, Druzhba, BTC, CPC |
-| Basemap | Natural Earth + Protomaps PMTiles | Public domain / OSM ODbL | |
-| Basins / storage / ports | NETL Global Oil & Gas Infrastructure (US DOE) | **Public domain** (US Gov work, 17 USC §105) | Phase 4 — 1,046 basins + ~26k storage + ~3.7k ports |
-| Tankers / AIS | **Deferred to Phase 5** | Paid for historical | TankerMap free for live snapshot |
+| Reserves (country-year, oil + gas) | Energy Institute Statistical Review of World Energy | Free, terms on site | Phase 1/3 — reserves capped at 2020; production runs through 2024 |
+| Extraction sites | GEM Global Oil & Gas Extraction Tracker | **CC BY 4.0** | Phase 1 — 5,008 sites; July 2023 snapshot; commissioned_year populated 22% |
+| Oil pipelines | GEM Global Oil Infrastructure Tracker (GOIT GeoJSON) | **CC BY 4.0** | Phase 2 — 2025-04-09 release; start_year populated 71% |
+| Gas pipelines + LNG terminals | GEM Global Gas Infrastructure Tracker (GGIT) | **CC BY 4.0** | Phase 3 — 2026-02-20 release; LNG terminals discriminated by import/export, capacity in mtpa |
+| Refineries | NETL GOGI Refineries (primary) + OpenStreetMap (supplement) | Public domain / ODbL | Phase 5 — 2,272 NETL + 88 OSM after 2 km same-country dedup; NETL capacity parsed for ~15% |
+| Basins / storage / ports | NETL Global Oil & Gas Infrastructure (US DOE) | Public domain (17 USC §105) | Phase 4 — 1,046 basins + 26,102 storage + 3,694 ports |
+| Crude + LNG trade flows | BACI (CEPII), HS 2709 + HS 271111 | Free for academic/research use; see CEPII terms | Annual bilateral flows; no API key required; pre-processed & deduplicated |
+| Chokepoints + pipeline disruption scenarios | EIA World Oil Transit Chokepoints + IEA pipeline reports | Public, free | 5 scenarios: Hormuz, Hormuz-LNG, Druzhba, BTC, CPC |
+| Country boundaries | Natural Earth admin-0 (1:110m) | Public domain | Phase 1 — basemap + reserves choropleth fills |
+| Raster basemap | CARTO `light_all` raster tiles | Free (no key) | Runtime tiles via `src/components/map/style.ts` |
+| Coal (mines + plants) | _deferred to Phase 6+_ | GEM CC BY 4.0 (when integrated) | Coal sector / cross-commodity scenarios are a Phase 6+ candidate |
+| Tankers / AIS | _deferred to Phase 6+_ | TankerMap free for live; paid for historical | Own brainstorm — AIS sourcing is the gating decision |
+| EIA STEO US shale basin time series | _deferred to Phase 6+_ | Public (US gov), free API key | Only authoritative open per-basin time-series we've found (Anadarko/Bakken/Eagle Ford/Permian/etc.) |
 
-API keys live in `~/.config/secrets.env` (already present: `EIA_API_KEY` is registered separately; Comtrade key needed). Never commit secrets.
+API keys live in `~/.config/secrets.env` (e.g., `TAVILY_API_KEY`, `EXA_API_KEY`). The EIA API key is registered separately; add to `~/.config/secrets.env` as `EIA_API_KEY` before any Phase 6+ EIA work. BACI (the trade-flow source) does not require a key. Never commit secrets.
 
 ## Common commands
 
@@ -116,12 +124,21 @@ pnpm lint
 pnpm test                      # Vitest unit
 pnpm test:e2e                  # Playwright
 
-# Data pipeline
-uv sync                        # install Python deps
-uv run scripts/ingest/<source>.py
-uv run scripts/transform/build_country_year.py
-uv run scripts/transform/build_assets.py
-uv run scripts/transform/build_chokepoint_routing.py
+# Data pipeline (build-time)
+uv sync                                              # install Python deps
+uv run python -m scripts.ingest.<source>            # one ingest per source (gem_*, netl_*, baci_*, osm_*, ei_*)
+uv run python -m scripts.transform.build_country_year     # reserves + production time series
+uv run python -m scripts.transform.build_assets           # extraction sites (other asset transforms append by kind)
+uv run python -m scripts.transform.build_refineries       # NETL primary + OSM supplement
+uv run python -m scripts.transform.build_pipelines        # oil + gas pipelines + simplified GeoJSON sidecar
+uv run python -m scripts.transform.build_lng_terminals    # GEM LNG export + import terminals
+uv run python -m scripts.transform.build_basins           # NETL basin polygons + simplified sidecar
+uv run python -m scripts.transform.build_storage          # NETL storage hubs (append to assets.parquet)
+uv run python -m scripts.transform.build_ports            # NETL ports (append to assets.parquet)
+uv run python -m scripts.transform.build_trade_flow       # BACI HS 2709 + 271111
+uv run python -m scripts.transform.build_chokepoint_routing
+uv run python -m scripts.transform.build_disruption_routing
+uv run pytest tests/python -v
 
 # Deploy
 vercel                         # preview
@@ -137,7 +154,10 @@ vercel --prod                  # production
 - **Geometry: GeoParquet, not GeoJSON, for anything > a few hundred features.** DuckDB-WASM reads it natively via the `spatial` extension.
 - **Citations:** Every layer must register a source entry in `catalog.json` (source URL, license, version/as-of). The `/about` page enumerates them — no manual list.
 - **GEM data attribution:** All GEM outputs require visible "Data: Global Energy Monitor, CC BY 4.0" attribution in the methodology page and any layer-level metadata UI.
-- **No client-side calls to data-provider APIs.** Comtrade, EIA, etc. are hit only at build time by Python ingestion scripts.
+- **No client-side calls to data-provider APIs.** BACI, EIA, NETL, GEM, etc. are hit only at build time by Python ingestion scripts. The runtime analytics path is pure HTTP range reads over Parquet/GeoJSON.
+- **Idempotent transforms.** Every `build_*.py` drops prior rows of its kind from the target Parquet before appending — re-running is safe.
+- **Source provenance on rows.** Multi-source tables (e.g., refineries) carry a `source` column so downstream consumers can filter or label by origin.
+- **Vintage-aware layer behavior.** Pipelines (`start_year`, 71%) and extraction sites (`commissioned_year`, 22%) respect the active year slider. Null vintage = always visible; refineries/LNG/storage/ports have no vintage data and remain time-independent.
 
 ## Workflow
 

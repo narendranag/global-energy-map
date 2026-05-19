@@ -325,9 +325,17 @@ Surfaced via Tavily/Exa research. Listed roughly in order of analytical value ×
 
 ### Tanker / LNG carrier AIS
 
-- **Sources considered:** TankerMap (live snapshot, free), MarineTraffic (free tier limited, paid historical), commercial AIS providers.
-- **Why it matters:** Real-time and historic vessel positions complete the trade-flow picture between exporters and importers. Most visually striking deferred slice; wildcard is sourcing.
-- **Status:** Deserves its own dedicated brainstorm + phase. AIS source choice is the gating decision.
+**Detailed research memo:** `docs/research/2026-05-19-tanker-ais-sources.md` (six-query pass with concrete dataset recommendations).
+
+Key findings from the 2026-05-19 sweep:
+
+- **LNG carriers — solved openly.** LNG-T3 (Zhou 2026, Zenodo `10.5281/zenodo.19571058`, **CC BY 4.0**) provides 406-vessel LNG fleet + 545 terminals + daily 2020–2024 voyages + country-to-country flows. ~27 MB. Validated against GIE, EIA, Eurostat, GIIGNL.
+- **US-coastal oil tankers — solved openly.** MarineCadastre.gov (NOAA / US Coast Guard NAIS) publishes 2009–2024 raw AIS positions for US coastal/EEZ waters as CSV/GeoPackage. ShipType codes 80–89 for tankers. Public domain.
+- **EU-coastal tanker route density — open.** EMODnet Human Activities derived from EMSA SafeSeaNet (likely CC BY); GeoTIFF / WMS aggregates.
+- **Global open AIS with caveats.** Global Fishing Watch (1 position/vessel/hour, non-commercial license) and AISStream.io (real-time WebSocket, no SLA / beta / no clear commercial terms) — usable but constrained.
+- **Global commercial AIS.** Datalastic (€199–849/mo) is the strongest self-serve REST option if the project ever takes a paid-data budget. Vortexa/Kpler/TankerTrackers/MarineTraffic are enterprise-priced.
+
+**Recommended Phase 6 scope:** ingest LNG-T3 to replace the current GEM-only LNG terminal layer; add LNG vessel fleet + voyage layers; switch the Hormuz-LNG scenario from annual BACI × capacity-weighted attribution to measured daily flows. US-coastal oil tankers via MarineCadastre is a clean follow-up; global oil tanker positions remain a paid-data decision and stay deferred.
 
 ---
 

@@ -56,9 +56,13 @@ export function useLngVoyagesLayer({
         // (start_date.year <= year <= end_date.year).
         const sql = `
           WITH terms AS (
-            SELECT name, lon, lat
+            -- One row per terminal name: assets.parquet can hold the same
+            -- name twice (e.g. an export and an import berth at one site),
+            -- and an un-grouped join would fan out into duplicate arcs.
+            SELECT name, any_value(lon) AS lon, any_value(lat) AS lat
             FROM read_parquet('/data/assets.parquet')
             WHERE kind IN ('lng_export', 'lng_import')
+            GROUP BY name
           )
           SELECT
             v.voyage_id,
@@ -90,7 +94,9 @@ export function useLngVoyagesLayer({
           getSourcePosition: (d) => [d.from_lon, d.from_lat],
           getTargetPosition: (d) => [d.to_lon, d.to_lat],
           getSourceColor: (d) => {
-            // Export end — orange-ish. Tint toward red for at-risk exporters.
+            // Export end — orange-ish. Tinted toward red when the *destination*
+            // terminal (d.to_terminal) is exposed under the active scenario, so
+            // both ends of an at-risk cargo read as at-risk.
             const impact = impactByTerminalName?.get(d.to_terminal);
             if (impact && impact.shareAtRisk > 0) {
               return [220, 80, 60, 200];

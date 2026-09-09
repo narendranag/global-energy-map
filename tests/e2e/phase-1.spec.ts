@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 // DuckDB-WASM loads from jsDelivr CDN; allow up to 90 s for the full test.
-test.setTimeout(90_000);
+test.setTimeout(180_000);
 
 test("phase 1 critical path", async ({ page }) => {
   // Forward console errors so test failures are easier to debug
@@ -24,7 +24,7 @@ test("phase 1 critical path", async ({ page }) => {
   // Ranked list should populate — wait for at least one percentage line to appear.
   // Heuristic: monofont items with a "%" character (the ScenarioPanel's `font-mono text-xs` rows)
   await expect(page.locator("ol li").filter({ hasText: /%/ }).first()).toBeVisible({
-    timeout: 60_000,
+    timeout: 120_000,
   });
 
   // About page renders catalog

@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 // DuckDB-WASM loads from jsDelivr CDN; allow up to 90 s for the full test.
-test.setTimeout(90_000);
+test.setTimeout(180_000);
 
 test("phase 2 critical path", async ({ page }) => {
   page.on("pageerror", (err) => { console.error("PAGE ERROR:", err.message); });
@@ -40,12 +40,12 @@ test("phase 2 critical path", async ({ page }) => {
   // Select Druzhba — ranked importer and refinery lists populate
   // DuckDB-WASM queries may take up to ~30 s on first load (CDN latency + WASM init).
   await select.selectOption("druzhba");
-  await expect(page.getByText(/Top importers at risk/i)).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByText(/Top refineries at risk/i)).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText(/Top importers at risk/i)).toBeVisible({ timeout: 120_000 });
+  await expect(page.getByText(/Top refineries at risk/i)).toBeVisible({ timeout: 120_000 });
 
   // At least one ranked row with a percentage should appear
   await expect(page.locator("ol li").filter({ hasText: /%/ }).first()).toBeVisible({
-    timeout: 60_000,
+    timeout: 120_000,
   });
 
   // About page renders with methodology heading and GEM attribution

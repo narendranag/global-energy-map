@@ -46,6 +46,7 @@ from scripts.common.iso3 import GEM_NAME_TO_ISO3
 from scripts.transform._lng_iso3 import lookup_iso3
 from scripts.transform._lng_terminal_helpers import (
     assert_unique_asset_ids,
+    collapse_duplicate_names,
     normalize_status,
 )
 from scripts.transform._refinery_dedup import haversine_km  # reuse Phase 5 helper
@@ -93,6 +94,9 @@ def _load_lng_t3() -> pd.DataFrame:
     df["kind"] = df["terminal_type"].map({"export": "lng_export", "import": "lng_import"})
     assert df["kind"].notna().all(), "unknown terminal_type values"
 
+    df = collapse_duplicate_names(df)
+    print(f"LNG-T3: {len(df)} after collapsing duplicate terminal names", file=sys.stderr)
+
     out = pd.DataFrame({
         "asset_id": "lngt3/" + df["name"].astype(str).str.replace(r"[^A-Za-z0-9]", "_", regex=True),
         "kind": df["kind"],
@@ -105,7 +109,7 @@ def _load_lng_t3() -> pd.DataFrame:
         "operator": pd.NA,
         "status": df["status"].map(normalize_status).astype(pd.StringDtype()),
         "commissioned_year": pd.to_numeric(df["start_year"], errors="coerce").astype("Int64"),
-        "decommissioned_year": pd.Series([pd.NA] * len(df), dtype="Int64"),
+        "decommissioned_year": pd.Series([pd.NA] * len(df), dtype="Int64", index=df.index),
         "unit_count": df["unit_count"].astype("Int64"),
         "total_processed_bcm": df["total_processed_bcm"].astype("Int64"),
         "un_locode": df["UN_LOCODE"].astype(pd.StringDtype()),
@@ -195,6 +199,17 @@ def _load_gem() -> pd.DataFrame:
 
     df = pd.DataFrame(rows)
     print(f"GEM: {len(df)} after geometry + status + iso3 attribution", file=sys.stderr)
+
+    # The raw GGIT geojson contains a handful of byte-identical duplicate
+    # features (same pid/status/geometry/capacity repeated verbatim) — drop
+    # them rather than let them surface as duplicate asset_ids downstream.
+    n_before = len(df)
+    df = df.drop_duplicates(subset="asset_id", keep="first")
+    n_dropped = n_before - len(df)
+    if n_dropped:
+        print(f"GEM: dropped {n_dropped} exact-duplicate feature(s) from raw geojson",
+              file=sys.stderr)
+
     return df
 
 

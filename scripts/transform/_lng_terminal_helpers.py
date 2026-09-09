@@ -6,6 +6,8 @@ constants — though not at import, this keeps parity with _refinery_dedup.py).
 """
 from __future__ import annotations
 
+import sys
+
 import pandas as pd
 
 # Maps raw LNG-T3 status values onto the normalized labels already used by
@@ -17,6 +19,15 @@ STATUS_NORMALIZATION: dict[str, str] = {
     "operating": "operating",
 }
 
+# Preference order for collapse_duplicate_names: lower rank wins. Covers both
+# raw LNG-T3 statuses ("construction") and already-normalized ones
+# ("in-construction"), since collapse may run before or after normalization.
+_STATUS_RANK: dict[str, int] = {
+    "operating": 0,
+    "in-construction": 1,
+    "construction": 1,
+}
+
 
 def normalize_status(raw: str) -> str:
     """Normalize a raw status string to the shared vocabulary.
@@ -25,6 +36,47 @@ def normalize_status(raw: str) -> str:
     Any other value is passed through unchanged.
     """
     return STATUS_NORMALIZATION.get(raw, raw)
+
+
+def collapse_duplicate_names(df: pd.DataFrame) -> pd.DataFrame:
+    """Collapse rows sharing the same `name` down to a single row each.
+
+    LNG-T3 lists some terminals twice — once as an existing "operating"
+    record and once as a separate "construction" (expansion-phase) record
+    — both under the same terminal name. We model one row per physical
+    terminal, so for each duplicated name we keep exactly one row:
+    prefer "operating" status over "construction"/"in-construction"
+    (unrecognized statuses rank lowest), then break ties by capacity
+    descending.
+
+    Logs "collapsed N duplicate-name rows (kept operating record)" to
+    stderr when N > 0. No-op (and silent) when there are no duplicates.
+    """
+    dup_mask = df["name"].duplicated(keep=False)
+    n_dupes = int(dup_mask.sum())
+    if n_dupes == 0:
+        return df
+
+    unique_part = df[~dup_mask]
+    dup_part = df[dup_mask].copy()
+    dup_part["_status_rank"] = dup_part["status"].map(
+        lambda s: _STATUS_RANK.get(s, len(_STATUS_RANK))
+    )
+    dup_part = dup_part.sort_values(
+        ["_status_rank", "capacity"], ascending=[True, False]
+    )
+    kept = dup_part.groupby("name", sort=False, as_index=False).head(1)
+    kept = kept.drop(columns="_status_rank")
+
+    n_names = df.loc[dup_mask, "name"].nunique()
+    n_dropped = n_dupes - n_names
+    print(
+        f"collapsed {n_dropped} duplicate-name rows (kept operating record)",
+        file=sys.stderr,
+    )
+
+    out = pd.concat([unique_part, kept], ignore_index=False).sort_index()
+    return out
 
 
 def assert_unique_asset_ids(df: pd.DataFrame) -> None:

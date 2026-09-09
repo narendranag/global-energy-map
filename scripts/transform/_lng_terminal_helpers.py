@@ -38,21 +38,32 @@ def normalize_status(raw: str) -> str:
     return STATUS_NORMALIZATION.get(raw, raw)
 
 
-def collapse_duplicate_names(df: pd.DataFrame) -> pd.DataFrame:
-    """Collapse rows sharing the same `name` down to a single row each.
+def collapse_duplicate_names(df: pd.DataFrame, key: str = "name") -> pd.DataFrame:
+    """Collapse rows sharing the same `key` value down to a single row each.
 
-    LNG-T3 lists some terminals twice — once as an existing "operating"
-    record and once as a separate "construction" (expansion-phase) record
-    — both under the same terminal name. We model one row per physical
-    terminal, so for each duplicated name we keep exactly one row:
-    prefer "operating" status over "construction"/"in-construction"
-    (unrecognized statuses rank lowest), then break ties by capacity
-    descending.
+    Two sources need this, for the same modelling reason — we keep one row
+    per *physical terminal*, while the raw data carries one row per
+    terminal-phase or per liquefaction/regasification unit:
 
-    Logs "collapsed N duplicate-name rows (kept operating record)" to
+    * LNG-T3 lists some terminals twice under the same `name` — once as an
+      existing "operating" record and once as a separate "construction"
+      (expansion-phase) record.
+    * GEM GGIT emits one feature per unit, several per terminal, all
+      sharing the terminal-level `pid` (and hence asset_id). The capacity
+      carried on each feature is the *terminal* total
+      (tot{import,export}lngterminalcapacityinmtpa), not the unit's, so
+      these must be collapsed rather than summed.
+
+    For each duplicated key we keep exactly one row: prefer "operating"
+    status over "construction"/"in-construction" (unrecognized statuses
+    rank lowest), then break ties by capacity descending. Deliberately
+    deterministic — never positional `keep="first"` — because the
+    duplicate rows differ in status, start year and owner.
+
+    Logs "collapsed N duplicate-<key> rows (kept operating record)" to
     stderr when N > 0. No-op (and silent) when there are no duplicates.
     """
-    dup_mask = df["name"].duplicated(keep=False)
+    dup_mask = df[key].duplicated(keep=False)
     n_dupes = int(dup_mask.sum())
     if n_dupes == 0:
         return df
@@ -63,15 +74,15 @@ def collapse_duplicate_names(df: pd.DataFrame) -> pd.DataFrame:
         lambda s: _STATUS_RANK.get(s, len(_STATUS_RANK))
     )
     dup_part = dup_part.sort_values(
-        ["_status_rank", "capacity"], ascending=[True, False]
+        ["_status_rank", "capacity"], ascending=[True, False], kind="stable"
     )
-    kept = dup_part.groupby("name", sort=False, as_index=False).head(1)
+    kept = dup_part.groupby(key, sort=False, as_index=False).head(1)
     kept = kept.drop(columns="_status_rank")
 
-    n_names = df.loc[dup_mask, "name"].nunique()
+    n_names = df.loc[dup_mask, key].nunique()
     n_dropped = n_dupes - n_names
     print(
-        f"collapsed {n_dropped} duplicate-name rows (kept operating record)",
+        f"collapsed {n_dropped} duplicate-{key} rows (kept operating record)",
         file=sys.stderr,
     )
 

@@ -1,5 +1,16 @@
 # Global Energy Map — Phase 6 Implementation Plan
 
+## Deviations (2026-09-09)
+
+Actual implementation diverged from this plan's estimates in a few places, all discovered and resolved during execution:
+
+- **GIIGNL reconciliation gate fired.** Task 6's validation script found LNG-T3 covers only 22–41% of GIIGNL's global LNG trade totals for 2020–2024 (every year exceeds the 30% acceptable-gap threshold) — the "likely outcome" the plan flagged. Per the plan's own contingency, the scenario engine (Tasks 9–10, `src/lib/scenarios/lng-t3.ts`) keeps BACI HS 271111 as the sole country-total source for all years and uses LNG-T3 voyages only to redistribute a country's BACI total across its covered terminals and to derive each terminal's exporter mix. LNG-T3 is never used as a country-total source.
+- **Duplicate-name collapse (not anticipated in Task 5's original estimate).** 25 LNG-T3 terminal names carried both an "operating" record and a separate "construction" (expansion-phase) record under the same name. `collapse_duplicate_names()` (commit `289ed88`) resolves each pair (operating kept over construction, higher capacity on ties) before `asset_id` construction, bringing LNG-T3's active count from 330 down to **305**.
+- **GEM verbatim-duplicate features.** The raw GGIT geojson contained byte-identical duplicate features (same pid/status/geometry/capacity repeated 2–10× per terminal, e.g. Elba Island LNG Terminal ×10). `_load_gem` now drops 149 exact duplicates by `asset_id` before the 25 km proximity dedup against LNG-T3, bringing the GEM supplement down to **8** terminals (the plan estimated ~10).
+- **Final counts** (vs. the plan's Task 5 estimates of ~330 LNG-T3 + ~10 GEM ≈ ~340 total): **305 LNG-T3 + 8 GEM = 313 LNG terminals** (74 lng_export / 239 lng_import), out of `assets.parquet`'s 37,608 total rows. `commissioned_year` coverage on LNG rows is **97.8%** (plan estimated ~88%). Voyage/trade/terminal-daily parquet counts matched the plan's expectations exactly: 17,592 / 16,691 / 16,115 rows; 159 of 471 unique terminal names in `LNG_terminal.csv` have measured throughput.
+
+---
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Ingest LNG-T3 (Zhou 2026, Zenodo `10.5281/zenodo.19571058`, CC BY 4.0) so the LNG layer goes from "static terminal capacity (GEM)" to "measured global LNG flow." Terminals get LNG-T3 as primary + GEM as 25 km supplement; voyages render as a new ArcLayer with year filter; Hormuz-LNG scenario uses measured 2020–2024 daily flows with per-terminal disaggregation when year ∈ [2020, 2024], falling back to BACI for earlier years.
@@ -16,7 +27,7 @@
 
 **Files:** none
 
-- [ ] **Step 1: Verify you're on the phase-6 branch with the spec present**
+- [x] **Step 1: Verify you're on the phase-6 branch with the spec present**
 
 ```bash
 cd /Users/narendranag/ai/global-energy-map
@@ -27,7 +38,7 @@ ls docs/superpowers/specs/2026-05-19-global-energy-map-phase-6-design.md
 
 Expected: branch is `phase-6`; recent commits include "docs(spec): Phase 6 design — LNG carrier dynamics"; spec file exists.
 
-- [ ] **Step 2: Verify clean working tree**
+- [x] **Step 2: Verify clean working tree**
 
 ```bash
 git status
@@ -44,7 +55,7 @@ Expected: "nothing to commit, working tree clean".
 
 **Why:** LNG-T3 uses country names that may not match existing GEM/NETL/EI dicts. Probe distinct names from the three CSVs, add a new source-specific dict for any unmapped ones.
 
-- [ ] **Step 1: Download LNG-T3 archive (if not cached) and enumerate distinct country names**
+- [x] **Step 1: Download LNG-T3 archive (if not cached) and enumerate distinct country names**
 
 ```bash
 mkdir -p /tmp/lng-t3-probe
@@ -56,7 +67,7 @@ ls *.csv
 
 Expected: 5 CSV files (`LNG_terminal.csv`, `LNG_tanker.csv`, `LNG_tanker_voyage.csv`, `LNG_terminal_daily.csv`, `LNG_trade_daily.csv`).
 
-- [ ] **Step 2: Enumerate the universe of country names referenced**
+- [x] **Step 2: Enumerate the universe of country names referenced**
 
 ```bash
 cd /Users/narendranag/ai/global-energy-map
@@ -77,7 +88,7 @@ EOF
 
 Expected: ~70–90 distinct country names.
 
-- [ ] **Step 3: Diff against existing mappings**
+- [x] **Step 3: Diff against existing mappings**
 
 ```bash
 uv run python << 'EOF'
@@ -101,7 +112,7 @@ EOF
 
 Expected: a list of country names not yet mapped (could be 0–30).
 
-- [ ] **Step 4: Add LNG_T3_NAME_TO_ISO3 dict to `scripts/common/iso3.py`**
+- [x] **Step 4: Add LNG_T3_NAME_TO_ISO3 dict to `scripts/common/iso3.py`**
 
 Open `scripts/common/iso3.py`. Find the end of the existing dicts. Append:
 
@@ -127,7 +138,7 @@ Use the Step 3 output to populate the dict. For each missing name, look up the I
 
 If the Step 3 output had 0 missing names, leave the dict empty but include it with a comment that says so.
 
-- [ ] **Step 5: Verify all names map**
+- [x] **Step 5: Verify all names map**
 
 ```bash
 uv run python << 'EOF'
@@ -153,7 +164,7 @@ EOF
 
 Expected: `unmapped after merge: 0` and `OK`.
 
-- [ ] **Step 6: Lint**
+- [x] **Step 6: Lint**
 
 ```bash
 uv run ruff check scripts/common/iso3.py
@@ -161,7 +172,7 @@ uv run ruff check scripts/common/iso3.py
 
 Expected: clean.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add scripts/common/iso3.py
@@ -186,7 +197,7 @@ EOF
 
 **Why:** Pull the Zenodo deposit once into `data/raw/lng_t3/<version>/` and let downstream transforms read from a cached path. Idempotent: re-runs use the cached files unless `--force`.
 
-- [ ] **Step 1: Write the ingest script**
+- [x] **Step 1: Write the ingest script**
 
 Create `scripts/ingest/lng_t3.py`:
 
@@ -263,7 +274,7 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 2: Run the ingest**
+- [x] **Step 2: Run the ingest**
 
 ```bash
 uv run python -m scripts.ingest.lng_t3
@@ -271,7 +282,7 @@ uv run python -m scripts.ingest.lng_t3
 
 Expected: writes `data/raw/lng_t3/v1-2026-04-01/all.zip` (~28 MB) and extracts the five CSVs. Re-running prints `cached at ...` instead of re-downloading.
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 ```bash
 ls -lh data/raw/lng_t3/v1-2026-04-01/
@@ -279,7 +290,7 @@ ls -lh data/raw/lng_t3/v1-2026-04-01/
 
 Expected: 5 CSV files plus `all.zip`. CSV sizes roughly: `LNG_terminal.csv` ~63 KB, `LNG_tanker.csv` ~128 KB, `LNG_tanker_voyage.csv` ~2 MB, `LNG_terminal_daily.csv` ~656 KB, `LNG_trade_daily.csv` ~954 KB.
 
-- [ ] **Step 4: Lint**
+- [x] **Step 4: Lint**
 
 ```bash
 uv run ruff check scripts/ingest/lng_t3.py
@@ -287,7 +298,7 @@ uv run ruff check scripts/ingest/lng_t3.py
 
 Expected: clean.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/ingest/lng_t3.py
@@ -314,7 +325,7 @@ EOF
 
 **Why:** Produces three new parquets: `lng_voyage.parquet`, `lng_trade_daily.parquet`, `lng_terminal_daily.parquet`. Voyage and trade-daily tables need country-name → ISO3 lookups using the merged dicts from Task 2.
 
-- [ ] **Step 1: Write failing test for the country-name lookup helper**
+- [x] **Step 1: Write failing test for the country-name lookup helper**
 
 Create `tests/python/test_lng_iso3.py`:
 
@@ -348,7 +359,7 @@ def test_lookup_handles_none_input():
     assert lookup_iso3(None) is None
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 uv run pytest tests/python/test_lng_iso3.py -v
@@ -356,7 +367,7 @@ uv run pytest tests/python/test_lng_iso3.py -v
 
 Expected: `ModuleNotFoundError: No module named 'scripts.transform._lng_iso3'`.
 
-- [ ] **Step 3: Implement the helper**
+- [x] **Step 3: Implement the helper**
 
 Create `scripts/transform/_lng_iso3.py`:
 
@@ -395,7 +406,7 @@ def lookup_iso3(name: str | None) -> str | None:
     return _MERGED.get(name.strip())
 ```
 
-- [ ] **Step 4: Run tests to verify pass**
+- [x] **Step 4: Run tests to verify pass**
 
 ```bash
 uv run pytest tests/python/test_lng_iso3.py -v
@@ -403,7 +414,7 @@ uv run pytest tests/python/test_lng_iso3.py -v
 
 Expected: all 5 tests pass.
 
-- [ ] **Step 5: Write the transform script**
+- [x] **Step 5: Write the transform script**
 
 Create `scripts/transform/build_lng_voyages.py`:
 
@@ -566,7 +577,7 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 6: Run the transform**
+- [x] **Step 6: Run the transform**
 
 ```bash
 uv run python -m scripts.transform.build_lng_voyages
@@ -581,7 +592,7 @@ Expected:
 
 If any of those numbers are off by more than 1% or you see an `unmapped country names` error, STOP and report.
 
-- [ ] **Step 7: Spot-check the output schemas**
+- [x] **Step 7: Spot-check the output schemas**
 
 ```bash
 uv run python -c "
@@ -596,7 +607,7 @@ for path in ['lng_voyage', 'lng_trade_daily', 'lng_terminal_daily']:
 
 Expected: all three tables have populated columns; voyage has `voyage_id`, `imo`, `from_country_iso3`, etc.
 
-- [ ] **Step 8: Lint**
+- [x] **Step 8: Lint**
 
 ```bash
 uv run ruff check scripts/transform/_lng_iso3.py scripts/transform/build_lng_voyages.py tests/python/test_lng_iso3.py
@@ -604,7 +615,7 @@ uv run ruff check scripts/transform/_lng_iso3.py scripts/transform/build_lng_voy
 
 Expected: clean.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add scripts/transform/_lng_iso3.py scripts/transform/build_lng_voyages.py \
@@ -638,7 +649,7 @@ EOF
 
 **Why:** Replace the current GEM-only LNG terminal build with LNG-T3 (primary, 545 terminals) + GEM (supplement at 25 km dedup, ~10 GEM-only terminals expected). Mirror the Phase 5 refinery pattern. New schema columns: `unit_count`, `total_processed_bcm`, `un_locode`.
 
-- [ ] **Step 1: Read the current build_lng_terminals.py to confirm starting point**
+- [x] **Step 1: Read the current build_lng_terminals.py to confirm starting point**
 
 ```bash
 cat scripts/transform/build_lng_terminals.py | head -60
@@ -646,7 +657,7 @@ cat scripts/transform/build_lng_terminals.py | head -60
 
 Note: the current script reads from `data/raw/gem_gas_infra/ggit_map_*.geojson` and writes terminals with `kind ∈ {lng_export, lng_import}`. It's idempotent (drops prior LNG rows from assets.parquet then appends).
 
-- [ ] **Step 2: Replace the file contents**
+- [x] **Step 2: Replace the file contents**
 
 Replace `scripts/transform/build_lng_terminals.py` with:
 
@@ -933,7 +944,7 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 3: Run the rewritten transform**
+- [x] **Step 3: Run the rewritten transform**
 
 ```bash
 uv run python -m scripts.transform.build_lng_terminals
@@ -948,7 +959,7 @@ Expected:
 
 If counts are off by more than 10%, STOP and report.
 
-- [ ] **Step 4: Spot-check**
+- [x] **Step 4: Spot-check**
 
 ```bash
 uv run python -c "
@@ -967,7 +978,7 @@ print(f'un_locode populated: {lng[\"un_locode\"].notna().sum()} / {len(lng)}')
 
 Expected: roughly the numbers in Step 3.
 
-- [ ] **Step 5: Lint**
+- [x] **Step 5: Lint**
 
 ```bash
 uv run ruff check scripts/transform/build_lng_terminals.py
@@ -975,7 +986,7 @@ uv run ruff check scripts/transform/build_lng_terminals.py
 
 Expected: clean.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add scripts/transform/build_lng_terminals.py public/data/assets.parquet
@@ -1008,7 +1019,7 @@ EOF
 
 **Why:** Spec's open question #1: LNG-T3 2020 daily arrivals sum to ~76 Mt, BACI 271111 says 484 Mt, GIIGNL public number is ~360 Mt. Verify which is right; document the discrepancy before merging.
 
-- [ ] **Step 1: Write the validation script**
+- [x] **Step 1: Write the validation script**
 
 Create `scripts/validate/lng_t3_vs_giignl.py`:
 
@@ -1107,7 +1118,7 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 2: Run validation**
+- [x] **Step 2: Run validation**
 
 ```bash
 uv run python -m scripts.validate.lng_t3_vs_giignl
@@ -1121,7 +1132,7 @@ If the gap is below 30%, proceed with the spec's original plan (LNG-T3 as the co
 
 **Either way:** record the validation table output in the methodology section (Task 12).
 
-- [ ] **Step 3: Save validation output for use in Task 12**
+- [x] **Step 3: Save validation output for use in Task 12**
 
 ```bash
 mkdir -p data/validation
@@ -1131,7 +1142,7 @@ cat data/validation/lng_t3_vs_giignl.txt
 
 `data/validation/` is committed (small text artifact, useful for methodology). Add `data/raw/` to .gitignore exclusion check.
 
-- [ ] **Step 4: Lint**
+- [x] **Step 4: Lint**
 
 ```bash
 uv run ruff check scripts/validate/lng_t3_vs_giignl.py
@@ -1139,7 +1150,7 @@ uv run ruff check scripts/validate/lng_t3_vs_giignl.py
 
 Expected: clean.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 mkdir -p scripts/validate
@@ -1171,7 +1182,7 @@ EOF
 
 **Why:** Phase 6 adds two new source entries (LNG-T3 terminals + voyages). Bump version 4 → 5, extend the parser allowlist + type.
 
-- [ ] **Step 1: Update catalog.json**
+- [x] **Step 1: Update catalog.json**
 
 Open `public/data/catalog.json`. Make these changes:
 
@@ -1223,7 +1234,7 @@ print('OK')
 
 Expected: `entries: 13` and `OK`.
 
-- [ ] **Step 2: Update the version allowlist**
+- [x] **Step 2: Update the version allowlist**
 
 Open `src/lib/data-catalog/index.ts`. Locate the version validator (the same place that was bumped in Phase 5 to accept 1–4). Extend to include 5. Pattern is something like `[1, 2, 3, 4].includes(version)` → change to `[1, 2, 3, 4, 5]`.
 
@@ -1233,7 +1244,7 @@ grep -n "version" src/lib/data-catalog/index.ts
 
 Make the smallest edit that adds 5 to the allowlist.
 
-- [ ] **Step 3: Update the Catalog.version literal type**
+- [x] **Step 3: Update the Catalog.version literal type**
 
 Open `src/lib/data-catalog/types.ts`. Find the `readonly version: 1 | 2 | 3 | 4` declaration (added in Phase 5 review fix). Extend to:
 
@@ -1241,7 +1252,7 @@ Open `src/lib/data-catalog/types.ts`. Find the `readonly version: 1 | 2 | 3 | 4`
 readonly version: 1 | 2 | 3 | 4 | 5;
 ```
 
-- [ ] **Step 4: Build sanity-check**
+- [x] **Step 4: Build sanity-check**
 
 ```bash
 pnpm tsc --noEmit 2>&1 | tail -15
@@ -1250,7 +1261,7 @@ pnpm build 2>&1 | tail -15
 
 Pre-existing errors in `tests/unit/scenarios/hormuz-gas.test.ts` and `tests/unit/scenarios/lng-impact.test.ts` are OK; new errors from these changes are not. `pnpm build` must succeed.
 
-- [ ] **Step 5: Lint**
+- [x] **Step 5: Lint**
 
 ```bash
 pnpm lint
@@ -1258,7 +1269,7 @@ pnpm lint
 
 Expected: clean.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add public/data/catalog.json src/lib/data-catalog/index.ts src/lib/data-catalog/types.ts
@@ -1284,7 +1295,7 @@ EOF
 
 **Why:** The Hormuz-LNG path needs new row types for voyages + daily trade, and `LngImportImpact` gains a `dataSource: 'baci' | 'lng-t3'` field so the UI can label which path produced the impact.
 
-- [ ] **Step 1: Modify `src/lib/scenarios/types.ts`**
+- [x] **Step 1: Modify `src/lib/scenarios/types.ts`**
 
 Open `src/lib/scenarios/types.ts`. Add the following AFTER the existing `LngImportRow` interface:
 
@@ -1342,7 +1353,7 @@ export interface LngImportImpact {
 }
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 ```bash
 pnpm tsc --noEmit 2>&1 | tail -20
@@ -1350,7 +1361,7 @@ pnpm tsc --noEmit 2>&1 | tail -20
 
 Expected: new errors in `src/lib/scenarios/lng.ts` (the existing computeLngImportImpacts doesn't populate `dataSource`) — that's intentional; Task 9 fixes it. No new errors anywhere else.
 
-- [ ] **Step 3: DO NOT commit yet** — Tasks 9–10 finish the scenario refactor; commit together at end of Task 10.
+- [x] **Step 3: DO NOT commit yet** — Tasks 9–10 finish the scenario refactor; commit together at end of Task 10.
 
 ---
 
@@ -1364,7 +1375,7 @@ Expected: new errors in `src/lib/scenarios/lng.ts` (the existing computeLngImpor
 
 The signature mirrors `computeLngImportImpacts` but takes `voyages` instead of `flowsByImporter`.
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Create `tests/unit/scenarios/lng-t3.test.ts`:
 
@@ -1492,7 +1503,7 @@ describe("computeLngImportImpactsFromVoyages", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 ```bash
 pnpm vitest run tests/unit/scenarios/lng-t3.test.ts
@@ -1500,7 +1511,7 @@ pnpm vitest run tests/unit/scenarios/lng-t3.test.ts
 
 Expected: "Cannot find module '@/lib/scenarios/lng-t3'".
 
-- [ ] **Step 3: Implement the module**
+- [x] **Step 3: Implement the module**
 
 Create `src/lib/scenarios/lng-t3.ts`:
 
@@ -1599,7 +1610,7 @@ export function computeLngImportImpactsFromVoyages({
 }
 ```
 
-- [ ] **Step 4: Run tests to verify pass**
+- [x] **Step 4: Run tests to verify pass**
 
 ```bash
 pnpm vitest run tests/unit/scenarios/lng-t3.test.ts
@@ -1607,7 +1618,7 @@ pnpm vitest run tests/unit/scenarios/lng-t3.test.ts
 
 Expected: all 6 tests pass.
 
-- [ ] **Step 5: DO NOT commit yet** — Task 10 finishes the engine wiring; commit together.
+- [x] **Step 5: DO NOT commit yet** — Task 10 finishes the engine wiring; commit together.
 
 ---
 
@@ -1619,7 +1630,7 @@ Expected: all 6 tests pass.
 
 **Why:** When the active year ∈ [2020, 2024] AND voyage data is provided, use the new lng-t3 path; otherwise keep BACI. Mirrors the spec's "branch on year" rule.
 
-- [ ] **Step 1: Update lng.ts to set dataSource: 'baci' on every impact**
+- [x] **Step 1: Update lng.ts to set dataSource: 'baci' on every impact**
 
 Open `src/lib/scenarios/lng.ts`. Find the `out.push({...})` block in `computeLngImportImpacts`. Add `dataSource: "baci",` to it. The block becomes:
 
@@ -1635,7 +1646,7 @@ Open `src/lib/scenarios/lng.ts`. Find the `out.push({...})` block in `computeLng
     });
 ```
 
-- [ ] **Step 2: Update engine.ts to branch on year + lngVoyages**
+- [x] **Step 2: Update engine.ts to branch on year + lngVoyages**
 
 Open `src/lib/scenarios/engine.ts`. Add import + interface field + branching logic:
 
@@ -1688,7 +1699,7 @@ export interface ScenarioInput {
   const rankedLngImports = [...byLngImport].sort((a, b) => b.atRiskQty - a.atRiskQty);
 ```
 
-- [ ] **Step 3: Type-check**
+- [x] **Step 3: Type-check**
 
 ```bash
 pnpm tsc --noEmit 2>&1 | tail -20
@@ -1696,7 +1707,7 @@ pnpm tsc --noEmit 2>&1 | tail -20
 
 Expected: clean (apart from the 8 pre-existing errors in `hormuz-gas.test.ts` and `lng-impact.test.ts`).
 
-- [ ] **Step 4: Run unit tests**
+- [x] **Step 4: Run unit tests**
 
 ```bash
 pnpm test 2>&1 | tail -15
@@ -1704,7 +1715,7 @@ pnpm test 2>&1 | tail -15
 
 Expected: all tests pass, including the new 6 `lng-t3.test.ts` tests.
 
-- [ ] **Step 5: Lint**
+- [x] **Step 5: Lint**
 
 ```bash
 pnpm lint
@@ -1712,7 +1723,7 @@ pnpm lint
 
 Expected: clean.
 
-- [ ] **Step 6: Commit Tasks 8, 9, 10 together**
+- [x] **Step 6: Commit Tasks 8, 9, 10 together**
 
 ```bash
 git add src/lib/scenarios/types.ts src/lib/scenarios/lng.ts src/lib/scenarios/lng-t3.ts src/lib/scenarios/engine.ts tests/unit/scenarios/lng-t3.test.ts

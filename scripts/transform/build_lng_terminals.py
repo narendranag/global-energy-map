@@ -26,7 +26,8 @@ Schema (assets.parquet for LNG rows — Phase 6 adds three columns):
   unit_count, total_processed_bcm, un_locode,
   source, source_version
 
-Idempotent — drops prior lng_export + lng_import rows, then appends.
+Idempotent — drops prior lng_export + lng_import rows (plus any orphan
+rows with a null kind left by earlier buggy runs), then appends.
 
 Usage:
     uv run python -m scripts.transform.build_lng_terminals
@@ -200,17 +201,24 @@ def _load_gem() -> pd.DataFrame:
     df = pd.DataFrame(rows)
     print(f"GEM: {len(df)} after geometry + status + iso3 attribution", file=sys.stderr)
 
-    # The raw GGIT geojson contains a handful of byte-identical duplicate
-    # features (same pid/status/geometry/capacity repeated verbatim) — drop
-    # them rather than let them surface as duplicate asset_ids downstream.
+    # GGIT emits one feature per liquefaction/regasification *unit*, so a
+    # terminal appears 2-12 times under a single terminal-level pid (and
+    # hence a single asset_id). Those features are NOT verbatim duplicates:
+    # they differ in unitid/unit-name, and 48 of the 84 duplicated pids also
+    # differ in the fields we retain (status 24, start-year 34, owner 17,
+    # tracker-custom 4, geometry 5). The capacity on each feature is already
+    # the terminal total (tot{import,export}lngterminalcapacityinmtpa), so
+    # the units must be collapsed to one row, not summed. Collapse
+    # deterministically (operating > in-construction, then capacity desc)
+    # rather than taking whichever unit happens to come first in the file.
     n_before = len(df)
-    df = df.drop_duplicates(subset="asset_id", keep="first")
+    df = collapse_duplicate_names(df, key="asset_id")
     n_dropped = n_before - len(df)
     if n_dropped:
-        print(f"GEM: dropped {n_dropped} exact-duplicate feature(s) from raw geojson",
-              file=sys.stderr)
+        print(f"GEM: collapsed {n_dropped} extra per-unit feature(s) into their "
+              f"terminal rows", file=sys.stderr)
 
-    return df
+    return df.reset_index(drop=True)
 
 
 # ---------------------------------------------------------------------------
@@ -277,6 +285,17 @@ def main() -> None:
         print(f"dropped {n_before - n_kept} stale LNG rows from assets.parquet",
               file=sys.stderr)
 
+    # A `kind` of NA escapes the isin() drop above, so any all-null rows left
+    # behind by an earlier buggy run (index-misaligned pd.DataFrame construction
+    # produced 131 such LNG-T3 rows) would otherwise be carried forward for
+    # ever. `kind` is required for every asset, so drop them unconditionally.
+    n_pre_orphan = len(existing)
+    existing = existing[existing["kind"].notna()]
+    n_orphans = n_pre_orphan - len(existing)
+    if n_orphans:
+        print(f"dropped {n_orphans} orphan rows with null kind from assets.parquet",
+              file=sys.stderr)
+
     # Phase 6 schema additions: bring existing rows up to the new column set
     for col in ("unit_count", "total_processed_bcm", "un_locode"):
         if col not in existing.columns:
@@ -286,6 +305,9 @@ def main() -> None:
     existing["un_locode"] = existing["un_locode"].astype(pd.StringDtype())
 
     out = pd.concat([existing, combined], ignore_index=True)
+    # Uniqueness must hold across the whole assets table, not just LNG rows.
+    assert_unique_asset_ids(out)
+    assert out["kind"].notna().all(), "assets.parquet rows with null kind"
     pq.write_table(
         pa.Table.from_pandas(out, preserve_index=False),
         ASSETS,

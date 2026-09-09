@@ -68,3 +68,30 @@ def test_collapse_duplicate_names_no_duplicates_is_noop():
         out.sort_values("name").reset_index(drop=True),
         df.sort_values("name").reset_index(drop=True),
     )
+
+
+def test_collapse_duplicate_names_honours_key_argument():
+    """GEM per-unit features collapse on asset_id, not name."""
+    df = pd.DataFrame([
+        {"asset_id": "gem/T1", "name": "Train 1", "status": "construction", "capacity": 5.0},
+        {"asset_id": "gem/T1", "name": "Train 2", "status": "operating", "capacity": 5.0},
+        {"asset_id": "gem/T2", "name": "Other", "status": "operating", "capacity": 1.0},
+    ])
+    out = collapse_duplicate_names(df, key="asset_id")
+    assert len(out) == 2
+    t1 = out[out["asset_id"] == "gem/T1"]
+    assert len(t1) == 1
+    # Deterministic preference, not positional keep="first".
+    assert t1.iloc[0]["status"] == "operating"
+
+
+def test_collapse_duplicate_names_is_order_independent():
+    """Same input in either row order collapses to the same kept row."""
+    rows = [
+        {"asset_id": "a", "name": "T", "status": "operating", "capacity": 2.0},
+        {"asset_id": "a", "name": "T", "status": "in-construction", "capacity": 9.0},
+    ]
+    fwd = collapse_duplicate_names(pd.DataFrame(rows), key="asset_id")
+    rev = collapse_duplicate_names(pd.DataFrame(rows[::-1]), key="asset_id")
+    assert fwd.iloc[0]["status"] == rev.iloc[0]["status"] == "operating"
+    assert fwd.iloc[0]["capacity"] == rev.iloc[0]["capacity"] == 2.0

@@ -85,9 +85,13 @@ export function useScenario(
         lngImports = r.rows;
       }
 
-      // Phase 6: load LNG voyages for the active year only when in LNG-T3 range.
-      // Outside [2020, 2024] the engine falls back to the BACI attribution path.
-      const useLngT3 = year >= 2020 && year <= 2024;
+      // Phase 6: load LNG voyages for the active year only when in LNG-T3
+      // range and the commodity is gas (voyages are irrelevant to oil).
+      // Outside that range the engine falls back to the BACI attribution
+      // path. `confidence_score >= 3` matches LngVoyagesLayer.tsx's query so
+      // both views agree on which voyages count — the engine's minConfidence
+      // default (also 3) still applies this filter defensively downstream.
+      const useLngT3 = commodity === "gas" && year >= 2020 && year <= 2024;
       let lngVoyages: readonly LngVoyageRow[] = [];
       if (useLngT3) {
         const r = await query<LngVoyageQueryRow>(
@@ -99,6 +103,7 @@ export function useScenario(
                   CAST(confidence_score AS INTEGER) AS confidence_score
            FROM read_parquet('/data/lng_voyage.parquet')
            WHERE voyage_type = 'export'
+             AND confidence_score >= 3
              AND year(start_date) <= ${year.toString()}
              AND year(end_date) >= ${year.toString()}`,
         );

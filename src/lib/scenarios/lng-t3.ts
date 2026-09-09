@@ -63,10 +63,15 @@ export function computeLngImportImpactsFromVoyages({
     (v) => v.voyage_type === "export" && v.confidence_score >= minConfidence,
   );
 
-  // Bucket by exact terminal name (LngImportRow.name === LngVoyageRow.to_terminal).
+  // Bucket by (importing country, terminal name) — not bare terminal name.
+  // A terminal name is only unique within its own country; two countries
+  // can each have a terminal sharing a name (e.g. a generic "LNG Terminal"),
+  // and keying globally by name would mix their BACI-attributed tonnes.
+  const terminalKey = (iso3: string, name: string): string => `${iso3} ${name}`;
   const byTerminalName = new Map<string, SrcQty[]>();
   for (const v of relevant) {
-    const list = byTerminalName.get(v.to_terminal) ?? [];
+    const key = terminalKey(v.to_country_iso3, v.to_terminal);
+    const list = byTerminalName.get(key) ?? [];
     // `amount_cbm` is BIGINT in lng_voyage.parquet, and Apache Arrow
     // deserialises BIGINT as a JS BigInt — summing it against a number
     // accumulator throws "Cannot mix BigInt and other types". Same hazard
@@ -77,7 +82,7 @@ export function computeLngImportImpactsFromVoyages({
       iso3: v.from_country_iso3,
       qty: Number(v.amount_cbm),
     });
-    byTerminalName.set(v.to_terminal, list);
+    byTerminalName.set(key, list);
   }
 
   // Group terminals by importing country.
@@ -95,7 +100,7 @@ export function computeLngImportImpactsFromVoyages({
     const totalCountryQty = flows.reduce((s, f) => s + f.qty, 0);
 
     const covered = terminals.filter(
-      (t) => (byTerminalName.get(t.name)?.length ?? 0) > 0,
+      (t) => (byTerminalName.get(terminalKey(t.country_iso3, t.name))?.length ?? 0) > 0,
     );
 
     if (covered.length === 0) {
@@ -111,28 +116,30 @@ export function computeLngImportImpactsFromVoyages({
       continue;
     }
 
-    // assets.parquet can carry several rows for one physical terminal —
-    // LNG-T3 splits some terminals into an "operating" row and a
-    // "construction" row at identical coordinates and under one name
-    // (Gate LNG Terminal, Krk FSRU, Zhuhai, …). They all match the same
-    // voyage bucket, so counting the bucket once per row would give that
-    // terminal 2x its true share of the country total, stolen from the
-    // country's uniquely-named terminals. Split a shared bucket evenly
-    // instead: the name still receives exactly one terminal's worth.
-    // (No-op when names are unique.)
+    // The build now collapses duplicate same-name/same-terminal rows before
+    // this runs, so in practice every name maps to exactly one row here.
+    // This split-evenly logic is a defensive no-op guard against that
+    // invariant ever slipping (e.g. a future source reintroducing an
+    // "operating" + "construction" pair under one name) — if it did, both
+    // rows would match the same voyage bucket, so counting it once per row
+    // would double that name's true share of the country total, stolen
+    // from the country's uniquely-named terminals.
     const rowsPerName = new Map<string, number>();
     for (const t of terminals) {
       rowsPerName.set(t.name, (rowsPerName.get(t.name) ?? 0) + 1);
     }
     const measuredCbm = (t: LngImportRow): number => {
-      const bucket = (byTerminalName.get(t.name) ?? []).reduce((a, x) => a + x.qty, 0);
+      const bucket = (byTerminalName.get(terminalKey(t.country_iso3, t.name)) ?? []).reduce(
+        (a, x) => a + x.qty,
+        0,
+      );
       return bucket / (rowsPerName.get(t.name) ?? 1);
     };
 
     const totalCoveredCbm = covered.reduce((sum, t) => sum + measuredCbm(t), 0);
 
     for (const t of terminals) {
-      const sources = byTerminalName.get(t.name) ?? [];
+      const sources = byTerminalName.get(terminalKey(t.country_iso3, t.name)) ?? [];
       if (sources.length === 0) {
         // Country has coverage elsewhere, but not for this terminal.
         out.push({

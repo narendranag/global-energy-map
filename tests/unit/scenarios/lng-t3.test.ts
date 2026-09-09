@@ -226,6 +226,51 @@ describe("computeLngImportImpactsFromVoyages", () => {
     expect(b.atRiskQty).toBeCloseTo(600, 6);
     expect(a.coverage).toBe("measured");
   });
+
+  it("keys terminal buckets by (country, name) so a same-named terminal in two countries doesn't mix voyages", () => {
+    // Both countries have a terminal literally named "LNG Terminal". Each
+    // country's BACI total must be redistributed only across its own
+    // voyages — a bare-name bucket would pool JPN's and KOR's voyages
+    // together and leak QAT-only exposure into KOR (and vice versa).
+    const JPN_TERM: LngImportRow = {
+      asset_id: "jpn-term",
+      name: "LNG Terminal",
+      country_iso3: "JPN",
+      capacity: 5,
+    };
+    const KOR_TERM: LngImportRow = {
+      asset_id: "kor-term",
+      name: "LNG Terminal",
+      country_iso3: "KOR",
+      capacity: 5,
+    };
+    const out = computeLngImportImpactsFromVoyages({
+      lngImports: [JPN_TERM, KOR_TERM],
+      voyages: [
+        v("LNG Terminal", "JPN", "QAT", 100),
+        v("LNG Terminal", "KOR", "USA", 100),
+      ],
+      flowsByImporter: flows({
+        JPN: [{ iso3: "QAT", qty: 900 }],
+        KOR: [{ iso3: "USA", qty: 500 }],
+      }),
+      lookupShare: (exp) => (exp === "QAT" ? 1.0 : 0),
+    });
+    const jpn = out.find((x) => x.asset_id === "jpn-term");
+    const kor = out.find((x) => x.asset_id === "kor-term");
+    if (!jpn || !kor) throw new Error("missing terminal");
+
+    // JPN's terminal only sees its own QAT voyage — 100% at risk.
+    expect(jpn.topSources.map((s) => s.iso3)).toEqual(["QAT"]);
+    expect(jpn.atRiskQty).toBeCloseTo(900, 6);
+    expect(jpn.shareAtRisk).toBeCloseTo(1, 6);
+
+    // KOR's terminal only sees its own USA voyage — 0% at risk (USA isn't
+    // on the disrupted route), and none of JPN's QAT exposure leaks in.
+    expect(kor.topSources.map((s) => s.iso3)).toEqual(["USA"]);
+    expect(kor.atRiskQty).toBeCloseTo(0, 6);
+    expect(kor.shareAtRisk).toBeCloseTo(0, 6);
+  });
 });
 
 describe("computeScenarioImpact — pre-2020 years stay on the BACI path even with voyages supplied", () => {
@@ -253,5 +298,66 @@ describe("computeScenarioImpact — pre-2020 years stay on the BACI path even wi
     // Capacity-weighted (5 vs 10 → 1/3 vs 2/3), same ratio as the voyage
     // split here, but derived from capacity, not from voyage cbm.
     expect(a.atRiskQty).toBeCloseTo(300, 6);
+  });
+});
+
+describe("computeScenarioImpact — LNG-T3 engine-gate year boundary", () => {
+  const routes: DisruptionRouteRow[] = [
+    { disruption_id: "hormuz", kind: "chokepoint", exporter_iso3: "QAT", importer_iso3: null, share: 1.0 },
+  ];
+
+  function runAtYear(year: number) {
+    const tradeFlows: TradeFlowRow[] = [
+      { year, importer_iso3: "JPN", exporter_iso3: "QAT", qty: 900 },
+    ];
+    return computeScenarioImpact({
+      scenarioId: "hormuz",
+      commodity: "gas",
+      year,
+      tradeFlows,
+      routes,
+      lngImports: [T_A, T_B],
+      lngVoyages: [v("T_A", "JPN", "QAT", 100), v("T_B", "JPN", "QAT", 200)],
+    });
+  }
+
+  it("year=2020 (lower bound) selects the LNG-T3 voyage path", () => {
+    const result = runAtYear(2020);
+    const a = result.byLngImport.find((x) => x.asset_id === "T_A");
+    if (!a) throw new Error("missing terminal");
+    expect(a.dataSource).toBe("lng-t3");
+    expect(a.coverage).toBe("measured");
+  });
+
+  it("year=2024 (upper bound) selects the LNG-T3 voyage path", () => {
+    const result = runAtYear(2024);
+    const a = result.byLngImport.find((x) => x.asset_id === "T_A");
+    if (!a) throw new Error("missing terminal");
+    expect(a.dataSource).toBe("lng-t3");
+    expect(a.coverage).toBe("measured");
+  });
+
+  it("year=2025 (just past the upper bound) falls back to the BACI path", () => {
+    const result = runAtYear(2025);
+    const a = result.byLngImport.find((x) => x.asset_id === "T_A");
+    if (!a) throw new Error("missing terminal");
+    expect(a.dataSource).toBe("baci");
+    expect(a.coverage).toBe("capacity-proxy");
+  });
+});
+
+describe("computeLngImportImpactsFromVoyages — minConfidence inclusive boundary", () => {
+  it("includes a voyage exactly at confidence_score === 3 (the default minConfidence)", () => {
+    const out = computeLngImportImpactsFromVoyages({
+      lngImports: [T_A],
+      voyages: [v("T_A", "JPN", "QAT", 100, { confidence_score: 3 })],
+      flowsByImporter: flows({ JPN: [{ iso3: "QAT", qty: 100 }] }),
+      lookupShare: () => 1.0,
+    });
+    const a = out[0];
+    if (!a) throw new Error("missing terminal");
+    expect(a.coverage).toBe("measured");
+    expect(a.topSources).toHaveLength(1);
+    expect(a.atRiskQty).toBeCloseTo(100, 6);
   });
 });

@@ -38,6 +38,11 @@ export function useUrlState(defaults: AppState): [
         ...partial,
         layers: { ...current.layers, ...(partial.layers ?? {}) },
       };
+      // Optimistic: assumes router.replace() below succeeds. If it's
+      // dropped (e.g. interrupted by a rapid navigation elsewhere), this
+      // ref can drift from the URL — but the effect above re-syncs
+      // stateRef.current from searchParams on the next navigation that
+      // does land, so a dropped replace() self-heals rather than sticking.
       stateRef.current = merged;
       const qs = encodeAppState(merged);
       router.replace(`?${qs}`, { scroll: false });

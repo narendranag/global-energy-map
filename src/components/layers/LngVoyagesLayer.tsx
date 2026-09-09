@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArcLayer } from "@deck.gl/layers";
 import { query } from "@/lib/duckdb/query";
 import type { LngImportImpact } from "@/lib/scenarios/types";
@@ -37,13 +37,15 @@ export function useLngVoyagesLayer({
   minConfidence = 3,
   impactByTerminalName,
 }: LngVoyagesLayerInput) {
-  const [layer, setLayer] = useState<ArcLayer<VoyageRow> | null>(null);
+  const [rows, setRows] = useState<readonly VoyageRow[]>([]);
 
+  // Query only depends on what changes the underlying row set — scenario
+  // recoloring (impactByTerminalName) must not re-run the 17.6k-row join.
   useEffect(() => {
     const ctrl = { cancelled: false };
     if (!visible) {
       void Promise.resolve().then(() => {
-        if (!ctrl.cancelled) setLayer(null);
+        if (!ctrl.cancelled) setRows([]);
       });
       return () => {
         ctrl.cancelled = true;
@@ -59,7 +61,13 @@ export function useLngVoyagesLayer({
             -- One row per terminal name: assets.parquet can hold the same
             -- name twice (e.g. an export and an import berth at one site),
             -- and an un-grouped join would fan out into duplicate arcs.
-            SELECT name, any_value(lon) AS lon, any_value(lat) AS lat
+            -- When a name has two rows, prefer LNG-T3's coordinates over a
+            -- supplement source (arbitrary any_value() could otherwise pick
+            -- either one nondeterministically).
+            SELECT
+              name,
+              arg_min(lon, CASE WHEN source LIKE '%LNG-T3%' THEN 0 ELSE 1 END) AS lon,
+              arg_min(lat, CASE WHEN source LIKE '%LNG-T3%' THEN 0 ELSE 1 END) AS lat
             FROM read_parquet('/data/assets.parquet')
             WHERE kind IN ('lng_export', 'lng_import')
             GROUP BY name
@@ -87,43 +95,7 @@ export function useLngVoyagesLayer({
         `;
         const res = await query<VoyageRow>(sql);
         if (ctrl.cancelled) return;
-
-        const l = new ArcLayer<VoyageRow>({
-          id: "lng-voyages",
-          data: res.rows,
-          getSourcePosition: (d) => [d.from_lon, d.from_lat],
-          getTargetPosition: (d) => [d.to_lon, d.to_lat],
-          getSourceColor: (d) => {
-            // Export end — orange-ish. Tinted toward red when the *destination*
-            // terminal (d.to_terminal) is exposed under the active scenario, so
-            // both ends of an at-risk cargo read as at-risk.
-            const impact = impactByTerminalName?.get(d.to_terminal);
-            if (impact && impact.shareAtRisk > 0) {
-              return [220, 80, 60, 200];
-            }
-            return [220, 140, 60, 160];
-          },
-          getTargetColor: (d) => {
-            // Import end — teal/blue. Tint toward red when at-risk.
-            const impact = impactByTerminalName?.get(d.to_terminal);
-            if (impact && impact.shareAtRisk > 0) {
-              const r = Math.round(80 + 175 * impact.shareAtRisk);
-              return [r, 30, 30, 230];
-            }
-            return [20, 140, 200, 200];
-          },
-          getWidth: (d) =>
-            Math.max(0.5, Math.log10(Math.max(1, d.amount_cbm)) - 3),
-          widthMinPixels: 0.5,
-          widthMaxPixels: 4,
-          greatCircle: true,
-          pickable: true,
-          updateTriggers: {
-            getSourceColor: [impactByTerminalName],
-            getTargetColor: [impactByTerminalName],
-          },
-        });
-        setLayer(l);
+        setRows(res.rows);
       } catch (err) {
         console.error("LngVoyagesLayer load failed:", err);
       }
@@ -131,7 +103,51 @@ export function useLngVoyagesLayer({
     return () => {
       ctrl.cancelled = true;
     };
-  }, [visible, year, minConfidence, impactByTerminalName]);
+  }, [visible, year, minConfidence]);
+
+  // Recolouring on scenario change only needs to rebuild the layer object,
+  // not re-run the DuckDB join above.
+  const layer = useMemo(() => {
+    if (rows.length === 0) return null;
+    return new ArcLayer<VoyageRow>({
+      id: "lng-voyages",
+      data: rows,
+      getSourcePosition: (d) => [d.from_lon, d.from_lat],
+      getTargetPosition: (d) => [d.to_lon, d.to_lat],
+      getSourceColor: (d) => {
+        // Export end — orange-ish. Tinted toward red when the *destination*
+        // terminal (d.to_terminal) is exposed under the active scenario, so
+        // both ends of an at-risk cargo read as at-risk.
+        const impact = impactByTerminalName?.get(d.to_terminal);
+        if (impact && impact.shareAtRisk > 0) {
+          return [220, 80, 60, 200];
+        }
+        return [220, 140, 60, 160];
+      },
+      getTargetColor: (d) => {
+        // Import end — teal/blue. Tint toward red when at-risk.
+        const impact = impactByTerminalName?.get(d.to_terminal);
+        if (impact && impact.shareAtRisk > 0) {
+          const r = Math.round(80 + 175 * impact.shareAtRisk);
+          return [r, 30, 30, 230];
+        }
+        return [20, 140, 200, 200];
+      },
+      getWidth: (d) =>
+        Math.max(0.5, Math.log10(Math.max(1, d.amount_cbm)) - 3),
+      widthMinPixels: 0.5,
+      widthMaxPixels: 4,
+      greatCircle: true,
+      pickable: true,
+      // `data` (rows) is unchanged on a scenario switch, and deck.gl does not
+      // re-run accessors just because their closures are new — the trigger
+      // is what forces the colour attributes to recompute.
+      updateTriggers: {
+        getSourceColor: [impactByTerminalName],
+        getTargetColor: [impactByTerminalName],
+      },
+    });
+  }, [rows, impactByTerminalName]);
 
   return layer;
 }

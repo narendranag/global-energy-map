@@ -26,7 +26,7 @@ import type { Commodity, ScenarioId } from "@/lib/scenarios/types";
 import { useUrlState } from "@/lib/url-state/useUrlState";
 import type { AppState } from "@/lib/url-state/encode";
 
-const ALL_LAYERS_ON: LayerState = {
+const DEFAULT_LAYERS: LayerState = {
   reserves: true,
   basins: true,
   extraction: true,
@@ -43,7 +43,7 @@ const DEFAULTS: AppState = {
   year: 2020,
   commodity: "oil",
   scenario: null,
-  layers: ALL_LAYERS_ON,
+  layers: DEFAULT_LAYERS,
 };
 
 function HomeInner() {

@@ -70,6 +70,9 @@ global-energy-map/
 │   └── superpowers/
 │       ├── specs/                 # design specs (per phase + master)
 │       └── plans/                 # implementation plans (per phase)
+├── .github/
+│   └── workflows/
+│       └── ci.yml                 # lint + typecheck + Vitest + build (app); ruff + pytest (Python); Playwright e2e
 ├── pyproject.toml
 ├── README.md
 ├── LICENSE
@@ -154,6 +157,8 @@ vercel --prod                  # production
 
 CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typecheck` + `pnpm test` (Vitest) + `pnpm build` for the app; `ruff` + `pytest tests/python` for the Python pipeline; and a Playwright e2e job.
 
+**Environment:** after moving or re-cloning the repo, run `pnpm install` (relinks node_modules) and `uv sync` (rebuilds `.venv`) — a stale link makes `next dev` panic with "Next.js package not found".
+
 ## Conventions
 
 - **TDD where it pays:** scenario engine, data transforms, query helpers — write failing test first. UI components covered by Playwright e2e smoke tests, not unit-tested by default.
@@ -167,6 +172,11 @@ CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typec
 - **Idempotent transforms.** Every `build_*.py` drops prior rows of its kind from the target Parquet before appending — re-running is safe.
 - **Source provenance on rows.** Multi-source tables (e.g., refineries) carry a `source` column so downstream consumers can filter or label by origin.
 - **Vintage-aware layer behavior.** Pipelines (`start_year`, 71%) and extraction sites (`commissioned_year`, 22%) respect the active year slider. Null vintage = always visible; refineries/LNG/storage/ports have no vintage data and remain time-independent.
+- **e2e is CPU-bound.** Every Playwright spec boots DuckDB-WASM and deck.gl under headless software WebGL. `playwright.config.ts` runs `workers: 1` unconditionally; scenario-panel expects need ~120 s inside 180 s test budgets to pass on ubuntu-latest (a Mac passes at 60 s). CI runs e2e against `pnpm build && pnpm start` under `CI=1`; the push trigger is limited to `main` so a PR branch runs once.
+- **Parallel implementer agents do not commit.** Give each a disjoint file set, have them report changed files, then commit each set with an explicit `git add <files>`. Never `git add -A` on a shared tree.
+- **Panels set their own text colour.** `globals.css` flips the body foreground to near-white under `prefers-color-scheme: dark`; any `bg-white/90` overlay must carry `text-slate-800` (or similar) or its labels vanish for dark-mode users. The deck.gl tooltip is unaffected (inline styles).
+- **deck.gl accessors need `updateTriggers`.** Recolouring a layer from a `useMemo` with fresh closures does nothing unless the trigger changes; keep `updateTriggers` keyed on the input that drives the colour.
+- **Terminal name is the runtime join key** between `lng_voyage.parquet` and LNG terminal rows (never `asset_id`); `build_lng_terminals.py` asserts `(country_iso3, name)` uniqueness and `build_lng_voyages.py` asserts every `to_terminal` resolves.
 
 ## Workflow
 
@@ -189,3 +199,4 @@ CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typec
 - **Phase 5** — _shipped 2026-05-17_ (NETL refineries augmentation + vintage-aware pipeline/extraction filtering + pipelines.geojson simplification). Live: https://global-energy-map-one.vercel.app
 - **Phase 6** — _shipped 2026-09-09_ (LNG-T3 terminals + voyages + BACI-anchored Hormuz-LNG attribution + CI + MIT/CITATION). Live: https://global-energy-map-one.vercel.app
 - **Phase 7** — pending: consolidation phase (shared asset query cache so five layer hooks stop scanning assets.parquet separately; app state store that syncs to the URL; explicit ready signals for e2e; vintage filter on scenario inputs; Legend driven by LayerState; daily-throughput tooltip; drop unused pipelines.parquet from the runtime bundle; skip the voyage-layer query outside 2020–2024). Data candidates in docs/data-sources.md deferred list.
+- **Going public** — not yet decided; agenda for the next session (see memory / docs/superpowers/specs when written).

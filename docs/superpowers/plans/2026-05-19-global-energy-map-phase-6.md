@@ -1,5 +1,7 @@
 # Global Energy Map — Phase 6 Implementation Plan
 
+Status: shipped 2026-09-09 as v1.0.0 (PR #12 + docs PR #13 + dark-scheme text fix PR #14).
+
 ## Deviations (2026-09-09)
 
 Actual implementation diverged from this plan's estimates in a few places, all discovered and resolved during execution:
@@ -2588,13 +2590,13 @@ Expected: clean tree; ~13–15 Phase 6 commits on the branch beyond `main`.
 
 **Files:** none
 
-- [ ] **Step 1: Push**
+- [x] **Step 1: Push**
 
 ```bash
 git push -u origin phase-6
 ```
 
-- [ ] **Step 2: Open PR**
+- [x] **Step 2: Open PR**
 
 ```bash
 gh pr create --title "Phase 6: LNG carrier dynamics — LNG-T3 ingest + voyages + scenario refactor" --body "$(cat <<'EOF'
@@ -2636,7 +2638,7 @@ Return the PR URL.
 
 **Files:** none (review only — addresses any reviewer findings)
 
-- [ ] **Step 1: Dispatch a code-quality reviewer subagent (Opus)** to audit the full Phase 6 diff against `main`.
+- [x] **Step 1: Dispatch a code-quality reviewer subagent (Opus)** to audit the full Phase 6 diff against `main`.
 
 Use the controller's subagent dispatch with `feature-dev:code-reviewer` + `model: opus`. Provide BASE/HEAD SHAs from:
 
@@ -2657,11 +2659,11 @@ Brief the reviewer to look at:
 - Schema additions: do existing non-LNG rows in assets.parquet get sensible nulls for the new columns?
 - Type discipline (no `any`, no missing optional handling), idempotency of all builds, license attribution on every doc page.
 
-- [ ] **Step 2: Address each finding**
+- [x] **Step 2: Address each finding**
 
 Per Phase 5's pattern: real issues → focused commit + re-test + push; false positives → one-line rejection note in PR.
 
-- [ ] **Step 3: Squash-merge when clean**
+- [x] **Step 3: Squash-merge when clean**
 
 ```bash
 gh pr merge --squash --delete-branch
@@ -2675,14 +2677,14 @@ git checkout main && git pull
 **Files:**
 - Modify: `CLAUDE.md` (header + phase status section)
 
-- [ ] **Step 1: New branch from main**
+- [x] **Step 1: New branch from main**
 
 ```bash
 git checkout main && git pull
 git checkout -b phase-6-shipped
 ```
 
-- [ ] **Step 2: Update CLAUDE.md header**
+- [x] **Step 2: Update CLAUDE.md header**
 
 Change:
 ```
@@ -2693,7 +2695,7 @@ to:
 > Status: Phases 1–6 shipped (live at https://global-energy-map-one.vercel.app).
 ```
 
-- [ ] **Step 3: Update Phase status section**
+- [x] **Step 3: Update Phase status section**
 
 Replace the Phase 5 + Phase 6 lines with:
 
@@ -2703,7 +2705,7 @@ Replace the Phase 5 + Phase 6 lines with:
 - **Phase 7** — pending (vessel fleet animation, or MarineCadastre US-coastal oil tankers, or daily time slider — see docs/data-sources.md).
 ```
 
-- [ ] **Step 4: Commit + push + open PR + merge**
+- [x] **Step 4: Commit + push + open PR + merge**
 
 ```bash
 git add CLAUDE.md

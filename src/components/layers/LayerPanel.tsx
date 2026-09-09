@@ -41,7 +41,7 @@ const ROWS: readonly Row[] = [
 
 export function LayerPanel({ state, onChange }: LayerPanelProps) {
   return (
-    <div className="pointer-events-auto absolute left-4 top-4 z-10 w-60 rounded-md bg-white/90 p-3 text-sm shadow-lg backdrop-blur">
+    <div className="pointer-events-auto absolute left-4 top-4 z-10 w-60 rounded-md bg-white/90 p-3 text-sm text-slate-800 shadow-lg backdrop-blur">
       <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-600">Layers</div>
       <div className="space-y-1.5">
         {ROWS.map((r, idx) =>

@@ -28,7 +28,7 @@ export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioP
     showLng && (result?.byLngImport.some((i) => i.dataSource === "lng-t3") ?? false);
 
   return (
-    <div className="pointer-events-auto absolute right-4 top-4 z-10 w-80 rounded-md bg-white/90 p-3 text-sm shadow-lg backdrop-blur">
+    <div className="pointer-events-auto absolute right-4 top-4 z-10 w-80 rounded-md bg-white/90 p-3 text-sm text-slate-800 shadow-lg backdrop-blur">
       <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-600">Scenario</div>
       <select
         value={active ?? ""}
@@ -36,7 +36,7 @@ export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioP
           const v = e.target.value;
           onChange(v === "" ? null : (v as ScenarioId));
         }}
-        className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm"
+        className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-800"
       >
         <option value="">None</option>
         {visibleScenarios.map((s) => (

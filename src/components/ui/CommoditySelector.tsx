@@ -11,7 +11,7 @@ export function CommoditySelector({ value, onChange }: CommoditySelectorProps) {
     <div
       role="group"
       aria-label="Commodity"
-      className="pointer-events-auto inline-flex overflow-hidden rounded-md border border-slate-300 bg-white/90 text-xs font-medium shadow-sm backdrop-blur"
+      className="pointer-events-auto inline-flex overflow-hidden rounded-md border border-slate-300 bg-white/90 text-xs font-medium text-slate-800 shadow-sm backdrop-blur"
     >
       {(["oil", "gas"] as const).map((c) => (
         <button

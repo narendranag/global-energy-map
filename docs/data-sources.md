@@ -240,7 +240,7 @@ Each row: year, exporter ISO3, importer ISO3, quantity (tonnes).
 
 **Coverage gaps:**
 - **Routing shares are fixed across all years** — they don't track maintenance windows, sanctions regimes, or renegotiations of joint-venture operating agreements.
-- Compiled from EIA and IEA analyst commentary, not raw export-flow data. A per-year refinement using disaggregated EIA export flow data is a Phase 6+ candidate.
+- Compiled from EIA and IEA analyst commentary, not raw export-flow data. A per-year refinement using disaggregated EIA export flow data is a Phase 7+ candidate.
 
 ---
 
@@ -276,6 +276,10 @@ Each row: year, exporter ISO3, importer ISO3, quantity (tonnes).
 ---
 
 ## Candidate sources (Phase 7+)
+
+### Phase 7 — consolidation
+
+Engineering cleanup precedes new data sources: a shared asset query cache so the five layer hooks stop scanning `assets.parquet` separately; an app state store that syncs to the URL; explicit ready signals for e2e; a vintage filter on scenario inputs; Legend driven by `LayerState`; a daily-throughput tooltip; and dropping the unused `pipelines.parquet` from the runtime bundle.
 
 Surfaced via Tavily/Exa research. Listed roughly in order of analytical value × tractability.
 
@@ -315,7 +319,7 @@ Surfaced via Tavily/Exa research. Listed roughly in order of analytical value ×
 - **License:** Public PDF; tables would need extraction
 - **What it offers:** Authoritative LNG terminal capacity AND import volumes by terminal, per year. GIIGNL is the international LNG importers' association — their annual report is the canonical LNG market reference.
 - **Why it matters:** The single richest source for LNG terminal-level data. Bonus: per-terminal annual throughput would be the first **actual flow** data for LNG infrastructure.
-- **Cost:** PDF parsing; tables are well-structured but require manual scraping logic. Major Phase 6+ investment.
+- **Cost:** PDF parsing; tables are well-structured but require manual scraping logic. Major Phase 7+ investment.
 
 ### KAPSARC Designed Refinery Capacity
 
@@ -350,14 +354,14 @@ Surfaced via Tavily/Exa research. Listed roughly in order of analytical value ×
 - **URL:** https://globalenergymonitor.org/projects/
 - **License:** CC BY 4.0
 - **What it offers:** Global coal mines and coal-fired power plants, CC BY 4.0, GEM tracker quality.
-- **Why it matters:** Coal is the missing fossil fuel in the project's current commodity axis. Phase 6+ candidate for the coal-sector + cross-commodity scenarios slice.
+- **Why it matters:** Coal is the missing fossil fuel in the project's current commodity axis. Phase 7+ candidate for the coal-sector + cross-commodity scenarios slice.
 
 ### GEM Global Oil & Gas Plant Tracker (GOGPT) vs NETL Power Plants
 
 - **URL:** https://globalenergymonitor.org/projects/global-oil-gas-plant-tracker/ + NETL `Power_Plants` FeatureServer
 - **License:** GEM = CC BY 4.0; NETL = public domain
 - **What it offers:** Two complementary global power-plant datasets. GEM tracks ~14,700 fossil-fuel power units; NETL has its own counterpart.
-- **Why it matters:** Adds the demand-side (electricity generation) layer over existing fuel supply chains. Phase 6+ candidate; needs a comparison + primary-source pick.
+- **Why it matters:** Adds the demand-side (electricity generation) layer over existing fuel supply chains. Phase 7+ candidate; needs a comparison + primary-source pick.
 
 ### Tanker / LNG carrier AIS
 

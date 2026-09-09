@@ -2,7 +2,7 @@
 
 > An interactive OSINT visualization of the world's hydrocarbon energy system — reserves, extraction, transport, refining, distribution — for academics, energy-policy researchers, and IR/economics scholars who think in systems.
 >
-> Status: Phases 1–5 shipped (live at https://global-energy-map-one.vercel.app). See `docs/superpowers/specs/2026-05-15-global-energy-map-design.md` for the full design and `docs/superpowers/plans/` for per-phase plans.
+> Status: Phases 1–6 shipped (live at https://global-energy-map-one.vercel.app). See `docs/superpowers/specs/2026-05-15-global-energy-map-design.md` for the full design and `docs/superpowers/plans/` for per-phase plans.
 
 ## One-liner
 
@@ -96,7 +96,7 @@ All artifacts indexed in `public/data/catalog.json` (path, version, license, sou
 
 ## Data sources (verified, public)
 
-For a researcher-facing inventory (with coverage gaps, evaluated-and-rejected sources, and Phase 6+ candidates) see `docs/data-sources.md`. The table below is the quick reference.
+For a researcher-facing inventory (with coverage gaps, evaluated-and-rejected sources, and Phase 7+ candidates) see `docs/data-sources.md`. The table below is the quick reference.
 
 | Layer | Source | License | Notes |
 |---|---|---|---|
@@ -111,11 +111,11 @@ For a researcher-facing inventory (with coverage gaps, evaluated-and-rejected so
 | Chokepoints + pipeline disruption scenarios | EIA World Oil Transit Chokepoints + IEA pipeline reports | Public, free | 5 scenarios: Hormuz, Hormuz-LNG, Druzhba, BTC, CPC |
 | Country boundaries | Natural Earth admin-0 (1:110m) | Public domain | Phase 1 — basemap + reserves choropleth fills |
 | Raster basemap | CARTO `light_all` raster tiles | Free (no key) | Runtime tiles via `src/components/map/style.ts` |
-| Coal (mines + plants) | _deferred to Phase 6+_ | GEM CC BY 4.0 (when integrated) | Coal sector / cross-commodity scenarios are a Phase 6+ candidate |
-| Tankers / AIS | _deferred to Phase 6+_ | TankerMap free for live; paid for historical | Own brainstorm — AIS sourcing is the gating decision |
-| EIA STEO US shale basin time series | _deferred to Phase 6+_ | Public (US gov), free API key | Only authoritative open per-basin time-series we've found (Anadarko/Bakken/Eagle Ford/Permian/etc.) |
+| Coal (mines + plants) | _deferred to Phase 7+_ | GEM CC BY 4.0 (when integrated) | Coal sector / cross-commodity scenarios are a Phase 7+ candidate |
+| Tankers / AIS | _deferred to Phase 7+_ | TankerMap free for live; paid for historical | Own brainstorm — AIS sourcing is the gating decision |
+| EIA STEO US shale basin time series | _deferred to Phase 7+_ | Public (US gov), free API key | Only authoritative open per-basin time-series we've found (Anadarko/Bakken/Eagle Ford/Permian/etc.) |
 
-API keys live in `~/.config/secrets.env` (e.g., `TAVILY_API_KEY`, `EXA_API_KEY`). The EIA API key is registered separately; add to `~/.config/secrets.env` as `EIA_API_KEY` before any Phase 6+ EIA work. BACI (the trade-flow source) does not require a key. Never commit secrets.
+API keys live in `~/.config/secrets.env` (e.g., `TAVILY_API_KEY`, `EXA_API_KEY`). The EIA API key is registered separately; add to `~/.config/secrets.env` as `EIA_API_KEY` before any Phase 7+ EIA work. BACI (the trade-flow source) does not require a key. Never commit secrets.
 
 ## Common commands
 
@@ -187,4 +187,5 @@ CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typec
 - **Phase 3** — _shipped 2026-05-16_ (gas pipelines + LNG terminals + Hormuz-LNG scenario). Live: https://global-energy-map-one.vercel.app
 - **Phase 4** — _shipped 2026-05-17_ (NETL basins + storage + ports + shareable URL state). Live: https://global-energy-map-one.vercel.app
 - **Phase 5** — _shipped 2026-05-17_ (NETL refineries augmentation + vintage-aware pipeline/extraction filtering + pipelines.geojson simplification). Live: https://global-energy-map-one.vercel.app
-- **Phase 6** — pending (EIA STEO US shale basin time series, or coal + cross-commodity scenarios, or tankers/AIS — see docs/data-sources.md).
+- **Phase 6** — _shipped 2026-09-09_ (LNG-T3 terminals + voyages + BACI-anchored Hormuz-LNG attribution + CI + MIT/CITATION). Live: https://global-energy-map-one.vercel.app
+- **Phase 7** — pending: consolidation phase (shared asset query cache so five layer hooks stop scanning assets.parquet separately; app state store that syncs to the URL; explicit ready signals for e2e; vintage filter on scenario inputs; Legend driven by LayerState; daily-throughput tooltip; drop unused pipelines.parquet from the runtime bundle; skip the voyage-layer query outside 2020–2024). Data candidates in docs/data-sources.md deferred list.

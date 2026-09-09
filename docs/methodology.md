@@ -4,7 +4,7 @@
 
 ## Scope & Approach
 
-Global Energy Map presents a multidimensional view of the world's hydrocarbon energy system — reserves, extraction, pipelines, refining, LNG, storage, ports, and bilateral trade — with chokepoint/pipeline disruption scenarios overlaid on the map. Phases 1–5 are shipped; Phase 6 (LNG carrier dynamics) is in review.
+Global Energy Map presents a multidimensional view of the world's hydrocarbon energy system — reserves, extraction, pipelines, refining, LNG, storage, ports, and bilateral trade — with chokepoint/pipeline disruption scenarios overlaid on the map. Phases 1–6 are shipped; Phase 7 (consolidation) is next.
 
 The narrative below preserves what each phase shipped with the caveats that applied AT THAT TIME. Where a later phase has materially changed a Phase N claim (e.g., Phase 5's refinery augmentation supersedes Phase 2's OSM-only counts), the original phase section keeps its historical claim and the later phase documents the upgrade. Cross-references are inline.
 

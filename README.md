@@ -6,7 +6,7 @@ Interactive OSINT visualization of the world's hydrocarbon energy system — res
 
 ## Status
 
-Phases 1–5 shipped; Phase 6 in review. See `CLAUDE.md` for current state, schema, and conventions.
+Phases 1–6 shipped; Phase 7 (consolidation) pending. See `CLAUDE.md` for current state, schema, and conventions.
 
 ## What's on the map today
 
@@ -28,7 +28,7 @@ Next.js 16 + React 19 + TypeScript strict; deck.gl 9 over MapLibre; DuckDB-WASM 
 ## Docs
 
 - **`CLAUDE.md`** — tech stack, schema, sources, conventions, phase status
-- **`docs/data-sources.md`** — researcher-facing inventory: in-production sources, evaluated-and-rejected sources (with reasons), and Phase 6+ candidates
+- **`docs/data-sources.md`** — researcher-facing inventory: in-production sources, evaluated-and-rejected sources (with reasons), and Phase 7+ candidates
 - **`docs/methodology.md`** — chronological per-phase narrative (rendered into `/about`)
 - **`docs/superpowers/specs/`** — per-phase design specs + master design
 - **`docs/superpowers/plans/`** — per-phase implementation plans

@@ -44,6 +44,10 @@ import pyarrow.parquet as pq
 
 from scripts.common.iso3 import GEM_NAME_TO_ISO3
 from scripts.transform._lng_iso3 import lookup_iso3
+from scripts.transform._lng_terminal_helpers import (
+    assert_unique_asset_ids,
+    normalize_status,
+)
 from scripts.transform._refinery_dedup import haversine_km  # reuse Phase 5 helper
 
 LNG_T3_RAW = Path("data/raw/lng_t3/v1-2026-04-01/LNG_terminal.csv")
@@ -99,7 +103,7 @@ def _load_lng_t3() -> pd.DataFrame:
         "capacity": df["capacity"].astype("Float64"),  # mtpa
         "capacity_unit": "mtpa",
         "operator": pd.NA,
-        "status": df["status"].astype(pd.StringDtype()),
+        "status": df["status"].map(normalize_status).astype(pd.StringDtype()),
         "commissioned_year": pd.to_numeric(df["start_year"], errors="coerce").astype("Int64"),
         "decommissioned_year": pd.Series([pd.NA] * len(df), dtype="Int64"),
         "unit_count": df["unit_count"].astype("Int64"),
@@ -110,6 +114,7 @@ def _load_lng_t3() -> pd.DataFrame:
     })
     # Ensure asset_id is a regular column
     out["asset_id"] = out["asset_id"].astype(pd.StringDtype())
+    assert_unique_asset_ids(out)
     return out
 
 
@@ -246,6 +251,7 @@ def main() -> None:
     combined["un_locode"] = combined["un_locode"].astype(pd.StringDtype())
     combined["source"] = combined["source"].astype(pd.StringDtype())
     combined["source_version"] = combined["source_version"].astype(pd.StringDtype())
+    assert_unique_asset_ids(combined)
 
     # Idempotent: drop prior LNG rows, append new
     existing = pd.read_parquet(ASSETS)

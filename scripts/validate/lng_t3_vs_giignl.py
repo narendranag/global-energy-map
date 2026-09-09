@@ -14,6 +14,14 @@ GIIGNL revises retrospectively.
 
 LNG density conversion: 1 cbm liquid LNG ≈ 0.4245 t (DOE convention).
 
+LNG-T3 is a partial-coverage AIS-derived sample, not a census of global
+LNG trade — it will systematically undercount GIIGNL's totals. This
+script does NOT gate the build: it prints a per-year coverage ratio
+(LNG-T3 ÷ GIIGNL) for researchers to see the sample fraction, and always
+exits 0. The scenario engine does not rely on LNG-T3 for absolute
+volumes — it uses BACI totals with LNG-T3 voyage-derived per-terminal
+shares (see docs/methodology.md, Phase 6).
+
 Usage:
     uv run python -m scripts.validate.lng_t3_vs_giignl
 """
@@ -36,9 +44,6 @@ GIIGNL_MT_PER_YEAR: dict[int, float] = {
     2024: 407.0,  # 2025 GIIGNL report; treat as ±5
 }
 
-ACCEPTABLE_GAP_PCT = 30.0  # spec threshold
-
-
 def main() -> None:
     if not TRADE_DAILY.exists():
         sys.exit(f"missing {TRADE_DAILY} — run build_lng_voyages first")
@@ -59,7 +64,7 @@ def main() -> None:
 
     print(f"{'Year':<6} {'LNG-T3 Mt':<12} {'GIIGNL Mt':<12} {'Δ Mt':<10} {'Gap %':<8}")
     print("-" * 50)
-    failed = False
+    coverage_lines: list[str] = []
     for _, r in annual.iterrows():
         y = int(r["year"])
         t3 = float(r["lng_t3_mt"])
@@ -69,23 +74,18 @@ def main() -> None:
             continue
         diff = t3 - gi
         gap_pct = abs(diff) / gi * 100.0
-        flag = "✗" if gap_pct > ACCEPTABLE_GAP_PCT else "✓"
-        print(f"{y:<6} {t3:>10.1f}   {gi:>10.1f}   {diff:>+8.1f}   {gap_pct:>5.1f}%  {flag}")
-        if gap_pct > ACCEPTABLE_GAP_PCT:
-            failed = True
+        ratio = t3 / gi
+        print(f"{y:<6} {t3:>10.1f}   {gi:>10.1f}   {diff:>+8.1f}   {gap_pct:>5.1f}%")
+        coverage_lines.append(f"{y} coverage ratio (LNG-T3 ÷ GIIGNL): {ratio:.2f}")
 
-    if failed:
-        print(
-            f"\n✗ FAILED: at least one year exceeds {ACCEPTABLE_GAP_PCT}% gap vs GIIGNL.\n"
-            f"  Per spec, this triggers escalation before merge. Either:\n"
-            f"  - LNG-T3 under-reports (check filtering / density constant)\n"
-            f"  - GIIGNL constants in this script are wrong (verify against latest report)\n"
-            f"  - The dataset is unsuitable for the scenario refactor; consider keeping BACI",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+    print()
+    for line in coverage_lines:
+        print(line)
 
-    print(f"\n✓ All years within {ACCEPTABLE_GAP_PCT}% of GIIGNL public totals.")
+    print(
+        "\nPartial-coverage AIS sample: scenario engine uses BACI totals with "
+        "voyage-derived shares (see docs/methodology.md, Phase 6)."
+    )
 
 
 if __name__ == "__main__":

@@ -38,10 +38,34 @@ SOURCE = "Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058)"
 SOURCE_VERSION = "v1-2026-04-01"
 
 
+def _known_terminal_names() -> set[str]:
+    src = RAW_DIR / "LNG_terminal.csv"
+    terminals = pd.read_csv(src)
+    return set(terminals["name"].astype(str))
+
+
 def _build_voyages() -> pd.DataFrame:
     src = RAW_DIR / "LNG_tanker_voyage.csv"
     df = pd.read_csv(src, parse_dates=["start_date", "end_date"])
     print(f"[voyage] loaded {len(df)} rows from {src}", file=sys.stderr)
+
+    known_terminals = _known_terminal_names()
+    unknown_mask = (
+        ~df["from_terminal"].isin(known_terminals)
+        | ~df["to_terminal"].isin(known_terminals)
+    )
+    n_misses = int(unknown_mask.sum())
+    print(f"[voyage] {n_misses} rows reference an unknown terminal name", file=sys.stderr)
+    if n_misses:
+        miss_pct = n_misses / len(df) * 100.0
+        if miss_pct > 5.0:
+            sys.exit(
+                f"[voyage] {n_misses} rows ({miss_pct:.1f}%) reference terminal "
+                f"names not in LNG_terminal.csv — exceeds 5% tolerance"
+            )
+        df = df[~unknown_mask].copy()
+        print(f"[voyage] dropped {n_misses} rows with unknown terminal names, "
+              f"{len(df)} remain", file=sys.stderr)
 
     df["from_country_iso3"] = df["from_country"].map(lookup_iso3)
     df["to_country_iso3"] = df["to_country"].map(lookup_iso3)

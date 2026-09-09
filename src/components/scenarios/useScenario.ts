@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { computeScenarioImpact } from "@/lib/scenarios/engine";
-import type { Commodity, ScenarioId, ScenarioResult } from "@/lib/scenarios/types";
+import type { Commodity, LngVoyageRow, ScenarioId, ScenarioResult } from "@/lib/scenarios/types";
 import { query } from "@/lib/duckdb/query";
 
 interface FlowRow extends Record<string, unknown> {
@@ -21,6 +21,19 @@ interface AssetRow extends Record<string, unknown> {
   asset_id: string;
   country_iso3: string;
   capacity: number;
+  name: string;
+}
+interface LngVoyageQueryRow extends Record<string, unknown> {
+  start_date: string;
+  end_date: string;
+  imo: number;
+  voyage_type: "export" | "return";
+  from_terminal: string;
+  to_terminal: string;
+  from_country_iso3: string;
+  to_country_iso3: string;
+  amount_cbm: number;
+  confidence_score: number;
 }
 
 const HS_BY_COMMODITY: Record<Commodity, string> = {
@@ -58,19 +71,40 @@ export function useScenario(
       let lngImports: readonly AssetRow[] | undefined;
       if (commodity === "oil") {
         const r = await query<AssetRow>(
-          `SELECT asset_id, country_iso3, COALESCE(capacity, 0) AS capacity
+          `SELECT asset_id, name, country_iso3, COALESCE(capacity, 0) AS capacity
            FROM read_parquet('/data/assets.parquet')
            WHERE kind = 'refinery'`,
         );
         refineries = r.rows;
       } else {
         const r = await query<AssetRow>(
-          `SELECT asset_id, country_iso3, COALESCE(capacity, 0) AS capacity
+          `SELECT asset_id, name, country_iso3, COALESCE(capacity, 0) AS capacity
            FROM read_parquet('/data/assets.parquet')
            WHERE kind = 'lng_import'`,
         );
         lngImports = r.rows;
       }
+
+      // Phase 6: load LNG voyages for the active year only when in LNG-T3 range.
+      // Outside [2020, 2024] the engine falls back to the BACI attribution path.
+      const useLngT3 = year >= 2020 && year <= 2024;
+      let lngVoyages: readonly LngVoyageRow[] = [];
+      if (useLngT3) {
+        const r = await query<LngVoyageQueryRow>(
+          `SELECT CAST(start_date AS VARCHAR) AS start_date,
+                  CAST(end_date AS VARCHAR) AS end_date,
+                  CAST(imo AS INTEGER) AS imo, voyage_type, from_terminal,
+                  to_terminal, from_country_iso3, to_country_iso3,
+                  CAST(amount_cbm AS DOUBLE) AS amount_cbm,
+                  CAST(confidence_score AS INTEGER) AS confidence_score
+           FROM read_parquet('/data/lng_voyage.parquet')
+           WHERE voyage_type = 'export'
+             AND year(start_date) <= ${year.toString()}
+             AND year(end_date) >= ${year.toString()}`,
+        );
+        lngVoyages = r.rows;
+      }
+
       if (ctrl.cancelled) return;
       setResult(
         computeScenarioImpact({
@@ -81,6 +115,7 @@ export function useScenario(
           routes: routes.rows,
           ...(refineries !== undefined ? { refineries } : {}),
           ...(lngImports !== undefined ? { lngImports } : {}),
+          ...(lngVoyages.length > 0 ? { lngVoyages } : {}),
         }),
       );
     })();

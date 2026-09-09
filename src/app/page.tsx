@@ -10,6 +10,7 @@ import { useLngTerminalsLayer } from "@/components/layers/LngTerminalsLayer";
 import { useBasinPolygonsLayer } from "@/components/layers/BasinPolygonsLayer";
 import { useStorageLayer } from "@/components/layers/StorageLayer";
 import { usePortsLayer } from "@/components/layers/PortsLayer";
+import { useLngVoyagesLayer } from "@/components/layers/LngVoyagesLayer";
 import { LayerPanel, type LayerState } from "@/components/layers/LayerPanel";
 import { CommoditySelector } from "@/components/ui/CommoditySelector";
 import { YearSlider } from "@/components/time-slider/YearSlider";
@@ -19,6 +20,7 @@ import {
   importerOverlay,
   refineryImpactMap,
   lngImportImpactMap,
+  lngVoyageImpactByTerminalName,
 } from "@/components/scenarios/overlay";
 import type { Commodity, ScenarioId } from "@/lib/scenarios/types";
 import { useUrlState } from "@/lib/url-state/useUrlState";
@@ -34,6 +36,7 @@ const ALL_LAYERS_ON: LayerState = {
   ports: true,
   gas_pipelines: true,
   lng_terminals: true,
+  lng_voyages: false,   // Phase 6: opt-in only — high visual noise
 };
 
 const DEFAULTS: AppState = {
@@ -62,6 +65,10 @@ function HomeInner() {
   const overlay = useMemo(() => importerOverlay(scenario), [scenario]);
   const refImpacts = useMemo(() => refineryImpactMap(scenario), [scenario]);
   const lngImpacts = useMemo(() => lngImportImpactMap(scenario), [scenario]);
+  const voyageImpacts = useMemo(
+    () => lngVoyageImpactByTerminalName(scenario),
+    [scenario],
+  );
 
   const basins = useBasinPolygonsLayer(layers.basins);
   const reserves = useReservesChoropleth({
@@ -90,17 +97,24 @@ function HomeInner() {
   const ports = usePortsLayer(layers.ports);
   const lngTerminals = useLngTerminalsLayer({
     visible: layers.lng_terminals,
+    year,
     ...(lngImpacts !== undefined ? { impactByAssetId: lngImpacts } : {}),
+  });
+  const lngVoyages = useLngVoyagesLayer({
+    visible: layers.lng_voyages,
+    year,
+    ...(voyageImpacts !== undefined ? { impactByTerminalName: voyageImpacts } : {}),
   });
 
   // Z-order (bottom to top): basins, reserves, extraction, oil pipes, gas pipes,
-  // refineries, storage, ports, lng terminals
+  // lng voyages (arcs), refineries, storage, ports, lng terminals
   const visibleLayers = [
     layers.basins ? basins : null,
     layers.reserves ? reserves : null,
     layers.extraction ? extraction : null,
     oilPipes,
     gasPipes,
+    lngVoyages,
     refineries,
     storage,
     ports,
@@ -191,16 +205,53 @@ function HomeInner() {
           `Operator: ${(o.operator as string | null) ?? "n/a"}`,
           `Capacity: ${capStr}`,
         ];
-        if (impact && impact.topSources.length > 0) {
-          lines.push("", "Historical top sources (capacity-weighted):");
-          for (const s of impact.topSources) {
-            lines.push(`  ${s.iso3}: ${s.qty.toFixed(1)}`);
+        const unitCount = o.unit_count;
+        if (typeof unitCount === "number" && unitCount > 0) {
+          lines.push(`Units: ${unitCount.toString()}`);
+        }
+        const totalProcessed = o.total_processed_bcm;
+        if (typeof totalProcessed === "number" && totalProcessed > 0) {
+          lines.push(`Total processed 2020–2024: ${totalProcessed.toFixed(0)} bcm`);
+        }
+        const unLocode = o.un_locode;
+        if (typeof unLocode === "string" && unLocode.length > 0) {
+          lines.push(`UN/LOCODE: ${unLocode}`);
+        }
+        const source = o.source;
+        if (typeof source === "string" && source.length > 0) {
+          lines.push(`Source: ${source.includes("LNG-T3") ? "LNG-T3" : "GEM"}`);
+        }
+        if (impact) {
+          if (impact.coverage === "none") {
+            lines.push("", `No measured voyages to this terminal in ${year.toString()}`);
+          } else if (impact.topSources.length > 0) {
+            lines.push("", "Historical top sources (t/yr):");
+            for (const s of impact.topSources) {
+              lines.push(`  ${s.iso3}: ${s.qty.toFixed(1)}`);
+            }
+            if (impact.shareAtRisk > 0) {
+              lines.push("", `At-risk under scenario: ${(impact.shareAtRisk * 100).toFixed(1)}%`);
+            }
           }
-          if (impact.shareAtRisk > 0) {
-            lines.push("", `At-risk under scenario: ${(impact.shareAtRisk * 100).toFixed(1)}%`);
+          if (impact.coverage === "measured") {
+            lines.push("", "Attribution: measured voyages (LNG-T3), scaled to BACI country total");
+          } else if (impact.coverage === "capacity-proxy") {
+            lines.push("", "Attribution: BACI, capacity-weighted");
           }
         }
         return lines.join("\n");
+      }
+      if (info.layer?.id === "lng-voyages") {
+        const cbm = typeof o.amount_cbm === "number" ? o.amount_cbm : 0;
+        const mt = (cbm * 0.4245) / 1e6;
+        return [
+          `LNG voyage: ${o.from_terminal as string} → ${o.to_terminal as string}`,
+          `From: ${o.from_country as string} (${o.from_country_iso3 as string})`,
+          `To:   ${o.to_country as string} (${o.to_country_iso3 as string})`,
+          `Dates: ${o.start_date as string} → ${o.end_date as string}`,
+          `Cargo: ${cbm.toLocaleString()} cbm  (≈ ${mt.toFixed(3)} Mt)`,
+          `Confidence: ${typeof o.confidence_score === "number" ? o.confidence_score.toString() : "n/a"}/5`,
+        ].join("\n");
       }
       if ((info.layer?.id ?? "").startsWith("pipelines-")) {
         const props = (o as { properties?: Record<string, unknown> }).properties ?? {};
@@ -221,7 +272,7 @@ function HomeInner() {
       }
       return null;
     },
-    [refImpacts, lngImpacts],
+    [refImpacts, lngImpacts, year],
   );
 
   return (

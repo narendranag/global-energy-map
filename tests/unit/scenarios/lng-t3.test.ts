@@ -182,6 +182,29 @@ describe("computeLngImportImpactsFromVoyages", () => {
     expect(out.find((x) => x.asset_id === "T_A")?.atRiskQty).toBeCloseTo(300, 6);
   });
 
+  it("splits one voyage bucket across duplicate rows for the same physical terminal", () => {
+    // LNG-T3 lists some terminals twice — an "operating" row and a
+    // "construction" row, same name, same coordinates (Gate, Krk, Zhuhai…).
+    // Both rows match the same voyage bucket, so the name must still receive
+    // exactly one terminal's worth of the country total, not two.
+    const T_A2: LngImportRow = { ...T_A, asset_id: "T_A#construction" };
+    const out = computeLngImportImpactsFromVoyages({
+      lngImports: [T_A, T_A2, T_B],
+      voyages: [v("T_A", "JPN", "QAT", 100), v("T_B", "JPN", "QAT", 200)],
+      flowsByImporter: flows({ JPN: [{ iso3: "QAT", qty: 900 }] }),
+      lookupShare: () => 1.0,
+    });
+    const a1 = out.find((x) => x.asset_id === "T_A");
+    const a2 = out.find((x) => x.asset_id === "T_A#construction");
+    const b = out.find((x) => x.asset_id === "T_B");
+    if (!a1 || !a2 || !b) throw new Error("missing terminal");
+    // "T_A" collectively still holds 1/3 of JPN's 900 t, split 50/50 across
+    // its two rows; T_B keeps its full 2/3 rather than being diluted to 1/2.
+    expect(a1.atRiskQty + a2.atRiskQty).toBeCloseTo(300, 6);
+    expect(b.atRiskQty).toBeCloseTo(600, 6);
+    expect(a1.atRiskQty + a2.atRiskQty + b.atRiskQty).toBeCloseTo(900, 6);
+  });
+
   it("handles BigInt amount_cbm (Arrow deserialises the BIGINT column as BigInt)", () => {
     // lng_voyage.parquet stores amount_cbm as BIGINT; duckdb-wasm hands it
     // back as a JS BigInt at runtime even though the TS type says number.

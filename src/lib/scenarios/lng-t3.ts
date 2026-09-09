@@ -111,11 +111,25 @@ export function computeLngImportImpactsFromVoyages({
       continue;
     }
 
-    const totalCoveredCbm = covered.reduce(
-      (sum, t) =>
-        sum + (byTerminalName.get(t.name) ?? []).reduce((a, x) => a + x.qty, 0),
-      0,
-    );
+    // assets.parquet can carry several rows for one physical terminal —
+    // LNG-T3 splits some terminals into an "operating" row and a
+    // "construction" row at identical coordinates and under one name
+    // (Gate LNG Terminal, Krk FSRU, Zhuhai, …). They all match the same
+    // voyage bucket, so counting the bucket once per row would give that
+    // terminal 2x its true share of the country total, stolen from the
+    // country's uniquely-named terminals. Split a shared bucket evenly
+    // instead: the name still receives exactly one terminal's worth.
+    // (No-op when names are unique.)
+    const rowsPerName = new Map<string, number>();
+    for (const t of terminals) {
+      rowsPerName.set(t.name, (rowsPerName.get(t.name) ?? 0) + 1);
+    }
+    const measuredCbm = (t: LngImportRow): number => {
+      const bucket = (byTerminalName.get(t.name) ?? []).reduce((a, x) => a + x.qty, 0);
+      return bucket / (rowsPerName.get(t.name) ?? 1);
+    };
+
+    const totalCoveredCbm = covered.reduce((sum, t) => sum + measuredCbm(t), 0);
 
     for (const t of terminals) {
       const sources = byTerminalName.get(t.name) ?? [];
@@ -136,7 +150,7 @@ export function computeLngImportImpactsFromVoyages({
       }
 
       const terminalCbm = sources.reduce((s, x) => s + x.qty, 0);
-      const terminalShare = totalCoveredCbm > 0 ? terminalCbm / totalCoveredCbm : 0;
+      const terminalShare = totalCoveredCbm > 0 ? measuredCbm(t) / totalCoveredCbm : 0;
 
       const byExporter = new Map<string, number>();
       for (const s of sources) {

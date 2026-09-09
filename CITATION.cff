@@ -1,0 +1,67 @@
+cff-version: 1.2.0
+message: "If you use this software or its bundled datasets, please cite it as below."
+title: "Global Energy Map"
+type: software
+version: 1.0.0
+date-released: 2026-09-09
+authors:
+  - family-names: Nag
+    given-names: Narendra
+repository-code: "https://github.com/narendranag/global-energy-map"
+url: "https://global-energy-map-one.vercel.app"
+license: MIT
+abstract: >-
+  An interactive OSINT visualization of the world's hydrocarbon energy
+  system — reserves, extraction, transport, refining, and distribution —
+  built for academics, energy-policy researchers, and IR/economics
+  scholars who think in systems.
+references:
+  - type: dataset
+    title: "Global Oil & Gas Extraction Tracker (GOGET)"
+    authors:
+      - name: "Global Energy Monitor"
+    url: "https://globalenergymonitor.org/projects/global-oil-gas-extraction-tracker/"
+    license: "CC-BY-4.0"
+  - type: dataset
+    title: "Global Oil Infrastructure Tracker (GOIT)"
+    authors:
+      - name: "Global Energy Monitor"
+    url: "https://globalenergymonitor.org/projects/global-oil-infrastructure-tracker/"
+    license: "CC-BY-4.0"
+  - type: dataset
+    title: "Global Gas Infrastructure Tracker (GGIT)"
+    authors:
+      - name: "Global Energy Monitor"
+    url: "https://globalenergymonitor.org/projects/global-gas-infrastructure-tracker/"
+    license: "CC-BY-4.0"
+  - type: dataset
+    title: "NETL Global Oil and Gas Infrastructure (GOGI)"
+    authors:
+      - name: "National Energy Technology Laboratory (US Department of Energy)"
+    url: "https://arcgis.netl.doe.gov/portal/home/item.html?id=1e1c13b43dfb4af68040598c6f4baf44"
+    license: "Public Domain (17 USC 105)"
+  - type: dataset
+    title: "Statistical Review of World Energy"
+    authors:
+      - name: "Energy Institute"
+    url: "https://www.energyinst.org/statistical-review/resources-and-data-downloads"
+  - type: dataset
+    title: "BACI: International Trade Database at the Product-Level"
+    authors:
+      - name: "CEPII"
+    url: "https://www.cepii.fr/CEPII/en/bdd_modele/bdd_modele_item.asp?id=37"
+  - type: dataset
+    title: "Global Marine LNG Terminals, Tankers & Trade (LNG-T3): A High-Resolution AIS-Based Dataset of LNG Trade Dynamics (2020-2024)"
+    authors:
+      - family-names: Zhou
+        given-names: C.
+    year: 2026
+    doi: "10.5281/zenodo.19571058"
+    url: "https://doi.org/10.5281/zenodo.19571058"
+    license: "CC-BY-4.0"
+  - type: dataset
+    title: "Natural Earth — 1:110m Cultural Vectors, Admin 0 Countries"
+    authors:
+      - name: "Natural Earth"
+    url: "https://www.naturalearthdata.com/downloads/110m-cultural-vectors/110m-admin-0-countries/"
+    license: "Public Domain"

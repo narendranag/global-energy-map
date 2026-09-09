@@ -396,6 +396,17 @@ NETL_NAME_TO_ISO3: dict[str, str] = {
 }
 
 
+
+# LNG-T3 country-name → ISO3 mapping (Phase 6).
+# LNG-T3 uses a mix of UN-style and short English names. Most overlap with
+# GEM/NETL/EI dicts; this covers Phase 6 deltas.
+LNG_T3_NAME_TO_ISO3: dict[str, str] = {
+    "Gibraltar": "GIB",
+    "Republic of the Congo": "COG",
+    "South Korea": "KOR",
+}
+
+
 def lookup(name: str, source: str) -> str | None:
     """Return iso3 for a name; source in {'ei', 'gem', 'netl'}."""
     table = {"ei": EI_NAME_TO_ISO3, "gem": GEM_NAME_TO_ISO3, "netl": NETL_NAME_TO_ISO3}[source]

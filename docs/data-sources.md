@@ -16,7 +16,7 @@ Categories:
 
 - **In production** — currently ingested and shipped in the live map
 - **Evaluated and rejected** — looked at, didn't make the cut, with the reason
-- **Candidate (Phase 6+)** — surfaced during research, not yet integrated
+- **Candidate (Phase 7+)** — surfaced during research, not yet integrated
 
 ---
 
@@ -96,11 +96,47 @@ Categories:
 
 **What we ingest:**
 - Gas pipelines: LineString geometry, status, capacity (bcm/y), operator, start year, fuel type.
-- LNG terminals: 434 facilities split by `tracker-custom ∈ {GGIT-export, GGIT-import}`. Capacity in mtpa (million tonnes per annum).
+- LNG terminals: as of Phase 3, 434 facilities split by `tracker-custom ∈ {GGIT-export, GGIT-import}` (capacity in mtpa). **As of Phase 6, GEM is a supplement (7 terminals) to LNG-T3** (see the LNG-T3 entry below) — GEM terminals sharing a name with a same-country LNG-T3 terminal, or falling within 25 km of one, are dropped as already-covered.
 
 **Coverage:**
-- LNG terminals have authoritative import/export classification and rich mtpa capacity data — the gold standard for global LNG infrastructure.
+- LNG terminals have authoritative import/export classification and rich mtpa capacity data — useful as a supplement where LNG-T3 doesn't have a match.
 - Gas pipeline geometry is comparable in quality to oil pipelines.
+
+---
+
+### LNG-T3 — Zhou et al. 2026 (Global Marine LNG Terminals, Tankers & Trade)
+
+- **URL:** https://doi.org/10.5281/zenodo.19571058
+- **License:** **CC BY 4.0** (attribution required: "Data: Zhou et al. 2026, LNG-T3, CC BY 4.0 (Zenodo 10.5281/zenodo.19571058)")
+- **As-of:** 2026-04-01 (Zenodo deposit, version `v1-2026-04-01`)
+- **Where it lands:** `assets.parquet` rows where `source LIKE 'Zhou%LNG-T3%'` (LNG terminals, primary source as of Phase 6); `lng_voyage.parquet`, `lng_trade_daily.parquet`, `lng_terminal_daily.parquet`
+- **Layers/scenarios using it:** LNG terminals layer (primary); LNG voyages opt-in layer; Hormuz-LNG scenario (per-terminal disaggregation for years 2020–2024)
+
+**What we ingest:**
+- LNG terminals: 545 total in `LNG_terminal.csv` (471 unique names), filtered to `operating`/`construction` (330), then collapsed to **305** by resolving 25 terminal names that carried both an operating and a construction record (operating kept, higher capacity on ties).
+- LNG voyages: **17,592** AIS-derived voyages, 2020-01-01 → 2024-12-31, with from/to terminal, from/to country, `amount_cbm`, `confidence_score` (1–5).
+- Country-pair daily trade: **16,691** arrival/departure records.
+- Terminal-daily measured throughput: **16,115** records, covering **159 of the 471 unique terminal names** in `LNG_terminal.csv` with non-zero measured flow.
+- The 406-active/861-total-vessel fleet inventory (`LNG_tanker.csv`) is ingested but NOT surfaced as a map layer in Phase 6 — deferred to Phase 7+.
+
+**Why LNG-T3 as terminal primary, not just a voyage supplement:** LNG-T3's terminal table carries `commissioned_year` (from `start_year`, populated 97.8% of LNG rows) and `total_processed_bcm`/`unit_count`/`UN_LOCODE`, none of which GEM's terminal table has at comparable coverage — a strict upgrade for the terminal point layer even setting aside the voyage data.
+
+**Validation — partial AIS coverage, NOT used as a country-total source:** `scripts/validate/lng_t3_vs_giignl.py` sums LNG-T3 daily arrivals to annual tonnage (cbm × 0.4245 t/cbm) and compares against GIIGNL Annual Report public headline totals. Result (`data/validation/lng_t3_vs_giignl.txt`, reproduced in `docs/methodology.md` Phase 6):
+
+| Year | LNG-T3 Mt | GIIGNL Mt | Coverage ratio |
+|---|---|---|---|
+| 2020 | 76.6 | 356.1 | 0.22 |
+| 2021 | 105.0 | 372.3 | 0.28 |
+| 2022 | 136.0 | 401.5 | 0.34 |
+| 2023 | 164.8 | 401.4 | 0.41 |
+| 2024 | 129.4 | 407.0 | 0.32 |
+
+LNG-T3 covers **22–41% of GIIGNL's global LNG trade, 2020–2024** — every year exceeds the validation script's 30% acceptable-gap threshold. **LNG-T3 is a partial-coverage AIS sample, not a comprehensive trade census; the scenario engine and this project never use it as a country-total LNG source.** BACI HS 271111 remains the canonical country-level total for all years, including 2020–2024. LNG-T3 voyages are used only to redistribute a BACI country total across its covered terminals and to derive each terminal's exporter mix.
+
+**Coverage gaps:**
+- Confidence score (1–5) reflects AIS voyage-detection certainty; Phase 6's voyage layer and scenario engine default to `confidence_score >= 3`.
+- The 2020-01-01 start cuts off pre-pandemic history; pre-2020 LNG analysis always falls back to BACI HS 271111 with capacity-weighted attribution.
+- Density conversion (`cbm × 0.4245` for tonnes) is the DOE convention but real density varies ~0.41–0.46 depending on LNG composition — used for display only, never for the tonnes-conservation math in the scenario engine.
 
 ---
 
@@ -239,7 +275,7 @@ Each row: year, exporter ISO3, importer ISO3, quantity (tonnes).
 
 ---
 
-## Candidate sources (Phase 6+)
+## Candidate sources (Phase 7+)
 
 Surfaced via Tavily/Exa research. Listed roughly in order of analytical value × tractability.
 
@@ -329,7 +365,7 @@ Surfaced via Tavily/Exa research. Listed roughly in order of analytical value ×
 
 Key findings from the 2026-05-19 sweep:
 
-- **LNG carriers — solved openly.** LNG-T3 (Zhou 2026, Zenodo `10.5281/zenodo.19571058`, **CC BY 4.0**) provides 406-vessel LNG fleet + 545 terminals + daily 2020–2024 voyages + country-to-country flows. ~27 MB. Validated against GIE, EIA, Eurostat, GIIGNL.
+- **LNG carriers — shipped in Phase 6.** LNG-T3 (Zhou et al. 2026) — see the "In production" section above for the full schema, counts, and the GIIGNL partial-coverage finding (22–41%, so it supplements rather than replaces BACI). The 861-vessel fleet inventory was *not* surfaced as a map layer in Phase 6; an animated vessel-position layer remains a Phase 7+ candidate.
 - **US-coastal oil tankers — solved openly.** MarineCadastre.gov (NOAA / US Coast Guard NAIS) publishes 2009–2024 raw AIS positions for US coastal/EEZ waters as CSV/GeoPackage. ShipType codes 80–89 for tankers. Public domain.
 - **EU-coastal tanker route density — open.** EMODnet Human Activities derived from EMSA SafeSeaNet (likely CC BY); GeoTIFF / WMS aggregates.
 - **Global open AIS with caveats.** Global Fishing Watch (1 position/vessel/hour, non-commercial license) and AISStream.io (real-time WebSocket, no SLA / beta / no clear commercial terms) — usable but constrained.

@@ -4,7 +4,7 @@
 
 ## Scope & Approach
 
-Global Energy Map presents a multidimensional view of the world's hydrocarbon energy system — reserves, extraction, pipelines, refining, LNG, storage, ports, and bilateral trade — with chokepoint/pipeline disruption scenarios overlaid on the map. Phases 1–5 are shipped; Phase 6+ is in planning.
+Global Energy Map presents a multidimensional view of the world's hydrocarbon energy system — reserves, extraction, pipelines, refining, LNG, storage, ports, and bilateral trade — with chokepoint/pipeline disruption scenarios overlaid on the map. Phases 1–5 are shipped; Phase 6 (LNG carrier dynamics) is in review.
 
 The narrative below preserves what each phase shipped with the caveats that applied AT THAT TIME. Where a later phase has materially changed a Phase N claim (e.g., Phase 5's refinery augmentation supersedes Phase 2's OSM-only counts), the original phase section keeps its historical claim and the later phase documents the upgrade. Cross-references are inline.
 
@@ -15,7 +15,7 @@ Phase 1 focuses on foundational layers:
 - **Bilateral trade flows (1995–2024)**: crude oil exports and imports (HS code 2709) by bilateral partner pair, sourced from BACI and aggregated to annual flows.
 - **Hormuz scenario**: a simple closure case where Saudi Arabia, UAE, and other Strait-dependent exporters lose seaborne capacity proportional to their routing share. Illustrates leverage exerted by the world's most critical chokepoint.
 
-Phase 2 and beyond will extend scope to include pipeline networks, refinery locations, LNG terminals, broader energy security scenarios, and enhanced trade flow visualizations.
+Phase 2 and beyond extended scope to include pipeline networks, refinery locations, LNG terminals, broader energy security scenarios, and enhanced trade flow visualizations; Phase 6 further added measured LNG carrier voyage dynamics on top of the terminal layer. See the phase sections below.
 
 ## Caveats & Simplifications
 
@@ -155,6 +155,7 @@ NETL's basin polygons are continent-scale and complex; the raw GeoJSON is 63 MB.
 
 Attribution for all datasets used:
 
+- **LNG-T3 (Zhou et al. 2026)**: "Data: Zhou et al. 2026, LNG-T3, CC BY 4.0 (Zenodo 10.5281/zenodo.19571058)" (required for LNG terminals, voyages, and daily flows — see Phase 6).
 - **Global Energy Monitor extraction tracker**: "Data: Global Energy Monitor, CC BY 4.0" (this phrasing is mandatory for licensing compliance).
 - **Global Energy Monitor oil infrastructure tracker**: "Data: Global Energy Monitor, CC BY 4.0" (required for pipelines).
 - **OpenStreetMap** (refineries): "© OpenStreetMap contributors, ODbL 1.0" (required; ODbL allows derivative works with attribution and share-alike).
@@ -202,14 +203,80 @@ Coverage of vintage data in source:
 | Oil + gas pipelines | `start_year` | 71% |
 | Extraction sites | `commissioned_year` | 22% |
 | Refineries | — | 0% |
-| LNG terminals | — | 0% |
+| LNG terminals | `commissioned_year` | 97.8% _(Phase 6 — see below)_ |
 | Storage hubs | — | 0% |
 | Ports | — | 0% |
 
-Features without populated vintage data appear in all years (preserves prior behavior). The 29% of pipelines and 78% of extraction sites without dates are always-visible regardless of slider position. Refineries, LNG terminals, storage hubs, and ports have no vintage data in source and remain always-visible.
+Features without populated vintage data appear in all years (preserves prior behavior). The 29% of pipelines and 78% of extraction sites without dates are always-visible regardless of slider position. Refineries, storage hubs, and ports have no vintage data in source and remain always-visible. **LNG terminals are the exception as of Phase 6**: LNG-T3's `start_year` column populates `commissioned_year` for 97.8% of the 312 LNG terminal rows, so the year slider now meaningfully filters LNG terminals too (see Phase 6 section).
 
 `decommissioned_year` is 0% populated across all asset types; no decommission filtering is applied.
 
 ### Pipelines GeoJSON sidecar simplification
 
 `public/data/pipelines.geojson` is simplified at `tolerance=0.005` (Shapely `simplify(tol, preserve_topology=True)`, corresponding to roughly 500 m in lon/lat units). This reduces the sidecar from ~73 MB to ~13 MB, clearing the 25 MB single-file ceiling without requiring Vercel Blob hosting. Full-resolution geometry is preserved in `pipelines.parquet`.
+
+## Phase 6 — LNG carrier dynamics
+
+Phase 6 lifts the LNG layer from "static terminal capacity (GEM)" to "measured global LNG flow (LNG-T3)." Three changes: LNG-T3 becomes the primary LNG terminal source with GEM as a 25 km supplement; voyages and daily trade/terminal flows are surfaced as three new parquets and a new opt-in ArcLayer; the Hormuz-LNG scenario adds a voyage-derived per-terminal attribution path for years 2020–2024, layered on top of (not replacing) BACI country totals.
+
+### Source: Zhou et al. 2026 (LNG-T3)
+
+Citation: Zhou C. (2026). *Global Marine LNG Terminals, Tankers & Trade (LNG-T3): A High-Resolution AIS-Based Dataset of LNG Trade Dynamics (2020–2024).* DOI: [10.5281/zenodo.19571058](https://doi.org/10.5281/zenodo.19571058). License: **CC BY 4.0**. Attribution: "Data: Zhou et al. 2026, LNG-T3, CC BY 4.0 (Zenodo 10.5281/zenodo.19571058)".
+
+Five source CSVs are ingested: `LNG_terminal.csv` (545 terminals, 471 unique names), `LNG_tanker.csv` (fleet inventory, not surfaced as a Phase 6 layer), `LNG_tanker_voyage.csv` (17,592 AIS-derived voyages), `LNG_trade_daily.csv` (16,691 country-pair-day records), and `LNG_terminal_daily.csv` (16,115 terminal-day throughput records), all spanning 2020-01-01 → 2024-12-31.
+
+### Terminal augmentation: LNG-T3 primary + GEM supplement
+
+LNG-T3's 545 terminals filter to 330 active (`operating` + `construction`). Of those 330, 25 terminal names carry both an "operating" record and a separate "construction" (expansion-phase) record — `collapse_duplicate_names()` resolves each pair by keeping the operating record (falling back to higher capacity on ties), leaving **305 LNG-T3 terminals**. This means capacity reflects currently-operating trains only: e.g. Dahej LNG terminal keeps its 17.5 mtpa operating capacity, and a 5.0 mtpa under-construction expansion record for the same terminal is discarded.
+
+GEM's raw GGIT geojson emits one feature per liquefaction/regasification train sharing a single terminal-level `pid`, and the terminal-level capacity field is already the terminal total — these are **not** verbatim-duplicate features (48 of the 84 duplicated pids differ in status, start-year, owner, tracker-custom, or geometry across their per-unit rows). The transform collapses each multi-unit pid down to one record per pid (operating preferred over in-construction, then highest capacity), using the same deterministic rule as the LNG-T3 name collapse above. Before proximity matching, a **name-equality pre-pass** drops any GEM record whose (country, name) — case-insensitive, stripped — matches an LNG-T3 terminal in the same country: this catches same-terminal pairs whose coordinates diverge too far for the 25 km check below (e.g. "Ichthys FLNG Terminal," ~440 km apart between the two sources but unambiguously the same facility). The remaining GEM candidates are then matched against LNG-T3 terminals within **25 km same-country** (larger than Phase 5's refinery 2 km threshold, because LNG terminal campuses are larger and same-port collisions less likely); GEM records with a match are dropped as already covered. **7 GEM terminals** survive as supplements (73 lng_export / 239 lng_import across the combined layer).
+
+Result: **312 LNG terminals** total (305 LNG-T3 + 7 GEM), of `assets.parquet`'s 37,476 rows (a rebuild also purged 131 all-null orphan rows left behind by an earlier index-alignment bug). `capacity` covers 310/312 LNG rows and `commissioned_year` (populated from LNG-T3's `start_year`) covers **305/312 (97.8%)** — a dramatic jump from GEM-only Phase 3's 0%, and now the strongest-covered vintage field of any asset kind in the schema (see the vintage table above).
+
+### LNG-T3 vs GIIGNL reconciliation
+
+LNG-T3 daily arrivals aggregated to annual tonnage (cbm × 0.4245 t/cbm DOE LNG density convention). The table below is the verbatim output of `scripts/validate/lng_t3_vs_giignl.py`, checked in at `data/validation/lng_t3_vs_giignl.txt`:
+
+```
+Year   LNG-T3 Mt    GIIGNL Mt    Δ Mt       Gap %   
+--------------------------------------------------
+2020         76.6        356.1     -279.5    78.5%
+2021        105.0        372.3     -267.3    71.8%
+2022        136.0        401.5     -265.5    66.1%
+2023        164.8        401.4     -236.6    58.9%
+2024        129.4        407.0     -277.6    68.2%
+
+2020 coverage ratio (LNG-T3 ÷ GIIGNL): 0.22
+2021 coverage ratio (LNG-T3 ÷ GIIGNL): 0.28
+2022 coverage ratio (LNG-T3 ÷ GIIGNL): 0.34
+2023 coverage ratio (LNG-T3 ÷ GIIGNL): 0.41
+2024 coverage ratio (LNG-T3 ÷ GIIGNL): 0.32
+
+Partial-coverage AIS sample: scenario engine uses BACI totals with voyage-derived shares (see docs/methodology.md, Phase 6).
+```
+
+Every year exceeds the validation script's 30% acceptable-gap threshold — LNG-T3's AIS-derived arrivals cover only **22–41% of GIIGNL's global LNG trade** for 2020–2024, not the near-complete picture the original spec's open question had hoped for. **LNG-T3 is a partial-coverage AIS sample, and Phase 6 does NOT use it as a country-total source.** BACI HS 271111 remains the canonical country-level LNG import total for all years, including 2020–2024.
+
+### Hormuz-LNG scenario refactor
+
+Phase 3 implemented Hormuz-LNG as: BACI annual trade × capacity-weighted attribution from a country's total to its individual terminals. Phase 6 (`src/lib/scenarios/lng-t3.ts`) adds a voyage-informed disaggregation path for years 2020–2024, without ever letting LNG-T3 override a BACI country total:
+
+- For years **2020–2024**, a country's LNG import total still comes from BACI HS 271111 (tonnes) — unchanged.
+- Export voyages from LNG-T3 (`voyage_type = "export"`, `confidence_score >= 3`) are matched to import terminals by exact name against `to_terminal`. Where a country has covered terminals, its BACI total is redistributed across those terminals in proportion to voyage volume, and each terminal's exporter mix is set from its voyage-derived shares (not from capacity).
+- Terminals in a covered country that received zero qualifying voyages show coverage `"none"` in the UI — an explicit **data gap**, never rendered as a zero-risk terminal.
+- Countries with no covered terminals at all fall back entirely to the Phase 3 capacity-weighted split (coverage `"capacity-proxy"`, `dataSource: "baci"`).
+- Years ≤ 2019 are unaffected; they always use the Phase 3 BACI × capacity-weighted path.
+
+`0.4245` t/cbm (the DOE LNG density convention) is used only for the validation script's and UI's display conversion from cbm to tonnes — it never feeds the tonnes-conservation math above, which stays in BACI's native units.
+
+### Voyage layer
+
+An **"LNG voyages (2020–2024)"** toggle sits under the Gas layer group, **default off**. When enabled, a deck.gl ArcLayer renders great-circle arcs from export to import terminal, filtered server-side by the active year and `confidence_score >= 3` (dropping the lowest-confidence AIS matches). LNG terminals themselves now respect the year slider via the `commissioned_year` vintage field above. The terminal tooltip was enriched to show units (mtpa / bcm), total processed volume in bcm, UN/LOCODE, source, and — when a scenario is active — which attribution method (BACI capacity-proxy vs LNG-T3 voyage-derived) produced the terminal's risk figure. The ScenarioPanel carries a footnote for years 2020–2024 explaining the voyage-informed attribution path.
+
+### What Phase 6 doesn't ship
+
+- **Vessel fleet layer / animated trip visualization.** LNG-T3's fleet inventory has enough metadata for a vessel-at-position-on-date animation, but a deck.gl TripsLayer's complexity outweighs the analytical value over static arcs. Deferred to Phase 7+.
+- **Daily time slider.** The annual slider stays; daily resolution exists in the parquets but isn't surfaced as UI.
+- **Confidence-score threshold slider.** Fixed at >= 3; making it user-tunable is a Phase 7+ candidate.
+- **MarineCadastre US-coastal oil tankers + EMODnet EU route density.** Separate datasets from LNG-T3, deferred to a separate phase.
+- **A runtime consumer for `lng_trade_daily.parquet` / `lng_terminal_daily.parquet`.** Both are built and catalogued alongside `lng_voyage.parquet` for reproducibility of the GIIGNL reconciliation above, but no layer or scenario reads them at runtime today.

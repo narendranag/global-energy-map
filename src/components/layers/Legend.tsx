@@ -43,6 +43,14 @@ export function Legend() {
         <span className="inline-block h-2 w-2 rounded-full bg-teal-600" />
         <span>LNG terminal (size = capacity)</span>
       </div>
+      <div className="flex items-center gap-2">
+        <span className="inline-block h-0.5 w-6" style={{ background: "rgb(220,140,60)" }} />
+        <span>LNG voyage — export end</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="inline-block h-0.5 w-6" style={{ background: "rgb(20,140,200)" }} />
+        <span>LNG voyage — import end</span>
+      </div>
     </div>
   );
 }

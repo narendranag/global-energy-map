@@ -72,6 +72,8 @@ global-energy-map/
 │       └── plans/                 # implementation plans (per phase)
 ├── pyproject.toml
 ├── README.md
+├── LICENSE
+├── CITATION.cff
 └── package.json
 ```
 
@@ -88,6 +90,7 @@ Designed so adding a new commodity is a row, not a migration.
 | `country_year_series` | iso3, year (1990–2024), metric (production_crude_kbpd, proved_reserves_oil_bbn_bbl, proved_reserves_gas_tcm), value, unit | EI Statistical Review |
 | `trade_flow` | year, hs_code (2709 crude, 271111 LNG), exporter_iso3, importer_iso3, qty | BACI (CEPII) |
 | `chokepoint_route`, `disruption_route` | scenario_id, origin_iso3, destination_iso3, route_share, affected_infrastructure | EIA / IEA scenario analysis |
+| `lng_voyage`, `lng_trade_daily`, `lng_terminal_daily` | start/end dates, IMO, from/to terminal + country/iso3, amount_cbm, confidence_score | Phase 6 — LNG-T3 |
 
 All artifacts indexed in `public/data/catalog.json` (path, version, license, source URL, as-of) — the methodology page renders straight off this.
 
@@ -100,7 +103,8 @@ For a researcher-facing inventory (with coverage gaps, evaluated-and-rejected so
 | Reserves (country-year, oil + gas) | Energy Institute Statistical Review of World Energy | Free, terms on site | Phase 1/3 — reserves capped at 2020; production runs through 2024 |
 | Extraction sites | GEM Global Oil & Gas Extraction Tracker | **CC BY 4.0** | Phase 1 — 5,008 sites; July 2023 snapshot; commissioned_year populated 22% |
 | Oil pipelines | GEM Global Oil Infrastructure Tracker (GOIT GeoJSON) | **CC BY 4.0** | Phase 2 — 2025-04-09 release; start_year populated 71% |
-| Gas pipelines + LNG terminals | GEM Global Gas Infrastructure Tracker (GGIT) | **CC BY 4.0** | Phase 3 — 2026-02-20 release; LNG terminals discriminated by import/export, capacity in mtpa |
+| Gas pipelines | GEM Global Gas Infrastructure Tracker (GGIT) | **CC BY 4.0** | Phase 3 — 2026-02-20 release; capacity in bcm/y |
+| LNG terminals + voyages + daily flows | LNG-T3 (Zhou et al. 2026, Zenodo) primary + GEM GGIT supplement | CC BY 4.0 / CC BY 4.0 | Phase 6 — 305 LNG-T3 active terminals (25 duplicate operating/construction names collapsed) + 7 GEM terminals after collapsing multi-unit pids to one row per terminal, a same-name-same-country pre-pass, and a 25 km same-country haversine dedup; 312 LNG terminals total, capacity 310/312, `commissioned_year` 305/312 (97.8%); 17,592 voyages + 16,691 trade-daily + 16,115 terminal-daily rows, 2020–2024 |
 | Refineries | NETL GOGI Refineries (primary) + OpenStreetMap (supplement) | Public domain / ODbL | Phase 5 — 2,272 NETL + 88 OSM after 2 km same-country dedup; NETL capacity parsed for ~15% |
 | Basins / storage / ports | NETL Global Oil & Gas Infrastructure (US DOE) | Public domain (17 USC §105) | Phase 4 — 1,046 basins + 26,102 storage + 3,694 ports |
 | Crude + LNG trade flows | BACI (CEPII), HS 2709 + HS 271111 | Free for academic/research use; see CEPII terms | Annual bilateral flows; no API key required; pre-processed & deduplicated |
@@ -121,29 +125,34 @@ pnpm install
 pnpm dev                       # localhost:3000
 pnpm build && pnpm start
 pnpm lint
+pnpm typecheck                 # tsc --noEmit
 pnpm test                      # Vitest unit
 pnpm test:e2e                  # Playwright
 
 # Data pipeline (build-time)
 uv sync                                              # install Python deps
-uv run python -m scripts.ingest.<source>            # one ingest per source (gem_*, netl_*, baci_*, osm_*, ei_*)
+uv run python -m scripts.ingest.<source>            # one ingest per source (gem_*, netl_*, baci_*, osm_*, ei_*, lng_t3)
 uv run python -m scripts.transform.build_country_year     # reserves + production time series
 uv run python -m scripts.transform.build_assets           # extraction sites (other asset transforms append by kind)
 uv run python -m scripts.transform.build_refineries       # NETL primary + OSM supplement
 uv run python -m scripts.transform.build_pipelines        # oil + gas pipelines + simplified GeoJSON sidecar
-uv run python -m scripts.transform.build_lng_terminals    # GEM LNG export + import terminals
+uv run python -m scripts.transform.build_lng_terminals    # LNG-T3 primary + GEM supplement (Phase 6)
+uv run python -m scripts.transform.build_lng_voyages       # LNG-T3 voyages + trade-daily + terminal-daily parquets
 uv run python -m scripts.transform.build_basins           # NETL basin polygons + simplified sidecar
 uv run python -m scripts.transform.build_storage          # NETL storage hubs (append to assets.parquet)
 uv run python -m scripts.transform.build_ports            # NETL ports (append to assets.parquet)
 uv run python -m scripts.transform.build_trade_flow       # BACI HS 2709 + 271111
 uv run python -m scripts.transform.build_chokepoint_routing
 uv run python -m scripts.transform.build_disruption_routing
+uv run python -m scripts.validate.lng_t3_vs_giignl        # LNG-T3 vs GIIGNL public-total reconciliation
 uv run pytest tests/python -v
 
 # Deploy
 vercel                         # preview
 vercel --prod                  # production
 ```
+
+CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typecheck` + `pnpm test` (Vitest) + `pnpm build` for the app; `ruff` + `pytest tests/python` for the Python pipeline; and a Playwright e2e job.
 
 ## Conventions
 

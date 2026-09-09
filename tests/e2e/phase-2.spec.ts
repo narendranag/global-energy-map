@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 // DuckDB-WASM loads from jsDelivr CDN; allow up to 90 s for the full test.
-test.setTimeout(90_000);
+test.setTimeout(180_000);
 
 test("phase 2 critical path", async ({ page }) => {
   page.on("pageerror", (err) => { console.error("PAGE ERROR:", err.message); });
@@ -13,15 +13,20 @@ test("phase 2 critical path", async ({ page }) => {
   // All four layer checkboxes present in the LayerPanel
   await expect(page.getByLabel(/Reserves \(country\)/i)).toBeVisible();
   await expect(page.getByLabel(/Extraction sites/i)).toBeVisible();
-  await expect(page.getByLabel(/^Pipelines$/i)).toBeVisible();
+  await expect(page.getByLabel(/^Oil pipelines$/i)).toBeVisible();
   await expect(page.getByLabel(/^Refineries$/i)).toBeVisible();
 
-  // Layer toggle works — uncheck then re-check Extraction sites
+  // Layer toggle works — uncheck then re-check Extraction sites.
+  // The checkbox is controlled by URL state (router.replace → re-render), so
+  // its `checked` attribute updates asynchronously after the click. Use
+  // click() + a polling expect() rather than check()/uncheck(), which only
+  // verify the resulting state once immediately after the click and don't
+  // tolerate that round-trip.
   const extraction = page.getByLabel(/Extraction sites/i);
-  await extraction.uncheck();
-  await expect(extraction).not.toBeChecked();
-  await extraction.check();
-  await expect(extraction).toBeChecked();
+  await extraction.click();
+  await expect(extraction).not.toBeChecked({ timeout: 20_000 });
+  await extraction.click();
+  await expect(extraction).toBeChecked({ timeout: 20_000 });
 
   // Scenario dropdown lists all 4 scenarios
   const select = page.locator("select").first();
@@ -35,12 +40,12 @@ test("phase 2 critical path", async ({ page }) => {
   // Select Druzhba — ranked importer and refinery lists populate
   // DuckDB-WASM queries may take up to ~30 s on first load (CDN latency + WASM init).
   await select.selectOption("druzhba");
-  await expect(page.getByText(/Top importers at risk/i)).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByText(/Top refineries at risk/i)).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText(/Top importers at risk/i)).toBeVisible({ timeout: 120_000 });
+  await expect(page.getByText(/Top refineries at risk/i)).toBeVisible({ timeout: 120_000 });
 
   // At least one ranked row with a percentage should appear
   await expect(page.locator("ol li").filter({ hasText: /%/ }).first()).toBeVisible({
-    timeout: 60_000,
+    timeout: 120_000,
   });
 
   // About page renders with methodology heading and GEM attribution

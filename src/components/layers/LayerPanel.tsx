@@ -11,6 +11,7 @@ export interface LayerState {
   ports: boolean;           // NEW
   gas_pipelines: boolean;
   lng_terminals: boolean;
+  lng_voyages: boolean;     // Phase 6
 }
 
 export interface LayerPanelProps {
@@ -35,6 +36,7 @@ const ROWS: readonly Row[] = [
   { kind: "group", label: "Gas" },
   { kind: "toggle", key: "gas_pipelines", label: "Gas pipelines" },
   { kind: "toggle", key: "lng_terminals", label: "LNG terminals" },
+  { kind: "toggle", key: "lng_voyages", label: "LNG voyages (2020–2024)" },
 ];
 
 export function LayerPanel({ state, onChange }: LayerPanelProps) {

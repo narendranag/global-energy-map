@@ -13,7 +13,7 @@ export interface CatalogEntry {
 }
 
 export interface Catalog {
-  readonly version: 1 | 2 | 3 | 4;
+  readonly version: 1 | 2 | 3 | 4 | 5;
   readonly generated_at: string;
   readonly entries: readonly CatalogEntry[];
 }

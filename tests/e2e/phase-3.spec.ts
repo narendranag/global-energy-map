@@ -1,6 +1,10 @@
 // tests/e2e/phase-3.spec.ts
 import { test, expect } from "@playwright/test";
 
+// DuckDB-WASM loads from jsDelivr CDN and the scenario queries queue behind the
+// default-layer loads; allow the same budget as phase-1.
+test.setTimeout(180_000);
+
 test.describe("Phase 3 — gas + LNG + Hormuz-LNG", () => {
   test("commodity toggle restyles the choropleth", async ({ page }) => {
     await page.goto("/");
@@ -31,6 +35,6 @@ test.describe("Phase 3 — gas + LNG + Hormuz-LNG", () => {
     const scenarioSelect = page.locator("select");
     await scenarioSelect.selectOption("hormuz");
     // LNG ranked label should appear
-    await expect(page.getByText("Top LNG import terminals at risk")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("Top LNG import terminals at risk")).toBeVisible({ timeout: 120_000 });
   });
 });

@@ -24,6 +24,8 @@ export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioP
     : result?.rankedRefineries.slice(0, 6) ?? [];
   const assetLabel = showLng ? "Top LNG import terminals at risk" : "Top refineries at risk";
   const assetUnit = showLng ? "mtpa" : "kbpd";
+  const showLngT3Footnote =
+    showLng && (result?.byLngImport.some((i) => i.dataSource === "lng-t3") ?? false);
 
   return (
     <div className="pointer-events-auto absolute right-4 top-4 z-10 w-80 rounded-md bg-white/90 p-3 text-sm shadow-lg backdrop-blur">
@@ -75,6 +77,12 @@ export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioP
               })}
             </ol>
           </div>
+          {showLngT3Footnote && (
+            <p className="mt-2 text-[10px] leading-tight text-slate-500">
+              2020–2024: terminal shares from LNG-T3 voyages (partial AIS coverage), scaled to
+              BACI country totals.
+            </p>
+          )}
         </>
       )}
     </div>

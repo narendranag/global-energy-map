@@ -6,14 +6,15 @@ Interactive OSINT visualization of the world's hydrocarbon energy system — res
 
 ## Status
 
-Phases 1–5 shipped. Phase 6+ in planning. See `CLAUDE.md` for current state, schema, and conventions.
+Phases 1–5 shipped; Phase 6 in review. See `CLAUDE.md` for current state, schema, and conventions.
 
 ## What's on the map today
 
 - **5,008 oil & gas extraction sites** (GEM)
 - **3,957 oil + gas pipelines** (GEM, with 71% vintage data — the year slider hides post-Y pipelines)
 - **2,360 refineries** (NETL primary + OSM supplement, ~15% with parsed capacity)
-- **434 LNG terminals** (GEM, split by import/export, capacity in mtpa)
+- **312 LNG terminals** (LNG-T3 primary + GEM supplement, capacity in mtpa, 97.8% with vintage data)
+- **17,592 LNG voyages 2020–2024** (LNG-T3, opt-in layer under the Gas group, filterable by year and confidence)
 - **1,046 petroleum basins** (NETL polygons)
 - **26,102 storage hubs + 3,694 ports** (NETL)
 - **Bilateral trade flows** for crude (HS 2709) and LNG (HS 271111), 1995–2024 (BACI)
@@ -49,6 +50,8 @@ uv run pytest tests/python
 pnpm test:e2e           # Playwright
 ```
 
-## License
+## License and citation
 
-The code in this repository is currently unlicensed; the data is sourced under the licenses listed in `CLAUDE.md` and `docs/data-sources.md`. GEM datasets require visible "Data: Global Energy Monitor, CC BY 4.0" attribution. NETL and EIA data are US Government work (public domain, 17 USC §105). BACI (CEPII) is free for academic/research use. OpenStreetMap derivatives are under ODbL.
+The code in this repository is licensed under the **MIT License** (see `LICENSE`). The data is sourced under each source's own license, listed per-dataset in `CLAUDE.md`, `docs/data-sources.md`, and `public/data/catalog.json` (rendered on the live `/about` page). GEM and LNG-T3 datasets require visible attribution ("Data: Global Energy Monitor, CC BY 4.0" and "Data: Zhou et al. 2026, LNG-T3, CC BY 4.0 (Zenodo 10.5281/zenodo.19571058)" respectively). NETL and EIA data are US Government work (public domain, 17 USC §105). BACI (CEPII) is free for academic/research use. OpenStreetMap derivatives are under ODbL.
+
+If you use this project, please cite it via `CITATION.cff` (also readable through GitHub's "Cite this repository" button).

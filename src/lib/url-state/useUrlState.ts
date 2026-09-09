@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { encodeAppState, decodeAppState, type AppState } from "./encode";
 
@@ -17,17 +17,37 @@ export function useUrlState(defaults: AppState): [
     [searchParams, defaults],
   );
 
+  // router.replace() is asynchronous: the URL (and therefore `searchParams`
+  // and the `state` above) doesn't update until the navigation round-trips
+  // and this hook re-renders. If setState is called twice in quick
+  // succession — e.g. a commodity toggle immediately followed by a scenario
+  // pick — the second call would otherwise merge against the stale
+  // pre-navigation `state`, silently reverting the first change. Track the
+  // latest merged state in a ref so consecutive calls compose correctly
+  // regardless of whether the URL has caught up yet.
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
   const setState = useCallback(
     (partial: Partial<AppState>) => {
+      const current = stateRef.current;
       const merged: AppState = {
-        ...state,
+        ...current,
         ...partial,
-        layers: { ...state.layers, ...(partial.layers ?? {}) },
+        layers: { ...current.layers, ...(partial.layers ?? {}) },
       };
+      // Optimistic: assumes router.replace() below succeeds. If it's
+      // dropped (e.g. interrupted by a rapid navigation elsewhere), this
+      // ref can drift from the URL — but the effect above re-syncs
+      // stateRef.current from searchParams on the next navigation that
+      // does land, so a dropped replace() self-heals rather than sticking.
+      stateRef.current = merged;
       const qs = encodeAppState(merged);
       router.replace(`?${qs}`, { scroll: false });
     },
-    [state, router],
+    [router],
   );
 
   return [state, setState];

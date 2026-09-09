@@ -12,6 +12,7 @@ const ALL_ON: LayerState = {
   ports: true,
   gas_pipelines: true,
   lng_terminals: true,
+  lng_voyages: true,
 };
 
 const DEFAULTS: AppState = {
@@ -83,5 +84,26 @@ describe("decodeAppState", () => {
   it("falls back to defaults for non-numeric year", () => {
     const decoded = decodeAppState(new URLSearchParams("year=banana"), DEFAULTS);
     expect(decoded.year).toBe(2020);
+  });
+
+  it("round-trips with lng_voyages flag toggled on", () => {
+    const state: AppState = {
+      year: 2023,
+      commodity: "gas",
+      scenario: "hormuz",
+      layers: { ...ALL_ON, lng_voyages: true },
+    };
+    const qs = encodeAppState(state);
+    const decoded = decodeAppState(new URLSearchParams(qs), DEFAULTS);
+    expect(decoded.layers.lng_voyages).toBe(true);
+  });
+
+  it("decodes a URL missing lng_voyages to the default (false)", () => {
+    // Forward-compat: pre-Phase-6 bookmarks land with lng_voyages=false.
+    const decoded = decodeAppState(
+      new URLSearchParams("year=2020&layers=reserves,basins,extraction"),
+      DEFAULTS,
+    );
+    expect(decoded.layers.lng_voyages).toBe(false);
   });
 });

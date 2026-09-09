@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { IconLayer } from "@deck.gl/layers";
 import { query } from "@/lib/duckdb/query";
+import { isVisibleAtYear } from "@/lib/vintage/filter";
 import type { LngImportImpact } from "@/lib/scenarios/types";
 
 interface LngTerminalRow extends Record<string, unknown> {
@@ -14,10 +15,16 @@ interface LngTerminalRow extends Record<string, unknown> {
   capacity: number | null;
   operator: string | null;
   status: string | null;
+  commissioned_year: number | null;
+  unit_count: number | null;
+  total_processed_bcm: number | null;
+  un_locode: string | null;
+  source: string | null;
 }
 
 export interface LngTerminalsLayerInput {
   readonly visible: boolean;
+  readonly year: number;
   readonly impactByAssetId?: ReadonlyMap<string, LngImportImpact>;
 }
 
@@ -37,7 +44,7 @@ const ICON_MAPPING = {
   lng_import: { x: 32, y: 0, width: 32, height: 32, anchorX: 16, anchorY: 28, mask: true },
 } as const;
 
-export function useLngTerminalsLayer({ visible, impactByAssetId }: LngTerminalsLayerInput) {
+export function useLngTerminalsLayer({ visible, year, impactByAssetId }: LngTerminalsLayerInput) {
   const [layer, setLayer] = useState<IconLayer<LngTerminalRow> | null>(null);
   useEffect(() => {
     const ctrl = { cancelled: false };
@@ -53,14 +60,21 @@ export function useLngTerminalsLayer({ visible, impactByAssetId }: LngTerminalsL
     }
     void (async () => {
       const res = await query<LngTerminalRow>(
-        `SELECT asset_id, kind, name, country_iso3, lon, lat, capacity, operator, status
+        `SELECT asset_id, kind, name, country_iso3, lon, lat, capacity, operator, status,
+                CAST(commissioned_year AS INTEGER) AS commissioned_year,
+                CAST(unit_count AS INTEGER) AS unit_count,
+                CAST(total_processed_bcm AS DOUBLE) AS total_processed_bcm,
+                un_locode, source
          FROM read_parquet('/data/assets.parquet')
          WHERE kind IN ('lng_export', 'lng_import')`,
       );
       if (ctrl.cancelled) return;
+      const filtered = (res.rows as LngTerminalRow[]).filter((r) =>
+        isVisibleAtYear(r.commissioned_year, year),
+      );
       const l = new IconLayer<LngTerminalRow>({
         id: "lng-terminals",
-        data: res.rows,
+        data: filtered,
         iconAtlas: ICON_ATLAS,
         iconMapping: ICON_MAPPING,
         getIcon: (d) => d.kind,
@@ -72,6 +86,12 @@ export function useLngTerminalsLayer({ visible, impactByAssetId }: LngTerminalsL
         sizeMaxPixels: 36,
         getColor: (d) => {
           const impact = impactByAssetId?.get(d.asset_id);
+          if (impact?.coverage === "none") {
+            // No measured voyages to this terminal under the active scenario's
+            // year — a data gap, not a real "safe" reading. Render neutral grey
+            // rather than the base teal (which would look like "no exposure").
+            return [140, 140, 140, 200];
+          }
           if (impact && impact.shareAtRisk > 0) {
             const red = Math.round(80 + 175 * impact.shareAtRisk);
             return [red, 30, 30, 230];
@@ -87,6 +107,6 @@ export function useLngTerminalsLayer({ visible, impactByAssetId }: LngTerminalsL
     return () => {
       ctrl.cancelled = true;
     };
-  }, [visible, impactByAssetId]);
+  }, [visible, year, impactByAssetId]);
   return layer;
 }

@@ -3,6 +3,7 @@ import type {
   DisruptionRouteRow,
   ImporterImpact,
   LngImportRow,
+  LngVoyageRow,
   RefineryRow,
   ScenarioId,
   ScenarioResult,
@@ -10,6 +11,7 @@ import type {
 } from "./types";
 import { computeRefineryImpacts } from "./refinery";
 import { computeLngImportImpacts } from "./lng";
+import { computeLngImportImpactsFromVoyages } from "./lng-t3";
 
 export * from "./types";
 
@@ -21,6 +23,8 @@ export interface ScenarioInput {
   readonly routes: readonly DisruptionRouteRow[];
   readonly refineries?: readonly RefineryRow[];
   readonly lngImports?: readonly LngImportRow[];
+  /** Phase 6: LNG-T3 voyages, already pre-filtered by active year. */
+  readonly lngVoyages?: readonly LngVoyageRow[];
 }
 
 export function computeScenarioImpact(input: ScenarioInput): ScenarioResult {
@@ -82,8 +86,20 @@ export function computeScenarioImpact(input: ScenarioInput): ScenarioResult {
       : [];
   const rankedRefineries = [...byRefinery].sort((a, b) => b.atRiskQty - a.atRiskQty);
 
+  // Phase 6: prefer LNG-T3 voyage-derived per-terminal attribution when
+  // we have voyage data and the active year falls in the LNG-T3 range.
+  const lngVoyages =
+    input.year >= 2020 && input.year <= 2024 ? (input.lngVoyages ?? []) : [];
+
   const byLngImport =
-    input.lngImports && input.lngImports.length > 0
+    lngVoyages.length > 0
+      ? computeLngImportImpactsFromVoyages({
+          lngImports: input.lngImports ?? [],
+          voyages: lngVoyages,
+          flowsByImporter,
+          lookupShare,
+        })
+      : input.lngImports && input.lngImports.length > 0
       ? computeLngImportImpacts({
           lngImports: input.lngImports,
           flowsByImporter,

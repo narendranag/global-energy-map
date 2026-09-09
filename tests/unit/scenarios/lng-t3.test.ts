@@ -159,6 +159,50 @@ describe("computeLngImportImpactsFromVoyages", () => {
     expect(a.shareAtRisk).toBeCloseTo(0.5, 6); // 50% of the mix is QAT (100% at risk)
     expect(a.coverage).toBe("measured");
   });
+
+  it("conserves Q_C across covered terminals only, ignoring the uncovered one", () => {
+    // JPN has three terminals but only T_A and T_B see voyages. The whole of
+    // JPN's 900 t must land on the covered pair (1:2), with T_C at zero —
+    // no tonnes may leak into or out of the uncovered terminal.
+    const T_D: LngImportRow = { asset_id: "T_D", name: "T_D", country_iso3: "JPN", capacity: 20 };
+    const out = computeLngImportImpactsFromVoyages({
+      lngImports: [T_A, T_B, T_D],
+      voyages: [v("T_A", "JPN", "QAT", 100), v("T_B", "JPN", "QAT", 200)],
+      flowsByImporter: flows({ JPN: [{ iso3: "QAT", qty: 900 }] }),
+      lookupShare: () => 1.0,
+    });
+    const total = out.reduce(
+      (s, x) => s + x.topSources.reduce((a, y) => a + y.qty, 0),
+      0,
+    );
+    expect(total).toBeCloseTo(900, 6);
+    expect(out.find((x) => x.asset_id === "T_D")?.coverage).toBe("none");
+    // T_D's 20 mtpa capacity must not pull any share — this is not the
+    // capacity-proxy path.
+    expect(out.find((x) => x.asset_id === "T_A")?.atRiskQty).toBeCloseTo(300, 6);
+  });
+
+  it("handles BigInt amount_cbm (Arrow deserialises the BIGINT column as BigInt)", () => {
+    // lng_voyage.parquet stores amount_cbm as BIGINT; duckdb-wasm hands it
+    // back as a JS BigInt at runtime even though the TS type says number.
+    // Without coercion, summing it against a number accumulator throws.
+    const bigintVoyage = (terminal: string, from: string, cbm: bigint): LngVoyageRow => ({
+      ...v(terminal, "JPN", from, 0),
+      amount_cbm: cbm,
+    });
+    const out = computeLngImportImpactsFromVoyages({
+      lngImports: [T_A, T_B],
+      voyages: [bigintVoyage("T_A", "QAT", 100n), bigintVoyage("T_B", "QAT", 200n)],
+      flowsByImporter: flows({ JPN: [{ iso3: "QAT", qty: 900 }] }),
+      lookupShare: () => 1.0,
+    });
+    const a = out.find((x) => x.asset_id === "T_A");
+    const b = out.find((x) => x.asset_id === "T_B");
+    if (!a || !b) throw new Error("missing terminal");
+    expect(a.atRiskQty).toBeCloseTo(300, 6);
+    expect(b.atRiskQty).toBeCloseTo(600, 6);
+    expect(a.coverage).toBe("measured");
+  });
 });
 
 describe("computeScenarioImpact — pre-2020 years stay on the BACI path even with voyages supplied", () => {

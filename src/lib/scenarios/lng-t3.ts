@@ -67,7 +67,16 @@ export function computeLngImportImpactsFromVoyages({
   const byTerminalName = new Map<string, SrcQty[]>();
   for (const v of relevant) {
     const list = byTerminalName.get(v.to_terminal) ?? [];
-    list.push({ iso3: v.from_country_iso3, qty: v.amount_cbm });
+    // `amount_cbm` is BIGINT in lng_voyage.parquet, and Apache Arrow
+    // deserialises BIGINT as a JS BigInt — summing it against a number
+    // accumulator throws "Cannot mix BigInt and other types". Same hazard
+    // engine.ts works around with its `!=` year comparison. Coerce once,
+    // here, so every downstream arithmetic op sees a plain number.
+    // (Number(null) === 0, which is the right reading for a null amount.)
+    list.push({
+      iso3: v.from_country_iso3,
+      qty: Number(v.amount_cbm),
+    });
     byTerminalName.set(v.to_terminal, list);
   }
 

@@ -7,6 +7,7 @@ import pytest
 from scripts.transform._lng_terminal_helpers import (
     assert_unique_asset_ids,
     collapse_duplicate_names,
+    name_matches_in_country,
     normalize_status,
 )
 
@@ -83,6 +84,48 @@ def test_collapse_duplicate_names_honours_key_argument():
     assert len(t1) == 1
     # Deterministic preference, not positional keep="first".
     assert t1.iloc[0]["status"] == "operating"
+
+
+def test_name_matches_in_country_exact_match():
+    gem = pd.DataFrame([{"country_iso3": "AUS", "name": "Ichthys FLNG Terminal"}])
+    lng_t3 = pd.DataFrame([{"country_iso3": "AUS", "name": "Ichthys FLNG Terminal"}])
+    mask = name_matches_in_country(gem, lng_t3)
+    assert mask.tolist() == [True]
+
+
+def test_name_matches_in_country_case_and_whitespace_insensitive():
+    gem = pd.DataFrame([{"country_iso3": "AUS", "name": "  ichthys flng terminal "}])
+    lng_t3 = pd.DataFrame([{"country_iso3": "AUS", "name": "Ichthys FLNG Terminal"}])
+    mask = name_matches_in_country(gem, lng_t3)
+    assert mask.tolist() == [True]
+
+
+def test_name_matches_in_country_different_country_no_match():
+    gem = pd.DataFrame([{"country_iso3": "USA", "name": "Ichthys FLNG Terminal"}])
+    lng_t3 = pd.DataFrame([{"country_iso3": "AUS", "name": "Ichthys FLNG Terminal"}])
+    mask = name_matches_in_country(gem, lng_t3)
+    assert mask.tolist() == [False]
+
+
+def test_name_matches_in_country_different_name_no_match():
+    gem = pd.DataFrame([{"country_iso3": "AUS", "name": "Other Terminal"}])
+    lng_t3 = pd.DataFrame([{"country_iso3": "AUS", "name": "Ichthys FLNG Terminal"}])
+    mask = name_matches_in_country(gem, lng_t3)
+    assert mask.tolist() == [False]
+
+
+def test_name_matches_in_country_empty_lng_t3_no_match():
+    gem = pd.DataFrame([{"country_iso3": "AUS", "name": "Ichthys FLNG Terminal"}])
+    lng_t3 = pd.DataFrame(columns=["country_iso3", "name"])
+    mask = name_matches_in_country(gem, lng_t3)
+    assert mask.tolist() == [False]
+
+
+def test_name_matches_in_country_empty_gem_returns_empty_series():
+    gem = pd.DataFrame(columns=["country_iso3", "name"])
+    lng_t3 = pd.DataFrame([{"country_iso3": "AUS", "name": "Ichthys FLNG Terminal"}])
+    mask = name_matches_in_country(gem, lng_t3)
+    assert len(mask) == 0
 
 
 def test_collapse_duplicate_names_is_order_independent():

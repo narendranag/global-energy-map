@@ -48,6 +48,7 @@ from scripts.transform._lng_iso3 import lookup_iso3
 from scripts.transform._lng_terminal_helpers import (
     assert_unique_asset_ids,
     collapse_duplicate_names,
+    name_matches_in_country,
     normalize_status,
 )
 from scripts.transform._refinery_dedup import haversine_km  # reuse Phase 5 helper
@@ -226,9 +227,26 @@ def _load_gem() -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 
 def _gem_records_not_in_lngt3(gem: pd.DataFrame, lng_t3: pd.DataFrame) -> pd.DataFrame:
-    """Return GEM rows with NO LNG-T3 counterpart within DEDUP_THRESHOLD_KM same country."""
+    """Return GEM rows with NO LNG-T3 counterpart, by name or by proximity.
+
+    Two passes, in order:
+    1. Name-equality pre-pass: drop any GEM row whose (country, name) —
+       case-insensitive, stripped — matches an LNG-T3 row in the same
+       country. Catches same-terminal pairs whose coordinates diverge too
+       far for the proximity pass below (e.g. "Ichthys FLNG Terminal": GEM
+       and LNG-T3 records ~440 km apart, same country, same name).
+    2. Haversine proximity pass on what's left: drop GEM rows within
+       DEDUP_THRESHOLD_KM of an LNG-T3 row in the same country.
+    """
     if gem.empty or lng_t3.empty:
         return gem.copy()
+
+    name_dupe = name_matches_in_country(gem, lng_t3)
+    n_name_dupe = int(name_dupe.sum())
+    if n_name_dupe:
+        print(f"GEM: {n_name_dupe} row(s) dropped by name-equality pre-pass "
+              f"(same country, same name as an LNG-T3 terminal)", file=sys.stderr)
+    gem = gem.loc[~name_dupe].copy()
 
     t3_by_country: dict[str, pd.DataFrame] = {
         iso3: grp for iso3, grp in lng_t3.groupby("country_iso3")
@@ -275,6 +293,15 @@ def main() -> None:
     combined["source"] = combined["source"].astype(pd.StringDtype())
     combined["source_version"] = combined["source_version"].astype(pd.StringDtype())
     assert_unique_asset_ids(combined)
+    name_keys = list(zip(
+        combined["country_iso3"],
+        combined["name"].str.strip().str.casefold(),
+        strict=True,
+    ))
+    assert len(name_keys) == len(set(name_keys)), (
+        "duplicate (country_iso3, name) pairs survived dedup: "
+        f"{[k for k in name_keys if name_keys.count(k) > 1]}"
+    )
 
     # Idempotent: drop prior LNG rows, append new
     existing = pd.read_parquet(ASSETS)

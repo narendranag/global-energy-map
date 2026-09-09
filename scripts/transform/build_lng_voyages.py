@@ -28,6 +28,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from scripts.transform._lng_iso3 import lookup_iso3
+from scripts.transform._lng_voyage_helpers import make_unique_ids
 
 RAW_DIR = Path("data/raw/lng_t3/v1-2026-04-01")
 OUT_VOYAGE = Path("public/data/lng_voyage.parquet")
@@ -81,12 +82,19 @@ def _build_voyages() -> pd.DataFrame:
             f"to={miss_to} {dict(bad_to)} — extend LNG_T3_NAME_TO_ISO3"
         )
 
+    base_voyage_id = (
+        df["start_date"].dt.strftime("%Y%m%d")
+        + "_" + df["IMO"].astype(str)
+        + "_" + df["voyage"].astype(str)
+    )
+    voyage_id = make_unique_ids(base_voyage_id)
+    n_disambiguated = int((voyage_id != base_voyage_id).sum())
+    if n_disambiguated:
+        print(f"[voyage] disambiguated {n_disambiguated} colliding voyage_id "
+              f"values (start_date+IMO+voyage_type not unique)", file=sys.stderr)
+
     out = pd.DataFrame({
-        "voyage_id": (
-            df["start_date"].dt.strftime("%Y%m%d")
-            + "_" + df["IMO"].astype(str)
-            + "_" + df["voyage"].astype(str)
-        ),
+        "voyage_id": voyage_id,
         "start_date": df["start_date"].dt.date,
         "end_date": df["end_date"].dt.date,
         "imo": df["IMO"].astype("Int64"),
@@ -105,6 +113,7 @@ def _build_voyages() -> pd.DataFrame:
         "source": SOURCE,
         "source_version": SOURCE_VERSION,
     })
+    assert out["voyage_id"].is_unique, "voyage_id collisions survived disambiguation"
     return out
 
 

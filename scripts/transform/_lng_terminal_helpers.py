@@ -96,3 +96,27 @@ def assert_unique_asset_ids(df: pd.DataFrame) -> None:
     if not dupes.empty:
         ids = sorted(dupes.unique().tolist(), key=str)
         raise ValueError(f"duplicate asset_id values found: {ids}")
+
+
+def _normalize_name(name: object) -> str:
+    """Case-fold and strip a terminal name for equality comparison."""
+    return str(name).strip().casefold()
+
+
+def name_matches_in_country(gem: pd.DataFrame, lng_t3: pd.DataFrame) -> pd.Series:
+    """Boolean mask over `gem` rows whose (country_iso3, name) — case-insensitive,
+    stripped — matches an LNG-T3 row in the same country.
+
+    This is a pre-pass ahead of the haversine proximity dedup: two sources can
+    carry the *same named terminal* at coordinates far enough apart (hundreds
+    of km — e.g. differing site precision, or a relocated pin) that the 25 km
+    proximity check alone lets both rows through. An exact name match within
+    the same country is a stronger, independent signal that these are the
+    same physical terminal, so it's checked first, ahead of proximity.
+    """
+    if gem.empty or lng_t3.empty:
+        return pd.Series(False, index=gem.index)
+
+    t3_keys = set(zip(lng_t3["country_iso3"], lng_t3["name"].map(_normalize_name), strict=True))
+    gem_keys = list(zip(gem["country_iso3"], gem["name"].map(_normalize_name), strict=True))
+    return pd.Series([k in t3_keys for k in gem_keys], index=gem.index)

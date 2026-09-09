@@ -13,7 +13,7 @@ Phases 1–5 shipped; Phase 6 in review. See `CLAUDE.md` for current state, sche
 - **5,008 oil & gas extraction sites** (GEM)
 - **3,957 oil + gas pipelines** (GEM, with 71% vintage data — the year slider hides post-Y pipelines)
 - **2,360 refineries** (NETL primary + OSM supplement, ~15% with parsed capacity)
-- **313 LNG terminals** (LNG-T3 primary + GEM supplement, capacity in mtpa, 97.8% with vintage data)
+- **312 LNG terminals** (LNG-T3 primary + GEM supplement, capacity in mtpa, 97.8% with vintage data)
 - **17,592 LNG voyages 2020–2024** (LNG-T3, opt-in layer under the Gas group, filterable by year and confidence)
 - **1,046 petroleum basins** (NETL polygons)
 - **26,102 storage hubs + 3,694 ports** (NETL)

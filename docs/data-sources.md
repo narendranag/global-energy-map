@@ -96,7 +96,7 @@ Categories:
 
 **What we ingest:**
 - Gas pipelines: LineString geometry, status, capacity (bcm/y), operator, start year, fuel type.
-- LNG terminals: as of Phase 3, 434 facilities split by `tracker-custom ∈ {GGIT-export, GGIT-import}` (capacity in mtpa). **As of Phase 6, GEM is a supplement (8 terminals) to LNG-T3** (see the LNG-T3 entry below) — GEM terminals within 25 km of a same-country LNG-T3 terminal are dropped as already-covered.
+- LNG terminals: as of Phase 3, 434 facilities split by `tracker-custom ∈ {GGIT-export, GGIT-import}` (capacity in mtpa). **As of Phase 6, GEM is a supplement (7 terminals) to LNG-T3** (see the LNG-T3 entry below) — GEM terminals sharing a name with a same-country LNG-T3 terminal, or falling within 25 km of one, are dropped as already-covered.
 
 **Coverage:**
 - LNG terminals have authoritative import/export classification and rich mtpa capacity data — useful as a supplement where LNG-T3 doesn't have a match.

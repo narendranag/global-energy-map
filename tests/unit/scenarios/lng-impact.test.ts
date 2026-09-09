@@ -2,6 +2,12 @@ import { describe, it, expect } from "vitest";
 import { computeLngImportImpacts } from "@/lib/scenarios/lng";
 import type { LngImportRow } from "@/lib/scenarios/types";
 
+function at<T>(arr: readonly T[], i: number): T {
+  const v = arr[i];
+  if (v === undefined) throw new Error(`missing index ${String(i)}`);
+  return v;
+}
+
 const flowsByImporter = new Map([
   // JPN imports: 50 from QAT, 30 from AUS, 20 from USA
   ["JPN", [
@@ -29,8 +35,8 @@ describe("computeLngImportImpacts", () => {
   it("attributes country imports by terminal capacity share", () => {
     // JPN has 2 terminals: 75 mtpa + 25 mtpa = 100 total → 75% / 25%
     const terms: LngImportRow[] = [
-      { asset_id: "JPN-T1", country_iso3: "JPN", capacity: 75 },
-      { asset_id: "JPN-T2", country_iso3: "JPN", capacity: 25 },
+      { asset_id: "JPN-T1", name: "JPN-T1", country_iso3: "JPN", capacity: 75 },
+      { asset_id: "JPN-T2", name: "JPN-T2", country_iso3: "JPN", capacity: 25 },
     ];
     const out = computeLngImportImpacts({ lngImports: terms, flowsByImporter, lookupShare });
     const t1 = out.find((t) => t.asset_id === "JPN-T1");
@@ -48,31 +54,31 @@ describe("computeLngImportImpacts", () => {
 
   it("falls back to uniform-within-country when all capacities are zero", () => {
     const terms: LngImportRow[] = [
-      { asset_id: "KOR-T1", country_iso3: "KOR", capacity: 0 },
-      { asset_id: "KOR-T2", country_iso3: "KOR", capacity: 0 },
+      { asset_id: "KOR-T1", name: "KOR-T1", country_iso3: "KOR", capacity: 0 },
+      { asset_id: "KOR-T2", name: "KOR-T2", country_iso3: "KOR", capacity: 0 },
     ];
     const out = computeLngImportImpacts({ lngImports: terms, flowsByImporter, lookupShare });
     // Each terminal gets 50% of KOR's 100 total → 50; QAT at risk: 60 * 0.5 = 30
-    expect(out[0].atRiskQty).toBeCloseTo(30, 5);
-    expect(out[0].shareAtRisk).toBeCloseTo(0.6, 5);  // 30/50
-    expect(out[1].atRiskQty).toBeCloseTo(30, 5);
+    expect(at(out, 0).atRiskQty).toBeCloseTo(30, 5);
+    expect(at(out, 0).shareAtRisk).toBeCloseTo(0.6, 5);  // 30/50
+    expect(at(out, 1).atRiskQty).toBeCloseTo(30, 5);
   });
 
   it("returns top-5 sources sorted by attributed qty desc", () => {
     const terms: LngImportRow[] = [
-      { asset_id: "JPN-T1", country_iso3: "JPN", capacity: 100 },
+      { asset_id: "JPN-T1", name: "JPN-T1", country_iso3: "JPN", capacity: 100 },
     ];
     const out = computeLngImportImpacts({ lngImports: terms, flowsByImporter, lookupShare });
-    expect(out[0].topSources.map((s) => s.iso3)).toEqual(["QAT", "AUS", "USA"]);
+    expect(at(out, 0).topSources.map((s) => s.iso3)).toEqual(["QAT", "AUS", "USA"]);
   });
 
   it("yields shareAtRisk=0 for a terminal in a country with no imports", () => {
     const terms: LngImportRow[] = [
-      { asset_id: "USA-T1", country_iso3: "USA", capacity: 20 },  // net-exporter case
+      { asset_id: "USA-T1", name: "USA-T1", country_iso3: "USA", capacity: 20 },  // net-exporter case
     ];
     const out = computeLngImportImpacts({ lngImports: terms, flowsByImporter, lookupShare });
-    expect(out[0].atRiskQty).toBe(0);
-    expect(out[0].shareAtRisk).toBe(0);
-    expect(out[0].topSources).toEqual([]);
+    expect(at(out, 0).atRiskQty).toBe(0);
+    expect(at(out, 0).shareAtRisk).toBe(0);
+    expect(at(out, 0).topSources).toEqual([]);
   });
 });

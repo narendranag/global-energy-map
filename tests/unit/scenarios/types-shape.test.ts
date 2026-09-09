@@ -16,7 +16,7 @@ describe("Phase 3 type extensions", () => {
   });
 
   it("LngImportRow has expected shape", () => {
-    const row: LngImportRow = { asset_id: "x", country_iso3: "JPN", capacity: 12.5 };
+    const row: LngImportRow = { asset_id: "x", country_iso3: "JPN", capacity: 12.5, name: "x" };
     expect(row.country_iso3).toBe("JPN");
   });
 
@@ -25,10 +25,12 @@ describe("Phase 3 type extensions", () => {
       asset_id: "x",
       iso3: "JPN",
       capacity: 12.5,
+      name: "x",
       atRiskQty: 0,
       shareAtRisk: 0,
       topSources: [],
       dataSource: "baci",
+      coverage: "capacity-proxy",
     };
     expect(impact.shareAtRisk).toBe(0);
   });
@@ -51,7 +53,7 @@ describe("Phase 3 type extensions", () => {
       year: 2022,
       tradeFlows: [],
       routes: [],
-      lngImports: [{ asset_id: "x", country_iso3: "JPN", capacity: 12.5 }],
+      lngImports: [{ asset_id: "x", country_iso3: "JPN", capacity: 12.5, name: "x" }],
     };
     expect(input.commodity).toBe("gas");
   });

@@ -34,6 +34,8 @@ export interface LngImportRow {
   readonly country_iso3: string;
   /** Mtpa. May be 0 when GEM doesn't tag capacity — engine falls back to uniform-within-country. */
   readonly capacity: number;
+  /** Terminal name — matched exactly against LngVoyageRow.to_terminal. */
+  readonly name: string;
 }
 
 /** Phase 6: LNG-T3 voyage row used for per-terminal disaggregation. */
@@ -64,11 +66,21 @@ export interface LngImportImpact {
   readonly asset_id: string;
   readonly iso3: string;
   readonly capacity: number;
+  readonly name: string;
   readonly atRiskQty: number;
   readonly shareAtRisk: number;
   readonly topSources: readonly { iso3: string; qty: number }[];
   /** Phase 6: which engine path produced this impact. */
   readonly dataSource: "baci" | "lng-t3";
+  /**
+   * Phase 6: how this impact was derived.
+   *  - "measured": voyage data covers this terminal directly (LNG-T3)
+   *  - "capacity-proxy": BACI country total spread by terminal capacity (Phase 3 path)
+   *  - "none": terminal's country has voyage coverage, but this specific
+   *    terminal received zero qualifying voyages — quantities are zero, not
+   *    a real reading.
+   */
+  readonly coverage: "measured" | "capacity-proxy" | "none";
 }
 
 export interface ImporterImpact {

@@ -44,10 +44,12 @@ export function computeLngImportImpacts({
       asset_id: t.asset_id,
       iso3: t.country_iso3,
       capacity: t.capacity,
+      name: t.name,
       atRiskQty: termAtRisk,
       shareAtRisk: totalSupply > 0 ? termAtRisk / totalSupply : 0,
       topSources,
       dataSource: "baci",
+      coverage: "capacity-proxy",
     });
   }
   return out;

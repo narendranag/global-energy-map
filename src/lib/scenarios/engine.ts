@@ -96,6 +96,7 @@ export function computeScenarioImpact(input: ScenarioInput): ScenarioResult {
       ? computeLngImportImpactsFromVoyages({
           lngImports: input.lngImports ?? [],
           voyages: lngVoyages,
+          flowsByImporter,
           lookupShare,
         })
       : input.lngImports && input.lngImports.length > 0

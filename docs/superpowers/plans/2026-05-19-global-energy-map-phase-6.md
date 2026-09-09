@@ -1764,7 +1764,7 @@ EOF
 
 **Why:** Add a new boolean to LayerState for the LNG voyages toggle, default OFF (high visual noise).
 
-- [ ] **Step 1: Modify LayerPanel.tsx**
+- [x] **Step 1: Modify LayerPanel.tsx**
 
 Open `src/components/layers/LayerPanel.tsx`. Update `LayerState`:
 
@@ -1803,7 +1803,7 @@ const ROWS: readonly Row[] = [
 ];
 ```
 
-- [ ] **Step 2: Update page.tsx defaults**
+- [x] **Step 2: Update page.tsx defaults**
 
 Open `src/app/page.tsx`. Find `ALL_LAYERS_ON`:
 
@@ -1840,7 +1840,7 @@ const ALL_LAYERS_ON: LayerState = {
 
 (Rename the constant to `DEFAULT_LAYERS` if the name conflicts with the new behavior — but the existing code uses `ALL_LAYERS_ON` as `DEFAULTS.layers` initializer, so keeping the name with one explicit `false` is fine.)
 
-- [ ] **Step 3: Verify url-state encoding handles the new flag**
+- [x] **Step 3: Verify url-state encoding handles the new flag**
 
 `encode.ts` should already iterate over LayerState keys without hard-coding them. Verify by reading the file:
 
@@ -1850,7 +1850,7 @@ grep -A 30 "encodeAppState" src/lib/url-state/encode.ts | head -50
 
 If the encoder/decoder iterates over keys dynamically, no changes needed. If it hard-codes the key list, extend it to include `lng_voyages`.
 
-- [ ] **Step 4: Add url-state test**
+- [x] **Step 4: Add url-state test**
 
 Open `tests/unit/url-state/encode.test.ts`. Find the `ALL_ON` constant and add `lng_voyages: true` to it. Then add a new test case:
 
@@ -1877,7 +1877,7 @@ it("decodes a URL missing lng_voyages to the default (false)", () => {
 });
 ```
 
-- [ ] **Step 5: Run vitest**
+- [x] **Step 5: Run vitest**
 
 ```bash
 pnpm vitest run tests/unit/url-state
@@ -1885,7 +1885,7 @@ pnpm vitest run tests/unit/url-state
 
 Expected: all url-state tests pass.
 
-- [ ] **Step 6: Type-check + lint**
+- [x] **Step 6: Type-check + lint**
 
 ```bash
 pnpm tsc --noEmit 2>&1 | tail -10
@@ -1894,7 +1894,7 @@ pnpm lint
 
 Expected: clean.
 
-- [ ] **Step 7: DO NOT commit yet** — Task 12 wires the actual voyage layer; commit together at end of Task 12.
+- [x] **Step 7: DO NOT commit yet** — Task 12 wires the actual voyage layer; commit together at end of Task 12.
 
 ---
 
@@ -1905,7 +1905,7 @@ Expected: clean.
 
 **Why:** Renders LNG-T3 voyages as great-circle arcs from `from_terminal` → `to_terminal`. Filtered to active year (start_date.year <= Y <= end_date.year); min confidence 3; default OFF.
 
-- [ ] **Step 1: Create LngVoyagesLayer.tsx**
+- [x] **Step 1: Create LngVoyagesLayer.tsx**
 
 ```typescript
 "use client";
@@ -2030,7 +2030,7 @@ export function useLngVoyagesLayer({
 }
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 ```bash
 pnpm tsc --noEmit 2>&1 | tail -10
@@ -2038,7 +2038,7 @@ pnpm tsc --noEmit 2>&1 | tail -10
 
 Expected: no errors in the new file. (`page.tsx` will complain because it isn't mounting the layer yet — Task 13 fixes.)
 
-- [ ] **Step 3: DO NOT commit yet** — Task 13 mounts the layer in page.tsx; commit together.
+- [x] **Step 3: DO NOT commit yet** — Task 13 mounts the layer in page.tsx; commit together.
 
 ---
 
@@ -2051,7 +2051,7 @@ Expected: no errors in the new file. (`page.tsx` will complain because it isn't 
 
 **Why:** Mount the voyage layer; load voyage data for the active year; thread the impact map through to color the arcs by scenario.
 
-- [ ] **Step 1: Read current useScenario.ts**
+- [x] **Step 1: Read current useScenario.ts**
 
 ```bash
 ls src/components/scenarios/
@@ -2060,7 +2060,7 @@ cat src/components/scenarios/useScenario.ts
 
 Confirm the structure; existing hook returns a `ScenarioResult` from `computeScenarioImpact`.
 
-- [ ] **Step 2: Extend useScenario.ts to load voyages when year ∈ [2020, 2024]**
+- [x] **Step 2: Extend useScenario.ts to load voyages when year ∈ [2020, 2024]**
 
 Open `src/components/scenarios/useScenario.ts`. Find the data-loading block (it loads tradeFlows, routes, refineries, lngImports). Add a parallel load for voyages when year is in range:
 
@@ -2089,7 +2089,7 @@ Pass `lngVoyages: voyages` into `computeScenarioImpact({...})`.
 
 Note: the actual implementation of `useScenario.ts` may differ; adapt by reading the file. The principle: load voyages once per (year, commodity, scenario), pass to engine.
 
-- [ ] **Step 3: Add overlay helper**
+- [x] **Step 3: Add overlay helper**
 
 Open `src/components/scenarios/overlay.ts`. Add a new helper:
 
@@ -2112,7 +2112,7 @@ export function lngVoyageImpactByTerminalName(
 }
 ```
 
-- [ ] **Step 4: Wire into page.tsx**
+- [x] **Step 4: Wire into page.tsx**
 
 Open `src/app/page.tsx`. Add the voyage layer:
 
@@ -2172,7 +2172,7 @@ Add a tooltip case in `getTooltip`:
 
 Replace the placeholder type with an inline interface or import `VoyageRow`-style fields from where convenient; use the same `Record<string, unknown>` cast pattern the file already uses for other tooltips.
 
-- [ ] **Step 5: Type-check + tests + build**
+- [x] **Step 5: Type-check + tests + build**
 
 ```bash
 pnpm tsc --noEmit 2>&1 | tail -20
@@ -2183,7 +2183,7 @@ pnpm build 2>&1 | tail -10
 
 All must succeed.
 
-- [ ] **Step 6: Commit Tasks 11, 12, 13 together**
+- [x] **Step 6: Commit Tasks 11, 12, 13 together**
 
 ```bash
 git add src/components/layers/LayerPanel.tsx src/app/page.tsx \
@@ -2222,13 +2222,13 @@ EOF
 
 **Why:** The new schema columns on `assets.parquet` (unit_count, total_processed_bcm, un_locode) should appear in the terminal hover tooltip. Also surface the `source` field so analysts know which row came from LNG-T3 vs GEM.
 
-- [ ] **Step 1: Read the current LngTerminalsLayer.tsx**
+- [x] **Step 1: Read the current LngTerminalsLayer.tsx**
 
 ```bash
 cat src/components/layers/LngTerminalsLayer.tsx | head -80
 ```
 
-- [ ] **Step 2: Modify the SELECT and the tooltip**
+- [x] **Step 2: Modify the SELECT and the tooltip**
 
 Open `src/components/layers/LngTerminalsLayer.tsx`. Update the SQL SELECT to include the new columns:
 
@@ -2261,7 +2261,7 @@ interface LngTerminalRow extends Record<string, unknown> {
 }
 ```
 
-- [ ] **Step 3: Update the tooltip in page.tsx**
+- [x] **Step 3: Update the tooltip in page.tsx**
 
 Open `src/app/page.tsx`. Find the existing `lng-terminals` tooltip block (search for `lng-terminals`). Extend the lines list to include the new fields:
 
@@ -2308,7 +2308,7 @@ Open `src/app/page.tsx`. Find the existing `lng-terminals` tooltip block (search
       }
 ```
 
-- [ ] **Step 4: Build + lint**
+- [x] **Step 4: Build + lint**
 
 ```bash
 pnpm tsc --noEmit 2>&1 | tail -10
@@ -2319,7 +2319,7 @@ pnpm build 2>&1 | tail -10
 
 All must succeed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/layers/LngTerminalsLayer.tsx src/app/page.tsx
@@ -2348,7 +2348,7 @@ EOF
 
 **Why:** Single docs-update task. Bundles all narrative updates for the Phase 6 ship. Phase status flip stays in the follow-up PR (Task 18).
 
-- [ ] **Step 1: Read the validation output from Task 6**
+- [x] **Step 1: Read the validation output from Task 6**
 
 ```bash
 cat data/validation/lng_t3_vs_giignl.txt
@@ -2356,7 +2356,7 @@ cat data/validation/lng_t3_vs_giignl.txt
 
 The numbers there will populate the methodology section's reconciliation table.
 
-- [ ] **Step 2: Append Phase 6 section to `docs/methodology.md`**
+- [x] **Step 2: Append Phase 6 section to `docs/methodology.md`**
 
 Append the following after the Phase 5 section (use the actual validation table from Step 1 in the LNG-T3 vs GIIGNL subsection):
 
@@ -2411,7 +2411,7 @@ The engine branches on year + voyage availability:
 - **MarineCadastre US-coastal oil tankers + EMODnet EU route density.** Separate datasets, separate phases.
 ```
 
-- [ ] **Step 3: Update `docs/data-sources.md`**
+- [x] **Step 3: Update `docs/data-sources.md`**
 
 Open `docs/data-sources.md`. Move/promote LNG-T3 from the "Phase 6+ candidates" section to "In production". Add this section after the existing GEM GGIT entry:
 
@@ -2446,7 +2446,7 @@ Then update the existing "Tanker / LNG carrier AIS" entry in the "Candidate sour
 - **LNG carriers — shipped in Phase 6.** LNG-T3 (Zhou 2026) — see the "In production" section above for details. The 861-vessel fleet inventory was *not* surfaced as a map layer in Phase 6; an animated vessel-position layer remains a Phase 7+ candidate.
 ```
 
-- [ ] **Step 4: Update `CLAUDE.md`**
+- [x] **Step 4: Update `CLAUDE.md`**
 
 Open `CLAUDE.md`. In the data sources table, find the gas pipelines + LNG row:
 
@@ -2471,7 +2471,7 @@ Add a row to the schema table for the new tables:
 
 DO NOT flip the Phase 6 status to shipped — that's the follow-up PR.
 
-- [ ] **Step 5: Update `README.md`**
+- [x] **Step 5: Update `README.md`**
 
 Open `README.md`. In the "What's on the map today" list, update the LNG line to reflect new counts:
 
@@ -2485,7 +2485,7 @@ to:
 - **17,592 LNG voyages 2020–2024** (LNG-T3, opt-in layer, filterable by year and confidence)
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add docs/methodology.md docs/data-sources.md CLAUDE.md README.md
@@ -2516,7 +2516,7 @@ EOF
 
 **Files:** none (verification only)
 
-- [ ] **Step 1: Frontend lint**
+- [x] **Step 1: Frontend lint**
 
 ```bash
 pnpm lint
@@ -2524,7 +2524,7 @@ pnpm lint
 
 Expected: clean.
 
-- [ ] **Step 2: Python lint**
+- [x] **Step 2: Python lint**
 
 ```bash
 uv run ruff check scripts/ tests/
@@ -2532,7 +2532,7 @@ uv run ruff check scripts/ tests/
 
 Expected: clean.
 
-- [ ] **Step 3: Vitest**
+- [x] **Step 3: Vitest**
 
 ```bash
 pnpm test 2>&1 | tail -20
@@ -2540,7 +2540,7 @@ pnpm test 2>&1 | tail -20
 
 Expected: all tests pass, including 6 new `lng-t3.test.ts` tests + 2 new `encode.test.ts` cases.
 
-- [ ] **Step 4: Pytest**
+- [x] **Step 4: Pytest**
 
 ```bash
 uv run pytest tests/python -v 2>&1 | tail -20
@@ -2548,7 +2548,7 @@ uv run pytest tests/python -v 2>&1 | tail -20
 
 Expected: all tests pass, including 5 new `test_lng_iso3.py` tests. Total should be ~32+.
 
-- [ ] **Step 5: Build**
+- [x] **Step 5: Build**
 
 ```bash
 pnpm build 2>&1 | tail -20
@@ -2556,7 +2556,7 @@ pnpm build 2>&1 | tail -20
 
 Expected: build succeeds. Pre-existing TS errors in `tests/unit/scenarios/hormuz-gas.test.ts` and `tests/unit/scenarios/lng-impact.test.ts` are pre-existing.
 
-- [ ] **Step 6: Spot-check artifacts**
+- [x] **Step 6: Spot-check artifacts**
 
 ```bash
 ls -lh public/data/lng_voyage.parquet public/data/lng_trade_daily.parquet public/data/lng_terminal_daily.parquet
@@ -2575,7 +2575,7 @@ print(f'catalog v{c[\"version\"]}: {len(c[\"entries\"])} entries')
 "
 ```
 
-- [ ] **Step 7: Git state**
+- [x] **Step 7: Git state**
 
 ```bash
 git status

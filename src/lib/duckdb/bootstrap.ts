@@ -1,5 +1,5 @@
 import * as duckdb from "@duckdb/duckdb-wasm";
-import { selfHostedBundles } from "./bundles";
+import { DUCKDB_CORE_VERSION, extensionRepository, selfHostedBundles } from "./bundles";
 
 /**
  * The in-flight promise is cached, not the resolved DB (Phase 10, P1): the
@@ -23,7 +23,32 @@ async function boot(): Promise<duckdb.AsyncDuckDB> {
     worker.terminate();
     throw err;
   }
+  await configureSelfHostedExtensions(db);
   return db;
+}
+
+/**
+ * Autoload the parquet extension from our own origin (copied at build by
+ * scripts/copy-duckdb.mjs) instead of extensions.duckdb.org. Only when the
+ * running core version matches the one we downloaded for; otherwise keep
+ * DuckDB's default repository so a version bump degrades, not breaks.
+ */
+async function configureSelfHostedExtensions(db: duckdb.AsyncDuckDB): Promise<void> {
+  const conn = await db.connect();
+  try {
+    const rows = (await conn.query("SELECT version() AS v")).toArray() as { v: string }[];
+    const running = rows[0]?.v;
+    if (running !== DUCKDB_CORE_VERSION) {
+      console.warn(
+        `DuckDB core ${String(running)} != ${DUCKDB_CORE_VERSION}; loading extensions from the default repository`,
+      );
+      return;
+    }
+    const repo = extensionRepository(window.location.origin).replaceAll("'", "''");
+    await conn.query(`SET GLOBAL custom_extension_repository = '${repo}'`);
+  } finally {
+    await conn.close();
+  }
 }
 
 export function getDuckDB(): Promise<duckdb.AsyncDuckDB> {

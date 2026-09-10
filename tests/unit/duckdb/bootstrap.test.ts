@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const instantiate = vi.fn<(m: string, p: string | null) => Promise<void>>();
 const workers: string[] = [];
+const queries: string[] = [];
+let coreVersion = "v1.5.1";
 
 vi.mock("@duckdb/duckdb-wasm", () => ({
   PACKAGE_VERSION: "9.9.9-test",
@@ -14,6 +16,15 @@ vi.mock("@duckdb/duckdb-wasm", () => ({
   AsyncDuckDB: class {
     instantiate(m: string, p: string | null) {
       return instantiate(m, p);
+    }
+    connect() {
+      return Promise.resolve({
+        query: (sql: string) => {
+          queries.push(sql);
+          return Promise.resolve({ toArray: () => [{ v: coreVersion }] });
+        },
+        close: () => Promise.resolve(),
+      });
     }
   },
 }));
@@ -34,6 +45,8 @@ beforeEach(() => {
   __resetDuckDBForTests();
   instantiate.mockReset();
   workers.length = 0;
+  queries.length = 0;
+  coreVersion = "v1.5.1";
   vi.stubGlobal("Worker", FakeWorker);
 });
 afterEach(() => {
@@ -81,5 +94,41 @@ describe("selfHostedBundles", () => {
   it("uses only files the copy script ships", async () => {
     const script = (await import("../../../scripts/copy-duckdb.mjs")) as { DUCKDB_FILES: string[] };
     expect([...script.DUCKDB_FILES].sort()).toEqual([...DUCKDB_FILES].sort());
+  });
+});
+
+describe("self-hosted parquet extension", () => {
+  it("points DuckDB's extension repository at /duckdb/extensions on this origin", async () => {
+    const { extensionRepository } = await import("@/lib/duckdb/bundles");
+    expect(extensionRepository("https://example.org")).toBe("https://example.org/duckdb/extensions");
+  });
+
+  it("uses the same DuckDB core version as the copy script downloads", async () => {
+    const { DUCKDB_CORE_VERSION } = await import("@/lib/duckdb/bundles");
+    const script = (await import("../../../scripts/copy-duckdb.mjs")) as {
+      DUCKDB_CORE_VERSION: string;
+      PARQUET_EXTENSIONS: { platform: string; sha256: string }[];
+    };
+    expect(script.DUCKDB_CORE_VERSION).toBe(DUCKDB_CORE_VERSION);
+    expect(script.PARQUET_EXTENSIONS.map((e) => e.platform).sort()).toEqual(["wasm_eh", "wasm_mvp"]);
+    for (const e of script.PARQUET_EXTENSIONS) expect(e.sha256).toMatch(/^[0-9a-f]{64}$/);
+  });
+});
+
+describe("bootstrap extension repository", () => {
+  it("sets the self-hosted repository when the core version matches", async () => {
+    instantiate.mockResolvedValue(undefined);
+    await getDuckDB();
+    expect(queries.some((q) => /SET GLOBAL custom_extension_repository = '.*\/duckdb\/extensions'/.test(q))).toBe(true);
+  });
+
+  it("keeps the default repository (and warns) on a core version mismatch", async () => {
+    instantiate.mockResolvedValue(undefined);
+    coreVersion = "v9.9.9";
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    await getDuckDB();
+    expect(queries.some((q) => q.includes("custom_extension_repository"))).toBe(false);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });

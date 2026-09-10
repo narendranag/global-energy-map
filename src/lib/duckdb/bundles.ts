@@ -13,6 +13,20 @@ import type { DuckDBBundles } from "@duckdb/duckdb-wasm";
 
 export const DUCKDB_PUBLIC_DIR = "/duckdb";
 
+/**
+ * DuckDB core version inside the pinned @duckdb/duckdb-wasm build. Extensions
+ * are built per core version, so the copy script downloads the signed parquet
+ * extension for exactly this version into `public/duckdb/extensions/` and the
+ * bootstrap points DuckDB there (no runtime request to extensions.duckdb.org).
+ * Bump together with `DUCKDB_CORE_VERSION` in scripts/copy-duckdb.mjs.
+ */
+export const DUCKDB_CORE_VERSION = "v1.5.1";
+
+/** `custom_extension_repository` value: `<repo>/<version>/<platform>/<name>.duckdb_extension.wasm`. */
+export function extensionRepository(origin: string): string {
+  return `${origin}${DUCKDB_PUBLIC_DIR}/extensions`;
+}
+
 /** Files the copy script must place in `public/duckdb/` (EH + MVP; no COI). */
 export const DUCKDB_FILES = [
   "duckdb-eh.wasm",

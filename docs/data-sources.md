@@ -71,7 +71,7 @@ Categories:
 - **URL:** https://globalenergymonitor.org/projects/global-oil-infrastructure-tracker/
 - **License:** CC BY 4.0
 - **As-of:** 2025-04-09 release
-- **Where it lands:** `pipelines.parquet` (crude + NGL rows) + `pipelines.geojson` sidecar for the map layer
+- **Where it lands:** `pipelines.geojson` sidecar for the map layer (full-resolution GeoParquet in `data/derived/`, build-time only)
 - **Layers/scenarios using it:** oil pipelines layer (operating + in-construction); refinery feedstock attribution math
 
 **What we ingest:** 3,957 features (after filtering for valid geometries and operating/in-construction status). Per-pipeline: LineString geometry, name, status, commodity, capacity (kbpd), operator, parent operator, start year, end year, fuel type.
@@ -91,7 +91,7 @@ Categories:
 - **URL:** https://globalenergymonitor.org/projects/global-gas-infrastructure-tracker/
 - **License:** CC BY 4.0
 - **As-of:** 2026-02-20 release
-- **Where it lands:** `pipelines.parquet` (gas rows) + `pipelines.geojson` (gas features); `assets.parquet` rows where `kind ∈ {lng_export, lng_import}`
+- **Where it lands:** `pipelines.geojson` (gas features); `assets.parquet` rows where `kind ∈ {lng_export, lng_import}`
 - **Layers/scenarios using it:** gas pipelines layer; LNG terminal layer; Hormuz-LNG scenario import-side attribution
 
 **What we ingest:**
@@ -145,7 +145,7 @@ LNG-T3 covers **22–41% of GIIGNL's global LNG trade, 2020–2024** — every y
 - **URL:** https://arcgis.netl.doe.gov/portal/home/item.html?id=1e1c13b43dfb4af68040598c6f4baf44
 - **License:** US Government work, public domain (17 USC §105)
 - **As-of:** 2026-05-17
-- **Where it lands:** `basins.parquet` + `basins.geojson` sidecar (basins); `assets.parquet` rows where `kind ∈ {storage, port}`
+- **Where it lands:** `basins.geojson` sidecar (basins; full-resolution GeoParquet in `data/derived/`); `assets.parquet` rows where `kind ∈ {storage, port}`
 - **Layers/scenarios using it:** basin polygons layer; storage hubs point layer; ports point layer
 
 **What we ingest:**
@@ -233,10 +233,10 @@ Each row: year, exporter ISO3, importer ISO3, quantity (tonnes).
 - **URL:** https://www.eia.gov/international/analysis/special-topics/World_Oil_Transit_Chokepoints
 - **License:** Public domain (US government)
 - **As-of:** 2026-05-15 (consolidated EIA + IEA references)
-- **Where it lands:** `chokepoint_route.parquet`, `disruption_route.parquet`
+- **Where it lands:** `disruption_route.parquet` (each row carries `source_title`, `source_url`, `source_year`)
 - **Layers/scenarios using it:** all four scenarios (Hormuz, Druzhba, BTC, CPC)
 
-**What we ingest:** static routing-share tables that encode how each exporter's crude or LNG flows through each chokepoint or pipeline. Example: Saudi Arabia's crude is 88% Hormuz-dependent, 12% bypasses via East-West pipeline. Druzhba routing shares: DEU 60% of Russian crude, POL 95%, BLR/SVK/HUN 100%, CZE 90%.
+**What we ingest:** static routing-share tables that encode how each exporter's crude or LNG flows through each chokepoint or pipeline. Example: Saudi Arabia's crude is 88% Hormuz-dependent, 12% bypasses via East-West pipeline. Druzhba routing shares: DEU and POL 47% of Russian crude (IEA northern-branch volume allocated pro-rata), BLR/SVK/HUN/CZE 100%. Each row in `disruption_route.parquet` carries its citation and derivation (`source_title`, `source_url`, `source_year`, `source_note`); six shares were revised to source-derived values on 2026-09-10.
 
 **Coverage gaps:**
 - **Routing shares are fixed across all years** — they don't track maintenance windows, sanctions regimes, or renegotiations of joint-venture operating agreements.
@@ -277,9 +277,9 @@ Each row: year, exporter ISO3, importer ISO3, quantity (tonnes).
 
 ## Candidate sources (Phase 7+)
 
-### Phase 7 — consolidation
+### Phase 8 — consolidation (formerly "Phase 7")
 
-Engineering cleanup precedes new data sources: a shared asset query cache so the five layer hooks stop scanning `assets.parquet` separately; an app state store that syncs to the URL; explicit ready signals for e2e; a vintage filter on scenario inputs; Legend driven by `LayerState`; a daily-throughput tooltip; and dropping the unused `pipelines.parquet` from the runtime bundle.
+Phase 7 became a correctness pass (EI year parsing, BACI aggregates, reproducible assets, generated catalog). Engineering cleanup still precedes new data sources: a shared asset query cache so the five layer hooks stop scanning `assets.parquet` separately; an app state store that syncs to the URL; explicit ready signals for e2e; a vintage filter on scenario inputs; Legend driven by `LayerState`; a daily-throughput tooltip; and dropping the unused `pipelines.parquet` from the runtime bundle.
 
 Surfaced via Tavily/Exa research. Listed roughly in order of analytical value × tractability.
 
@@ -383,8 +383,8 @@ Key findings from the 2026-05-19 sweep:
 
 1. **Ingest script** at `scripts/ingest/<source>.py` downloads to `data/raw/<source>/` (gitignored). Idempotent: re-running uses cached files unless `--force`.
 2. **Transform script** at `scripts/transform/build_<output>.py` joins, harmonizes, and emits Parquet (or GeoParquet) to `public/data/`.
-3. **Catalog entry** in `public/data/catalog.json` — bump `version`, add an `entries[]` row with `source_url`, `license`, `as_of`, `layers`. The `/about` page reads this at build time.
-4. **Allow-list bump** in `src/lib/data-catalog/index.ts` — extend the version validator.
+3. **Catalog entry** — add a row to the registry in `scripts/transform/build_catalog.py` (`source_url`, `license`, `as_of`, `layers`, optional `attribution`), then run it to regenerate `public/data/catalog.json` (rows/bytes/sha256 are computed). Never hand-edit the JSON. The `/about` page reads it at build time.
+4. **Integrity test** — `tests/python/test_data_integrity.py` fails if a file in `public/data/` is not catalogued or its hash drifted.
 5. **Methodology entry** in `docs/methodology.md` for the current phase narrative.
 6. **This document** — add to the relevant section above (In production / Evaluated / Candidate) so future researchers have the context.
 

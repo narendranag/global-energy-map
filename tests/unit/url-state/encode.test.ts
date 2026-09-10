@@ -86,6 +86,26 @@ describe("decodeAppState", () => {
     expect(decoded.year).toBe(2020);
   });
 
+  it("clamps an absurdly large year to the range maximum (2024)", () => {
+    const decoded = decodeAppState(new URLSearchParams("year=99999"), DEFAULTS);
+    expect(decoded.year).toBe(2024);
+  });
+
+  it("clamps a year before the range to the range minimum (1990)", () => {
+    const decoded = decodeAppState(new URLSearchParams("year=1800"), DEFAULTS);
+    expect(decoded.year).toBe(1990);
+  });
+
+  it("falls back to the default for year=abc", () => {
+    const decoded = decodeAppState(new URLSearchParams("year=abc"), DEFAULTS);
+    expect(decoded.year).toBe(2020);
+  });
+
+  it("accepts the full 1990–2024 range unchanged", () => {
+    expect(decodeAppState(new URLSearchParams("year=1990"), DEFAULTS).year).toBe(1990);
+    expect(decodeAppState(new URLSearchParams("year=2024"), DEFAULTS).year).toBe(2024);
+  });
+
   it("round-trips with lng_voyages flag toggled on", () => {
     const state: AppState = {
       year: 2023,

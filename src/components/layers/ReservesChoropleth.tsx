@@ -1,19 +1,31 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { GeoJsonLayer } from "@deck.gl/layers";
+import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { loadCountries, type CountryProps } from "@/lib/geo/countries";
 import { query } from "@/lib/duckdb/query";
+import { reservesDataYear } from "@/lib/time/range";
 import type { Commodity } from "@/lib/scenarios/types";
+import type { OverlayEntry } from "@/components/scenarios/overlay";
+import { reservesColor } from "./reservesRamp";
 
 interface ReservesRow extends Record<string, unknown> {
   iso3: string;
   value: number;
 }
 
-export interface OverlayEntry {
-  readonly color: readonly [number, number, number, number];
-  readonly tooltip?: string;
+/** Country feature properties with the reserves reading attached for tooltips. */
+export interface ReservesProps extends CountryProps {
+  /** null = no reserves row in the source for this country/year. */
+  readonly value: number | null;
+  readonly commodity: Commodity;
+  /** Year the value is from (≤ RESERVES_LATEST_YEAR). */
+  readonly data_year: number;
 }
+
+type ReservesCollection = FeatureCollection<Polygon | MultiPolygon, ReservesProps>;
+
+export type { OverlayEntry };
 
 export interface ReservesChoroplethInput {
   readonly year: number;
@@ -21,52 +33,70 @@ export interface ReservesChoroplethInput {
   readonly overlayByIso3?: ReadonlyMap<string, OverlayEntry>;
 }
 
-function colorRamp(t: number): [number, number, number, number] {
-  const t01 = Math.max(0, Math.min(1, t));
-  const r = Math.round(230 - 200 * t01);
-  const g = Math.round(230 - 80 * t01);
-  const b = Math.round(230 - 50 * t01);
-  return [r, g, b, 200];
-}
-
+/**
+ * Reserves choropleth. EI stopped publishing proved reserves after
+ * RESERVES_LATEST_YEAR, so a later selected year shows the latest value.
+ *
+ * The layer id is stable ("reserves"): year/commodity/scenario changes update
+ * `data` or trip `updateTriggers` instead of rebuilding the layer.
+ */
 export function useReservesChoropleth({ year, commodity, overlayByIso3 }: ReservesChoroplethInput) {
-  const [layer, setLayer] = useState<GeoJsonLayer | null>(null);
+  const dataYear = reservesDataYear(year);
+  const [data, setData] = useState<{ fc: ReservesCollection; max: number } | null>(null);
+
   useEffect(() => {
     const metric =
       commodity === "oil" ? "proved_reserves_oil_bbn_bbl" : "proved_reserves_gas_tcm";
     const ctrl = { cancelled: false };
     void (async () => {
-      const countries = await loadCountries();
-      const res = await query<ReservesRow>(
-        `SELECT iso3, value FROM read_parquet('/data/country_year_series.parquet')
-         WHERE metric = ? AND year = ?`,
-        [metric, year],
-      );
-      if (ctrl.cancelled) return;
-      const byIso = new Map(res.rows.map((r) => [r.iso3, r.value]));
-      const maxVal = Math.max(0, ...res.rows.map((r) => r.value));
-      const styled = new GeoJsonLayer<CountryProps>({
-        id: `reserves-${commodity}-${String(year)}-${overlayByIso3 ? "ovl" : "base"}`,
-        data: countries,
-        filled: true,
-        stroked: true,
-        getFillColor: (f) => {
-          const iso = f.properties.iso3;
-          const override = overlayByIso3?.get(iso);
-          if (override) return [...override.color] as [number, number, number, number];
-          const v = byIso.get(iso) ?? 0;
-          return colorRamp(maxVal > 0 ? v / maxVal : 0);
-        },
-        getLineColor: [120, 120, 120, 180],
-        lineWidthMinPixels: 0.5,
-        pickable: true,
-        updateTriggers: { getFillColor: [year, commodity, overlayByIso3] },
-      });
-      setLayer(styled);
+      try {
+        const countries = await loadCountries();
+        const res = await query<ReservesRow>(
+          `SELECT iso3, value FROM read_parquet('/data/country_year_series.parquet')
+           WHERE metric = ? AND year = ?`,
+          [metric, dataYear],
+        );
+        if (ctrl.cancelled) return;
+        const byIso = new Map(res.rows.map((r) => [r.iso3, r.value]));
+        const max = Math.max(0, ...res.rows.map((r) => r.value));
+        const features = countries.features.map(
+          (f): Feature<Polygon | MultiPolygon, ReservesProps> => ({
+            ...f,
+            properties: {
+              ...f.properties,
+              value: byIso.get(f.properties.iso3) ?? null,
+              commodity,
+              data_year: dataYear,
+            },
+          }),
+        );
+        setData({ fc: { type: "FeatureCollection", features }, max });
+      } catch (err) {
+        console.error("ReservesChoropleth load failed:", err);
+      }
     })();
     return () => {
       ctrl.cancelled = true;
     };
-  }, [year, commodity, overlayByIso3]);
-  return layer;
+  }, [dataYear, commodity]);
+
+  return useMemo(() => {
+    if (!data) return null;
+    const { fc, max } = data;
+    return new GeoJsonLayer<ReservesProps>({
+      id: "reserves",
+      data: fc,
+      filled: true,
+      stroked: true,
+      getFillColor: (f) => {
+        const override = overlayByIso3?.get(f.properties.iso3)?.color;
+        if (override) return [...override];
+        return [...reservesColor(f.properties.value, max)];
+      },
+      getLineColor: [120, 120, 120, 180],
+      lineWidthMinPixels: 0.5,
+      pickable: true,
+      updateTriggers: { getFillColor: [fc, max, overlayByIso3] },
+    });
+  }, [data, overlayByIso3]);
 }

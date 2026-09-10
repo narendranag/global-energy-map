@@ -18,7 +18,7 @@ A public web app that lets serious analysts interrogate global energy dependenci
 
 **Map / viz**
 - `deck.gl` for data layers (points, choropleths, animated flows)
-- `maplibre-gl` for basemap, currently served by CARTO raster tiles (`light_all`) via `src/components/map/style.ts` — no API key, no local tile server. PMTiles is on the roadmap but not in use today.
+- `maplibre-gl` for basemap, served by OpenFreeMap Positron vector tiles via `src/components/map/style.ts` — no API key, no local tile server. (CARTO `light_all` was used through Phase 6 until CARTO began watermarking keyless tiles.) PMTiles for the basemap is deliberately deferred.
 - Natural Earth admin-0 polygons (public domain) for the reserves choropleth
 
 **In-browser data layer**
@@ -42,7 +42,7 @@ global-energy-map/
 ├── src/
 │   ├── app/                       # Next.js App Router (page.tsx, about/)
 │   ├── components/
-│   │   ├── map/                   # MapLibre + Deck.gl shell + CARTO basemap style
+│   │   ├── map/                   # MapLibre + Deck.gl shell + OpenFreeMap basemap style
 │   │   ├── layers/                # one file per data layer (Reserves, Extraction, Pipelines, Refineries, LngTerminals, BasinPolygons, Storage, Ports, LayerPanel, Legend)
 │   │   ├── time-slider/
 │   │   ├── scenarios/             # ScenarioPanel, overlay, useScenario hook
@@ -55,14 +55,14 @@ global-energy-map/
 │       ├── vintage/               # vintage filter predicate for time-aware layers
 │       └── geo/
 ├── public/
-│   └── data/                      # built Parquet/GeoParquet + catalog.json + GeoJSON sidecars
+│   └── data/                      # built Parquet + GeoJSON sidecars + generated catalog.json (runtime files only)
 ├── scripts/
 │   ├── common/                    # iso3 mappings, NETL REST helper, secrets loader
 │   ├── ingest/                    # one script per source
 │   └── transform/                 # joins / harmonization → Parquet
 ├── tests/
 │   ├── unit/                      # Vitest (TS) — scenarios, url-state, vintage filter, data-catalog
-│   ├── python/                    # pytest — NETL helper, ISO3, refinery capacity parser, dedup
+│   ├── python/                    # pytest — helpers, transform fixtures, data-integrity checks over public/data
 │   └── e2e/                       # Playwright smoke
 ├── docs/
 │   ├── data-sources.md            # researcher-facing source inventory
@@ -92,14 +92,14 @@ Designed so adding a new commodity is a row, not a migration.
 | `pipelines` | pipeline_id, name, status, commodity (crude, ngl, crude+ngl, gas), capacity_kbpd, capacity_unit, start_country_iso3, end_country_iso3, operator, start_year, geometry (LineString / MultiLineString) | GEM oil + gas infrastructure trackers |
 | `country_year_series` | iso3, year (1990–2024), metric (production_crude_kbpd, proved_reserves_oil_bbn_bbl, proved_reserves_gas_tcm), value, unit | EI Statistical Review |
 | `trade_flow` | year, hs_code (2709 crude, 271111 LNG), exporter_iso3, importer_iso3, qty | BACI (CEPII) |
-| `chokepoint_route`, `disruption_route` | scenario_id, origin_iso3, destination_iso3, route_share, affected_infrastructure | EIA / IEA scenario analysis |
+| `disruption_route` | scenario_id, origin_iso3, destination_iso3, route_share, affected_infrastructure, source_title, source_url, source_year | EIA / IEA scenario analysis (per-row citations) |
 | `lng_voyage`, `lng_trade_daily`, `lng_terminal_daily` | start/end dates, IMO, from/to terminal + country/iso3, amount_cbm, confidence_score | Phase 6 — LNG-T3 |
 
-All artifacts indexed in `public/data/catalog.json` (path, version, license, source URL, as-of) — the methodology page renders straight off this.
+All artifacts indexed in `public/data/catalog.json` (path, license, source URL, as-of, rows, bytes, sha256) — **generated** by `build_catalog.py`, never hand-edited; the methodology page renders straight off it. Full-resolution `pipelines`/`basins` GeoParquet is written to `data/derived/` (gitignored); only the simplified GeoJSON sidecars ship.
 
 ## Data sources (verified, public)
 
-For a researcher-facing inventory (with coverage gaps, evaluated-and-rejected sources, and Phase 7+ candidates) see `docs/data-sources.md`. The table below is the quick reference.
+For a researcher-facing inventory (with coverage gaps, evaluated-and-rejected sources, and post-launch candidates) see `docs/data-sources.md`. The table below is the quick reference.
 
 | Layer | Source | License | Notes |
 |---|---|---|---|
@@ -113,12 +113,12 @@ For a researcher-facing inventory (with coverage gaps, evaluated-and-rejected so
 | Crude + LNG trade flows | BACI (CEPII), HS 2709 + HS 271111 | Free for academic/research use; see CEPII terms | Annual bilateral flows; no API key required; pre-processed & deduplicated |
 | Chokepoints + pipeline disruption scenarios | EIA World Oil Transit Chokepoints + IEA pipeline reports | Public, free | 5 scenarios: Hormuz, Hormuz-LNG, Druzhba, BTC, CPC |
 | Country boundaries | Natural Earth admin-0 (1:110m) | Public domain | Phase 1 — basemap + reserves choropleth fills |
-| Raster basemap | CARTO `light_all` raster tiles | Free (no key) | Runtime tiles via `src/components/map/style.ts` |
-| Coal (mines + plants) | _deferred to Phase 7+_ | GEM CC BY 4.0 (when integrated) | Coal sector / cross-commodity scenarios are a Phase 7+ candidate |
-| Tankers / AIS | _deferred to Phase 7+_ | TankerMap free for live; paid for historical | Own brainstorm — AIS sourcing is the gating decision |
-| EIA STEO US shale basin time series | _deferred to Phase 7+_ | Public (US gov), free API key | Only authoritative open per-basin time-series we've found (Anadarko/Bakken/Eagle Ford/Permian/etc.) |
+| Basemap | OpenFreeMap Positron (vector, OpenMapTiles schema) | Free (no key); © OpenMapTiles, data © OpenStreetMap | Runtime tiles via `src/components/map/style.ts` |
+| Coal (mines + plants) | _deferred (post-launch)_ | GEM CC BY 4.0 (when integrated) | Coal sector / cross-commodity scenarios are a post-launch candidate |
+| Tankers / AIS | _deferred (post-launch)_ | TankerMap free for live; paid for historical | Own brainstorm — AIS sourcing is the gating decision |
+| EIA STEO US shale basin time series | _deferred (post-launch)_ | Public (US gov), free API key | Only authoritative open per-basin time-series we've found (Anadarko/Bakken/Eagle Ford/Permian/etc.) |
 
-API keys live in `~/.config/secrets.env` (e.g., `TAVILY_API_KEY`, `EXA_API_KEY`). The EIA API key is registered separately; add to `~/.config/secrets.env` as `EIA_API_KEY` before any Phase 7+ EIA work. BACI (the trade-flow source) does not require a key. Never commit secrets.
+API keys live in `~/.config/secrets.env` (e.g., `TAVILY_API_KEY`, `EXA_API_KEY`). The EIA API key is registered separately; add to `~/.config/secrets.env` as `EIA_API_KEY` before any EIA work. BACI (the trade-flow source) does not require a key. Never commit secrets.
 
 ## Common commands
 
@@ -136,7 +136,8 @@ pnpm test:e2e                  # Playwright
 uv sync                                              # install Python deps
 uv run python -m scripts.ingest.<source>            # one ingest per source (gem_*, netl_*, baci_*, osm_*, ei_*, lng_t3)
 uv run python -m scripts.transform.build_country_year     # reserves + production time series
-uv run python -m scripts.transform.build_assets           # extraction sites (other asset transforms append by kind)
+# assets.parquet chain — run in this order: build_assets → build_refineries → build_storage → build_ports → build_lng_terminals
+uv run python -m scripts.transform.build_assets           # extraction sites (every asset transform drops its kind, then appends)
 uv run python -m scripts.transform.build_refineries       # NETL primary + OSM supplement
 uv run python -m scripts.transform.build_pipelines        # oil + gas pipelines + simplified GeoJSON sidecar
 uv run python -m scripts.transform.build_lng_terminals    # LNG-T3 primary + GEM supplement (Phase 6)
@@ -145,17 +146,17 @@ uv run python -m scripts.transform.build_basins           # NETL basin polygons 
 uv run python -m scripts.transform.build_storage          # NETL storage hubs (append to assets.parquet)
 uv run python -m scripts.transform.build_ports            # NETL ports (append to assets.parquet)
 uv run python -m scripts.transform.build_trade_flow       # BACI HS 2709 + 271111
-uv run python -m scripts.transform.build_chokepoint_routing
 uv run python -m scripts.transform.build_disruption_routing
 uv run python -m scripts.validate.lng_t3_vs_giignl        # LNG-T3 vs GIIGNL public-total reconciliation
-uv run pytest tests/python -v
+uv run python -m scripts.transform.build_catalog          # regenerate catalog.json — run LAST, after any data file changes
+uv run python -m pytest tests/python -v                   # `python -m` form: bare `uv run pytest` fails to spawn on some machines
 
 # Deploy
 vercel                         # preview
 vercel --prod                  # production
 ```
 
-CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typecheck` + `pnpm test` (Vitest) + `pnpm build` for the app; `ruff` + `pytest tests/python` for the Python pipeline; and a Playwright e2e job.
+CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typecheck` + `pnpm test` (Vitest) + `pnpm build` for the app; `ruff` + `python -m pytest tests/python` (incl. data-integrity checks) for the Python pipeline; and a Playwright e2e job.
 
 **Environment:** after moving or re-cloning the repo, run `pnpm install` (relinks node_modules) and `uv sync` (rebuilds `.venv`) — a stale link makes `next dev` panic with "Next.js package not found".
 
@@ -174,7 +175,8 @@ CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typec
 - **Vintage-aware layer behavior.** Pipelines (`start_year`, 71%) and extraction sites (`commissioned_year`, 22%) respect the active year slider. Null vintage = always visible; refineries/LNG/storage/ports have no vintage data and remain time-independent.
 - **e2e is CPU-bound.** Every Playwright spec boots DuckDB-WASM and deck.gl under headless software WebGL. `playwright.config.ts` runs `workers: 1` unconditionally; scenario-panel expects need ~120 s inside 180 s test budgets to pass on ubuntu-latest (a Mac passes at 60 s). CI runs e2e against `pnpm build && pnpm start` under `CI=1`; the push trigger is limited to `main` so a PR branch runs once.
 - **Parallel implementer agents do not commit.** Give each a disjoint file set, have them report changed files, then commit each set with an explicit `git add <files>`. Never `git add -A` on a shared tree.
-- **Panels set their own text colour.** `globals.css` flips the body foreground to near-white under `prefers-color-scheme: dark`; any `bg-white/90` overlay must carry `text-slate-800` (or similar) or its labels vanish for dark-mode users. The deck.gl tooltip is unaffected (inline styles).
+- **Light-only UI.** There is no dark theme (decided 2026-09-10); `globals.css` sets `color-scheme: light` and has no `prefers-color-scheme` block. Panels still set their own text colour (`text-slate-800`) so they never inherit from the host.
+- **Tailwind v4 layers vs. third-party CSS.** Tailwind utilities live in `@layer utilities`; unlayered library CSS (e.g. `maplibre-gl.css`) beats them regardless of order. Size the MapLibre container with inline styles (see `MapShell.tsx`).
 - **deck.gl accessors need `updateTriggers`.** Recolouring a layer from a `useMemo` with fresh closures does nothing unless the trigger changes; keep `updateTriggers` keyed on the input that drives the colour.
 - **Terminal name is the runtime join key** between `lng_voyage.parquet` and LNG terminal rows (never `asset_id`); `build_lng_terminals.py` asserts `(country_iso3, name)` uniqueness and `build_lng_voyages.py` asserts every `to_terminal` resolves.
 
@@ -198,5 +200,6 @@ CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typec
 - **Phase 4** — _shipped 2026-05-17_ (NETL basins + storage + ports + shareable URL state). Live: https://global-energy-map-one.vercel.app
 - **Phase 5** — _shipped 2026-05-17_ (NETL refineries augmentation + vintage-aware pipeline/extraction filtering + pipelines.geojson simplification). Live: https://global-energy-map-one.vercel.app
 - **Phase 6** — _shipped 2026-09-09_ (LNG-T3 terminals + voyages + BACI-anchored Hormuz-LNG attribution + CI + MIT/CITATION). Live: https://global-energy-map-one.vercel.app
-- **Phase 7** — pending: consolidation phase (shared asset query cache so five layer hooks stop scanning assets.parquet separately; app state store that syncs to the URL; explicit ready signals for e2e; vintage filter on scenario inputs; Legend driven by LayerState; daily-throughput tooltip; drop unused pipelines.parquet from the runtime bundle; skip the voyage-layer query outside 2020–2024). Data candidates in docs/data-sources.md deferred list.
-- **Going public** — not yet decided; agenda for the next session (see memory / docs/superpowers/specs when written).
+- **Phase 7 — Correctness** — _in progress 2026-09-10_ on branch `phase-7-correctness` (plan: `docs/superpowers/plans/2026-09-10-global-energy-map-phase-7.md`). Roadmap from the refactor/redesign review (`docs/superpowers/specs/2026-09-10-refactor-redesign-review.md`): Phase 7 Correctness → Phase 8 Consolidation → Phase 9 Product redesign → Phase 10 Launch hardening.
+- **Phase 8 — Consolidation** — the former Phase 7 backlog, resequenced: consolidation phase (shared asset query cache so five layer hooks stop scanning assets.parquet separately; app state store that syncs to the URL; explicit ready signals for e2e; Legend driven by LayerState; the daily-throughput tooltip and vintage-on-scenario-inputs are deferred per the review; skip the voyage-layer query outside 2020–2024). Data candidates in docs/data-sources.md deferred list.
+- **Going public** — decided: after Phase 9, with `LICENSE-DATA.md`, map-footer attribution, downloads limited to CC BY / public-domain subsets. Light-only UI; phones get a "best on desktop" banner; keep DuckDB-WASM (export + query console in scope).

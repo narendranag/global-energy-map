@@ -1,4 +1,27 @@
-"""Transform GEM Oil & Gas Extraction Tracker workbook → assets.parquet.
+"""Transform GEM Oil & Gas Extraction Tracker workbook → extraction rows in assets.parquet.
+
+assets.parquet is shared by five transforms, each of which owns one or more
+``kind`` values and follows the same drop-kind-then-append pattern (re-running
+any one of them is safe and leaves the other kinds untouched):
+
+    kind(s)                    transform
+    extraction_site            build_assets        (this module)
+    refinery                   build_refineries
+    storage                    build_storage
+    port                       build_ports
+    lng_export, lng_import     build_lng_terminals
+
+Canonical full rebuild order (the build_all DAG is Phase 8):
+
+    uv run python -m scripts.transform.build_assets
+    uv run python -m scripts.transform.build_refineries
+    uv run python -m scripts.transform.build_storage
+    uv run python -m scripts.transform.build_ports
+    uv run python -m scripts.transform.build_lng_terminals
+
+build_lng_terminals runs last because it adds the Phase 6 columns
+(unit_count, total_processed_bcm, un_locode) and back-fills them as NULL on
+the other kinds. Every transform tolerates a missing assets.parquet.
 
 Source:  data/raw/gem_extraction/Global-Oil-and-Gas-Extraction-Tracker-July-2023.xlsx
          Sheet "Main data" (probed 2026-05-15):
@@ -14,8 +37,9 @@ Output:  public/data/assets.parquet
            country_iso3 (str3)       ISO 3166-1 alpha-3
            lon (float)               WGS-84 longitude
            lat (float)               WGS-84 latitude
-           capacity (float|null)     best annual production figure (boe/d)
-           capacity_unit (str|null)  "boe/d" when populated (else null)
+           capacity (float|null)     always null (GEM gives no single figure)
+           capacity_unit (str)       "kboe/d" — the unit the layer would use if
+                                     capacity were populated
            operator (str|null)       Operator column
            status (str|null)         Status column
            commissioned_year (int)   Production start year
@@ -52,10 +76,14 @@ import pandas as pd
 
 from scripts.common.iso3 import GEM_NAME_TO_ISO3 as NAME_TO_ISO3
 
-XLSX = next(Path("data/raw/gem_extraction").glob("*.xlsx"))
+RAW_DIR = Path("data/raw/gem_extraction")
 OUT_PATH = Path("public/data/assets.parquet")
 SOURCE = "Global Energy Monitor – Global Oil and Gas Extraction Tracker"
 SOURCE_VERSION = "July 2023"
+EXTRACTION_KIND = "extraction_site"
+# Capacity stays NULL, but the unit is declared so capacity_unit is consistent
+# per kind (matches the Phase 3-5 shipped file; see review R4).
+EXTRACTION_CAPACITY_UNIT = "kboe/d"
 
 
 def _coerce_year(val: object) -> int | None:
@@ -68,10 +96,12 @@ def _coerce_year(val: object) -> int | None:
         return None
 
 
-def build() -> pd.DataFrame:
+def build(xlsx: Path | None = None) -> pd.DataFrame:
     """Read GEM Main data sheet and return normalised assets DataFrame."""
+    if xlsx is None:
+        xlsx = next(RAW_DIR.glob("*.xlsx"))
     # Read the "Main data" sheet verbatim (all columns as-is)
-    df = pd.read_excel(XLSX, sheet_name="Main data")
+    df = pd.read_excel(xlsx, sheet_name="Main data")
 
     # --- Drop rows missing coordinates (383 of 5391) ---
     before = len(df)
@@ -92,7 +122,7 @@ def build() -> pd.DataFrame:
         {
             # GEM's own stable project ID (e.g. "OG0000001")
             "asset_id": df["Unit ID"].astype(str),
-            "kind": "extraction_site",
+            "kind": EXTRACTION_KIND,
             "name": df["Unit name"].astype(str),
             "country_iso3": df["country_iso3"].astype(str),
             "lon": df["Longitude"].astype(float),
@@ -100,7 +130,7 @@ def build() -> pd.DataFrame:
             # No per-asset single production figure available without messy unit
             # harmonisation across the Production & reserves sheet; leave null.
             "capacity": None,
-            "capacity_unit": None,
+            "capacity_unit": EXTRACTION_CAPACITY_UNIT,
             "operator": df["Operator"].where(df["Operator"].notna(), other=None),
             "status": df["Status"].where(df["Status"].notna(), other=None),
             "commissioned_year": df["Production start year"].apply(_coerce_year),
@@ -124,11 +154,52 @@ def build() -> pd.DataFrame:
     return assets.reset_index(drop=True)
 
 
+def append_extraction(assets_path: Path, extraction: pd.DataFrame) -> pd.DataFrame:
+    """Replace the extraction_site rows of *assets_path* with *extraction*.
+
+    Reads the existing parquet (if any), drops every ``kind == extraction_site``
+    row, appends the new rows (column union, existing column order first) and
+    writes the result back. A missing file is written fresh. Returns the
+    combined frame.
+    """
+    if assets_path.exists():
+        existing = pd.read_parquet(assets_path)
+        n_before = len(existing)
+        existing = existing[existing["kind"] != EXTRACTION_KIND]
+        if n_before != len(existing):
+            print(
+                f"dropped {n_before - len(existing)} stale {EXTRACTION_KIND} rows",
+                file=sys.stderr,
+            )
+    else:
+        existing = pd.DataFrame(columns=extraction.columns)
+
+    all_cols = list(dict.fromkeys([*existing.columns, *extraction.columns]))
+    extraction = extraction.copy()
+    for col in existing.columns:
+        if col not in extraction.columns:
+            # Keep the existing dtype (e.g. Int64 unit_count) so an all-null
+            # column on the new rows doesn't widen the column's type.
+            extraction[col] = pd.Series(index=extraction.index, dtype=existing[col].dtype)
+    existing = existing.reindex(columns=all_cols)
+    extraction = extraction[all_cols]
+    frames = [f for f in (existing, extraction) if not f.empty]
+    combined = (
+        pd.concat(frames, ignore_index=True) if frames else extraction.reset_index(drop=True)
+    )
+
+    assets_path.parent.mkdir(parents=True, exist_ok=True)
+    combined.to_parquet(assets_path, index=False, compression="zstd")
+    return combined
+
+
 def main() -> None:
     df = build()
-    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(OUT_PATH, index=False, compression="zstd")
-    print(f"wrote {OUT_PATH}  rows={len(df)}")
+    combined = append_extraction(OUT_PATH, df)
+    print(
+        f"wrote {OUT_PATH}  extraction_rows={len(df)}  "
+        f"by_kind={combined['kind'].value_counts().to_dict()}"
+    )
     top_countries = (
         df.groupby("country_iso3").size().sort_values(ascending=False).head(10)
     )

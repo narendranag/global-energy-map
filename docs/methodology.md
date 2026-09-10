@@ -4,7 +4,7 @@
 
 ## Scope & Approach
 
-Global Energy Map presents a multidimensional view of the world's hydrocarbon energy system — reserves, extraction, pipelines, refining, LNG, storage, ports, and bilateral trade — with chokepoint/pipeline disruption scenarios overlaid on the map. Phases 1–6 are shipped; Phase 7 (consolidation) is next.
+Global Energy Map presents a multidimensional view of the world's hydrocarbon energy system — reserves, extraction, pipelines, refining, LNG, storage, ports, and bilateral trade — with chokepoint/pipeline disruption scenarios overlaid on the map. Phases 1–6 are shipped; Phase 7 (correctness) fixes data and rendering defects found in the 2026-09 review.
 
 The narrative below preserves what each phase shipped with the caveats that applied AT THAT TIME. Where a later phase has materially changed a Phase N claim (e.g., Phase 5's refinery augmentation supersedes Phase 2's OSM-only counts), the original phase section keeps its historical claim and the later phase documents the upgrade. Cross-references are inline.
 
@@ -84,7 +84,7 @@ Real-world shares vary year-to-year with maintenance, sanctions regimes, and ren
 
 #### Pipeline GeoJSON Geometry Coverage _(at Phase 2 ship)_
 
-At Phase 2 ship, the Global Energy Monitor oil pipeline GeoJSON source included 1,872 pipeline features, of which 24% lacked geometry. After filtering for valid geometries and operational status (in-service or in-construction), 1,185 features were retained. Abandoned or indefinitely deferred pipelines are excluded from the visualization but documented in the raw source for reference. **Phase 3 added gas pipelines (GGIT) on the same filtering rules**; the combined oil + gas pipelines table is now ~3,957 features. **Phase 5 simplified the GeoJSON sidecar from 73 MB to 14 MB at tolerance 0.005** (full-resolution geometry kept in `pipelines.parquet`).
+At Phase 2 ship, the Global Energy Monitor oil pipeline GeoJSON source included 1,872 pipeline features, of which 24% lacked geometry. After filtering for valid geometries and operational status (in-service or in-construction), 1,185 features were retained. Abandoned or indefinitely deferred pipelines are excluded from the visualization but documented in the raw source for reference. **Phase 3 added gas pipelines (GGIT) on the same filtering rules**; the combined oil + gas pipelines table is now ~3,957 features. **Phase 5 simplified the GeoJSON sidecar from 73 MB to 14 MB at tolerance 0.005** (full-resolution geometry kept in a build-time GeoParquet under `data/derived/`, not shipped).
 
 ## Phase 3: Natural Gas + LNG Terminals
 
@@ -213,7 +213,7 @@ Features without populated vintage data appear in all years (preserves prior beh
 
 ### Pipelines GeoJSON sidecar simplification
 
-`public/data/pipelines.geojson` is simplified at `tolerance=0.005` (Shapely `simplify(tol, preserve_topology=True)`, corresponding to roughly 500 m in lon/lat units). This reduces the sidecar from ~73 MB to ~13 MB, clearing the 25 MB single-file ceiling without requiring Vercel Blob hosting. Full-resolution geometry is preserved in `pipelines.parquet`.
+`public/data/pipelines.geojson` is simplified at `tolerance=0.005` (Shapely `simplify(tol, preserve_topology=True)`, corresponding to roughly 500 m in lon/lat units). This reduces the sidecar from ~73 MB to ~13 MB, clearing the 25 MB single-file ceiling without requiring Vercel Blob hosting. Full-resolution geometry is preserved in a build-time GeoParquet under `data/derived/` (not shipped to the browser since Phase 7).
 
 ## Phase 6 — LNG carrier dynamics
 

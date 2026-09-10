@@ -1,4 +1,10 @@
-"""Transform NETL basins GeoJSON → basins.parquet + sidecar GeoJSON.
+"""Transform NETL basins GeoJSON → basins GeoParquet + sidecar GeoJSON.
+
+Outputs:
+  data/derived/basins.parquet   GeoParquet (gitignored; not shipped — the
+                                runtime has no consumer for it)
+  public/data/basins.geojson    sidecar the BasinPolygonsLayer fetches
+Both carry the same ~1 km simplified geometry.
 
 Probe findings (2026-05-17):
   Raw columns: fid, md_source1, onshore_of, available, md_country, basin_id,
@@ -22,7 +28,7 @@ Output schema:
     region (str|null)      NETL md_region
     geometry (Polygon | MultiPolygon)  — simplified to ~1 km tolerance
     source                 "NETL Global Oil and Gas Infrastructure (GOGI)"
-    source_version         ISO date string at build time
+    source_version         NETL snapshot retrieval date (SOURCE_VERSION constant)
 
 Usage:
     uv run python -m scripts.transform.build_basins
@@ -30,7 +36,6 @@ Usage:
 from __future__ import annotations
 
 import sys
-from datetime import date
 from pathlib import Path
 
 import geopandas as gpd
@@ -40,9 +45,13 @@ from shapely.geometry.collection import GeometryCollection
 from scripts.common.iso3 import NETL_NAME_TO_ISO3
 
 SRC = Path("data/raw/netl/basins.geojson")
-OUT = Path("public/data/basins.parquet")
+OUT = Path("data/derived/basins.parquet")
 OUT_GEOJSON = Path("public/data/basins.geojson")
 SOURCE = "NETL Global Oil and Gas Infrastructure (GOGI)"
+# NETL serves GOGI from an unversioned live ArcGIS FeatureServer; the snapshot
+# in data/raw/netl/ was retrieved on this date. A constant (not date.today())
+# keeps rebuilds byte-stable. Update it when the raw snapshot is re-ingested.
+SOURCE_VERSION = "2026-05-17"
 
 # Geometry simplification tolerance in decimal degrees (~1 km at the equator).
 # Basins are continent-scale polygons; we don't need pipeline-grade precision
@@ -116,7 +125,7 @@ def main() -> None:
             "area_km2": areas,
             "region": regions,
             "source": SOURCE,
-            "source_version": date.today().isoformat(),
+            "source_version": SOURCE_VERSION,
         },
         geometry=gdf.geometry.values,
         crs="EPSG:4326",
@@ -142,6 +151,7 @@ def main() -> None:
         print(f"top missed countries:\n{miss_countries}", file=sys.stderr)
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
+    OUT_GEOJSON.parent.mkdir(parents=True, exist_ok=True)
     out.to_parquet(OUT, compression="zstd")
     out.to_file(OUT_GEOJSON, driver="GeoJSON")
 

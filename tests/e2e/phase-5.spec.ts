@@ -47,4 +47,20 @@ test.describe("Phase 5 — refineries + vintage-aware layers", () => {
 
     expect(errors).toEqual([]);
   });
+
+  test("pipelines.geojson is fetched exactly once on cold load", async ({ page }) => {
+    // Oil and gas pipeline hooks share one loader; it must cache the
+    // in-flight promise, not the parsed result, or both mount-time calls fetch.
+    test.setTimeout(180_000);
+    const hits: string[] = [];
+    page.on("request", (req) => {
+      if (new URL(req.url()).pathname === "/data/pipelines.geojson") hits.push(req.url());
+    });
+    await page.goto("/?layers=pipelines,gas_pipelines&year=2020");
+    await page.waitForSelector("#deck-canvas");
+    await expect(page.locator("main")).toHaveAttribute("data-ready", "true", {
+      timeout: 120_000,
+    });
+    expect(hits).toHaveLength(1);
+  });
 });

@@ -12,6 +12,10 @@ test("phase 1 critical path", async ({ page }) => {
   // Map canvas attaches
   await expect(page.locator("#deck-canvas")).toBeVisible();
 
+  // Phase 7: title bar with an <h1> and a link to the methodology page
+  await expect(page.getByRole("heading", { level: 1, name: "Global Energy Map" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Methodology & sources" })).toBeVisible();
+
   // Year slider present
   const slider = page.locator('input[type="range"]');
   await expect(slider).toBeVisible();

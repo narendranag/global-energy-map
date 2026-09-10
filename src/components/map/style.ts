@@ -1,19 +1,10 @@
-import type { StyleSpecification } from "maplibre-gl";
-
-// Protomaps public demo / CARTO basemap — minimal, neutral, no API key for dev.
-// Replace with self-hosted PMTiles before going public.
-export const basemapStyle: StyleSpecification = {
-  version: 8,
-  sources: {
-    "carto-light": {
-      type: "raster",
-      tiles: [
-        "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-        "https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-      ],
-      tileSize: 256,
-      attribution: "© OpenStreetMap, © CARTO",
-    },
-  },
-  layers: [{ id: "carto-light", type: "raster", source: "carto-light" }],
-};
+/**
+ * OpenFreeMap "Positron" — a light, low-contrast vector basemap. Free, no API
+ * key, no usage limits. CARTO `light_all` (the Phase 1–6 basemap) started
+ * watermarking keyless tiles with "API KEY REQUIRED" in 2026.
+ *
+ * Attribution (OpenFreeMap © OpenMapTiles, data from OpenStreetMap) comes from
+ * the style's TileJSON and is rendered by MapLibre's attribution control.
+ * PMTiles for the basemap is deliberately deferred (see the Phase 7 review).
+ */
+export const basemapStyle = "https://tiles.openfreemap.org/styles/positron";

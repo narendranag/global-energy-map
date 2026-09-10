@@ -35,14 +35,20 @@ export interface PipelinesLayerInput {
  * The cache holds ALL features. Per-instance commodity filtering happens after
  * the fetch, so two layers with different commodityFilter share a single fetch.
  */
-let _cache: PipelineCollection | undefined;
+// Cache the in-flight promise, not the resolved value, so callers mounting in
+// the same tick share one fetch. Cleared on failure so a later call retries.
+let _promise: Promise<PipelineCollection> | undefined;
 
-async function loadPipelines(): Promise<PipelineCollection> {
-  if (_cache) return _cache;
-  const res = await fetch("/data/pipelines.geojson");
-  if (!res.ok) throw new Error(`pipelines.geojson fetch failed: ${String(res.status)}`);
-  _cache = (await res.json()) as PipelineCollection;
-  return _cache;
+function loadPipelines(): Promise<PipelineCollection> {
+  _promise ??= (async () => {
+    const res = await fetch("/data/pipelines.geojson");
+    if (!res.ok) throw new Error(`pipelines.geojson fetch failed: ${String(res.status)}`);
+    return (await res.json()) as PipelineCollection;
+  })().catch((err: unknown) => {
+    _promise = undefined;
+    throw err;
+  });
+  return _promise;
 }
 
 /**

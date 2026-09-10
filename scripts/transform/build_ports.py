@@ -23,7 +23,6 @@ Usage:
 from __future__ import annotations
 
 import sys
-from datetime import date
 from pathlib import Path
 
 import geopandas as gpd
@@ -34,6 +33,10 @@ from scripts.common.iso3 import NETL_NAME_TO_ISO3
 SRC = Path("data/raw/netl/ports.geojson")
 ASSETS_PATH = Path("public/data/assets.parquet")
 SOURCE = "NETL Global Oil and Gas Infrastructure (GOGI)"
+# NETL serves GOGI from an unversioned live ArcGIS FeatureServer; the snapshot
+# in data/raw/netl/ was retrieved on this date. A constant (not date.today())
+# keeps rebuilds byte-stable. Update it when the raw snapshot is re-ingested.
+SOURCE_VERSION = "2026-05-17"
 
 
 def _country_iso3(md_country: object) -> str | None:
@@ -110,7 +113,7 @@ def main() -> None:
             "commissioned_year": None,
             "decommissioned_year": None,
             "source": SOURCE,
-            "source_version": date.today().isoformat(),
+            "source_version": SOURCE_VERSION,
         }
     )
 
@@ -134,7 +137,10 @@ def main() -> None:
     out["decommissioned_year"] = pd.array([pd.NA] * len(out), dtype=pd.Int64Dtype())
 
     # Idempotent merge: drop prior kind='port' rows, then append
-    existing = pd.read_parquet(ASSETS_PATH)
+    if ASSETS_PATH.exists():
+        existing = pd.read_parquet(ASSETS_PATH)
+    else:
+        existing = pd.DataFrame(columns=out.columns)
     n_before = existing["kind"].value_counts().to_dict()
     existing = existing[existing["kind"] != "port"].copy()
 

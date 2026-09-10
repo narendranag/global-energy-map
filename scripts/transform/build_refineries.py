@@ -278,7 +278,10 @@ def main() -> None:
     refineries = refineries[schema_cols]
 
     # Idempotent: drop prior refinery rows, append new
-    existing = pd.read_parquet(ASSETS)
+    if ASSETS.exists():
+        existing = pd.read_parquet(ASSETS)
+    else:
+        existing = pd.DataFrame(columns=refineries.columns)
     n_before = len(existing)
     existing = existing[existing["kind"] != "refinery"]
     n_kept = len(existing)

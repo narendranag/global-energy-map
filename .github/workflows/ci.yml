@@ -32,7 +32,7 @@ jobs:
           enable-cache: true
       - run: uv sync
       - run: uv run ruff check scripts tests
-      - run: uv run pytest tests/python -q
+      - run: uv run python -m pytest tests/python -q
 
   e2e:
     needs: web

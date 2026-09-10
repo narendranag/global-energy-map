@@ -1,7 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import { computeScenarioImpact } from "@/lib/scenarios/engine";
-import type { Commodity, LngVoyageRow, ScenarioId, ScenarioResult } from "@/lib/scenarios/types";
+import type {
+  Commodity,
+  LngVoyageRow,
+  RefineryImpact,
+  ScenarioId,
+  ScenarioResult,
+} from "@/lib/scenarios/types";
 import { query } from "@/lib/duckdb/query";
 
 interface FlowRow extends Record<string, unknown> {
@@ -111,18 +117,34 @@ export function useScenario(
       }
 
       if (ctrl.cancelled) return;
-      setResult(
-        computeScenarioImpact({
-          scenarioId,
-          commodity,
-          year,
-          tradeFlows: flows.rows,
-          routes: routes.rows,
-          ...(refineries !== undefined ? { refineries } : {}),
-          ...(lngImports !== undefined ? { lngImports } : {}),
-          ...(lngVoyages.length > 0 ? { lngVoyages } : {}),
-        }),
-      );
+      const raw = computeScenarioImpact({
+        scenarioId,
+        commodity,
+        year,
+        tradeFlows: flows.rows,
+        routes: routes.rows,
+        ...(refineries !== undefined ? { refineries } : {}),
+        ...(lngImports !== undefined ? { lngImports } : {}),
+        ...(lngVoyages.length > 0 ? { lngVoyages } : {}),
+      });
+      // The engine's RefineryImpact carries no name; attach it here so the
+      // panel can show "Ruwais Refinery" rather than "ARE · 0 kbpd".
+      if (refineries !== undefined) {
+        const nameById = new Map(refineries.map((r) => [r.asset_id, r.name]));
+        const withName = (i: RefineryImpact): RefineryImpact => {
+          const name = nameById.get(i.asset_id);
+          return typeof name === "string" && name.length > 0 ? { ...i, name } : i;
+        };
+        const byRefinery = raw.byRefinery.map(withName);
+        const byId = new Map(byRefinery.map((i) => [i.asset_id, i]));
+        setResult({
+          ...raw,
+          byRefinery,
+          rankedRefineries: raw.rankedRefineries.map((i) => byId.get(i.asset_id) ?? i),
+        });
+      } else {
+        setResult(raw);
+      }
     })();
     return () => { ctrl.cancelled = true; };
   }, [scenarioId, year, commodity]);

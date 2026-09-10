@@ -12,8 +12,12 @@ test.describe("Phase 3 — gas + LNG + Hormuz-LNG", () => {
     await page.waitForSelector("canvas");
     const gasBtn = page.getByRole("button", { name: "Gas" });
     await expect(gasBtn).toBeVisible();
-    await gasBtn.click();
-    await expect(gasBtn).toHaveAttribute("aria-pressed", "true");
+    // #deck-canvas is server-rendered, so the button can be visible before React
+    // hydrates and a first click is dropped; retry the click until it sticks.
+    await expect(async () => {
+      await gasBtn.click();
+      await expect(gasBtn).toHaveAttribute("aria-pressed", "true", { timeout: 2_000 });
+    }).toPass({ timeout: 30_000 });
     // Canvas should still be present (a soft check — full pixel-diff is overkill here)
     await page.waitForTimeout(500);
     await expect(page.locator("#deck-canvas")).toBeVisible();

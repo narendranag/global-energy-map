@@ -304,7 +304,10 @@ def main() -> None:
     )
 
     # Idempotent: drop prior LNG rows, append new
-    existing = pd.read_parquet(ASSETS)
+    if ASSETS.exists():
+        existing = pd.read_parquet(ASSETS)
+    else:
+        existing = pd.DataFrame(columns=combined.columns)
     n_before = len(existing)
     existing = existing[~existing["kind"].isin(["lng_export", "lng_import"])]
     n_kept = len(existing)

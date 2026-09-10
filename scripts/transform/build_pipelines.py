@@ -1,4 +1,9 @@
-"""Transform GEM Oil + Gas pipeline GeoJSON → pipelines.parquet (GeoParquet).
+"""Transform GEM Oil + Gas pipeline GeoJSON → pipelines GeoParquet + GeoJSON sidecar.
+
+Outputs:
+  data/derived/pipelines.parquet   full-resolution GeoParquet (gitignored; not
+                                   shipped — the runtime has no consumer for it)
+  public/data/pipelines.geojson    simplified sidecar the PipelinesLayer fetches
 
 Oil source:  data/raw/gem_oil_infra/*.geojson  (GEM Global Oil Infrastructure Tracker)
 Gas source:  data/raw/gem_gas_infra/ggit_map_*.geojson  (GEM Global Gas Infrastructure Tracker)
@@ -45,7 +50,7 @@ from shapely.geometry.collection import GeometryCollection
 
 from scripts.common.iso3 import GEM_NAME_TO_ISO3
 
-OUT = Path("public/data/pipelines.parquet")
+OUT = Path("data/derived/pipelines.parquet")
 OUT_GEOJSON = Path("public/data/pipelines.geojson")
 
 OIL_RAW_DIR = Path("data/raw/gem_oil_infra")
@@ -288,6 +293,7 @@ def main() -> None:
     )
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
+    OUT_GEOJSON.parent.mkdir(parents=True, exist_ok=True)
     combined.to_parquet(OUT, compression="zstd")
     print(
         f"wrote {OUT} "
@@ -301,7 +307,7 @@ def main() -> None:
     # Geometry is simplified to keep the sidecar under the 25 MB single-file
     # ceiling (raw ~73 MB → ~13 MB at tolerance 0.005, which corresponds to
     # roughly 500 m and is well below typical pixel resolution at country zoom).
-    # Full-resolution geometry is preserved in pipelines.parquet.
+    # Full-resolution geometry is preserved in data/derived/pipelines.parquet.
     SIMPLIFY_TOLERANCE_DEG = 0.005
     geojson_cols = [
         "pipeline_id", "name", "status", "commodity",

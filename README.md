@@ -6,7 +6,7 @@ Interactive OSINT visualization of the world's hydrocarbon energy system — res
 
 ## Status
 
-Phases 1–6 shipped; Phase 7 (consolidation) pending. See `CLAUDE.md` for current state, schema, and conventions.
+Phases 1–6 shipped; Phase 7 (correctness) in progress — see `docs/superpowers/specs/2026-09-10-refactor-redesign-review.md` for the roadmap. See `CLAUDE.md` for current state, schema, and conventions.
 
 ## What's on the map today
 
@@ -46,7 +46,7 @@ uv run python -m scripts.transform.build_<table>
 
 # Tests
 pnpm test                # Vitest unit
-uv run pytest tests/python
+uv run python -m pytest tests/python
 pnpm test:e2e           # Playwright
 ```
 

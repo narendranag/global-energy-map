@@ -2,7 +2,11 @@
 import { useCallback, useMemo, Suspense } from "react";
 import type { PickingInfo } from "@deck.gl/core";
 import { MapShell } from "@/components/map/MapShell";
-import { useReservesChoropleth } from "@/components/layers/ReservesChoropleth";
+import {
+  useReservesChoropleth,
+  type ReservesProps,
+} from "@/components/layers/ReservesChoropleth";
+import { formatReserves } from "@/components/layers/reservesRamp";
 import { useExtractionPoints } from "@/components/layers/ExtractionPoints";
 import { usePipelinesLayer } from "@/components/layers/PipelinesLayer";
 import { useRefineriesLayer } from "@/components/layers/RefineriesLayer";
@@ -13,11 +17,14 @@ import { usePortsLayer } from "@/components/layers/PortsLayer";
 import { useLngVoyagesLayer } from "@/components/layers/LngVoyagesLayer";
 import { LayerPanel, type LayerState } from "@/components/layers/LayerPanel";
 import { CommoditySelector } from "@/components/ui/CommoditySelector";
+import { TitleBar } from "@/components/ui/TitleBar";
+import { MapFooter } from "@/components/ui/MapFooter";
 import { YearSlider } from "@/components/time-slider/YearSlider";
 import { ScenarioPanel } from "@/components/scenarios/ScenarioPanel";
 import { useScenario } from "@/components/scenarios/useScenario";
 import {
   importerOverlay,
+  importsNoun,
   refineryImpactMap,
   lngImportImpactMap,
   lngVoyageImpactByTerminalName,
@@ -25,6 +32,11 @@ import {
 import type { Commodity, ScenarioId } from "@/lib/scenarios/types";
 import { useUrlState } from "@/lib/url-state/useUrlState";
 import type { AppState } from "@/lib/url-state/encode";
+import { RESERVES_LATEST_YEAR, YEAR_MAX, YEAR_MIN } from "@/lib/time/range";
+
+/** LNG-T3 voyage coverage; outside it the voyages layer has no rows. */
+const LNG_T3_FIRST_YEAR = 2020;
+const LNG_T3_LAST_YEAR = 2024;
 
 const DEFAULT_LAYERS: LayerState = {
   reserves: true,
@@ -39,8 +51,10 @@ const DEFAULT_LAYERS: LayerState = {
   lng_voyages: false,   // Phase 6: opt-in only — high visual noise
 };
 
+// Default 2020 = RESERVES_LATEST_YEAR, so first load shows a live (not
+// frozen) reserves value.
 const DEFAULTS: AppState = {
-  year: 2020,
+  year: RESERVES_LATEST_YEAR,
   commodity: "oil",
   scenario: null,
   layers: DEFAULT_LAYERS,
@@ -62,7 +76,7 @@ function HomeInner() {
   );
 
   const scenario = useScenario(scenarioId, year, commodity);
-  const overlay = useMemo(() => importerOverlay(scenario), [scenario]);
+  const overlay = useMemo(() => importerOverlay(scenario, commodity), [scenario, commodity]);
   const refImpacts = useMemo(() => refineryImpactMap(scenario), [scenario]);
   const lngImpacts = useMemo(() => lngImportImpactMap(scenario), [scenario]);
   const voyageImpacts = useMemo(
@@ -120,6 +134,34 @@ function HomeInner() {
     ports,
     lngTerminals,
   ].filter((x) => x !== null);
+
+  // Loading indicator + e2e ready signal: a visible layer whose hook has not
+  // produced a layer yet is pending, as is a scenario whose result does not
+  // yet match the requested (scenario, year, commodity).
+  const scenarioPending =
+    scenarioId !== null &&
+    (scenario?.scenarioId !== scenarioId ||
+      scenario.year !== year ||
+      scenario.commodity !== commodity);
+  const voyagesInRange = year >= LNG_T3_FIRST_YEAR && year <= LNG_T3_LAST_YEAR;
+  const pending = [
+    layers.basins && basins === null,
+    layers.reserves && reserves === null,
+    layers.extraction && extraction === null,
+    layers.pipelines && oilPipes === null,
+    layers.gas_pipelines && gasPipes === null,
+    layers.refineries && refineries === null,
+    layers.storage && storage === null,
+    layers.ports && ports === null,
+    layers.lng_terminals && lngTerminals === null,
+    layers.lng_voyages && voyagesInRange && lngVoyages === null,
+    scenarioPending,
+  ].filter(Boolean).length;
+
+  const reservesNote =
+    layers.reserves && year > RESERVES_LATEST_YEAR
+      ? `Reserves: ${RESERVES_LATEST_YEAR.toString()} value (latest in EI Statistical Review)`
+      : undefined;
 
   const getTooltip = useCallback(
     (info: PickingInfo) => {
@@ -266,29 +308,60 @@ function HomeInner() {
           `Capacity: ${capStr}`,
         ].join("\n");
       }
-      if (typeof info.layer?.id === "string" && info.layer.id.startsWith("reserves-")) {
-        const props = (o as { properties?: { name?: string; iso3?: string } }).properties;
-        return props ? `${props.name ?? ""} (${props.iso3 ?? ""})` : null;
+      if (info.layer?.id === "reserves") {
+        const props = (o as { properties?: Partial<ReservesProps> }).properties;
+        if (!props) return null;
+        const c = props.commodity ?? commodity;
+        const dataYear = (props.data_year ?? Math.min(year, RESERVES_LATEST_YEAR)).toString();
+        const lines = [`${props.name ?? ""} (${props.iso3 ?? ""})`];
+        lines.push(
+          typeof props.value === "number"
+            ? `Proved ${c} reserves: ${formatReserves(props.value, c)} (${dataYear})`
+            : `Proved ${c} reserves: no data in source (${dataYear})`,
+        );
+        if (year > RESERVES_LATEST_YEAR) {
+          lines.push(`(latest in source; year selected: ${year.toString()})`);
+        }
+        if (scenario !== null && props.iso3) {
+          const entry = overlay?.get(props.iso3);
+          lines.push(
+            "",
+            entry?.tooltip ??
+              `Scenario: no ${scenario.year.toString()} ${importsNoun(commodity)} recorded in BACI`,
+          );
+        }
+        return lines.join("\n");
       }
       return null;
     },
-    [refImpacts, lngImpacts, year],
+    [refImpacts, lngImpacts, year, commodity, scenario, overlay],
   );
 
   return (
-    <main className="relative h-screen w-screen">
+    <main
+      className="relative h-screen w-screen"
+      data-ready={pending === 0 ? "true" : "false"}
+    >
       <MapShell layers={visibleLayers} getTooltip={getTooltip} />
+      <TitleBar pending={pending} />
       <LayerPanel state={layers} onChange={setLayers} />
-      <div className="pointer-events-none absolute bottom-20 left-1/2 z-10 -translate-x-1/2">
+      <div className="pointer-events-none absolute bottom-28 left-1/2 z-10 -translate-x-1/2">
         <CommoditySelector value={commodity} onChange={setCommodity} />
       </div>
-      <YearSlider min={1990} max={2020} value={year} onChange={setYear} />
+      <YearSlider
+        min={YEAR_MIN}
+        max={YEAR_MAX}
+        value={year}
+        onChange={setYear}
+        note={reservesNote}
+      />
       <ScenarioPanel
         active={scenarioId}
         onChange={setScenarioId}
         commodity={commodity}
         result={scenario}
       />
+      <MapFooter />
     </main>
   );
 }

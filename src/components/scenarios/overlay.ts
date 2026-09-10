@@ -18,6 +18,9 @@ export function importsNoun(commodity: Commodity): string {
   return commodity === "gas" ? "LNG imports" : "crude imports";
 }
 
+/** Importers below this fraction of world imports are neither ranked nor shaded. */
+export const MIN_SHARE_OF_WORLD = 0.001;
+
 export function importerOverlay(
   r: ScenarioResult | null,
   commodity: Commodity,
@@ -25,12 +28,20 @@ export function importerOverlay(
   if (!r) return undefined;
   const route = getScenario(r.scenarioId).routeName;
   const noun = importsNoun(commodity);
+  // Same materiality floor as the ranked list: a country importing a few
+  // hundred tonnes at 100 % would otherwise paint as dark as Pakistan.
+  const world = r.byImporter.reduce((sum, i) => sum + i.totalQty, 0);
+  const floor = world * MIN_SHARE_OF_WORLD;
   const m = new Map<string, OverlayEntry>();
   for (const imp of r.byImporter) {
     const t = imp.shareAtRisk;
+    const base = `Scenario: ${(t * 100).toFixed(1)}% of ${r.year.toString()} ${noun} routed through ${route}`;
+    if (imp.totalQty < floor) {
+      m.set(imp.iso3, { tooltip: `${base} (negligible volume, under 0.1% of world ${noun}; not shaded)` });
+      continue;
+    }
     const color = exposureColor(t);
-    const tooltip = `Scenario: ${(t * 100).toFixed(1)}% of ${r.year.toString()} ${noun} routed through ${route}`;
-    m.set(imp.iso3, color ? { color, tooltip } : { tooltip });
+    m.set(imp.iso3, color ? { color, tooltip: base } : { tooltip: base });
   }
   return m;
 }
@@ -49,7 +60,7 @@ export function importerOverlay(
 export function rankImportersByShare(
   importers: readonly ImporterImpact[],
   isKnownCountry: (iso3: string) => boolean,
-  minShareOfWorld = 0.001,
+  minShareOfWorld = MIN_SHARE_OF_WORLD,
 ): ImporterImpact[] {
   const world = importers.reduce((s, i) => s + i.totalQty, 0);
   const floor = world * minShareOfWorld;

@@ -223,3 +223,13 @@ describe("rankAssetsByCapacityAtRisk", () => {
     expect(ranked.map((a) => a.id)).toEqual(["big-40pct", "tiny-100pct"]);
   });
 });
+
+describe("importerOverlay materiality floor", () => {
+  it("does not shade importers below 0.1 % of world imports, but explains why in the tooltip", () => {
+    const r = makeOilResult([makeImporter("JPN", 100_000, 0.6), makeImporter("ETH", 50, 1)]);
+    const m = importerOverlay(r, "gas");
+    expect(m?.get("JPN")?.color).toBeDefined();
+    expect(m?.get("ETH")?.color).toBeUndefined();
+    expect(m?.get("ETH")?.tooltip).toMatch(/negligible/i);
+  });
+});

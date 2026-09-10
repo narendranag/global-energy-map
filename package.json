@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "copy-duckdb": "node scripts/copy-duckdb.mjs",
+    "predev": "node scripts/copy-duckdb.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/copy-duckdb.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",

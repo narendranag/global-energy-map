@@ -1,23 +1,50 @@
 import * as duckdb from "@duckdb/duckdb-wasm";
+import { selfHostedBundles } from "./bundles";
 
-let _db: duckdb.AsyncDuckDB | undefined;
+/**
+ * The in-flight promise is cached, not the resolved DB (Phase 10, P1): the
+ * first-load loaders all call this in the same tick, and caching the value
+ * made each of them spawn a worker and download + instantiate the ~7 MB
+ * wasm. A rejected boot is evicted so a later call retries.
+ */
+let _db: Promise<duckdb.AsyncDuckDB> | undefined;
 
-export async function getDuckDB(): Promise<duckdb.AsyncDuckDB> {
-  if (_db) return _db;
-  const bundles = duckdb.getJsDelivrBundles();
-  const bundle = await duckdb.selectBundle(bundles);
-  const workerUrl = URL.createObjectURL(
-    new Blob(
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      [`importScripts("${bundle.mainWorker!}");`],
-      { type: "text/javascript" },
-    ),
+async function boot(): Promise<duckdb.AsyncDuckDB> {
+  const bundle = await duckdb.selectBundle(
+    selfHostedBundles(window.location.origin, duckdb.PACKAGE_VERSION),
   );
-  const worker = new Worker(workerUrl);
-  const logger = new duckdb.ConsoleLogger();
-  const db = new duckdb.AsyncDuckDB(logger, worker);
-  await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
-  URL.revokeObjectURL(workerUrl);
-  _db = db;
+  if (!bundle.mainWorker) throw new Error("DuckDB bundle has no worker");
+  // Same-origin classic worker: no blob/importScripts shim needed.
+  const worker = new Worker(bundle.mainWorker);
+  const db = new duckdb.AsyncDuckDB(new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING), worker);
+  try {
+    await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+  } catch (err) {
+    worker.terminate();
+    throw err;
+  }
   return db;
+}
+
+export function getDuckDB(): Promise<duckdb.AsyncDuckDB> {
+  _db ??= boot().catch((err: unknown) => {
+    _db = undefined;
+    throw err;
+  });
+  return _db;
+}
+
+/**
+ * Start booting DuckDB now (worker + wasm download) without waiting on it,
+ * so the download overlaps the GeoJSON sidecar fetches (P3). Browser only;
+ * a failure here is swallowed — the first real query retries and reports.
+ */
+export function prewarmDuckDB(): void {
+  if (typeof window === "undefined" || typeof Worker === "undefined") return;
+  getDuckDB().catch(() => undefined);
+}
+
+/** Test hook: forget the cached instance. */
+export function __resetDuckDBForTests(): void {
+  _db = undefined;
 }

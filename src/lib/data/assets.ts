@@ -1,3 +1,4 @@
+import { prewarmDuckDB } from "@/lib/duckdb/bootstrap";
 import { query } from "@/lib/duckdb/query";
 import { cachedLoader } from "./cache";
 import { useAsync } from "./useAsync";
@@ -8,6 +9,11 @@ import { useAsync } from "./useAsync";
  * grouped by kind in memory. Year / vintage filtering happens on these rows,
  * never by re-querying.
  */
+
+// P3: the map page imports this module, so start the DuckDB worker + wasm
+// download as soon as the page's JS evaluates — before hydration and the
+// first query — overlapping the GeoJSON sidecar fetches. No-op on the server.
+prewarmDuckDB();
 
 export type AssetKind =
   | "extraction_site"

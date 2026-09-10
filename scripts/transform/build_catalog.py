@@ -1,0 +1,353 @@
+"""Generate public/data/catalog.json from a small hand-written registry.
+
+The catalog is the source of truth for the /about page and pipeline metadata.
+It is GENERATED — never hand-edit catalog.json; edit REGISTRY below and re-run:
+
+    uv run python -m scripts.transform.build_catalog
+
+Run it last, after every other transform, because it records the size and
+sha256 of each shipped file (tests/python/test_data_integrity.py checks them).
+
+Hand-written fields per entry (REGISTRY):
+    id, label, path, format, source_name, source_url, license, as_of, layers,
+    attribution (optional), runtime (default True — False for artefacts shipped
+    for reproducibility that no layer or scenario reads)
+
+Computed fields per entry:
+    bytes, sha256   of the file at ``path``
+    rows            rows this entry contributes: the whole file, or the subset
+                    selected by the registry's ``subset`` filter when several
+                    sources share one file (assets.parquet, pipelines.geojson)
+
+``as_of`` rule: always ``YYYY-MM-DD``. The date is the source's own release /
+as-of date when it publishes one; a source that only gives a month uses the
+first of that month; unversioned live services (NETL ArcGIS, OSM Overpass)
+use the retrieval date of the snapshot in data/raw/.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+import sys
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
+
+import pandas as pd
+import pyarrow.parquet as pq
+
+PUBLIC = Path("public")
+OUT = PUBLIC / "data" / "catalog.json"
+CATALOG_VERSION = 6
+
+GEM_ATTRIBUTION = "Data: Global Energy Monitor, CC BY 4.0"
+LNG_T3_ATTRIBUTION = (
+    "Data: Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0"
+)
+NETL_SOURCE_NAME = "National Energy Technology Laboratory (US DOE)"
+NETL_LICENSE = "US Government work, public domain (17 USC §105)"
+NETL_GOGI_URL = (
+    "https://arcgis.netl.doe.gov/portal/home/item.html?id=1e1c13b43dfb4af68040598c6f4baf44"
+)
+NETL_SNAPSHOT = "2026-05-17"
+LNG_T3_URL = "https://doi.org/10.5281/zenodo.19571058"
+LNG_T3_SOURCE = "Zhou et al. 2026, LNG-T3 (Zenodo)"
+
+REGISTRY: list[dict[str, Any]] = [
+    {
+        "id": "ei_country_year",
+        "label": "Country-year reserves + production",
+        "path": "/data/country_year_series.parquet",
+        "format": "parquet",
+        "source_name": "Energy Institute Statistical Review of World Energy",
+        "source_url": "https://www.energyinst.org/statistical-review/resources-and-data-downloads",
+        "license": "Free; see Energy Institute terms",
+        "as_of": "2025-06-26",
+        "layers": ["reserves", "reserves:gas", "production"],
+        "attribution": "Data: Energy Institute Statistical Review of World Energy 2025",
+    },
+    {
+        "id": "gem_extraction",
+        "label": "Oil & gas extraction sites (GEM)",
+        "path": "/data/assets.parquet",
+        "subset": {"kind": ["extraction_site"]},
+        "format": "parquet",
+        "source_name": "Global Energy Monitor",
+        "source_url": "https://globalenergymonitor.org/projects/global-oil-gas-extraction-tracker/",
+        "license": "CC BY 4.0",
+        "as_of": "2023-07-01",
+        "layers": ["extraction"],
+        "attribution": GEM_ATTRIBUTION,
+    },
+    {
+        "id": "netl_refineries",
+        "label": "Oil refineries (NETL GOGI, primary)",
+        "path": "/data/assets.parquet",
+        "subset": {
+            "kind": ["refinery"],
+            "source": ["National Energy Technology Laboratory (US DOE) — GOGI Refineries"],
+        },
+        "format": "parquet",
+        "source_name": NETL_SOURCE_NAME,
+        "source_url": "https://prod.arcgis.netl.doe.gov/server/rest/services/Hosted/Refineries/FeatureServer",
+        "license": NETL_LICENSE,
+        "as_of": NETL_SNAPSHOT,
+        "layers": ["refineries"],
+    },
+    {
+        "id": "osm_refineries",
+        "label": "Oil refineries (OpenStreetMap, supplement to NETL)",
+        "path": "/data/assets.parquet",
+        "subset": {"kind": ["refinery"], "source": ["OpenStreetMap (Overpass)"]},
+        "format": "parquet",
+        "source_name": "OpenStreetMap",
+        "source_url": "https://www.openstreetmap.org/",
+        "license": "ODbL (Open Database License)",
+        "as_of": "2026-05-15",
+        "layers": ["refineries"],
+        "attribution": "© OpenStreetMap contributors, ODbL",
+    },
+    {
+        "id": "netl_storage",
+        "label": "Oil & gas storage (NETL GOGI)",
+        "path": "/data/assets.parquet",
+        "subset": {"kind": ["storage"]},
+        "format": "parquet",
+        "source_name": NETL_SOURCE_NAME,
+        "source_url": NETL_GOGI_URL,
+        "license": NETL_LICENSE,
+        "as_of": NETL_SNAPSHOT,
+        "layers": ["storage"],
+    },
+    {
+        "id": "netl_ports",
+        "label": "Oil & gas ports (NETL GOGI)",
+        "path": "/data/assets.parquet",
+        "subset": {"kind": ["port"]},
+        "format": "parquet",
+        "source_name": NETL_SOURCE_NAME,
+        "source_url": NETL_GOGI_URL,
+        "license": NETL_LICENSE,
+        "as_of": NETL_SNAPSHOT,
+        "layers": ["ports"],
+    },
+    {
+        "id": "lng_t3_terminals",
+        "label": "LNG terminals (LNG-T3, primary)",
+        "path": "/data/assets.parquet",
+        "subset": {
+            "kind": ["lng_export", "lng_import"],
+            "source": ["Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058)"],
+        },
+        "format": "parquet",
+        "source_name": LNG_T3_SOURCE,
+        "source_url": LNG_T3_URL,
+        "license": "CC BY 4.0",
+        "as_of": "2026-04-01",
+        "layers": ["lng_terminals"],
+        "attribution": LNG_T3_ATTRIBUTION,
+    },
+    {
+        "id": "gem_lng_terminals",
+        "label": "LNG terminals (GEM GGIT, supplement to LNG-T3)",
+        "path": "/data/assets.parquet",
+        "subset": {
+            "kind": ["lng_export", "lng_import"],
+            "source": ["Global Energy Monitor — Global Gas Infrastructure Tracker"],
+        },
+        "format": "parquet",
+        "source_name": "Global Energy Monitor",
+        "source_url": "https://globalenergymonitor.org/projects/global-gas-infrastructure-tracker/",
+        "license": "CC BY 4.0",
+        "as_of": "2026-02-20",
+        "layers": ["lng_terminals"],
+        "attribution": GEM_ATTRIBUTION,
+    },
+    {
+        "id": "gem_oil_pipelines",
+        "label": "Crude/NGL pipelines (GEM GOIT; simplified GeoJSON)",
+        "path": "/data/pipelines.geojson",
+        "subset": {"commodity": ["crude", "ngl", "crude+ngl"]},
+        "format": "json",
+        "source_name": "Global Energy Monitor",
+        "source_url": "https://globalenergymonitor.org/projects/global-oil-infrastructure-tracker/",
+        "license": "CC BY 4.0",
+        "as_of": "2025-04-09",
+        "layers": ["pipelines"],
+        "attribution": GEM_ATTRIBUTION,
+    },
+    {
+        "id": "gem_gas_pipelines",
+        "label": "Gas pipelines (GEM GGIT; simplified GeoJSON)",
+        "path": "/data/pipelines.geojson",
+        "subset": {"commodity": ["gas"]},
+        "format": "json",
+        "source_name": "Global Energy Monitor",
+        "source_url": "https://globalenergymonitor.org/projects/global-gas-infrastructure-tracker/",
+        "license": "CC BY 4.0",
+        "as_of": "2026-02-20",
+        "layers": ["gas_pipelines"],
+        "attribution": GEM_ATTRIBUTION,
+    },
+    {
+        "id": "netl_basins",
+        "label": "Oil & gas basins (NETL GOGI; simplified GeoJSON)",
+        "path": "/data/basins.geojson",
+        "format": "json",
+        "source_name": NETL_SOURCE_NAME,
+        "source_url": NETL_GOGI_URL,
+        "license": NETL_LICENSE,
+        "as_of": NETL_SNAPSHOT,
+        "layers": ["basins"],
+    },
+    {
+        "id": "baci_2709",
+        "label": "Crude oil + LNG bilateral trade (HS 2709 + 271111)",
+        "path": "/data/trade_flow.parquet",
+        "format": "parquet",
+        "source_name": "BACI (CEPII)",
+        "source_url": "https://www.cepii.fr/CEPII/en/bdd_modele/bdd_modele_item.asp?id=37",
+        "license": "Free for academic/research use; see CEPII terms",
+        "as_of": "2026-01-01",
+        "layers": ["trade", "scenario:hormuz", "scenario:hormuz-lng"],
+        "attribution": "Data: CEPII BACI (release V202601)",
+    },
+    {
+        "id": "disruption_route",
+        "label": "Disruption routing shares (chokepoints + pipelines; per-row citations)",
+        "path": "/data/disruption_route.parquet",
+        "format": "parquet",
+        "source_name": "EIA / IEA / Argus Media (Kpler) / GEM — see source_* columns",
+        "source_url": "https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz",
+        "license": "Hand-set shares derived from public reports; per-row citations",
+        "as_of": "2026-09-10",
+        "layers": ["scenario:hormuz", "scenario:druzhba", "scenario:btc", "scenario:cpc"],
+    },
+    {
+        "id": "natural_earth_countries",
+        "label": "Country geometries (1:110m admin-0)",
+        "path": "/data/countries.geojson",
+        "format": "json",
+        "source_name": "Natural Earth",
+        "source_url": "https://www.naturalearthdata.com/downloads/110m-cultural-vectors/110m-admin-0-countries/",
+        "license": "Public domain",
+        "as_of": "2024-10-01",
+        "layers": ["basemap", "reserves"],
+    },
+    {
+        "id": "lng_t3_voyages",
+        "label": "LNG carrier voyages (LNG-T3)",
+        "path": "/data/lng_voyage.parquet",
+        "format": "parquet",
+        "source_name": LNG_T3_SOURCE,
+        "source_url": LNG_T3_URL,
+        "license": "CC BY 4.0",
+        "as_of": "2026-04-01",
+        "layers": ["lng_voyages", "scenario:hormuz-lng"],
+        "attribution": LNG_T3_ATTRIBUTION,
+    },
+    {
+        "id": "lng_t3_trade_daily",
+        "label": "LNG trade-daily arrivals/departures (LNG-T3) — reproducibility artefact",
+        "path": "/data/lng_trade_daily.parquet",
+        "format": "parquet",
+        "source_name": LNG_T3_SOURCE,
+        "source_url": LNG_T3_URL,
+        "license": "CC BY 4.0",
+        "as_of": "2026-04-01",
+        "layers": [],
+        "attribution": LNG_T3_ATTRIBUTION,
+        "runtime": False,
+    },
+    {
+        "id": "lng_t3_terminal_daily",
+        "label": "LNG terminal-daily throughput (LNG-T3) — reproducibility artefact",
+        "path": "/data/lng_terminal_daily.parquet",
+        "format": "parquet",
+        "source_name": LNG_T3_SOURCE,
+        "source_url": LNG_T3_URL,
+        "license": "CC BY 4.0",
+        "as_of": "2026-04-01",
+        "layers": [],
+        "attribution": LNG_T3_ATTRIBUTION,
+        "runtime": False,
+    },
+]
+
+_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_FIELD_ORDER = [
+    "id", "label", "path", "format", "source_name", "source_url", "license",
+    "as_of", "layers", "attribution", "runtime", "rows", "bytes", "sha256",
+]
+
+
+def _disk_path(catalog_path: str, public: Path = PUBLIC) -> Path:
+    return public / catalog_path.lstrip("/")
+
+
+def _sha256(path: Path) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _count_rows(path: Path, subset: dict[str, list[str]] | None) -> int:
+    if path.suffix == ".parquet":
+        if not subset:
+            return int(pq.ParquetFile(path).metadata.num_rows)
+        df = pd.read_parquet(path, columns=list(subset))
+        mask = pd.Series(True, index=df.index)
+        for col, values in subset.items():
+            mask &= df[col].isin(values)
+        return int(mask.sum())
+    if path.suffix in (".geojson", ".json"):
+        with open(path) as fh:
+            feats = json.load(fh)["features"]
+        if not subset:
+            return len(feats)
+        return sum(
+            1
+            for f in feats
+            if all((f.get("properties") or {}).get(c) in v for c, v in subset.items())
+        )
+    raise ValueError(f"don't know how to count rows in {path}")
+
+
+def build_catalog(public: Path = PUBLIC) -> dict[str, Any]:
+    ids = [e["id"] for e in REGISTRY]
+    if len(ids) != len(set(ids)):
+        raise ValueError("duplicate catalog ids")
+    entries = []
+    for spec in REGISTRY:
+        if not _DATE_RE.match(spec["as_of"]):
+            raise ValueError(f"{spec['id']}: as_of must be YYYY-MM-DD, got {spec['as_of']!r}")
+        path = _disk_path(spec["path"], public)
+        if not path.exists():
+            raise FileNotFoundError(f"{spec['id']}: {path} does not exist")
+        entry = {k: v for k, v in spec.items() if k != "subset"}
+        entry.setdefault("runtime", True)
+        entry["rows"] = _count_rows(path, spec.get("subset"))
+        entry["bytes"] = path.stat().st_size
+        entry["sha256"] = _sha256(path)
+        entries.append({k: entry[k] for k in _FIELD_ORDER if k in entry})
+    return {
+        "version": CATALOG_VERSION,
+        "generated_at": datetime.now(UTC).isoformat(),
+        "entries": entries,
+    }
+
+
+def main() -> None:
+    catalog = build_catalog()
+    OUT.write_text(json.dumps(catalog, indent=2, ensure_ascii=False) + "\n")
+    print(f"wrote {OUT}  entries={len(catalog['entries'])}")
+    for e in catalog["entries"]:
+        print(f"  {e['id']:<26} rows={e['rows']:>7}  bytes={e['bytes']:>10}  {e['path']}")
+
+
+if __name__ == "__main__":
+    sys.exit(main())

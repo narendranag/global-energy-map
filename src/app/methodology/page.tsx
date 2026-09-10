@@ -60,7 +60,10 @@ function ScenarioSharesTable() {
             return (
               <tr key={`${r.disruption_id}-${r.exporter_iso3}-${r.importer_iso3 ?? "all"}`} className="align-top">
                 <td className="border-t border-panel-border py-2 pr-4 whitespace-nowrap">
-                  {getScenario(r.disruption_id as ScenarioId).label.replace(/^(Close|Cut) /, "")}{r.disruption_id === "hormuz" ? " (oil + LNG)" : ""}
+                  {r.disruption_id === "hormuz_lng"
+                    ? "Strait of Hormuz (LNG)"
+                    : getScenario(r.disruption_id as ScenarioId).label.replace(/^(Close|Cut) /, "")}
+                  {r.disruption_id === "hormuz" ? " (crude)" : ""}
                 </td>
                 <td className="border-t border-panel-border py-2 pr-4 whitespace-nowrap font-mono text-xs text-ink">
                   {r.exporter_iso3} → {r.importer_iso3 ?? "all"}

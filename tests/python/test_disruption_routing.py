@@ -14,6 +14,8 @@ EXPECTED_SHARES = {
     ("hormuz", "SAU", None): 0.88,
     ("hormuz", "ARE", None): 0.65,
     ("hormuz", "BHR", None): 1.00,
+    ("hormuz_lng", "QAT", None): 1.00,
+    ("hormuz_lng", "ARE", None): 1.00,
     ("druzhba", "RUS", "BLR"): 1.00,
     ("druzhba", "RUS", "POL"): 0.47,
     ("druzhba", "RUS", "DEU"): 0.47,
@@ -28,7 +30,7 @@ EXPECTED_SHARES = {
 
 def test_every_row_is_cited():
     rows = all_rows()
-    assert len(rows) == 16
+    assert len(rows) == 18
     for r in rows:
         assert r["source_title"].strip(), r
         assert isinstance(r["source_year"], int) and 1990 <= r["source_year"] <= 2100, r

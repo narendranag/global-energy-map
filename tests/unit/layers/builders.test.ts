@@ -115,7 +115,7 @@ describe("storage / ports / basins builders", () => {
     const l = buildPortsLayer([port("p1")]);
     expect(l.id).toBe("ports");
     expect(dataLength(l)).toBe(1);
-    expect(call(l.props.getSize, port("p", { capacity: null }))).toBe(16);
+    expect(call(l.props.getSize, port("p", { capacity: null }))).toBe(8);
   });
 
   it("basins", () => {

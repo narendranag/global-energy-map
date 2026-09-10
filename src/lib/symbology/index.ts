@@ -164,11 +164,12 @@ export function refineryColor(shareAtRisk: number | undefined): Rgba {
 export const STORAGE_FILL: Rgba = [170, 100, 40, 180]; // amber-brown
 export const STORAGE_RADIUS = { metres: 3_000, minPixels: 2, maxPixels: 6 } as const;
 
-export const PORT_COLOR: Rgba = [60, 80, 100, 230]; // slate
-export const PORT_SIZE = { minPixels: 12, maxPixels: 28 } as const;
+export const PORT_COLOR: Rgba = [60, 80, 100, 170]; // slate, softened: 3.7k glyphs line every coast
+// Halved in Phase 8 once interleaved rendering made the icons reliably visible; zoom-gating is Phase 9.
+export const PORT_SIZE = { minPixels: 6, maxPixels: 14 } as const;
 /** Pixels. Capacity is known for <1 % of ports, so nearly all get the default. */
 export function portSize(capacity: number | null): number {
-  return capacity !== null && capacity > 0 ? 14 + Math.sqrt(capacity) * 0.5 : 16;
+  return capacity !== null && capacity > 0 ? 7 + Math.sqrt(capacity) * 0.25 : 8;
 }
 
 /** Anchor glyph (32×32 viewBox), shared by the port icon atlas and the legend. */
@@ -185,10 +186,10 @@ export const ANCHOR_GLYPH = {
 export const LNG_TERMINAL_COLOR: Rgba = [20, 130, 160, 230]; // cyan/teal
 /** Import terminal with no measured voyages in the scenario year — a data gap, not "safe". */
 export const LNG_NO_COVERAGE_COLOR: Rgba = [140, 140, 140, 200];
-export const LNG_TERMINAL_SIZE = { minPixels: 10, maxPixels: 36 } as const;
+export const LNG_TERMINAL_SIZE = { minPixels: 6, maxPixels: 20 } as const;
 /** Pixels; capacity in mtpa (sqrt for area perception). */
 export function lngTerminalSize(capacity: number | null): number {
-  return 14 + Math.sqrt(Math.max(0, capacity ?? 0)) * 2.2;
+  return 7 + Math.sqrt(Math.max(0, capacity ?? 0)) * 1.2;
 }
 
 /** Red for an LNG asset / voyage end at risk, by share (shared by terminals and arcs). */

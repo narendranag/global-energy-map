@@ -56,10 +56,15 @@ export async function clickUntil(
  * Drive a (controlled) checkbox to `checked`. Re-reads the state before every
  * attempt, so a slow re-render never turns a retry into a second toggle.
  */
-export async function setChecked(box: Locator, checked: boolean, timeout = 30_000): Promise<void> {
+export async function setChecked(
+  box: Locator,
+  checked: boolean,
+  timeout = 30_000,
+  settle = 2_000,
+): Promise<void> {
   await expect(async () => {
     if ((await box.isChecked()) !== checked) await box.click();
-    await expect(box).toBeChecked({ checked, timeout: 2_000 });
+    await expect(box).toBeChecked({ checked, timeout: settle });
   }).toPass({ timeout });
 }
 

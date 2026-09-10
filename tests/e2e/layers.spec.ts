@@ -51,6 +51,10 @@ test.describe("Layer panel", () => {
   test("default layer set; unticking all but Extraction sites keeps extraction rendered (canvas probe)", async ({
     page,
   }) => {
+    // The only spec that boots the full nine-layer default map and then re-renders
+    // it eight times; under ubuntu-latest software WebGL that alone exceeds the
+    // shared 180 s budget (CI run 34521062431), so it gets its own.
+    test.setTimeout(420_000);
     const errors = collectConsoleErrors(page);
     await gotoReady(page, "/");
 
@@ -65,7 +69,7 @@ test.describe("Layer panel", () => {
 
     for (const label of LAYER_LABELS) {
       if (label === "Extraction sites") continue;
-      await setChecked(page.getByLabel(label, { exact: true }), false);
+      await setChecked(page.getByLabel(label, { exact: true }), false, 60_000, 10_000);
     }
     await expect(page.getByLabel("Extraction sites")).toBeChecked();
     await expect(page).toHaveURL(/layers=extraction(&|$)/);

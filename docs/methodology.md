@@ -1,282 +1,213 @@
-# Global Energy Map — Methodology
+# Methodology
 
-> This page is a chronological record of what shipped in each phase and the simplifications behind each layer. For a flat researcher-oriented inventory of current data sources, see `docs/data-sources.md`. For current totals (refinery count, layer counts, etc.) the live `/about` page renders from `public/data/catalog.json` at build time.
+This is the **current-state** methodology of Global Energy Map: for every map layer and every disruption scenario, where the data comes from, how current it is, how complete it is, what units it is in, what it cannot tell you, and how the scenarios use it. It describes the site as it is now. The phase-by-phase record of how it got here — including claims that later phases superseded — lives in [`docs/history.md`](https://github.com/narendranag/global-energy-map/blob/main/docs/history.md). The source-by-source research inventory (including sources evaluated and rejected) is [`docs/data-sources.md`](https://github.com/narendranag/global-energy-map/blob/main/docs/data-sources.md). File-level metadata — licence, as-of date, row count, size and sha256 for every shipped file — is on the [Data page](/data).
 
-## Scope & Approach
+## At a glance
 
-Global Energy Map presents a multidimensional view of the world's hydrocarbon energy system — reserves, extraction, pipelines, refining, LNG, storage, ports, and bilateral trade — with chokepoint/pipeline disruption scenarios overlaid on the map. Phases 1–6 are shipped; Phase 7 (correctness) fixes data and rendering defects found in the 2026-09 review.
+| Layer | Source | As of | Features | Follows the year slider | Units |
+|---|---|---|---|---|---|
+| Reserves (country) | Energy Institute Statistical Review | 2025 edition | 1990–2020, country-year | Yes, to 2020; 2020 value shown for 2021–2024 | oil: billion bbl · gas: Tcm |
+| Basins | NETL GOGI | 2026-05-17 snapshot | 1,046 polygons | No | area km² |
+| Extraction sites | GEM GOGET | 2023-07 | 5,008 | Partly — 22 % dated | — (no capacity) |
+| Oil pipelines | GEM GOIT | 2025-04-09 | 1,185 | Partly — 64 % dated | kb/d |
+| Gas pipelines | GEM GGIT | 2026-02-20 | 2,772 | Partly — 74 % dated | bcm/y |
+| Refineries | NETL GOGI (primary) + OpenStreetMap | 2026-05 | 1,163 (1,075 + 88) | No | kb/d (30 % known) |
+| Storage hubs | NETL GOGI | 2026-05-17 | 26,102 | No | — |
+| Ports | NETL GOGI | 2026-05-17 | 3,694 | No | — |
+| LNG terminals | LNG-T3 (primary) + GEM GGIT | 2026-04-01 / 2026-02-20 | 312 (305 + 7) | Yes — 98 % dated | Mtpa |
+| LNG voyages | LNG-T3 | 2026-04-01 | 17,592 voyages, 2020–2024 | Yes, 2020–2024 only | m³ of LNG |
+| Scenario trade | CEPII BACI, HS 2709 + 271111 | V202601 | 53,727 country-pair-years, 1995–2024 | Yes | tonnes |
+| Scenario route shares | EIA / IEA / Argus (Kpler) / GEM, per row | 2026-09-10 | 16 shares | No — static | fraction |
 
-The narrative below preserves what each phase shipped with the caveats that applied AT THAT TIME. Where a later phase has materially changed a Phase N claim (e.g., Phase 5's refinery augmentation supersedes Phase 2's OSM-only counts), the original phase section keeps its historical claim and the later phase documents the upgrade. Cross-references are inline.
+"Dated" means the feature carries a start or commissioning year. Undated features are shown in every year, so for layers that are only partly dated the map *over*-states what existed in early years.
 
-Phase 1 focuses on foundational layers:
+## Map layers
 
-- **Reserves choropleth (1990–2020)**: country-level proven crude reserves from Energy Institute Statistical Review, visualized as fill color on world map.
-- **Extraction sites**: point locations of operating oil and gas fields from Global Energy Monitor, with capacity and status metadata.
-- **Bilateral trade flows (1995–2024)**: crude oil exports and imports (HS code 2709) by bilateral partner pair, sourced from BACI and aggregated to annual flows.
-- **Hormuz scenario**: a simple closure case where Saudi Arabia, UAE, and other Strait-dependent exporters lose seaborne capacity proportional to their routing share. Illustrates leverage exerted by the world's most critical chokepoint.
+### Reserves (country choropleth)
 
-Phase 2 and beyond extended scope to include pipeline networks, refinery locations, LNG terminals, broader energy security scenarios, and enhanced trade flow visualizations; Phase 6 further added measured LNG carrier voyage dynamics on top of the terminal layer. See the phase sections below.
+- **Source:** Energy Institute, *Statistical Review of World Energy* 2025 — "Oil: Proved reserves history" and "Gas: Proved reserves history" sheets. File `country_year_series.parquet`.
+- **Coverage:** proved oil reserves (billion barrels) and proved gas reserves (trillion cubic metres), country-year, **1990–2020**. The same file carries crude production (kb/d) 1990–2024, used in tooltips.
+- **Reserves stop in 2020.** The EI edition that refreshed production to 2024 did not update the reserves tables. For 2021–2024 the choropleth shows the **2020 value** and says so on the map ("Reserves: 2020 value"). No post-2020 change in the map is a real change in reserves.
+- **Colour scale:** logarithmic, so both Venezuela-scale and small producers are distinguishable. Countries with no reserves row in the source get a neutral no-data tint, not the bottom of the ramp.
+- **Gaps:** country aggregates only (no field, basin or sub-national split); EI's regional "Other …" residuals are not attributed to any country.
+- **Scenarios:** not used. When a scenario is active the country fill switches from reserves to exposure.
+- **Licence:** free to use with attribution; EI's terms restrict redistributing the dataset itself, so the Data page does not offer it for download.
 
-## Caveats & Simplifications
+### Basins
 
-### Reserves Data Timing
+- **Source:** US DOE National Energy Technology Laboratory, Global Oil and Gas Infrastructure (GOGI) — basins feature service, snapshot retrieved 2026-05-17. Public domain (17 USC §105).
+- **Coverage:** 1,046 petroleum-bearing basin polygons with name, country, region and area. Geometry is simplified to ≈1 km for the browser (`basins.geojson`); full resolution stays in the build.
+- **Gaps:** geological outlines, not production; many polygons lack a name; no time dimension.
+- **Scenarios:** not used.
 
-The Energy Institute Statistical Review data underlying the reserves layer caps at 2020. The EI 2025 edition (published mid-2025) refreshed production figures through 2024 but did not update the reserves tables. This is a limitation of the source material, not a data processing error. Reserves figures should be interpreted as frozen as of 2020 for all years shown; any apparent post-2020 changes reflect display artifacts, not actual reserves discoveries or depletions.
+### Extraction sites
 
-### GEM Extraction Tracker Snapshot
+- **Source:** Global Energy Monitor, Global Oil & Gas Extraction Tracker (GOGET), July 2023 snapshot. CC BY 4.0.
+- **Coverage:** 5,008 oil and gas fields with location, status (4,795 operating, 123 in development, 77 discovered, 13 shut in), operator and country.
+- **Time:** `commissioned_year` is known for **1,087 of 5,008 (22 %)**; the other 78 % appear in every year.
+- **Gaps:** **no production or capacity** in this snapshot (GEM publishes production in separate sheets with non-uniform units; not ingested). Newer GEM releases are behind a sign-up form.
+- **Scenarios:** not used.
 
-Global Energy Monitor's Oil & Gas Extraction Tracker is a living dataset; the version ingested for Phase 1 is a snapshot from July 2023. More recent data is available directly from the GEM website but requires gated access via email-form signup. The capacity field is currently null across all assets and will be harmonized in Phase 2 once we reconcile production units across multiple GEM sheet exports.
+### Oil pipelines
 
-### BACI Iran Suppression in 2023–2024
+- **Source:** Global Energy Monitor, Global Oil Infrastructure Tracker (GOIT), 2025-04-09 GeoJSON release. CC BY 4.0.
+- **Coverage:** 1,185 crude, NGL and crude+NGL lines that are operating (1,137) or in construction (48). Shelved, cancelled and retired lines, and features without geometry, are dropped at ingest.
+- **Units:** capacity in thousand barrels per day, known for 933 of 1,185.
+- **Time:** `start_year` known for 760 of 1,185 (64 %); undated lines appear in every year. There is no retirement year, so a line decommissioned in the past is not in the data at all rather than disappearing at the right year.
+- **Geometry:** simplified at 0.005° (≈500 m) to keep the browser file under 15 MB; the shape is schematic at street scale.
+- **Scenarios:** not used directly — the pipeline scenarios are defined by route shares (below), not by these geometries.
 
-BACI suppressess low-value trade flows and certain sensitive countries to protect statistical disclosure. Iran (IRN) export records in 2024 show only one reported bilateral pair with a near-zero value. This suppression materially understates Iran's historical crude export market share and bilateral dependencies, particularly for countries in South and East Asia. The Hormuz scenario panel surfaces this caveat in the UI, noting that the impact on historically Iran-dependent importers is understated for recent years.
+### Gas pipelines
 
-### Hormuz Routing Shares — Hardcoded Simplifications
+- **Source:** Global Energy Monitor, Global Gas Infrastructure Tracker (GGIT), 2026-02-20 release. CC BY 4.0.
+- **Coverage:** 2,772 operating (2,554) or in-construction (218) gas lines, on the same filtering rules as oil.
+- **Units:** capacity in billion cubic metres per year (the column is named `capacity_kbpd` for historical reasons; `capacity_unit` says `bcm/y`).
+- **Time:** `start_year` known for 2,058 of 2,772 (74 %).
+- **Scenarios:** not used. The only gas scenario is Hormuz-LNG, which concerns seaborne LNG, not pipeline gas.
 
-The Hormuz scenario applies fixed routing shares based on engineering literature and EIA guidance:
-- **Saudi Arabia**: 88% seaborne via Hormuz; 12% bypasses via the East-West pipeline to the Red Sea.
-- **UAE**: 65% seaborne via Hormuz; 35% diverts via pipeline to Fujairah on the Gulf of Oman.
-- **All other Gulf producers**: 100% Hormuz-dependent in the base scenario.
+### Refineries
 
-These shares are static simplifications. Phase 2+ will refine routing allocations using per-year export data (seaborne vs. pipeline shares from EIA, disaggregated by exporter) to better track the evolution of alternative export infrastructure.
+- **Sources:** NETL GOGI Refineries (primary, public domain, snapshot 2026-05-17) plus OpenStreetMap (supplement, ODbL, Overpass snapshot 2026-05-15). Each row carries a `source` column.
+- **Deduplication:**
+  - *Within NETL* — NETL lists many plants more than once (an English name, a numbered "333 – …" variant, a French "Raffinerie de …" variant). Rows in the same country within **1 km** are merged, but never two rows whose known capacities differ by more than 5 %. 2,272 raw rows become **1,075**. A few probable duplicates with conflicting capacities (e.g. several Pemex plants) remain as two rows.
+  - *OSM against NETL* — an OSM refinery is dropped when a NETL refinery in the **same country lies within 2 km**. The 2 km threshold is the knee of the nearest-neighbour distance distribution: matches under 2 km are the same facility; beyond it, genuinely distinct neighbours appear (e.g. Marcus Hook / Trainer). 168 OSM refineries become **88** supplements.
+- **Units:** capacity in kb/d, parsed from NETL's free-text field; known for **350 of 1,163 (30 %)**; OSM rows never carry capacity.
+- **Time:** no vintage in either source; refineries appear in every year.
+- **Scenarios:** oil scenarios attribute each country's at-risk crude imports to its refineries — see [Refinery attribution](#refinery-attribution).
+- **Licence:** the 88 OSM rows are ODbL (share-alike), so the refinery layer — and `assets.parquet`, which mixes them with CC BY and public-domain rows — is view-only.
 
-## Phase 2: Oil Pipelines & Refineries
+### Storage hubs
 
-Phase 2 extends Phase 1's foundation by adding critical midstream and refining infrastructure, alongside additional disruption scenarios.
+- **Source:** NETL GOGI storage feature service, snapshot 2026-05-17. Public domain.
+- **Coverage:** 26,102 oil and gas storage sites. Drawn from zoom 4 upward to keep the world view legible.
+- **Gaps:** capacity is present on only 4 rows, so the layer shows *where* storage is, not how much; no vintage; status is mostly blank.
+- **Scenarios:** not used.
 
-### Scope Additions
+### Ports
 
-- **Oil pipelines (operating + in-construction)**: crude oil and NGL fuels transported via land and subsea routes, sourced from Global Energy Monitor's Global Oil Infrastructure Tracker (DigitalOcean CDN release 2025-04-09). Displayed as line features colored by commodity and status. **Attribution: "Data: Global Energy Monitor, CC BY 4.0"** is required.
-- **Oil refineries**: point locations of petroleum refineries worldwide, sourced from OpenStreetMap (via Overpass API). Colored by bilateral feedstock attribution (see caveat below). 168 refineries ingested; geographic distribution skews toward Western Europe and North America.
-- **Four disruption scenarios**:
-  - **Hormuz** (Phase 1): Saudi Arabia and UAE export routes via Strait of Hormuz.
-  - **Druzhba** (Phase 2): Russian crude pipeline to Central and Eastern Europe (DEU 60%, POL 95%, BLR/SVK/HUN 100%, CZE 90% routing shares).
-  - **BTC** (Phase 2): Azerbaijan crude pipeline to Turkey (90% routing share).
-  - **CPC** (Phase 2): Kazakhstan and Russian crude pipeline to the Black Sea (KAZ 80%, RUS 10% routing shares).
+- **Source:** NETL GOGI ports feature service, snapshot 2026-05-17. Public domain.
+- **Coverage:** 3,694 oil and gas handling ports. Drawn from zoom 4 upward.
+- **Gaps:** status blank for 93 %; capacity on 23 rows; no vintage.
+- **Scenarios:** not used.
 
-### Caveats & Simplifications
+### LNG terminals
 
-#### Refinery Feedstock Attribution is a Country Proxy
+- **Sources:** LNG-T3 (Zhou et al. 2026, Zenodo, CC BY 4.0) as primary; GEM GGIT (CC BY 4.0) as supplement.
+- **Build:** LNG-T3's 545 terminals are filtered to operating and in-construction (330); 25 names that carry both an operating and an expansion record are collapsed to the operating record, leaving **305**. GEM's per-train records are collapsed to one per terminal; a GEM terminal is dropped if an LNG-T3 terminal in the same country has the same name, or lies within **25 km** (terminal campuses are large). **7** GEM terminals survive. Result: **312 terminals** (73 export, 239 import).
+- **Units:** nameplate capacity in million tonnes per annum, known for 310 of 312; LNG-T3 terminals also carry total processed volume (bcm), unit count and UN/LOCODE.
+- **Time:** `commissioned_year` known for **305 of 312 (97.8 %)** — the best-dated layer on the map.
+- **Scenarios:** the Hormuz-LNG scenario attributes at-risk LNG imports to import terminals — see [LNG import-terminal attribution](#lng-import-terminal-attribution).
 
-When a refinery R is located in country C, the model assigns it a capacity-share of C's bilateral crude import mix (BACI, HS 2709). This is a first-order simplification: actual refinery feedstock depends on API gravity compatibility, long-term contract structures, and per-refinery ownership. The method is informative for identifying which countries' import partners are material to a refinery's energy security, but should not be interpreted as precise accounting of individual-refinery sourcing. Real-world feedstock attribution requires detailed AECO (Association Petrolifère Européenne, etc.) refinery-level data, which is not publicly available at this temporal and geographic resolution.
+### LNG voyages
 
-#### OSM Refinery Coverage is Incomplete _(superseded by Phase 5)_
+- **Source:** LNG-T3 tanker-voyage table, 17,592 AIS-derived voyages from 2020-01-01 to 2024-12-31. CC BY 4.0.
+- **What is drawn:** laden (export) voyages active in the selected year with confidence score ≥ 3 (of 5), as arcs from loading to discharge terminal. Voyages are joined to terminals by **terminal name** (every destination name resolves at build time).
+- **Units:** cargo in cubic metres of LNG. Where tonnes are shown, 0.4245 t/m³ is used for display only (real density varies 0.41–0.46).
+- **Time:** only 2020–2024; outside that range the layer is empty.
+- **Partial coverage:** LNG-T3 is an AIS sample. Summed to annual tonnage it covers **22–41 % of GIIGNL's reported world LNG trade** in every year:
 
-At Phase 2 time, OpenStreetMap's global refinery database underrepresented major refining hubs in China, India, Saudi Arabia, and South Korea. The 168 refineries ingested represented approximately 30–40% of global refining capacity by count, with the data skew being geographic (OECD countries overrepresented). **Phase 5 added NETL GOGI Refineries (2,272 features, US Government public domain) as the primary source with OSM kept as a 2 km same-country supplement.** The merged refinery layer is 2,360 features with much-improved coverage of Asian and Middle-Eastern hubs. See the Phase 5 section below.
+| Year | LNG-T3 (Mt) | GIIGNL (Mt) | Coverage |
+|---|---|---|---|
+| 2020 | 76.6 | 356.1 | 0.22 |
+| 2021 | 105.0 | 372.3 | 0.28 |
+| 2022 | 136.0 | 401.5 | 0.34 |
+| 2023 | 164.8 | 401.4 | 0.41 |
+| 2024 | 129.4 | 407.0 | 0.32 |
 
-#### OSM Refinery Capacity Coverage is Zero _(partially superseded by Phase 5)_
+  (`scripts/validate/lng_t3_vs_giignl.py`, output checked in at `data/validation/lng_t3_vs_giignl.txt`.) The voyage arcs are therefore a sample of routes, not a census of trade, and **LNG-T3 is never used as a country total** anywhere in the site.
 
-OpenStreetMap refinery features rarely include a capacity tag (API key: `output:capacity_*`). At Phase 2 time, all 168 OSM refineries fell back to uniform-within-country attribution: each refinery in country C is treated as 1/N of C's import mix. **Phase 5's NETL augmentation lifts global refinery capacity coverage from 0% to ~15%** (NETL's `capacity` field is populated for 355 / 2,272 records and parsed via a TDD'd helper). The remaining ~85% still uses the uniform-within-country fallback.
+### Country boundaries and basemap
 
-#### Net-Supplier Countries
+- **Country polygons:** Natural Earth 1:110m admin-0 (public domain), used for the reserves and exposure fills. Small islands and city-states (Singapore, Bahrain, …) have no polygon at this scale; they still appear in scenario tables.
+- **Basemap:** OpenFreeMap "Positron" vector tiles — © OpenMapTiles, data from OpenStreetMap contributors. No API key; attribution is shown on the map.
 
-Countries with negligible crude imports (Saudi Arabia, Russia, UAE, etc.) show refinery points in base color with a "domestic crude feed — model not informative for scenario analysis" tooltip. The model is most useful for net-importer refineries.
+## Time axis
 
-#### Pipeline Route Shares are Fixed Simplifications
+The slider runs **1990–2024**. Each layer behaves differently:
 
-Scenario routing shares are static:
+- Reserves change until 2020, then hold the 2020 value (flagged on the map).
+- Pipelines, extraction sites and LNG terminals hide features whose start/commissioning year is after the selected year; undated features always show.
+- LNG voyages exist only for 2020–2024.
+- Refineries, storage, ports and basins have no dates and are the same in every year — the map shows today's facilities on a 1990 background.
+- Scenario trade data (BACI) starts in **1995**; a scenario in 1990–1994 has no trade to put at risk.
 
-- **Druzhba (Russia → Central Europe)**: DEU 60% of Russian crude, POL 95%, BLR/SVK/HUN 100%, CZE 90% — based on EIA and IEA pipeline throughput reports.
-- **BTC (Azerbaijan → Turkey)**: 90% of Azeri crude routed through the Baku-Tbilisi-Ceyhan pipeline.
-- **CPC (Kazakhstan + Russia → Black Sea)**: KAZ 80% routed via Caspian Pipeline Consortium, RUS 10% via CPC (the remainder uses Russian domestic routes not modeled).
+## Disruption scenarios
 
-Real-world shares vary year-to-year with maintenance, sanctions regimes, and renegotiation of joint-venture operating agreements. Phase 3+ will incorporate per-year EIA export flow data to improve routing allocations dynamically.
+### What the scenario computes
 
-#### Pipeline GeoJSON Geometry Coverage _(at Phase 2 ship)_
-
-At Phase 2 ship, the Global Energy Monitor oil pipeline GeoJSON source included 1,872 pipeline features, of which 24% lacked geometry. After filtering for valid geometries and operational status (in-service or in-construction), 1,185 features were retained. Abandoned or indefinitely deferred pipelines are excluded from the visualization but documented in the raw source for reference. **Phase 3 added gas pipelines (GGIT) on the same filtering rules**; the combined oil + gas pipelines table is now ~3,957 features. **Phase 5 simplified the GeoJSON sidecar from 73 MB to 14 MB at tolerance 0.005** (full-resolution geometry kept in a build-time GeoParquet under `data/derived/`, not shipped).
-
-## Phase 3: Natural Gas + LNG Terminals
-
-Phase 3 extends the energy map to natural gas infrastructure and liquefied natural gas (LNG) trade, providing visibility into the second-largest component of the global energy system.
-
-### Gas pipelines + LNG terminals
-
-Source: **Global Energy Monitor — Global Gas Infrastructure Tracker** (CC BY 4.0). Filtered to operating + in-construction. Pipeline capacity is preserved in source units (typically bcm/y); LNG terminal capacity is preserved in mtpa.
-
-Data: Global Energy Monitor, CC BY 4.0. https://globalenergymonitor.org/projects/global-gas-infrastructure-tracker/
-
-### LNG trade flows — HS code choice
-
-BACI HS 271111 (liquefied natural gas) is used for the Hormuz-LNG scenario specifically because the Strait of Hormuz only affects waterborne (liquefied) gas — pipeline gas (HS 271121) does not transit chokepoints. Aggregating to HS 2711 would mix the two and overstate Hormuz's reach.
-
-### LNG terminal feedstock attribution
-
-For each LNG import terminal `T` in country `C`, year `Y`:
+For a scenario *S* (a chokepoint or pipeline), a commodity and a year:
 
 ```
-terminal_capacity_share     = T.capacity / Σ(capacity of LNG import terminals in C)
-country_lng_imports_from_X  = BACI[271111, Y].importer=C, exporter=X
-historical_lng_from_X(T)    = terminal_capacity_share × country_lng_imports_from_X
+at_risk(importer)  = Σ over exporters X of  imports(X → importer, year) × share(S, X, importer)
+share_at_risk      = at_risk(importer) / total imports(importer, year)
 ```
 
-With a scenario active, `terminal_at_risk = Σ_X historical_lng_from_X(T) × route_share(scenario, X, C)` and `terminal_share_at_risk = terminal_at_risk / Σ_X historical_lng_from_X(T)`. Terminals in countries with no LNG imports show zero exposure with a tooltip note.
+`share(S, X, importer)` is the fraction of X's exports to that importer that moves through the route. A per-pair share wins over a per-exporter share; exporters with no share contribute nothing. The map colours each importer by `share_at_risk` (red is reserved for this), and the scenario panel ranks importers, refineries or LNG terminals.
 
-Caveat (mirrors refinery model): contracted-offtake data is not used; attribution is purely capacity-weighted on import volumes. This is the country-proxy approximation, not actual cargo-level allocation.
+This is a **static first-order exposure measure**: what fraction of last year's supply moved through the route. It does not model rerouting, spare pipeline capacity, strategic stocks, price response, or substitution between suppliers.
 
-### Gas reserves
+### Trade data (BACI)
 
-Source: **Energy Institute Statistical Review of World Energy** — sheet `Gas - Proved reserves history`. Unit: trillion cubic metres (Tcm). Same temporal coverage as oil reserves.
+- **Source:** CEPII BACI, HS92 release V202601, annual bilateral trade 1995–2024, reconciled from UN Comtrade mirror statistics. Quantities in **metric tonnes**. HS 2709 (crude petroleum) for oil scenarios; HS 271111 (liquefied natural gas) for Hormuz-LNG — pipeline gas (HS 271121) never transits a chokepoint, so HS 2711 would overstate Hormuz.
+- **Cleaning:** BACI pseudo-country aggregates are removed and duplicate country-pair rows summed.
+- **Iran suppression:** BACI reports almost no Iranian crude exports in 2023–2024 (one near-zero pair). Exposure of importers that historically bought Iranian crude is **understated** for those years; the scenario panel says so.
+- **Volumes:** panels show crude in kb/d using 7.33 barrels per tonne (EI's mean conversion) and LNG in Mt.
+- **Licence:** BACI is free for academic and research use; the bilateral table stays behind the app and is not offered for bulk download. Cite Gaulier & Zignago (2010), CEPII Working Paper 2010-23.
 
-## Phase 4 — NETL basins + storage + ports + URL state
+### Route shares
 
-### NETL Global Oil and Gas Infrastructure (GOGI)
+Sixteen hand-set shares drive every scenario. Each is tied to a document and year in `disruption_route.parquet` (`source_title`, `source_url`, `source_year`, `source_note`), and shares are **static across years** — they do not follow maintenance outages, sanctions or contract changes. Six shares were revised to source-derived values on 2026-09-10; one (Russian crude via CPC) has no single supporting document and is flagged as an analyst estimate. The table below is generated from the parquet file at build time.
 
-Source: **National Energy Technology Laboratory (US Department of Energy)** — Global Oil and Gas Data ArcGIS portal (https://arcgis.netl.doe.gov/portal/home/item.html?id=1e1c13b43dfb4af68040598c6f4baf44). Data accessed via the public ArcGIS REST FeatureServer endpoints. License: **US Government work, public domain (17 USC §105)**.
+<!-- generated:scenario-shares -->
 
-Three layers ingested in Phase 4:
-- **Basins** — petroleum-bearing geological basins (~1,046 polygons)
-- **Storage hubs** — oil and gas storage facilities globally (~26,100 points; capacity in barrels)
-- **Ports** — oil & gas handling ports (~3,700 points)
+### Refinery attribution
 
-The NETL dataset also includes Wells (4.8M features), Power Plants, Mines, Processing Plants, Stations, Railways, Platforms/Pads, and Fields — out of Phase 4 scope, possible Phase 5+ candidates.
-
-### Shareable URL state
-
-The application's full UI state — year, commodity (oil/gas), active scenario, and visible-layer toggles — round-trips through the querystring. Every control change calls `router.replace` to keep the URL in sync without polluting browser history. Bookmarking or sharing a URL preserves the exact view.
-
-Format:
+For oil scenarios, a country's imports (and its at-risk imports) are split across its refineries in proportion to capacity:
 
 ```
-?year=2020&commodity=gas&scenario=hormuz&layers=reserves,basins,gas_pipelines,lng_terminals
+refinery_share = capacity(R) / Σ capacity of refineries in the same country
 ```
 
-The `layers` querystring lists only ENABLED layers. **Forward-compat caveat:** when a future phase adds new layer toggles, URLs bookmarked from Phase 4 will load the new layers in their default-OFF state (since the bookmark's `layers=` list won't mention them). This is intentional — the URL is authoritative — so analysts sharing links know exactly what others will see.
+When **no** refinery in the country has a known capacity, the split is even (1/N). When **some** do, refineries without a capacity receive no attribution. This is a country-level proxy: real feedstock depends on crude quality, contracts and ownership, which are not public at this resolution. Refineries in net-exporting countries (Saudi Arabia, Russia, …) show little or no exposure because the model only sees imports. The panel ranks refineries by capacity at risk, so rows without capacity are not ranked.
 
-### Basin layer
+### LNG import-terminal attribution
 
-Basin polygons render as semi-transparent muted-brown fills beneath all point/line layers, with stroke at higher alpha. Tooltip on hover shows basin name, country, area (km²), and region.
+For Hormuz-LNG, each importer's **country total always comes from BACI**. How it is split across that country's import terminals depends on the year:
 
-### Geometry simplification
+- **2020–2024, country covered by LNG-T3 voyages:** the country total is split across its terminals in proportion to the volume of qualifying voyages (laden, confidence ≥ 3) each received, and each terminal's supplier mix comes from those voyages. Terminals in a covered country that received no qualifying voyage are marked **"no voyage data"** — a data gap, never shown as zero risk.
+- **2020–2024, country not covered, and all years before 2020:** the country total is split by terminal capacity ("capacity proxy").
 
-NETL's basin polygons are continent-scale and complex; the raw GeoJSON is 63 MB. Phase 4 simplifies basin geometries to ~1 km tolerance before publishing the sidecar (`public/data/basins.geojson` ~7 MB), since the map view at country scale doesn't need pipeline-grade precision for basins.
+Because LNG-T3 covers only 22–41 % of world LNG trade, it is used only for *shares within a country*, never for volumes.
 
-## Attribution — Data Sources
+### Scenario notes
 
-Attribution for all datasets used:
+- **Close Strait of Hormuz (oil).** Chokepoint; one share per Gulf exporter, applied to all its buyers. Saudi Arabia (0.88) and the UAE (0.65) have bypass pipelines (East-West to Yanbu; Habshan-Fujairah); Iraq is 0.90 to reflect the northern Kirkuk-Ceyhan route (shut 2023–24, so recent Iraqi exposure is slightly understated); Iran, Kuwait, Qatar and Bahrain are 1.0. Iran's exports are suppressed in BACI for 2023–24 (above).
+- **Close Strait of Hormuz (LNG).** Same shares, applied to HS 271111. Qatar and the UAE have no LNG bypass. Terminal attribution as above.
+- **Cut Druzhba pipeline.** Per-importer shares of Russian crude: Belarus, Slovakia, Hungary and Czechia 1.0 (landlocked or southern-branch-fed); Poland and Germany 0.47 (the ≈500 kb/d northern branch allocated pro-rata across their 2021 Russian imports; the rest came by tanker). Germany and Poland largely ended Russian pipeline crude in early 2023, but the share is static, so post-2022 results scale whatever Russian volumes BACI still records.
+- **Cut Baku-Tbilisi-Ceyhan.** Azerbaijan 0.83 (EIA: about 83 % of Azerbaijan's oil exports use BTC), applied to all its buyers.
+- **Cut Caspian Pipeline Consortium.** Kazakhstan 0.80 (EIA); Russia 0.035 — Russian-field CPC volumes against total Russian crude exports, an **analyst estimate** without a single source.
 
-- **LNG-T3 (Zhou et al. 2026)**: "Data: Zhou et al. 2026, LNG-T3, CC BY 4.0 (Zenodo 10.5281/zenodo.19571058)" (required for LNG terminals, voyages, and daily flows — see Phase 6).
-- **Global Energy Monitor extraction tracker**: "Data: Global Energy Monitor, CC BY 4.0" (this phrasing is mandatory for licensing compliance).
-- **Global Energy Monitor oil infrastructure tracker**: "Data: Global Energy Monitor, CC BY 4.0" (required for pipelines).
-- **OpenStreetMap** (refineries): "© OpenStreetMap contributors, ODbL 1.0" (required; ODbL allows derivative works with attribution and share-alike).
-- **Energy Institute Statistical Review of World Energy**: Free and public; see Energy Institute terms of use.
-- **BACI (CEPII bilateral trade)**: Free for academic and research use; consult CEPII terms for commercial applications.
-- **UN Comtrade**: Not used in Phase 1 (BACI substituted as a pre-processed, deduplicated alternative).
-- **EIA World Oil Transit Chokepoints**: Public domain (US government source).
-- **Natural Earth base map**: Public domain.
+## Known limitations
+
+- Infrastructure layers are snapshots with partial or no dates; the historical map is an approximation that shows too much in early years.
+- Capacity is missing for most storage, ports, extraction sites and 70 % of refineries.
+- Scenario exposure is annual, static and first-order (see above); route shares do not vary by year.
+- BACI suppresses some flows (notably Iran 2023–24) and lags by about a year.
+- LNG-T3 is a partial AIS sample (22–41 % of trade).
+- Country polygons are 1:110m; small states appear in tables but not as fills.
 
 ## Reproducibility
 
-Data ingestion and transformation follow a reproducible workflow:
+Every shipped file is built by a Python script from public inputs: `uv run python -m scripts.build_all` runs every ingest and transform in order and finishes with `scripts.transform.build_catalog`, which records each file's size and sha256 in `public/data/catalog.json`. Rebuilding unchanged inputs is byte-identical, and `tests/python/test_data_integrity.py` fails if a shipped file drifts from its catalog entry. The browser reads the files directly (DuckDB-WASM over Parquet, plus GeoJSON sidecars); there is no server-side analytics path and no client-side call to any data provider.
 
-1. Download raw sources (scripts log all URLs for transparency).
-2. Process via Python uv environment: `uv run scripts/ingest/<source>.py` ingests and validates raw data; `uv run scripts/transform/build_<output>.py` produces final Parquet outputs.
-3. Raw downloads are cached in `data/raw/` (gitignored for size); processed Parquet files are committed to `public/data/` for distribution.
-4. Build logs and transformation scripts are version-controlled in the repository for audit.
+## Licences and downloads
 
-All processing is deterministic and re-runnable. Data dependencies are minimal and explicitly declared.
+The code is MIT-licensed. The data keeps its original licences, listed per file on the [Data page](/data). Downloads are offered only for CC BY 4.0 and public-domain sources and for the project's own route-share table; Energy Institute reserves and BACI trade data are shown in the app but not offered for download, and `assets.parquet` is not offered as-is because it contains 88 ODbL OpenStreetMap refinery rows. From the map, **Share / cite** exports the rows of any visible CC BY or public-domain layer (CSV or GeoJSON) and the active scenario table (CSV; derived analysis, with every input cited in the file header).
 
-## Phase 5 — Data quality polish
+## How to cite
 
-Phase 5 strengthens existing layers with three independent improvements: pipeline sidecar simplification, NETL refineries augmentation, and vintage-aware time filtering. No new commodity, no new scenarios.
+<!-- generated:how-to-cite -->
 
-### NETL Refineries augmentation
+## Required attributions
 
-Source: **NETL Global Oil & Gas Infrastructure (US Department of Energy)** — `Refineries` FeatureServer. License: US Government work, public domain (17 USC §105). Adds ~2,272 refineries to the existing 168 OpenStreetMap features.
-
-NETL is the primary source; OpenStreetMap is the supplement. For each OSM refinery, the build checks whether any NETL refinery falls within 2 km in the same country — if yes, the OSM record is dropped (NETL covers it). The 2 km threshold is the empirical knee of the OSM↔NETL nearest-neighbor distance distribution: matches ≤ 2 km are virtually always the same facility (Joliet/Joliet 0.12 km, Pembroke 0.02 km), while > 2 km may legitimately be distinct neighbors (e.g., Marcus Hook / Trainer in the Philadelphia refinery cluster).
-
-NETL's `capacity` field is a string. A parser (`scripts/transform/_refinery_capacity.py`) handles both observed patterns — 97% pure numbers (e.g., `"59000"`) and 3% HTML-wrapped (e.g., `"<td>150,000 bpd crude capacity</td>"`). Unparseable / blank values produce NULL capacity; the scenario engine falls back to uniform-within-country attribution.
-
-`source` column added to refinery rows: `"National Energy Technology Laboratory (US DOE) — GOGI Refineries"` or `"OpenStreetMap (Overpass)"`.
-
-Capacity coverage improves from 0% (OSM-only) to ~15% (NETL's populated subset). Geographic skew shifts from OECD-heavy (OSM bias) toward global coverage (NETL includes major refineries in China, India, Saudi Arabia, South Korea that OSM under-tags).
-
-### Vintage-aware time filtering
-
-Pipelines and extraction sites become time-aware: the year slider now hides features whose build year is after the active year. A pipeline built in 2020 no longer appears on the 1990 map; an extraction site commissioned in 2015 no longer appears in 1990.
-
-Coverage of vintage data in source:
-
-| Layer | Vintage field | Populated |
-|---|---|---|
-| Oil + gas pipelines | `start_year` | 71% |
-| Extraction sites | `commissioned_year` | 22% |
-| Refineries | — | 0% |
-| LNG terminals | `commissioned_year` | 97.8% _(Phase 6 — see below)_ |
-| Storage hubs | — | 0% |
-| Ports | — | 0% |
-
-Features without populated vintage data appear in all years (preserves prior behavior). The 29% of pipelines and 78% of extraction sites without dates are always-visible regardless of slider position. Refineries, storage hubs, and ports have no vintage data in source and remain always-visible. **LNG terminals are the exception as of Phase 6**: LNG-T3's `start_year` column populates `commissioned_year` for 97.8% of the 312 LNG terminal rows, so the year slider now meaningfully filters LNG terminals too (see Phase 6 section).
-
-`decommissioned_year` is 0% populated across all asset types; no decommission filtering is applied.
-
-### Pipelines GeoJSON sidecar simplification
-
-`public/data/pipelines.geojson` is simplified at `tolerance=0.005` (Shapely `simplify(tol, preserve_topology=True)`, corresponding to roughly 500 m in lon/lat units). This reduces the sidecar from ~73 MB to ~13 MB, clearing the 25 MB single-file ceiling without requiring Vercel Blob hosting. Full-resolution geometry is preserved in a build-time GeoParquet under `data/derived/` (not shipped to the browser since Phase 7).
-
-## Phase 6 — LNG carrier dynamics
-
-Phase 6 lifts the LNG layer from "static terminal capacity (GEM)" to "measured global LNG flow (LNG-T3)." Three changes: LNG-T3 becomes the primary LNG terminal source with GEM as a 25 km supplement; voyages and daily trade/terminal flows are surfaced as three new parquets and a new opt-in ArcLayer; the Hormuz-LNG scenario adds a voyage-derived per-terminal attribution path for years 2020–2024, layered on top of (not replacing) BACI country totals.
-
-### Source: Zhou et al. 2026 (LNG-T3)
-
-Citation: Zhou C. (2026). *Global Marine LNG Terminals, Tankers & Trade (LNG-T3): A High-Resolution AIS-Based Dataset of LNG Trade Dynamics (2020–2024).* DOI: [10.5281/zenodo.19571058](https://doi.org/10.5281/zenodo.19571058). License: **CC BY 4.0**. Attribution: "Data: Zhou et al. 2026, LNG-T3, CC BY 4.0 (Zenodo 10.5281/zenodo.19571058)".
-
-Five source CSVs are ingested: `LNG_terminal.csv` (545 terminals, 471 unique names), `LNG_tanker.csv` (fleet inventory, not surfaced as a Phase 6 layer), `LNG_tanker_voyage.csv` (17,592 AIS-derived voyages), `LNG_trade_daily.csv` (16,691 country-pair-day records), and `LNG_terminal_daily.csv` (16,115 terminal-day throughput records), all spanning 2020-01-01 → 2024-12-31.
-
-### Terminal augmentation: LNG-T3 primary + GEM supplement
-
-LNG-T3's 545 terminals filter to 330 active (`operating` + `construction`). Of those 330, 25 terminal names carry both an "operating" record and a separate "construction" (expansion-phase) record — `collapse_duplicate_names()` resolves each pair by keeping the operating record (falling back to higher capacity on ties), leaving **305 LNG-T3 terminals**. This means capacity reflects currently-operating trains only: e.g. Dahej LNG terminal keeps its 17.5 mtpa operating capacity, and a 5.0 mtpa under-construction expansion record for the same terminal is discarded.
-
-GEM's raw GGIT geojson emits one feature per liquefaction/regasification train sharing a single terminal-level `pid`, and the terminal-level capacity field is already the terminal total — these are **not** verbatim-duplicate features (48 of the 84 duplicated pids differ in status, start-year, owner, tracker-custom, or geometry across their per-unit rows). The transform collapses each multi-unit pid down to one record per pid (operating preferred over in-construction, then highest capacity), using the same deterministic rule as the LNG-T3 name collapse above. Before proximity matching, a **name-equality pre-pass** drops any GEM record whose (country, name) — case-insensitive, stripped — matches an LNG-T3 terminal in the same country: this catches same-terminal pairs whose coordinates diverge too far for the 25 km check below (e.g. "Ichthys FLNG Terminal," ~440 km apart between the two sources but unambiguously the same facility). The remaining GEM candidates are then matched against LNG-T3 terminals within **25 km same-country** (larger than Phase 5's refinery 2 km threshold, because LNG terminal campuses are larger and same-port collisions less likely); GEM records with a match are dropped as already covered. **7 GEM terminals** survive as supplements (73 lng_export / 239 lng_import across the combined layer).
-
-Result: **312 LNG terminals** total (305 LNG-T3 + 7 GEM), of `assets.parquet`'s 37,476 rows (a rebuild also purged 131 all-null orphan rows left behind by an earlier index-alignment bug). `capacity` covers 310/312 LNG rows and `commissioned_year` (populated from LNG-T3's `start_year`) covers **305/312 (97.8%)** — a dramatic jump from GEM-only Phase 3's 0%, and now the strongest-covered vintage field of any asset kind in the schema (see the vintage table above).
-
-### LNG-T3 vs GIIGNL reconciliation
-
-LNG-T3 daily arrivals aggregated to annual tonnage (cbm × 0.4245 t/cbm DOE LNG density convention). The table below is the verbatim output of `scripts/validate/lng_t3_vs_giignl.py`, checked in at `data/validation/lng_t3_vs_giignl.txt`:
-
-```
-Year   LNG-T3 Mt    GIIGNL Mt    Δ Mt       Gap %   
---------------------------------------------------
-2020         76.6        356.1     -279.5    78.5%
-2021        105.0        372.3     -267.3    71.8%
-2022        136.0        401.5     -265.5    66.1%
-2023        164.8        401.4     -236.6    58.9%
-2024        129.4        407.0     -277.6    68.2%
-
-2020 coverage ratio (LNG-T3 ÷ GIIGNL): 0.22
-2021 coverage ratio (LNG-T3 ÷ GIIGNL): 0.28
-2022 coverage ratio (LNG-T3 ÷ GIIGNL): 0.34
-2023 coverage ratio (LNG-T3 ÷ GIIGNL): 0.41
-2024 coverage ratio (LNG-T3 ÷ GIIGNL): 0.32
-
-Partial-coverage AIS sample: scenario engine uses BACI totals with voyage-derived shares (see docs/methodology.md, Phase 6).
-```
-
-Every year exceeds the validation script's 30% acceptable-gap threshold — LNG-T3's AIS-derived arrivals cover only **22–41% of GIIGNL's global LNG trade** for 2020–2024, not the near-complete picture the original spec's open question had hoped for. **LNG-T3 is a partial-coverage AIS sample, and Phase 6 does NOT use it as a country-total source.** BACI HS 271111 remains the canonical country-level LNG import total for all years, including 2020–2024.
-
-### Hormuz-LNG scenario refactor
-
-Phase 3 implemented Hormuz-LNG as: BACI annual trade × capacity-weighted attribution from a country's total to its individual terminals. Phase 6 (`src/lib/scenarios/lng-t3.ts`) adds a voyage-informed disaggregation path for years 2020–2024, without ever letting LNG-T3 override a BACI country total:
-
-- For years **2020–2024**, a country's LNG import total still comes from BACI HS 271111 (tonnes) — unchanged.
-- Export voyages from LNG-T3 (`voyage_type = "export"`, `confidence_score >= 3`) are matched to import terminals by exact name against `to_terminal`. Where a country has covered terminals, its BACI total is redistributed across those terminals in proportion to voyage volume, and each terminal's exporter mix is set from its voyage-derived shares (not from capacity).
-- Terminals in a covered country that received zero qualifying voyages show coverage `"none"` in the UI — an explicit **data gap**, never rendered as a zero-risk terminal.
-- Countries with no covered terminals at all fall back entirely to the Phase 3 capacity-weighted split (coverage `"capacity-proxy"`, `dataSource: "baci"`).
-- Years ≤ 2019 are unaffected; they always use the Phase 3 BACI × capacity-weighted path.
-
-`0.4245` t/cbm (the DOE LNG density convention) is used only for the validation script's and UI's display conversion from cbm to tonnes — it never feeds the tonnes-conservation math above, which stays in BACI's native units.
-
-### Voyage layer
-
-An **"LNG voyages (2020–2024)"** toggle sits under the Gas layer group, **default off**. When enabled, a deck.gl ArcLayer renders great-circle arcs from export to import terminal, filtered server-side by the active year and `confidence_score >= 3` (dropping the lowest-confidence AIS matches). LNG terminals themselves now respect the year slider via the `commissioned_year` vintage field above. The terminal tooltip was enriched to show units (mtpa / bcm), total processed volume in bcm, UN/LOCODE, source, and — when a scenario is active — which attribution method (BACI capacity-proxy vs LNG-T3 voyage-derived) produced the terminal's risk figure. The ScenarioPanel carries a footnote for years 2020–2024 explaining the voyage-informed attribution path.
-
-### What Phase 6 doesn't ship
-
-- **Vessel fleet layer / animated trip visualization.** LNG-T3's fleet inventory has enough metadata for a vessel-at-position-on-date animation, but a deck.gl TripsLayer's complexity outweighs the analytical value over static arcs. Deferred to Phase 7+.
-- **Daily time slider.** The annual slider stays; daily resolution exists in the parquets but isn't surfaced as UI.
-- **Confidence-score threshold slider.** Fixed at >= 3; making it user-tunable is a Phase 7+ candidate.
-- **MarineCadastre US-coastal oil tankers + EMODnet EU route density.** Separate datasets from LNG-T3, deferred to a separate phase.
-- **A runtime consumer for `lng_trade_daily.parquet` / `lng_terminal_daily.parquet`.** Both are built and catalogued alongside `lng_voyage.parquet` for reproducibility of the GIIGNL reconciliation above, but no layer or scenario reads them at runtime today.
+<!-- generated:attributions -->

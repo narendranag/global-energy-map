@@ -152,7 +152,7 @@ This is a **static first-order exposure measure**: what fraction of last year's 
 - **Cleaning:** BACI pseudo-country aggregates are removed and duplicate country-pair rows summed.
 - **Iran suppression:** BACI reports almost no Iranian crude exports in 2023–2024 (one near-zero pair). Exposure of importers that historically bought Iranian crude is **understated** for those years; the scenario panel says so.
 - **Volumes:** panels show crude in kb/d using 7.33 barrels per tonne (EI's mean conversion) and LNG in Mt.
-- **Licence:** CEPII publishes BACI under the Etalab Open Licence 2.0 (reuse with attribution). By project policy our processed bilateral table stays behind the app and is not offered for bulk download; the full dataset is free from CEPII. Cite Gaulier & Zignago (2010), CEPII Working Paper 2010-23.
+- **Licence:** CEPII publishes BACI under the Etalab Open Licence 2.0 (reuse and redistribution with attribution). Our processed bilateral table is downloadable from `/data` under the same licence; the full dataset is free from CEPII. Cite Gaulier & Zignago (2010), CEPII Working Paper 2010-23.
 
 ### Route shares
 
@@ -208,7 +208,7 @@ The code is MIT-licensed. The data keeps its original licences; [`LICENSE-DATA.m
 - **Public domain / attribution** — NETL GOGI (basins, storage, ports, refineries) is a US Government work; NETL's data portal lists it under a Creative Commons Attribution licence, so credit NETL. Natural Earth (country polygons) is public domain.
 - **ODbL (share-alike)** — the 88 OpenStreetMap refineries. Shown on the map, never offered for download.
 - **Energy Institute** — reserves and production: quoting with attribution is welcome, extensive reproduction needs EI permission. Shown in the app only.
-- **CEPII BACI** — Etalab Open Licence 2.0. Our bilateral extract is shown in the app only (project policy); get the full dataset from CEPII.
+- **CEPII BACI** — Etalab Open Licence 2.0. Our bilateral extract (`trade_flow.parquet`) is downloadable from `/data`; the full dataset is free from CEPII.
 - **Basemap** — OpenFreeMap tiles © OpenMapTiles, data © OpenStreetMap contributors (ODbL); credited on the map.
 
 ### Downloads

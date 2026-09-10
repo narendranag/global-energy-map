@@ -281,13 +281,12 @@ REGISTRY: list[dict[str, Any]] = [
             "scenario:btc",
             "scenario:cpc",
         ],
-        "redistributable": False,
-        "download_note": (
-            "Project policy keeps this processed extract of BACI behind the app; "
-            "get the full dataset from CEPII, which publishes it under the Etalab "
-            "Open Licence 2.0."
+        # Etalab Open Licence 2.0 permits redistribution with attribution;
+        # made downloadable 2026-09-10 (user decision, Phase 10).
+        "redistributable": True,
+        "attribution": (
+            f"Data: CEPII BACI (release {pins.BACI.release}); cite Gaulier & Zignago (2010)"
         ),
-        "attribution": f"Data: CEPII BACI (release {pins.BACI.release})",
     },
     {
         "id": "disruption_route",

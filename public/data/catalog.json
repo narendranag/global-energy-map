@@ -266,11 +266,10 @@
         "scenario:btc",
         "scenario:cpc"
       ],
-      "attribution": "Data: CEPII BACI (release V202601)",
+      "attribution": "Data: CEPII BACI (release V202601); cite Gaulier & Zignago (2010)",
       "runtime": true,
-      "redistributable": false,
-      "downloadable": false,
-      "download_note": "Project policy keeps this processed extract of BACI behind the app; get the full dataset from CEPII, which publishes it under the Etalab Open Licence 2.0.",
+      "redistributable": true,
+      "downloadable": true,
       "rows": 53727,
       "bytes": 757819,
       "sha256": "da2fce24fe15f29cc83efbb378a049849cd7a70fe4a1f45c76b9a3e36111c8b2"

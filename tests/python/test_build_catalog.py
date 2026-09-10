@@ -7,7 +7,7 @@ import json
 from scripts.transform import build_catalog as bc
 
 # Licences the Phase 9 decision allows to be offered for download.
-_OPEN_LICENCES = ("CC BY 4.0", "public domain", "Public domain")
+_OPEN_LICENCES = ("CC BY 4.0", "public domain", "Public domain", "Etalab Open Licence 2.0")
 
 
 def test_download_flags_block_mixed_files():
@@ -60,9 +60,10 @@ def test_shipped_catalog_download_policy():
             # Every tenant of a downloadable file is open-licensed or project-derived.
             tenants = [t for t in entries.values() if t["path"] == e["path"]]
             assert all(t["redistributable"] for t in tenants), e["id"]
-    # User decision (Phase 9): EI and BACI view-only; assets.parquet not offered as-is.
+    # User decisions: EI view-only (Phase 9); BACI downloadable under Etalab
+    # Open Licence 2.0 (Phase 10); assets.parquet not offered as-is.
     assert not entries["ei_country_year"]["downloadable"]
-    assert not entries["baci_2709"]["downloadable"]
+    assert entries["baci_2709"]["downloadable"]
     assets = [e for e in entries.values() if e["path"] == "/data/assets.parquet"]
     assert assets and not any(e["downloadable"] for e in assets)
     # Phase 10: the open subset (no OSM rows) is the downloadable asset table.

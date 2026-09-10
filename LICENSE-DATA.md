@@ -16,7 +16,7 @@ The per-file licence, row count, size and sha256 are also listed on the live [Da
 | Natural Earth | Public domain | `countries.geojson` | Yes | None required ("Made with Natural Earth" appreciated) |
 | OpenStreetMap (88 refinery rows) | ODbL 1.0 (share-alike) | `assets.parquet` only | No | © OpenStreetMap contributors, ODbL |
 | Energy Institute Statistical Review | EI terms: quote with attribution, permission for extensive reproduction | `country_year_series.parquet` | No (shown in the app only) | Data: Energy Institute Statistical Review of World Energy 2025 |
-| CEPII BACI | Etalab Open Licence 2.0 | `trade_flow.parquet` | No (project policy; shown in the app only) | Data: CEPII BACI (release V202601); cite Gaulier & Zignago (2010) |
+| CEPII BACI | Etalab Open Licence 2.0 | `trade_flow.parquet` | Yes | Data: CEPII BACI (release V202601); cite Gaulier & Zignago (2010) |
 | Scenario route shares (our derivation from EIA, IEA, GEM, Argus/Kpler reporting) | Our own table, per-row citations | `disruption_route.parquet` | Yes | Cite this project and the source on each row |
 | Basemap: OpenFreeMap / OpenMapTiles / OpenStreetMap | OSM data ODbL; OpenMapTiles design CC BY 4.0; OpenFreeMap MIT | Not shipped (tiles load from OpenFreeMap) | — | OpenFreeMap © OpenMapTiles, data from OpenStreetMap contributors |
 
@@ -67,7 +67,7 @@ The per-file licence, row count, size and sha256 are also listed on the live [Da
 
 - **Terms:** CEPII's [BACI page](https://www.cepii.fr/CEPII/en/bdd_modele/bdd_modele_item.asp?id=37) now lists BACI under the [Etalab Open Licence 2.0](https://www.etalab.gouv.fr/wp-content/uploads/2018/11/open-licence.pdf), which permits reuse and redistribution (including commercial) provided you credit the source and the date of its last update. CEPII asks users to cite Gaulier, G. and Zignago, S. (2010), *BACI: International Trade Database at the Product-Level. The 1994–2007 Version*, CEPII Working Paper 2010-23.
 - **What we use:** bilateral annual trade for HS 2709 (crude) and HS 271111 (LNG), 1995–2024, release V202601, filtered and re-keyed to ISO3 in `trade_flow.parquet`. It drives every disruption scenario.
-- **Why it is not downloadable:** earlier project documents described BACI as "academic/research use only", and the Phase 9 decision kept it behind the app on that basis. The current Etalab licence would allow redistributing our extract with attribution; until the project revisits that decision, `trade_flow.parquet` stays view-only. The full dataset is free from CEPII.
+- **Redistribution:** our filtered extract (`trade_flow.parquet`) is downloadable from `/data` under the same Etalab Open Licence 2.0. Credit "CEPII BACI" with the release (V202601) and cite Gaulier & Zignago (2010). Earlier project documents described BACI as academic-use-only; CEPII's current licence supersedes that. The full dataset is free from CEPII.
 
 ### Scenario route shares — our derived table
 

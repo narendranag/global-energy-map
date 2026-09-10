@@ -3,7 +3,7 @@
 /*
  * Light-only UI by design (Phase 7 decision). There is deliberately no
  * `prefers-color-scheme: dark` override: panels are `bg-white/90` and the
- * basemap is CARTO light, so flipping the body colours only produced
+ * basemap is a light style, so flipping the body colours only produced
  * unreadable text and a dark void behind the map.
  */
 :root {

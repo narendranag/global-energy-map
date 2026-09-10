@@ -12,9 +12,10 @@ export interface MapShellProps {
 }
 
 /**
- * Shared zoom bounds for MapLibre and deck.gl. CARTO raster tiles stop being
- * useful past z8 and MapLibre clamps `jumpTo` at `maxZoom`, so deck.gl must be
- * clamped to the same range or its layers drift off the basemap (R12).
+ * Shared zoom bounds for MapLibre and deck.gl. The data layers (simplified
+ * pipelines, 1:110m countries) stop being useful past z8, and MapLibre clamps
+ * `jumpTo` at `maxZoom`, so deck.gl must be clamped to the same range or its
+ * layers drift off the basemap (R12).
  */
 export const MIN_ZOOM = 0;
 export const MAX_ZOOM = 8;
@@ -60,7 +61,7 @@ export function MapShell({ layers, getTooltip }: MapShellProps) {
       zoom: INITIAL_VIEW_STATE.zoom,
       minZoom: MIN_ZOOM,
       maxZoom: MAX_ZOOM,
-      // Always show the full text (CARTO's basemap terms require visible
+      // Always show the full text (OpenStreetMap / OpenMapTiles require visible
       // attribution); the default collapses to an "i" button under 640 px.
       attributionControl: { compact: false },
     });

@@ -22,14 +22,20 @@ export type BasinCollection = FeatureCollection<Polygon | MultiPolygon, BasinPro
  * available in DuckDB-WASM dev builds (1.33.1-dev45.0). The GeoJSON path is
  * simpler, browser-native, and avoids extension lifecycle issues.
  */
-let _cache: BasinCollection | undefined;
+// Cache the in-flight promise, not the resolved value, so callers mounting in
+// the same tick share one fetch. Cleared on failure so a later call retries.
+let _promise: Promise<BasinCollection> | undefined;
 
-async function loadBasins(): Promise<BasinCollection> {
-  if (_cache) return _cache;
-  const res = await fetch("/data/basins.geojson");
-  if (!res.ok) throw new Error(`basins.geojson fetch failed: ${String(res.status)}`);
-  _cache = (await res.json()) as BasinCollection;
-  return _cache;
+function loadBasins(): Promise<BasinCollection> {
+  _promise ??= (async () => {
+    const res = await fetch("/data/basins.geojson");
+    if (!res.ok) throw new Error(`basins.geojson fetch failed: ${String(res.status)}`);
+    return (await res.json()) as BasinCollection;
+  })().catch((err: unknown) => {
+    _promise = undefined;
+    throw err;
+  });
+  return _promise;
 }
 
 /**

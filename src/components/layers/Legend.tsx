@@ -4,8 +4,12 @@ export function Legend() {
   return (
     <div className="space-y-1 text-[10px] leading-tight text-slate-600">
       <div className="flex items-center gap-2">
-        <span className="inline-block h-2 w-6 rounded bg-gradient-to-r from-slate-200 to-emerald-700" />
-        <span>Reserves: low → high</span>
+        <span className="inline-block h-2 w-6 rounded bg-gradient-to-r from-[#edf8e9] to-[#005a32]" />
+        <span>Reserves: low → high (log scale)</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="inline-block h-2 w-6 rounded bg-[#c8c8c86e]" />
+        <span>Reserves: no data in source</span>
       </div>
       <div className="flex items-center gap-2">
         <span className="inline-block h-2 w-6 rounded bg-[#78645050]" />

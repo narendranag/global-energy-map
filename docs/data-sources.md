@@ -2,9 +2,11 @@
 
 A research-oriented inventory of the datasets behind Global Energy Map: what's in production, how we use it, what it covers (and doesn't), and what candidate sources we've evaluated for future phases.
 
-This document complements `docs/methodology.md` (the per-phase chronological narrative rendered into `/about`). Use this one when you need to **answer "what data are we using and why,"** not "what did we do in Phase 3."
+This document complements `docs/methodology.md` (the current-state methodology rendered at `/methodology`: per layer and per scenario, what the data covers and how the scenarios use it) and `docs/history.md` (the phase-by-phase record). Use this one when you need to **answer "what data are we using, why, and what else did we consider."**
 
-For runtime metadata (paths, formats, licenses, as-of dates) the canonical source is `public/data/catalog.json`. This document explains *what's in those files* and *what the data lets you say* — context the catalog can't carry.
+For runtime metadata (paths, formats, licenses, as-of dates, rows, sha256, and whether a file may be downloaded) the canonical source is `public/data/catalog.json`, rendered at `/data`. This document explains *what's in those files* and *what the data lets you say* — context the catalog can't carry.
+
+**Download policy (Phase 9 decision).** Downloads are limited to CC BY 4.0 and public-domain sources plus the project's own route-share table. Each catalog entry carries `redistributable` (its licence permits redistribution under that policy) and a computed `downloadable` (every source sharing the file is redistributable). Energy Institute (redistribution of the dataset restricted) and BACI (academic/research-use terms) are view-only; `assets.parquet` is not offered as-is because it mixes 88 ODbL OpenStreetMap refinery rows with CC BY and public-domain rows — its GEM, NETL and LNG-T3 subsets can be exported per layer from the map's Share / cite menu.
 
 ---
 
@@ -52,7 +54,7 @@ Categories:
 - **License:** CC BY 4.0 (attribution required: "Data: Global Energy Monitor, CC BY 4.0")
 - **As-of:** 2023-07-01 (July 2023 snapshot)
 - **Where it lands:** `assets.parquet` rows where `kind = 'extraction_site'`
-- **Layers/scenarios using it:** extraction-sites point layer; future Phase 5 vintage-aware filtering
+- **Layers/scenarios using it:** extraction-sites point layer (vintage-aware since Phase 5)
 
 **What we ingest:** ~5,000 oil and gas fields globally. Per-asset: location (lon/lat), name, country, operator, status, commissioned year, source URL.
 
@@ -72,14 +74,14 @@ Categories:
 - **License:** CC BY 4.0
 - **As-of:** 2025-04-09 release
 - **Where it lands:** `pipelines.geojson` sidecar for the map layer (full-resolution GeoParquet in `data/derived/`, build-time only)
-- **Layers/scenarios using it:** oil pipelines layer (operating + in-construction); refinery feedstock attribution math
+- **Layers/scenarios using it:** oil pipelines layer (operating + in-construction). Not an input to the scenario engine (pipeline scenarios are defined by route shares).
 
-**What we ingest:** 3,957 features (after filtering for valid geometries and operating/in-construction status). Per-pipeline: LineString geometry, name, status, commodity, capacity (kbpd), operator, parent operator, start year, end year, fuel type.
+**What we ingest:** 1,185 crude / NGL / crude+NGL features (after filtering for valid geometries and operating/in-construction status; 3,957 together with the GGIT gas lines). Per-pipeline: LineString geometry, name, status, commodity, capacity (kbpd, known for 933), operator, start/end country, start year.
 
 **Why GeoJSON not XLSX:** The GOIT XLSX export is behind a Supabase token-exchange form; GEM publishes the same data as a public GeoJSON on DigitalOcean CDN. The GeoJSON has 26 properties — all analytical content of the XLSX. The XLSX's extra columns are scaled/searchable variants of the same fields.
 
 **Coverage:**
-- **start_year populated on 71%** (range 1904–2031, median 2010). Strong enough to support time-aware year-filtering.
+- **start_year populated on 64% of oil lines** (760 / 1,185; 71% across oil + gas). Strong enough to support time-aware year-filtering.
 - ~24% of raw features lack geometry — filtered out at ingest.
 
 **Update cadence:** GEM publishes new GOIT snapshots periodically; we pin a release.
@@ -121,7 +123,7 @@ Categories:
 
 **Why LNG-T3 as terminal primary, not just a voyage supplement:** LNG-T3's terminal table carries `commissioned_year` (from `start_year`, populated 97.8% of LNG rows) and `total_processed_bcm`/`unit_count`/`UN_LOCODE`, none of which GEM's terminal table has at comparable coverage — a strict upgrade for the terminal point layer even setting aside the voyage data.
 
-**Validation — partial AIS coverage, NOT used as a country-total source:** `scripts/validate/lng_t3_vs_giignl.py` sums LNG-T3 daily arrivals to annual tonnage (cbm × 0.4245 t/cbm) and compares against GIIGNL Annual Report public headline totals. Result (`data/validation/lng_t3_vs_giignl.txt`, reproduced in `docs/methodology.md` Phase 6):
+**Validation — partial AIS coverage, NOT used as a country-total source:** `scripts/validate/lng_t3_vs_giignl.py` sums LNG-T3 daily arrivals to annual tonnage (cbm × 0.4245 t/cbm) and compares against GIIGNL Annual Report public headline totals. Result (`data/validation/lng_t3_vs_giignl.txt`, reproduced in `docs/methodology.md`, LNG voyages section):
 
 | Year | LNG-T3 Mt | GIIGNL Mt | Coverage ratio |
 |---|---|---|---|
@@ -150,7 +152,7 @@ LNG-T3 covers **22–41% of GIIGNL's global LNG trade, 2020–2024** — every y
 
 **What we ingest:**
 - **Basins:** 1,046 petroleum-bearing geological basin polygons with area, country, region.
-- **Storage:** 26,102 storage facilities (oil + gas) with capacity in barrels.
+- **Storage:** 26,102 storage facilities (oil + gas). The schema has a capacity field in barrels, but it is populated on only 4 rows.
 - **Ports:** 3,694 oil & gas handling ports.
 
 **Why NETL:** the strongest single global open dataset for upstream/midstream infrastructure that isn't behind a paywall or gated form. US Government source, public domain, queryable via ArcGIS REST FeatureServer. Comprehensive across 14+ asset types beyond what we currently ingest.
@@ -383,9 +385,9 @@ Key findings from the 2026-05-19 sweep:
 
 1. **Ingest script** at `scripts/ingest/<source>.py` downloads to `data/raw/<source>/` (gitignored). Idempotent: re-running uses cached files unless `--force`.
 2. **Transform script** at `scripts/transform/build_<output>.py` joins, harmonizes, and emits Parquet (or GeoParquet) to `public/data/`.
-3. **Catalog entry** — add a row to the registry in `scripts/transform/build_catalog.py` (`source_url`, `license`, `as_of`, `layers`, optional `attribution`), then run it to regenerate `public/data/catalog.json` (rows/bytes/sha256 are computed). Never hand-edit the JSON. The `/about` page reads it at build time.
+3. **Catalog entry** — add a row to the registry in `scripts/transform/build_catalog.py` (`source_url`, `license`, `as_of`, `layers`, `redistributable` + `download_note`, optional `attribution`), then run it to regenerate `public/data/catalog.json` (rows/bytes/sha256/downloadable are computed). Never hand-edit the JSON. `/data`, `/methodology` and the Share menu read it at build time.
 4. **Integrity test** — `tests/python/test_data_integrity.py` fails if a file in `public/data/` is not catalogued or its hash drifted.
-5. **Methodology entry** in `docs/methodology.md` for the current phase narrative.
+5. **Methodology entry** — a section in `docs/methodology.md` (current state: source, as-of, coverage, units, gaps, scenario use) and a dated note in `docs/history.md` for the phase that added it.
 6. **This document** — add to the relevant section above (In production / Evaluated / Candidate) so future researchers have the context.
 
 ### Conventions

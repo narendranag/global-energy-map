@@ -15,6 +15,18 @@ export interface CatalogEntry {
   readonly attribution?: string;
   /** False for reproducibility artefacts no layer or scenario reads. */
   readonly runtime?: boolean;
+  /**
+   * Licence policy: these rows may be redistributed (CC BY 4.0, public domain,
+   * or project-derived). Gates per-layer row export in the Share menu.
+   */
+  readonly redistributable?: boolean;
+  /**
+   * The file at `path` may be offered as-is on /data — every entry sharing it
+   * is redistributable (false for assets.parquet: it mixes in ODbL rows).
+   */
+  readonly downloadable?: boolean;
+  /** One-line reason a non-downloadable entry is view-only. */
+  readonly download_note?: string;
   /** Rows this entry contributes (a subset when several sources share a file). */
   readonly rows?: number;
   /** Size of the file at `path`, in bytes. */

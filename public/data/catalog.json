@@ -18,6 +18,9 @@
       ],
       "attribution": "Data: Energy Institute Statistical Review of World Energy 2025",
       "runtime": true,
+      "redistributable": false,
+      "downloadable": false,
+      "download_note": "Energy Institute terms restrict redistribution of the dataset itself; shown in the app, not offered for download.",
       "rows": 4786,
       "bytes": 40019,
       "sha256": "1431a41668bc8fb68c43cc60498b22354cf9fa1e5ee858abc14dbbbfdaa85e4b"
@@ -36,6 +39,9 @@
       ],
       "attribution": "Data: Global Energy Monitor, CC BY 4.0",
       "runtime": true,
+      "redistributable": true,
+      "downloadable": false,
+      "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. Export this layer's rows from the map's Share / cite menu instead.",
       "rows": 5008,
       "bytes": 1253789,
       "sha256": "c1710228d241a5b986b80252f53bc671491e1f893ea5b452e3a5b7eb228a2eff"
@@ -53,6 +59,9 @@
         "refineries"
       ],
       "runtime": true,
+      "redistributable": true,
+      "downloadable": false,
+      "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. The refineries layer includes those rows too, so it is view-only.",
       "rows": 1075,
       "bytes": 1253789,
       "sha256": "c1710228d241a5b986b80252f53bc671491e1f893ea5b452e3a5b7eb228a2eff"
@@ -71,6 +80,9 @@
       ],
       "attribution": "© OpenStreetMap contributors, ODbL",
       "runtime": true,
+      "redistributable": false,
+      "downloadable": false,
+      "download_note": "ODbL (share-alike) rows; downloads are limited to CC BY 4.0 and public-domain sources.",
       "rows": 88,
       "bytes": 1253789,
       "sha256": "c1710228d241a5b986b80252f53bc671491e1f893ea5b452e3a5b7eb228a2eff"
@@ -88,6 +100,9 @@
         "storage"
       ],
       "runtime": true,
+      "redistributable": true,
+      "downloadable": false,
+      "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. Export this layer's rows from the map's Share / cite menu instead.",
       "rows": 26102,
       "bytes": 1253789,
       "sha256": "c1710228d241a5b986b80252f53bc671491e1f893ea5b452e3a5b7eb228a2eff"
@@ -105,6 +120,9 @@
         "ports"
       ],
       "runtime": true,
+      "redistributable": true,
+      "downloadable": false,
+      "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. Export this layer's rows from the map's Share / cite menu instead.",
       "rows": 3694,
       "bytes": 1253789,
       "sha256": "c1710228d241a5b986b80252f53bc671491e1f893ea5b452e3a5b7eb228a2eff"
@@ -123,6 +141,9 @@
       ],
       "attribution": "Data: Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0",
       "runtime": true,
+      "redistributable": true,
+      "downloadable": false,
+      "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. Export this layer's rows from the map's Share / cite menu instead.",
       "rows": 305,
       "bytes": 1253789,
       "sha256": "c1710228d241a5b986b80252f53bc671491e1f893ea5b452e3a5b7eb228a2eff"
@@ -141,6 +162,9 @@
       ],
       "attribution": "Data: Global Energy Monitor, CC BY 4.0",
       "runtime": true,
+      "redistributable": true,
+      "downloadable": false,
+      "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. Export this layer's rows from the map's Share / cite menu instead.",
       "rows": 7,
       "bytes": 1253789,
       "sha256": "c1710228d241a5b986b80252f53bc671491e1f893ea5b452e3a5b7eb228a2eff"
@@ -159,6 +183,8 @@
       ],
       "attribution": "Data: Global Energy Monitor, CC BY 4.0",
       "runtime": true,
+      "redistributable": true,
+      "downloadable": true,
       "rows": 1185,
       "bytes": 14264820,
       "sha256": "83d66ebd3320e37ca0edb414733ce8e9e8580649104640e4146d5457ed6cc035"
@@ -177,6 +203,8 @@
       ],
       "attribution": "Data: Global Energy Monitor, CC BY 4.0",
       "runtime": true,
+      "redistributable": true,
+      "downloadable": true,
       "rows": 2772,
       "bytes": 14264820,
       "sha256": "83d66ebd3320e37ca0edb414733ce8e9e8580649104640e4146d5457ed6cc035"
@@ -194,6 +222,8 @@
         "basins"
       ],
       "runtime": true,
+      "redistributable": true,
+      "downloadable": true,
       "rows": 1046,
       "bytes": 7072438,
       "sha256": "67f1e588a3bc0b118f4297b69175ebab8b5ef54e172a8d3377c3005c134d2715"
@@ -210,10 +240,16 @@
       "layers": [
         "trade",
         "scenario:hormuz",
-        "scenario:hormuz-lng"
+        "scenario:hormuz-lng",
+        "scenario:druzhba",
+        "scenario:btc",
+        "scenario:cpc"
       ],
       "attribution": "Data: CEPII BACI (release V202601)",
       "runtime": true,
+      "redistributable": false,
+      "downloadable": false,
+      "download_note": "CEPII licenses BACI for academic/research use; the bilateral table stays behind the app and is not offered for bulk download.",
       "rows": 53727,
       "bytes": 757819,
       "sha256": "da2fce24fe15f29cc83efbb378a049849cd7a70fe4a1f45c76b9a3e36111c8b2"
@@ -229,11 +265,14 @@
       "as_of": "2026-09-10",
       "layers": [
         "scenario:hormuz",
+        "scenario:hormuz-lng",
         "scenario:druzhba",
         "scenario:btc",
         "scenario:cpc"
       ],
       "runtime": true,
+      "redistributable": true,
+      "downloadable": true,
       "rows": 16,
       "bytes": 9779,
       "sha256": "18af0a89811715c3ca24f12db5b4b5823e6f0e93a3053cd3f985e539c60d4296"
@@ -252,6 +291,8 @@
         "reserves"
       ],
       "runtime": true,
+      "redistributable": true,
+      "downloadable": true,
       "rows": 177,
       "bytes": 464423,
       "sha256": "7e11c5d15f5c3b7f3d439b85262b3183e1e7df24af94635fbf461004f2d53944"
@@ -271,6 +312,8 @@
       ],
       "attribution": "Data: Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0",
       "runtime": true,
+      "redistributable": true,
+      "downloadable": true,
       "rows": 17592,
       "bytes": 274690,
       "sha256": "2ff61860d913bf655b24184f53ef21ce0afb3999e5d476a7211edd3bd50655c3"
@@ -287,6 +330,8 @@
       "layers": [],
       "attribution": "Data: Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0",
       "runtime": false,
+      "redistributable": true,
+      "downloadable": true,
       "rows": 16691,
       "bytes": 112453,
       "sha256": "709683c7802a63a9ae60e8989c59e6335c9fc762f9fc17f8423c8c6f5067704b"
@@ -303,6 +348,8 @@
       "layers": [],
       "attribution": "Data: Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0",
       "runtime": false,
+      "redistributable": true,
+      "downloadable": true,
       "rows": 16115,
       "bytes": 47838,
       "sha256": "cb9aa5871ad1541a328a126b0c04e61da80f93515543582492eae36c0ba56cb2"

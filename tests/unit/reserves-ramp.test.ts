@@ -1,10 +1,6 @@
 import { describe, it, expect } from "vitest";
-import {
-  RESERVES_NO_DATA_COLOR,
-  formatReserves,
-  reservesColor,
-  reservesRampT,
-} from "@/components/layers/reservesRamp";
+import { RESERVES_NO_DATA_COLOR, reservesColor, reservesRampT } from "@/lib/symbology";
+import { formatReserves } from "@/components/layers/ReservesChoropleth";
 
 describe("reservesRampT", () => {
   it("maps the maximum to 1 and zero / negatives to 0", () => {

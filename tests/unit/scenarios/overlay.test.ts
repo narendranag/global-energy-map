@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
+import { exposureColor } from "@/lib/symbology";
 import {
-  exposureColor,
   importerOverlay,
   lngVoyageImpactByTerminalName,
   rankAssetsByCapacityAtRisk,

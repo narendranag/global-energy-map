@@ -44,6 +44,7 @@ import pandas as pd
 from shapely.geometry.collection import GeometryCollection
 
 from scripts.common.iso3 import netl_country_iso3
+from scripts.common.sources import NETL
 
 SRC = Path("data/raw/netl/basins.geojson")
 OUT = Path("data/derived/basins.parquet")
@@ -51,8 +52,9 @@ OUT_GEOJSON = Path("public/data/basins.geojson")
 SOURCE = "NETL Global Oil and Gas Infrastructure (GOGI)"
 # NETL serves GOGI from an unversioned live ArcGIS FeatureServer; the snapshot
 # in data/raw/netl/ was retrieved on this date. A constant (not date.today())
-# keeps rebuilds byte-stable. Update it when the raw snapshot is re-ingested.
-SOURCE_VERSION = "2026-05-17"
+# keeps rebuilds byte-stable. Bump the NETL pin in scripts/common/sources.py
+# when the raw snapshot is re-ingested.
+SOURCE_VERSION = NETL.release
 
 # Geometry simplification tolerance in decimal degrees (~1 km at the equator).
 # Basins are continent-scale polygons; we don't need pipeline-grade precision

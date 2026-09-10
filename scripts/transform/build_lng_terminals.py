@@ -45,6 +45,7 @@ import pandas as pd
 from scripts.common.iso3 import gem_first_iso3, lookup_iso3
 from scripts.common.parquet import ASSETS_PATH, append_kind
 from scripts.common.paths import latest
+from scripts.common.sources import GEM_GGIT, LNG_T3
 from scripts.common.values import to_float
 from scripts.transform._lng_terminal_helpers import (
     assert_unique_asset_ids,
@@ -54,13 +55,13 @@ from scripts.transform._lng_terminal_helpers import (
 )
 from scripts.transform._refinery_dedup import haversine_km  # reuse Phase 5 helper
 
-LNG_T3_RAW = Path("data/raw/lng_t3/v1-2026-04-01/LNG_terminal.csv")
-GEM_RAW_DIR = Path("data/raw/gem_gas_infra")
+LNG_T3_RAW = LNG_T3.raw_dir / "LNG_terminal.csv"
+GEM_RAW_DIR = GEM_GGIT.raw_dir
 ASSETS = ASSETS_PATH
 KINDS = ("lng_export", "lng_import")
 
 LNG_T3_SOURCE = "Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058)"
-LNG_T3_SOURCE_VERSION = "v1-2026-04-01"
+LNG_T3_SOURCE_VERSION = LNG_T3.release  # pinned in scripts/common/sources.py
 GEM_SOURCE = "Global Energy Monitor — Global Gas Infrastructure Tracker"
 
 DEDUP_THRESHOLD_KM = 25.0

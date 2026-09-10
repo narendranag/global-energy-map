@@ -37,8 +37,9 @@ from pathlib import Path
 import pandas as pd
 
 from scripts.common.iso3 import TRADE_ISO3_ALLOWLIST
+from scripts.common.sources import BACI
 
-RAW_DIR = Path("data/raw/baci")
+RAW_DIR = BACI.raw_dir
 OUT_PATH = Path("public/data/trade_flow.parquet")
 COUNTRIES_GEOJSON = Path("public/data/countries.geojson")
 SOURCE = "BACI (CEPII)"

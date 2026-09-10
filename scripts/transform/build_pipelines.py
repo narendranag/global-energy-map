@@ -52,12 +52,13 @@ from shapely.geometry.collection import GeometryCollection
 
 from scripts.common.iso3 import gem_endpoints_iso3
 from scripts.common.paths import latest
+from scripts.common.sources import GEM_GGIT, GEM_GOIT
 
 OUT = Path("data/derived/pipelines.parquet")
 OUT_GEOJSON = Path("public/data/pipelines.geojson")
 
-OIL_RAW_DIR = Path("data/raw/gem_oil_infra")
-GAS_RAW_DIR = Path("data/raw/gem_gas_infra")
+OIL_RAW_DIR = GEM_GOIT.raw_dir
+GAS_RAW_DIR = GEM_GGIT.raw_dir
 
 OIL_SOURCE = "Global Energy Monitor — Global Oil Infrastructure Tracker"
 GAS_SOURCE = "Global Energy Monitor — Global Gas Infrastructure Tracker"

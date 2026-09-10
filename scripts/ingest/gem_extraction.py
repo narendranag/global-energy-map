@@ -11,26 +11,19 @@ Usage:
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from scripts.common.download import cli
+from scripts.common.sources import GEM_GOGET
 
-RAW_DIR = Path("data/raw/gem_extraction")
+RAW_DIR = GEM_GOGET.raw_dir
 
-# Known Wayback Machine snapshot (July 2023 release, archived 2024-03-21)
-# The live GEM download requires a gated form; Wayback provides public access.
-WAYBACK_SNAPSHOT_URL = (
-    "https://web.archive.org/web/20240321185306/"
-    "https://globalenergymonitor.org/wp-content/uploads/2023/08/"
-    "Global-Oil-and-Gas-Extraction-Tracker-July-2023.xlsx"
-)
-DEST_FILENAME = "Global-Oil-and-Gas-Extraction-Tracker-July-2023.xlsx"
+# Pinned in scripts/common/sources.py: a known Wayback Machine snapshot (July
+# 2023 release, archived 2024-03-21) — the live GEM download requires a gated
+# form; Wayback provides public access.
+WAYBACK_SNAPSHOT_URL = GEM_GOGET.download_url
+DEST_FILENAME = GEM_GOGET.dest_filename
 
 # Fallback: re-discover via Wayback CDX in case the snapshot URL changes
-ORIGINAL_URL = (
-    "https://globalenergymonitor.org/wp-content/uploads/2023/08/"
-    "Global-Oil-and-Gas-Extraction-Tracker-July-2023.xlsx"
-)
+ORIGINAL_URL = GEM_GOGET.extra["original_url"]
 
 HELP = (
     "No Wayback Machine snapshot found for GEM extraction xlsx. "

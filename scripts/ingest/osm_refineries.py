@@ -10,18 +10,15 @@ import argparse
 import json
 import sys
 from datetime import UTC, datetime
-from pathlib import Path
 
 import httpx
 
-CACHE_DIR = Path("data/raw/osm_refineries")
+from scripts.common.sources import OSM
 
-# Primary endpoint + fallbacks
-ENDPOINTS = [
-    "https://overpass-api.de/api/interpreter",
-    "https://overpass.kumi.systems/api/interpreter",
-    "https://overpass.private.coffee/api/interpreter",
-]
+CACHE_DIR = OSM.raw_dir
+
+# Primary endpoint + fallbacks (pinned in scripts/common/sources.py)
+ENDPOINTS = [OSM.download_url, OSM.extra["fallback_1"], OSM.extra["fallback_2"]]
 
 # OSM canonical tags for oil refineries:
 #   industrial=oil_refinery (preferred)

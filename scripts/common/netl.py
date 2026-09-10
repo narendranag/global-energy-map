@@ -24,7 +24,9 @@ from urllib.parse import urlencode
 
 import httpx
 
-NETL_BASE = "https://prod.arcgis.netl.doe.gov/server/rest/services/Hosted"
+from scripts.common.sources import NETL
+
+NETL_BASE = NETL.download_url  # pinned in scripts/common/sources.py
 PAGE_SIZE = 2000
 
 

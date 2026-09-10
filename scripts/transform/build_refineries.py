@@ -44,6 +44,7 @@ from shapely.geometry import Point
 
 from scripts.common.iso3 import netl_country_iso3
 from scripts.common.parquet import ASSETS_PATH, append_kind
+from scripts.common.sources import NETL, OSM
 from scripts.transform._refinery_capacity import parse_netl_capacity_kbpd
 from scripts.transform._refinery_dedup import (
     NETL_SELF_DEDUP_KM,
@@ -52,8 +53,8 @@ from scripts.transform._refinery_dedup import (
     osm_records_not_in_netl,
 )
 
-OSM_CACHE = Path("data/raw/osm_refineries/refineries.json")
-NETL_RAW = Path("data/raw/netl/refineries.geojson")
+OSM_CACHE = OSM.raw_dir / "refineries.json"
+NETL_RAW = NETL.raw_dir / "refineries.geojson"
 COUNTRIES = Path("public/data/countries.geojson")
 ASSETS = ASSETS_PATH
 KIND = "refinery"

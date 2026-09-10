@@ -16,7 +16,9 @@ import {
   LNG_TERMINAL_COLOR,
   REFINERY_FILL,
   RESERVES_NO_DATA_COLOR,
+  atRiskColor,
   exposureColor,
+  reservesColor,
 } from "@/lib/symbology";
 import type { LayerState } from "@/components/layers/LayerPanel";
 import {
@@ -93,7 +95,7 @@ describe("refineries builder", () => {
     expect(l.id).toBe("refineries");
     expect(dataLength(l)).toBe(2);
     expect(call(l.props.getFillColor, rows[1])).toEqual([...REFINERY_FILL]);
-    expect(call(l.props.getFillColor, rows[0])).toEqual([150, 30, 30, 230]);
+    expect(call(l.props.getFillColor, rows[0])).toEqual([...atRiskColor(0.5)]);
     expect(l.props.updateTriggers.getFillColor).toEqual([impacts]);
   });
 
@@ -109,6 +111,7 @@ describe("storage / ports / basins builders", () => {
     const l = buildStorageLayer([storage("s1"), storage("s2"), storage("s3")]);
     expect(l.id).toBe("storage");
     expect(dataLength(l)).toBe(3);
+    expect(l.props.visible).toBe(true);
   });
 
   it("ports", () => {
@@ -116,6 +119,17 @@ describe("storage / ports / basins builders", () => {
     expect(l.id).toBe("ports");
     expect(dataLength(l)).toBe(1);
     expect(call(l.props.getSize, port("p", { capacity: null }))).toBe(8);
+  });
+
+  it("zoom gating hides storage / ports without dropping their data or id", () => {
+    const s = buildStorageLayer([storage("s1")], { visible: false, scale: 0.6 });
+    expect(s.id).toBe("storage");
+    expect(s.props.visible).toBe(false);
+    expect(dataLength(s)).toBe(1);
+    const p = buildPortsLayer([port("p1")], { visible: false, scale: 0.6 });
+    expect(p.id).toBe("ports");
+    expect(p.props.visible).toBe(false);
+    expect(p.props.sizeScale).toBeCloseTo(0.6);
   });
 
   it("basins", () => {
@@ -156,6 +170,21 @@ describe("LNG terminals builder", () => {
   });
 });
 
+describe("glyph scale", () => {
+  it("shrinks pixel clamps / icon size, never data or ids", () => {
+    const full = buildRefineriesLayer([refinery("r1")]);
+    const small = buildRefineriesLayer([refinery("r1")], undefined, 0.6);
+    expect(small.id).toBe(full.id);
+    expect(small.props.radiusMinPixels).toBeCloseTo(full.props.radiusMinPixels * 0.6);
+    expect(small.props.radiusMaxPixels).toBeCloseTo(full.props.radiusMaxPixels * 0.6);
+    const lng = buildLngTerminalsLayer([lngTerminal("t")], 2024, undefined, 0.6);
+    expect(lng.props.sizeScale).toBeCloseTo(0.6);
+    const ex = buildExtractionLayer([extraction("a")], 2020, { scale: 0.6, opacity: 0.5 });
+    expect(ex.props.opacity).toBe(0.5);
+    expect(ex.id).toBe("extraction");
+  });
+});
+
 describe("LNG voyages builder", () => {
   it("draws every positioned voyage with the stable id", () => {
     const l = buildLngVoyagesLayer([voyage(), voyage({ voyage_id: "v2" })]);
@@ -183,6 +212,13 @@ describe("reserves builder", () => {
     expect(dataLength(l)).toBe(2);
     expect(call(l.props.getFillColor, fc.features[1])).toEqual([...RESERVES_NO_DATA_COLOR]);
     expect(call(l.props.getFillColor, fc.features[0])).toEqual([...color]);
+  });
+
+  it("mutes the reserves ramp (no hue) while a scenario is active", () => {
+    const without = buildReservesLayer(fc, data.max);
+    const withScenario = buildReservesLayer(fc, data.max, new Map());
+    expect(call(without.props.getFillColor, fc.features[0])).toEqual([...reservesColor(297.5, data.max)]);
+    expect(call(withScenario.props.getFillColor, fc.features[0])).toEqual([...reservesColor(297.5, data.max, true)]);
   });
 });
 

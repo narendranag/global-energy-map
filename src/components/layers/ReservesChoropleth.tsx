@@ -50,8 +50,11 @@ export function reservesFeatures(
 
 /**
  * Reserves choropleth (log ramp) with the scenario exposure overlay painted
- * over importers. The id is stable: year/commodity changes swap `data`, a
- * scenario change trips `updateTriggers`, and the layer is never rebuilt (R17).
+ * over importers. While a scenario is active (`overlayByIso3` defined) the
+ * reserves ramp drops to its hue-free muted variant, so red exposure is the
+ * only hue on the choropleth. The id is stable: year/commodity changes swap
+ * `data`, a scenario change trips `updateTriggers`, and the layer is never
+ * rebuilt (R17).
  */
 export function buildReservesLayer(
   fc: ReservesCollection,
@@ -65,7 +68,7 @@ export function buildReservesLayer(
     stroked: true,
     getFillColor: (f) => {
       const override = overlayByIso3?.get(f.properties.iso3)?.color;
-      return [...(override ?? reservesColor(f.properties.value, max))];
+      return [...(override ?? reservesColor(f.properties.value, max, overlayByIso3 !== undefined))];
     },
     getLineColor: [...COUNTRY_OUTLINE_COLOR],
     lineWidthMinPixels: COUNTRY_OUTLINE_MIN_PX,

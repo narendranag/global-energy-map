@@ -21,7 +21,11 @@ const ICON_MAPPING = {
   anchor: { x: 0, y: 0, width: 32, height: 32, anchorX: 16, anchorY: 16, mask: true },
 } as const;
 
-export function buildPortsLayer(rows: readonly PortAsset[]): IconLayer<PortAsset> {
+/** Port anchors; `visible: false` below the layer's minimum zoom. */
+export function buildPortsLayer(
+  rows: readonly PortAsset[],
+  { scale = 1, visible = true }: { readonly scale?: number; readonly visible?: boolean } = {},
+): IconLayer<PortAsset> {
   return new IconLayer<PortAsset>({
     id: PORTS_LAYER_ID,
     data: rows,
@@ -31,9 +35,11 @@ export function buildPortsLayer(rows: readonly PortAsset[]): IconLayer<PortAsset
     getPosition: (d) => [d.lon, d.lat],
     getSize: (d) => portSize(d.capacity),
     sizeUnits: "pixels",
-    sizeMinPixels: PORT_SIZE.minPixels,
-    sizeMaxPixels: PORT_SIZE.maxPixels,
+    sizeScale: scale,
+    sizeMinPixels: PORT_SIZE.minPixels * scale,
+    sizeMaxPixels: PORT_SIZE.maxPixels * scale,
     getColor: [...PORT_COLOR],
+    visible,
     pickable: true,
   });
 }

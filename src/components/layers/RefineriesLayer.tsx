@@ -16,6 +16,8 @@ export const REFINERIES_LAYER_ID = "refineries";
 export function buildRefineriesLayer(
   rows: readonly RefineryAsset[],
   impactByAssetId?: ReadonlyMap<string, RefineryImpact>,
+  /** Glyph-size multiplier from `glyphScale(zoom)`. */
+  scale = 1,
 ): ScatterplotLayer<RefineryAsset> {
   return new ScatterplotLayer<RefineryAsset>({
     id: REFINERIES_LAYER_ID,
@@ -24,8 +26,8 @@ export function buildRefineriesLayer(
     // Capacity in kbpd; ~85 % of rows have none and get the base radius.
     getRadius: (d) => refineryRadius(d.capacity),
     radiusUnits: "meters",
-    radiusMinPixels: REFINERY_RADIUS.minPixels,
-    radiusMaxPixels: REFINERY_RADIUS.maxPixels,
+    radiusMinPixels: REFINERY_RADIUS.minPixels * scale,
+    radiusMaxPixels: REFINERY_RADIUS.maxPixels * scale,
     getFillColor: (d) => [...refineryColor(impactByAssetId?.get(d.asset_id)?.shareAtRisk)],
     stroked: true,
     getLineColor: [...REFINERY_LINE],

@@ -84,7 +84,7 @@ Real-world shares vary year-to-year with maintenance, sanctions regimes, and ren
 
 #### Pipeline GeoJSON Geometry Coverage _(at Phase 2 ship)_
 
-At Phase 2 ship, the Global Energy Monitor oil pipeline GeoJSON source included 1,872 pipeline features, of which 24% lacked geometry. After filtering for valid geometries and operational status (in-service or in-construction), 1,185 features were retained. Abandoned or indefinitely deferred pipelines are excluded from the visualization but documented in the raw source for reference. **Phase 3 added gas pipelines (GGIT) on the same filtering rules**; the combined oil + gas pipelines table is now ~3,957 features. **Phase 5 simplified the GeoJSON sidecar from 73 MB to 14 MB at tolerance 0.005** (full-resolution geometry kept in `pipelines.parquet`).
+At Phase 2 ship, the Global Energy Monitor oil pipeline GeoJSON source included 1,872 pipeline features, of which 24% lacked geometry. After filtering for valid geometries and operational status (in-service or in-construction), 1,185 features were retained. Abandoned or indefinitely deferred pipelines are excluded from the visualization but documented in the raw source for reference. **Phase 3 added gas pipelines (GGIT) on the same filtering rules**; the combined oil + gas pipelines table is now ~3,957 features. **Phase 5 simplified the GeoJSON sidecar from 73 MB to 14 MB at tolerance 0.005** (full-resolution geometry kept in a build-time GeoParquet under `data/derived/`, not shipped).
 
 ## Phase 3: Natural Gas + LNG Terminals
 
@@ -213,7 +213,7 @@ Features without populated vintage data appear in all years (preserves prior beh
 
 ### Pipelines GeoJSON sidecar simplification
 
-`public/data/pipelines.geojson` is simplified at `tolerance=0.005` (Shapely `simplify(tol, preserve_topology=True)`, corresponding to roughly 500 m in lon/lat units). This reduces the sidecar from ~73 MB to ~13 MB, clearing the 25 MB single-file ceiling without requiring Vercel Blob hosting. Full-resolution geometry is preserved in `pipelines.parquet`.
+`public/data/pipelines.geojson` is simplified at `tolerance=0.005` (Shapely `simplify(tol, preserve_topology=True)`, corresponding to roughly 500 m in lon/lat units). This reduces the sidecar from ~73 MB to ~13 MB, clearing the 25 MB single-file ceiling without requiring Vercel Blob hosting. Full-resolution geometry is preserved in a build-time GeoParquet under `data/derived/` (not shipped to the browser since Phase 7).
 
 ## Phase 6 — LNG carrier dynamics
 

@@ -1,6 +1,6 @@
 {
   "version": 6,
-  "generated_at": "2026-09-10T17:24:20.558144+00:00",
+  "generated_at": "2026-09-10T17:43:31.912900+00:00",
   "entries": [
     {
       "id": "ei_country_year",
@@ -235,8 +235,8 @@
       ],
       "runtime": true,
       "rows": 16,
-      "bytes": 9652,
-      "sha256": "313383718c28e4abf3474b3e07911d139fae599c673cc657fc990d4e13c3a2ba"
+      "bytes": 9779,
+      "sha256": "18af0a89811715c3ca24f12db5b4b5823e6f0e93a3053cd3f985e539c60d4296"
     },
     {
       "id": "natural_earth_countries",

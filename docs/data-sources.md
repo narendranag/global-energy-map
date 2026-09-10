@@ -236,7 +236,7 @@ Each row: year, exporter ISO3, importer ISO3, quantity (tonnes).
 - **Where it lands:** `disruption_route.parquet` (each row carries `source_title`, `source_url`, `source_year`)
 - **Layers/scenarios using it:** all four scenarios (Hormuz, Druzhba, BTC, CPC)
 
-**What we ingest:** static routing-share tables that encode how each exporter's crude or LNG flows through each chokepoint or pipeline. Example: Saudi Arabia's crude is 88% Hormuz-dependent, 12% bypasses via East-West pipeline. Druzhba routing shares: DEU 60% of Russian crude, POL 95%, BLR/SVK/HUN 100%, CZE 90%.
+**What we ingest:** static routing-share tables that encode how each exporter's crude or LNG flows through each chokepoint or pipeline. Example: Saudi Arabia's crude is 88% Hormuz-dependent, 12% bypasses via East-West pipeline. Druzhba routing shares: DEU and POL 47% of Russian crude (IEA northern-branch volume allocated pro-rata), BLR/SVK/HUN/CZE 100%. Each row in `disruption_route.parquet` carries its citation and derivation (`source_title`, `source_url`, `source_year`, `source_note`); six shares were revised to source-derived values on 2026-09-10.
 
 **Coverage gaps:**
 - **Routing shares are fixed across all years** — they don't track maintenance windows, sanctions regimes, or renegotiations of joint-venture operating agreements.

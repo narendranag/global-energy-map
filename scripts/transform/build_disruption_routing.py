@@ -13,9 +13,11 @@ Citations (review R6, Phase 7 A6): every hand-set share carries the document
 that supports it (``source_title``/``source_url``/``source_year``) and a
 ``source_note`` explaining how the number follows from that document. Shares
 were set in Phase 1/2; the citations were researched afterwards (2026-09-10)
-and the shares were deliberately NOT changed. Where a cited document suggests
-a different figure, the note says so. Rows no document supports are marked
-``source_title = UNSOURCED``.
+and the shares were left unchanged at first; on 2026-09-10 the user approved
+updating the six that disagreed with their sources (IRQ, POL, DEU, CZE, AZE,
+RUS-CPC) to values derived from the cited figures. Each note records the
+derivation and the Phase 1/2 value it replaced. Rows no document supports
+directly are marked ``source_title = UNSOURCED``.
 """
 from __future__ import annotations
 
@@ -99,10 +101,11 @@ HORMUZ = [
     _row("hormuz", "chokepoint", "IRN", None, 1.00, SRC_EIA, IEA_HORMUZ,
          _NO_BYPASS + " Iran's Goreh-Jask/Jask terminal is 'effectively non-operational' "
          "(one test cargo, late 2024)."),
-    _row("hormuz", "chokepoint", "IRQ", None, 1.00, SRC_EIA, IEA_HORMUZ,
-         _NO_BYPASS + " Caveat: Iraq's northern Kirkuk-Ceyhan exports (roughly 0.4 mb/d "
-         "before the Mar 2023 shutdown; figure not from the cited source) bypass Hormuz, "
-         "so the true share was ~0.9 in years when that line operated."),
+    _row("hormuz", "chokepoint", "IRQ", None, 0.90, SRC_EIA, IEA_HORMUZ,
+         _NO_BYPASS + " Iraq's northern Kirkuk-Ceyhan exports (roughly 0.4 mb/d before "
+         "the Mar 2023 shutdown; figure not from the cited source) bypass Hormuz, so 0.90 "
+         "is the long-run share; ~1.0 in 2023-24 while that line was shut (shares are "
+         "static across years). Was 1.00 before 2026-09-10."),
     _row("hormuz", "chokepoint", "KWT", None, 1.00, SRC_EIA, IEA_HORMUZ, _NO_BYPASS),
     _row("hormuz", "chokepoint", "QAT", None, 1.00, SRC_EIA, IEA_HORMUZ, _NO_BYPASS),
     _row("hormuz", "chokepoint", "SAU", None, 0.88, SRC_EIA, ARGUS_YANBU,
@@ -123,16 +126,16 @@ DRUZHBA = [
          "Structural: Belarus is landlocked; its two refineries (Mozyr, Naftan/Novopolotsk) "
          "are fed by Druzhba and the Unecha-Polotsk line. Residual rail volumes not "
          "quantified in the source."),
-    _row("druzhba", "pipeline", "RUS", "POL", 0.95, SRC_IEA_PIPELINE, None,
-         "No document found giving Poland's pipeline vs seaborne split of Russian crude. "
-         "IEA 2022 aggregates (northern Druzhba ~500 kb/d shared with Germany; Poland "
-         "imported 372 kb/d from Russia, Nov 2021) suggest a materially lower share "
-         "(~0.35-0.65). Flagged for review."),
-    _row("druzhba", "pipeline", "RUS", "DEU", 0.60, SRC_IEA_PIPELINE, IEA_RUSSIA_2022,
-         "IEA: ~750 kb/d delivered to Europe via Druzhba (~250 kb/d on the southern "
-         "branch), Germany imported 687 kb/d from Russia (Nov 2021), remainder by tanker. "
-         "Implies roughly 0.5-0.6 depending on the Germany/Poland split of the northern "
-         "branch (not given by IEA)."),
+    _row("druzhba", "pipeline", "RUS", "POL", 0.47, SRC_IEA_PIPELINE, IEA_RUSSIA_2022,
+         "IEA: ~750 kb/d to Europe via Druzhba, ~250 kb/d on the southern branch -> "
+         "~500 kb/d on the northern branch shared by Poland and Germany. Poland imported "
+         "372 kb/d and Germany 687 kb/d from Russia (Nov 2021); IEA does not give the "
+         "split, so the branch is allocated pro-rata: 500 / (372 + 687) = 0.47. "
+         "Was 0.95 before 2026-09-10."),
+    _row("druzhba", "pipeline", "RUS", "DEU", 0.47, SRC_IEA_PIPELINE, IEA_RUSSIA_2022,
+         "Northern branch ~500 kb/d allocated pro-rata across Poland (372 kb/d) and "
+         "Germany (687 kb/d) Russian imports (IEA, Nov 2021): 500 / 1059 = 0.47; the "
+         "remainder arrived by tanker. Was 0.60 before 2026-09-10."),
     _row("druzhba", "pipeline", "RUS", "SVK", 1.00, SRC_IEA_PIPELINE, IEA_RUSSIA_2022,
          "IEA: ~250 kb/d via the southern branch to Hungary, Slovakia, Czechia; their "
          "Nov 2021 imports from Russia (SVK 109 + HUN 79 + CZE 52 = 240 kb/d) match "
@@ -140,28 +143,28 @@ DRUZHBA = [
     _row("druzhba", "pipeline", "RUS", "HUN", 1.00, SRC_IEA_PIPELINE, IEA_RUSSIA_2022,
          "IEA: southern branch ~250 kb/d vs HUN+SVK+CZE Russian imports 240 kb/d "
          "(Nov 2021) — essentially all by pipeline."),
-    _row("druzhba", "pipeline", "RUS", "CZE", 0.90, SRC_IEA_PIPELINE, IEA_RUSSIA_2022,
+    _row("druzhba", "pipeline", "RUS", "CZE", 1.00, SRC_IEA_PIPELINE, IEA_RUSSIA_2022,
          "IEA: southern branch ~250 kb/d vs HUN+SVK+CZE Russian imports 240 kb/d "
-         "(Nov 2021) — implies ~1.0 for Czechia; 0.90 is a conservative Phase 2 value."),
+         "(Nov 2021) — essentially all by pipeline. Was 0.90 before 2026-09-10."),
 ]
 
 # ── BTC (Baku-Tbilisi-Ceyhan) ───────────────────────────────────────────────
 BTC = [
-    _row("btc", "pipeline", "AZE", None, 0.90, SRC_IEA_PIPELINE, EIA_CASPIAN,
-         "EIA: 'Over 90% of ACG-produced oil ... has been exported to Ceyhan via BTC' "
-         "(cumulative); but 'about 83% of Azerbaijan's oil exports go through the BTC "
-         "pipeline' (IEA 2023 profile: ~80%). Current-year share is ~0.8-0.83."),
+    _row("btc", "pipeline", "AZE", None, 0.83, SRC_IEA_PIPELINE, EIA_CASPIAN,
+         "EIA: 'about 83% of Azerbaijan's oil exports go through the BTC pipeline' "
+         "(IEA 2023 profile: ~80%). The 'over 90%' EIA figure is cumulative ACG output, "
+         "not the share of exports. Was 0.90 before 2026-09-10."),
 ]
 
 # ── CPC (Caspian Pipeline Consortium) ───────────────────────────────────────
 CPC = [
     _row("cpc", "pipeline", "KAZ", None, 0.80, SRC_IEA_PIPELINE, EIA_CASPIAN,
          "EIA: 'The CPC carries about 80% of Kazakhstan's crude oil export'."),
-    _row("cpc", "pipeline", "RUS", None, 0.10, SRC_IEA_PIPELINE, None,
-         "No document found. Non-Kazakh (Russian-field) CPC volumes are ~8 Mt/y "
+    _row("cpc", "pipeline", "RUS", None, 0.035, SRC_IEA_PIPELINE, None,
+         "Derived, no single document: non-Kazakh (Russian-field) CPC volumes are ~8 Mt/y "
          "(63 Mt total 2024 minus 54.9 Mt Kazakh) against ~230 Mt/y of Russian crude "
-         "exports, i.e. ~0.03-0.04 — 0.10 likely conflates Russia's share of CPC "
-         "throughput with CPC's share of Russian exports. Flagged for review."),
+         "exports -> ~0.035. The earlier 0.10 conflated Russia's share of CPC throughput "
+         "with CPC's share of Russian exports. Was 0.10 before 2026-09-10."),
 ]
 
 

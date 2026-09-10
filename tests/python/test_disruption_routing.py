@@ -4,25 +4,25 @@ from __future__ import annotations
 
 from scripts.transform.build_disruption_routing import UNSOURCED, all_rows
 
-# Shares shipped before citations were added — they drive every scenario and
-# must not change silently.
+# Shares drive every scenario and must not change silently. Six were updated
+# to source-derived values on 2026-09-10 (user-approved); see row notes.
 EXPECTED_SHARES = {
     ("hormuz", "IRN", None): 1.00,
-    ("hormuz", "IRQ", None): 1.00,
+    ("hormuz", "IRQ", None): 0.90,
     ("hormuz", "KWT", None): 1.00,
     ("hormuz", "QAT", None): 1.00,
     ("hormuz", "SAU", None): 0.88,
     ("hormuz", "ARE", None): 0.65,
     ("hormuz", "BHR", None): 1.00,
     ("druzhba", "RUS", "BLR"): 1.00,
-    ("druzhba", "RUS", "POL"): 0.95,
-    ("druzhba", "RUS", "DEU"): 0.60,
+    ("druzhba", "RUS", "POL"): 0.47,
+    ("druzhba", "RUS", "DEU"): 0.47,
     ("druzhba", "RUS", "SVK"): 1.00,
     ("druzhba", "RUS", "HUN"): 1.00,
-    ("druzhba", "RUS", "CZE"): 0.90,
-    ("btc", "AZE", None): 0.90,
+    ("druzhba", "RUS", "CZE"): 1.00,
+    ("btc", "AZE", None): 0.83,
     ("cpc", "KAZ", None): 0.80,
-    ("cpc", "RUS", None): 0.10,
+    ("cpc", "RUS", None): 0.035,
 }
 
 

@@ -72,6 +72,16 @@ body {
   outline-offset: 2px;
 }
 
+/*
+ * The map canvas fills a clipped container, so an outside ring would be cut
+ * off: draw it inset. `!important` because deck.gl's input handler
+ * (mjolnir.js) writes an inline `outline: none` on the shared canvas.
+ */
+.maplibregl-map .maplibregl-canvas:focus-visible {
+  outline: 2px solid var(--focus) !important;
+  outline-offset: -3px;
+}
+
 /* Year slider: thin track, round thumb, in the ink colour. */
 input[type="range"].year-range {
   accent-color: var(--ink);

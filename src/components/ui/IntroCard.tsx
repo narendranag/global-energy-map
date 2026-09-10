@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { EXAMPLE_QUESTIONS, type ExampleQuestion } from "@/lib/modes";
 
 export const INTRO_DISMISSED_KEY = "gem.intro.dismissed.v1";
@@ -42,15 +42,29 @@ export function IntroCard({ onPick }: IntroCardProps) {
   const [dismissedNow, setDismissedNow] = useState(false);
   const visible = !stored && !dismissedNow;
 
+  const cardRef = useRef<HTMLElement>(null);
+
   const dismiss = useCallback(() => {
     writeDismissed();
+    // Focus would otherwise fall back to <body> with the card: hand it to the
+    // selected mode tab, the start of the page's controls. Next frame, so an
+    // example question's mode change has rendered first.
+    const hadFocus = cardRef.current?.contains(document.activeElement) ?? false;
     setDismissedNow(true);
+    if (hadFocus) {
+      requestAnimationFrame(() => {
+        document.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')?.focus();
+      });
+    }
   }, []);
 
   useEffect(() => {
     if (!visible) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") dismiss();
+      if (e.key !== "Escape") return;
+      // Escape inside another popup (the share panel) closes that one only.
+      if (document.activeElement?.closest('[role="dialog"]')) return;
+      dismiss();
     };
     window.addEventListener("keydown", onKey);
     return () => {
@@ -62,6 +76,7 @@ export function IntroCard({ onPick }: IntroCardProps) {
 
   return (
     <section
+      ref={cardRef}
       aria-labelledby="intro-title"
       data-testid="intro-card"
       className="pointer-events-auto absolute z-30 rounded-md border border-slate-200 bg-white/95 p-4 text-sm text-slate-800 shadow-xl backdrop-blur max-lg:inset-x-4 max-lg:top-16 max-lg:mx-auto max-lg:max-w-xl max-md:top-14 lg:left-[20rem] lg:top-4 lg:w-[min(24rem,calc(100%-20rem-22rem))]"
@@ -74,7 +89,7 @@ export function IntroCard({ onPick }: IntroCardProps) {
           type="button"
           onClick={dismiss}
           aria-label="Dismiss introduction"
-          className="-mr-1 -mt-1 rounded px-1.5 text-base leading-none text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+          className="-mr-1 -mt-1 rounded px-1.5 text-base leading-none text-slate-600 hover:bg-slate-100 hover:text-slate-900"
         >
           ×
         </button>
@@ -93,7 +108,7 @@ export function IntroCard({ onPick }: IntroCardProps) {
           which importers, refineries and LNG terminals are exposed.
         </li>
       </ul>
-      <p className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+      <p className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
         Try a question
       </p>
       <div className="mt-1.5 flex flex-wrap gap-1.5">

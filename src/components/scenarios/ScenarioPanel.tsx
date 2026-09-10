@@ -139,6 +139,7 @@ export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioP
   const datalistId = `${uid}-countries`;
   const importersId = `${uid}-importers`;
   const assetsId = `${uid}-assets`;
+  const headingId = `${uid}-heading`;
 
   const def = active ? findScenario(active) : undefined;
   const names = useCountryNames();
@@ -192,6 +193,20 @@ export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioP
   );
   const unsourcedCount = routeRows.filter((r) => r.unsourced).length;
 
+  // Most exposed by share, whichever sort the list uses.
+  const top = rankedImporters.reduce<(typeof rankedImporters)[number] | undefined>(
+    (best, r) => (best === undefined || r.shareAtRisk > best.shareAtRisk ? r : best),
+    undefined,
+  );
+  const announcement =
+    def === undefined
+      ? ""
+      : current === null
+        ? "Computing exposure…"
+        : top === undefined
+          ? `${def.label}, ${current.year.toString()}: no importer has ${noun} routed through ${def.routeName}.`
+          : `${def.label}, ${current.year.toString()}: ${rankedImporters.length.toString()} importers exposed; most exposed ${nameOf(top.iso3)}, ${pct(top.shareAtRisk)} of ${noun}.`;
+
   // "Check a country": accept a country name (case-insensitive) or an ISO3 code.
   const countryOptions = useMemo(
     () => (names ? [...names].sort((a, b) => a[1].localeCompare(b[1])) : []),
@@ -216,7 +231,18 @@ export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioP
       : null;
 
   return (
-    <div className="pointer-events-auto absolute right-4 top-4 z-10 w-80 rounded-md bg-white/95 p-3 text-sm text-slate-800 shadow-lg backdrop-blur">
+    <section
+      aria-labelledby={headingId}
+      className="pointer-events-auto absolute right-4 top-4 z-10 w-80 rounded-md bg-white/95 p-3 text-sm text-slate-800 shadow-lg backdrop-blur"
+    >
+      <h2 id={headingId} className="sr-only">
+        Disruption scenario
+      </h2>
+      {/* One short, always-mounted announcement per result (the lists below are
+          too long to read out on every sort or year change). */}
+      <p aria-live="polite" className="sr-only" data-testid="scenario-announcement">
+        {announcement}
+      </p>
       <label htmlFor={selectId} className={`mb-2 block ${HEADING}`}>
         Scenario
       </label>
@@ -273,7 +299,6 @@ export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioP
 
       {def && (
         <section
-          aria-live="polite"
           aria-busy={current === null}
           aria-label="Scenario results"
           className="mt-3"
@@ -309,7 +334,7 @@ export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioP
                     <li key={r.iso3} className="flex justify-between gap-2 text-xs">
                       <span className="min-w-0 truncate">
                         {nameOf(r.iso3)}{" "}
-                        <span className="font-mono text-[11px] text-slate-500">{r.iso3}</span>
+                        <span className="font-mono text-[11px] text-slate-600">{r.iso3}</span>
                       </span>
                       <span className="shrink-0 text-right">
                         <span className="font-mono">{pct(r.shareAtRisk)}</span>{" "}
@@ -348,7 +373,7 @@ export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioP
                           <div className="flex justify-between gap-2">
                             <span className="min-w-0 truncate" title={a.name ?? a.asset_id}>
                               {a.name ?? a.asset_id}{" "}
-                              <span className="font-mono text-[11px] text-slate-500">{a.iso3}</span>
+                              <span className="font-mono text-[11px] text-slate-600">{a.iso3}</span>
                             </span>
                             <span className="shrink-0 font-mono">{pct(a.shareAtRisk)}</span>
                           </div>
@@ -455,6 +480,6 @@ export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioP
           </p>
         </section>
       )}
-    </div>
+    </section>
   );
 }

@@ -53,7 +53,7 @@ const ROWS: readonly Row[] = [
 const BADGE_CLASS: Record<"yes" | "partial" | "no", string> = {
   yes: "border-slate-400 bg-slate-100 text-slate-700",
   partial: "border-slate-300 bg-white text-slate-600",
-  no: "border-transparent text-slate-500",
+  no: "border-transparent text-slate-600",
 };
 
 /**
@@ -104,7 +104,7 @@ export function LayerPanel({ state, onChange, scenarioNoun, defaultOpen = true }
         >
           <Chevron open={open} />
           <span>Layers</span>
-          <span className="ml-auto text-[11px] font-normal normal-case tracking-normal text-slate-500">
+          <span className="ml-auto text-[11px] font-normal normal-case tracking-normal text-slate-600">
             {activeCount} on
           </span>
         </button>
@@ -113,7 +113,7 @@ export function LayerPanel({ state, onChange, scenarioNoun, defaultOpen = true }
             r.kind === "group" ? (
               <div
                 key={`group-${String(idx)}`}
-                className="pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500"
+                className="pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-600"
               >
                 {r.label}
               </div>
@@ -145,7 +145,7 @@ export function LayerPanel({ state, onChange, scenarioNoun, defaultOpen = true }
           )}
         </div>
         <div className="mt-3 border-t border-slate-200 pt-2">
-          <div className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-600">Legend</div>
+          <h2 className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-600">Legend</h2>
           <Legend layers={state} scenarioNoun={scenarioNoun} />
         </div>
       </div>

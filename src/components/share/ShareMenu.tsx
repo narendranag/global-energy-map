@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { createPortal } from "react-dom";
-import { type Ref, useCallback, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { type KeyboardEvent as ReactKeyboardEvent, type Ref, useCallback, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { BUNDLED_CATALOG } from "@/lib/data-catalog/bundled";
 import { loadCountries, countryNameMap } from "@/lib/geo/countries";
 import { voyagesInRange, LNG_T3_FIRST_YEAR, LNG_T3_LAST_YEAR } from "@/lib/data/voyages";
@@ -100,6 +100,43 @@ export function ShareMenu({ scenario }: { scenario: ScenarioResult | null }) {
     };
   }, [open, close]);
 
+  // Focus moves into the panel when it opens (it is portalled to the end of
+  // <body>, so Tab from the button would otherwise skip it).
+  useEffect(() => {
+    if (!open || anchor === null) return;
+    focusables(panelRef.current)[0]?.focus();
+  }, [open, anchor]);
+
+  /**
+   * Keep the panel in the header's tab sequence as if it sat right after the
+   * button: Shift+Tab off its first control returns to the button; Tab off its
+   * last control closes it and continues to whatever follows the button.
+   */
+  const onPanelKeyDown = useCallback(
+    (e: ReactKeyboardEvent<HTMLDivElement>) => {
+      if (e.key !== "Tab") return;
+      const items = focusables(panelRef.current);
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        buttonRef.current?.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        const button = buttonRef.current;
+        if (!button) return;
+        const after = focusables(document.body).find(
+          (el) =>
+            !panelRef.current?.contains(el) &&
+            (button.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0,
+        );
+        e.preventDefault();
+        close(false);
+        (after ?? button).focus();
+      }
+    },
+    [close],
+  );
+
   return (
     <div ref={rootRef} className="relative">
       <button
@@ -118,10 +155,27 @@ export function ShareMenu({ scenario }: { scenario: ScenarioResult | null }) {
       {open &&
         anchor !== null &&
         createPortal(
-          <SharePanel ref={panelRef} id={panelId} scenario={scenario} anchor={anchor} />,
+          <SharePanel
+            ref={panelRef}
+            id={panelId}
+            scenario={scenario}
+            anchor={anchor}
+            onKeyDown={onPanelKeyDown}
+          />,
           document.body,
         )}
     </div>
+  );
+}
+
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/** Tabbable elements under `root`, in DOM order (visible ones only). */
+function focusables(root: HTMLElement | null): HTMLElement[] {
+  if (!root) return [];
+  return [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
+    (el) => el.getClientRects().length > 0 && el.tabIndex >= 0,
   );
 }
 
@@ -132,9 +186,10 @@ interface SharePanelProps {
   readonly id: string;
   readonly scenario: ScenarioResult | null;
   readonly anchor: { readonly top: number; readonly right: number };
+  readonly onKeyDown: (e: ReactKeyboardEvent<HTMLDivElement>) => void;
 }
 
-function SharePanel({ ref, id, scenario, anchor }: SharePanelProps) {
+function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
   const { app, view } = useStoreSnapshot();
   const [format, setFormat] = useState<CiteFormat>("view");
   const [status, setStatus] = useState<string>("");
@@ -230,6 +285,7 @@ function SharePanel({ ref, id, scenario, anchor }: SharePanelProps) {
       ref={ref}
       id={id}
       role="dialog"
+      onKeyDown={onKeyDown}
       style={{ top: anchor.top, right: anchor.right, maxHeight: `calc(100vh - ${String(anchor.top + 16)}px)` }}
       aria-labelledby={headingId}
       className="fixed z-[1000] w-[28rem] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-lg border border-panel-border bg-white p-4 text-left text-ink shadow-xl"
@@ -294,6 +350,9 @@ function SharePanel({ ref, id, scenario, anchor }: SharePanelProps) {
           </div>
         </div>
         <pre
+          // Scrollable, so it must be reachable by keyboard (WCAG 2.1.1).
+          tabIndex={0}
+          aria-label="Citation text"
           className="mt-1.5 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded border border-panel-border bg-slate-50 p-2 font-mono text-2xs leading-snug text-ink"
           data-testid="cite-text"
         >

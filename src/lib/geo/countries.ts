@@ -1,4 +1,5 @@
 import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
+import { dataUrl } from "@/lib/data/urls";
 
 export interface CountryProps {
   readonly iso3: string;
@@ -14,7 +15,7 @@ let _promise: Promise<CountryCollection> | undefined;
 
 export function loadCountries(): Promise<CountryCollection> {
   _promise ??= (async () => {
-    const res = await fetch("/data/countries.geojson");
+    const res = await fetch(dataUrl("/data/countries.geojson"));
     if (!res.ok) throw new Error("countries.geojson fetch failed");
     return (await res.json()) as CountryCollection;
   })().catch((err: unknown) => {

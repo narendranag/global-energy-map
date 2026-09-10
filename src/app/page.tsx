@@ -129,9 +129,13 @@ function HomeInner() {
       {/* Map area: every panel below is positioned against this box, so none
           can ride up under the header. */}
       <div className="relative min-h-0 flex-1">
-        <div className="absolute inset-0">
-          <MapShell layers={deckLayers} getTooltip={getTooltip} />
-        </div>
+        {/*
+          DOM order is focus order (header → intro → layers → scenario →
+          commodity → year → map): the map is
+          last in the DOM and painted beneath the panels by its own z-0
+          stacking context; every panel carries z-10 or higher.
+        */}
+        <IntroCard onPick={pickExample} />
         <LayerPanel
           // Remount on mode change so the Layers disclosure re-applies its
           // per-mode default (open in Infrastructure, closed otherwise).
@@ -140,16 +144,6 @@ function HomeInner() {
           onChange={setLayers}
           scenarioNoun={scenarioId !== null ? importsNoun(commodity) : undefined}
           defaultOpen={layersOpenByDefault(mode)}
-        />
-        <div className="pointer-events-none absolute bottom-32 left-1/2 z-10 -translate-x-1/2">
-          <CommoditySelector value={commodity} onChange={setCommodity} />
-        </div>
-        <YearSlider
-          min={YEAR_MIN}
-          max={YEAR_MAX}
-          value={year}
-          onChange={setYear}
-          note={reservesNote}
         />
         {showScenarioPanel && (
           <>
@@ -187,8 +181,20 @@ function HomeInner() {
             </div>
           </>
         )}
-        <IntroCard onPick={pickExample} />
+        <div className="pointer-events-none absolute bottom-32 left-1/2 z-10 -translate-x-1/2">
+          <CommoditySelector value={commodity} onChange={setCommodity} />
+        </div>
+        <YearSlider
+          min={YEAR_MIN}
+          max={YEAR_MAX}
+          value={year}
+          onChange={setYear}
+          note={reservesNote}
+        />
         <MapFooter />
+        <div className="absolute inset-0 z-0">
+          <MapShell layers={deckLayers} getTooltip={getTooltip} />
+        </div>
       </div>
     </main>
   );

@@ -43,6 +43,11 @@ def test_download_flags_block_mixed_files():
     assert ok is False and note is not None and "B rows under ODbL" in note and "x.parquet" in note
     # Missing flag = not redistributable (fail closed).
     assert flags["d"][0] is False
+    # A mixed file with a downloadable open subset points there instead.
+    flags = bc._download_flags(reg, {"/data/x.parquet": "x_open.parquet"})
+    ok, note = flags["a"]
+    assert ok is False and note is not None and "x_open.parquet" in note
+    assert flags["c"] == (True, None) and flags["b"] == (False, "share-alike")
 
 
 def test_shipped_catalog_download_policy():
@@ -60,6 +65,12 @@ def test_shipped_catalog_download_policy():
     assert not entries["baci_2709"]["downloadable"]
     assets = [e for e in entries.values() if e["path"] == "/data/assets.parquet"]
     assert assets and not any(e["downloadable"] for e in assets)
+    # Phase 10: the open subset (no OSM rows) is the downloadable asset table.
+    assert entries["assets_open"]["downloadable"]
+    assert not entries["assets_open"]["runtime"]
+    for e in assets:
+        if e["redistributable"]:
+            assert "assets_open.parquet" in e["download_note"], e["id"]
     for e in entries.values():
         if e["redistributable"] and e["id"] != "disruption_route":
             assert any(lic in e["license"] for lic in _OPEN_LICENCES), e["id"]

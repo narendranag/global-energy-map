@@ -9,7 +9,7 @@
       "format": "parquet",
       "source_name": "Energy Institute Statistical Review of World Energy",
       "source_url": "https://www.energyinst.org/statistical-review/resources-and-data-downloads",
-      "license": "Free; see Energy Institute terms",
+      "license": "Free to quote with attribution; extensive reproduction needs EI permission",
       "as_of": "2025-06-26",
       "layers": [
         "reserves",
@@ -20,7 +20,7 @@
       "runtime": true,
       "redistributable": false,
       "downloadable": false,
-      "download_note": "Energy Institute terms restrict redistribution of the dataset itself; shown in the app, not offered for download.",
+      "download_note": "The Energy Institute asks for permission before extensive reproduction of its tables, so the series is shown in the app, not offered for download; get it from the Energy Institute.",
       "rows": 4786,
       "bytes": 40019,
       "sha256": "1431a41668bc8fb68c43cc60498b22354cf9fa1e5ee858abc14dbbbfdaa85e4b"
@@ -41,7 +41,7 @@
       "runtime": true,
       "redistributable": true,
       "downloadable": false,
-      "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. Export this layer's rows from the map's Share / cite menu instead.",
+      "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
       "rows": 5008,
       "bytes": 1253789,
       "sha256": "c1710228d241a5b986b80252f53bc671491e1f893ea5b452e3a5b7eb228a2eff"
@@ -58,10 +58,11 @@
       "layers": [
         "refineries"
       ],
+      "attribution": "Data: NETL Global Oil & Gas Infrastructure (GOGI), US DOE",
       "runtime": true,
       "redistributable": true,
       "downloadable": false,
-      "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. The refineries layer includes those rows too, so it is view-only.",
+      "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable. The refineries layer includes those rows too, so it is view-only.",
       "rows": 1075,
       "bytes": 1253789,
       "sha256": "c1710228d241a5b986b80252f53bc671491e1f893ea5b452e3a5b7eb228a2eff"
@@ -82,7 +83,7 @@
       "runtime": true,
       "redistributable": false,
       "downloadable": false,
-      "download_note": "ODbL (share-alike) rows; downloads are limited to CC BY 4.0 and public-domain sources.",
+      "download_note": "ODbL (share-alike) rows; downloads are limited to CC BY 4.0 and public-domain sources, so these rows are left out of assets_open.parquet (the NETL refinery rows are in it).",
       "rows": 88,
       "bytes": 1253789,
       "sha256": "c1710228d241a5b986b80252f53bc671491e1f893ea5b452e3a5b7eb228a2eff"
@@ -99,10 +100,11 @@
       "layers": [
         "storage"
       ],
+      "attribution": "Data: NETL Global Oil & Gas Infrastructure (GOGI), US DOE",
       "runtime": true,
       "redistributable": true,
       "downloadable": false,
-      "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. Export this layer's rows from the map's Share / cite menu instead.",
+      "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
       "rows": 26102,
       "bytes": 1253789,
       "sha256": "c1710228d241a5b986b80252f53bc671491e1f893ea5b452e3a5b7eb228a2eff"
@@ -119,10 +121,11 @@
       "layers": [
         "ports"
       ],
+      "attribution": "Data: NETL Global Oil & Gas Infrastructure (GOGI), US DOE",
       "runtime": true,
       "redistributable": true,
       "downloadable": false,
-      "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. Export this layer's rows from the map's Share / cite menu instead.",
+      "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
       "rows": 3694,
       "bytes": 1253789,
       "sha256": "c1710228d241a5b986b80252f53bc671491e1f893ea5b452e3a5b7eb228a2eff"
@@ -143,7 +146,7 @@
       "runtime": true,
       "redistributable": true,
       "downloadable": false,
-      "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. Export this layer's rows from the map's Share / cite menu instead.",
+      "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
       "rows": 305,
       "bytes": 1253789,
       "sha256": "c1710228d241a5b986b80252f53bc671491e1f893ea5b452e3a5b7eb228a2eff"
@@ -164,10 +167,27 @@
       "runtime": true,
       "redistributable": true,
       "downloadable": false,
-      "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. Export this layer's rows from the map's Share / cite menu instead.",
+      "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
       "rows": 7,
       "bytes": 1253789,
       "sha256": "c1710228d241a5b986b80252f53bc671491e1f893ea5b452e3a5b7eb228a2eff"
+    },
+    {
+      "id": "assets_open",
+      "label": "Asset table, open subset (every assets.parquet row except OpenStreetMap)",
+      "path": "/data/assets_open.parquet",
+      "format": "parquet",
+      "source_name": "Global Energy Monitor, LNG-T3 and NETL — see the source column",
+      "source_url": "https://github.com/narendranag/global-energy-map/blob/main/LICENSE-DATA.md",
+      "license": "CC BY 4.0 (GEM, LNG-T3) + public domain (NETL); attribution required",
+      "as_of": "2026-05-17",
+      "layers": [],
+      "runtime": false,
+      "redistributable": true,
+      "downloadable": true,
+      "rows": 36191,
+      "bytes": 1248278,
+      "sha256": "3906a830bde7acb64342b90b23632bbaf738c29342c8885797c60d36b4db85ba"
     },
     {
       "id": "gem_oil_pipelines",
@@ -221,6 +241,7 @@
       "layers": [
         "basins"
       ],
+      "attribution": "Data: NETL Global Oil & Gas Infrastructure (GOGI), US DOE",
       "runtime": true,
       "redistributable": true,
       "downloadable": true,
@@ -235,7 +256,7 @@
       "format": "parquet",
       "source_name": "BACI (CEPII)",
       "source_url": "https://www.cepii.fr/CEPII/en/bdd_modele/bdd_modele_item.asp?id=37",
-      "license": "Free for academic/research use; see CEPII terms",
+      "license": "Etalab Open Licence 2.0; cite Gaulier & Zignago (2010)",
       "as_of": "2026-01-01",
       "layers": [
         "trade",
@@ -249,7 +270,7 @@
       "runtime": true,
       "redistributable": false,
       "downloadable": false,
-      "download_note": "CEPII licenses BACI for academic/research use; the bilateral table stays behind the app and is not offered for bulk download.",
+      "download_note": "Project policy keeps this processed extract of BACI behind the app; get the full dataset from CEPII, which publishes it under the Etalab Open Licence 2.0.",
       "rows": 53727,
       "bytes": 757819,
       "sha256": "da2fce24fe15f29cc83efbb378a049849cd7a70fe4a1f45c76b9a3e36111c8b2"

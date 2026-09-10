@@ -190,3 +190,41 @@ def test_netl_refinery_names_unique_where_the_source_allows(assets):
     # generic Myanmar operator name must not (it had located variants).
     mmr = netl.loc[netl["country_iso3"] == "MMR", "name"]
     assert mmr.is_unique, mmr.tolist()
+
+
+# ── assets_open (downloadable open subset of assets.parquet) ────────────────
+
+
+def test_assets_open_has_no_osm_rows():
+    from scripts.transform.build_refineries import OSM_SOURCE
+
+    open_ = pd.read_parquet(DATA / "assets_open.parquet", columns=["source"])
+    assert not (open_["source"] == OSM_SOURCE).any()
+    assert not open_["source"].str.contains("OpenStreetMap", case=False).any()
+
+
+def test_assets_open_is_assets_minus_osm(assets):
+    from scripts.transform.build_refineries import OSM_SOURCE
+
+    open_ = pd.read_parquet(DATA / "assets_open.parquet")
+    expected = assets[assets["source"] != OSM_SOURCE].reset_index(drop=True)
+    n_osm = int((assets["source"] == OSM_SOURCE).sum())
+    assert n_osm > 0
+    assert len(open_) == len(assets) - n_osm
+    pd.testing.assert_frame_equal(open_, expected)
+
+
+def test_assets_open_sources_are_open_licensed():
+    open_ = pd.read_parquet(DATA / "assets_open.parquet", columns=["source"])
+    allowed = ("Global Energy Monitor", "Zhou et al. 2026, LNG-T3", "NETL", "National Energy")
+    bad = sorted(s for s in set(open_["source"]) if not s.startswith(allowed))
+    assert not bad, f"assets_open.parquet has rows from unexpected sources: {bad}"
+
+
+def test_assets_open_catalog_entry():
+    entry = next(e for e in ENTRIES if e["id"] == "assets_open")
+    assert entry["downloadable"] is True and entry["redistributable"] is True
+    assert entry["runtime"] is False and entry["layers"] == []
+    assets_rows = sum(e["rows"] for e in ENTRIES if e["path"] == "/data/assets.parquet")
+    osm_rows = next(e["rows"] for e in ENTRIES if e["id"] == "osm_refineries")
+    assert entry["rows"] == assets_rows - osm_rows

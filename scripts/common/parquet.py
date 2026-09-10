@@ -158,6 +158,7 @@ LNG_TERMINAL_DAILY_SCHEMA = pa.schema(
 # Shipped file name → declared schema (tests/python/test_schemas.py checks each).
 SCHEMAS: dict[str, pa.Schema] = {
     "assets.parquet": ASSETS_SCHEMA,
+    "assets_open.parquet": ASSETS_SCHEMA,  # open subset (scripts.transform.build_assets_open)
     "country_year_series.parquet": COUNTRY_YEAR_SCHEMA,
     "trade_flow.parquet": TRADE_FLOW_SCHEMA,
     "disruption_route.parquet": DISRUPTION_ROUTE_SCHEMA,
@@ -167,17 +168,19 @@ SCHEMAS: dict[str, pa.Schema] = {
 }
 
 # Columns that must never be null, per shipped file.
+_ASSETS_REQUIRED = (
+    "asset_id",
+    "kind",
+    "name",
+    "country_iso3",
+    "lon",
+    "lat",
+    "source",
+    "source_version",
+)
 REQUIRED: dict[str, tuple[str, ...]] = {
-    "assets.parquet": (
-        "asset_id",
-        "kind",
-        "name",
-        "country_iso3",
-        "lon",
-        "lat",
-        "source",
-        "source_version",
-    ),
+    "assets.parquet": _ASSETS_REQUIRED,
+    "assets_open.parquet": _ASSETS_REQUIRED,
     "country_year_series.parquet": ("iso3", "year", "metric", "value", "unit", "source"),
     "trade_flow.parquet": ("year", "importer_iso3", "exporter_iso3", "hs_code", "source"),
     "disruption_route.parquet": ("disruption_id", "kind", "exporter_iso3", "share", "source"),

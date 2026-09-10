@@ -1,48 +1,39 @@
 "use client";
-import { useCallback, Suspense } from "react";
+import { useCallback, useEffect, useRef, useState, Suspense } from "react";
 import type { PickingInfo } from "@deck.gl/core";
 import { MapShell } from "@/components/map/MapShell";
 import { LayerPanel, type LayerState } from "@/components/layers/LayerPanel";
 import { formatTooltip } from "@/components/layers/tooltips";
 import { needsAssets, useMapLayers } from "@/components/layers/useMapLayers";
+import { Chevron } from "@/components/ui/Chevron";
 import { CommoditySelector } from "@/components/ui/CommoditySelector";
-import { TitleBar } from "@/components/ui/TitleBar";
+import { Header } from "@/components/ui/Header";
+import { IntroCard } from "@/components/ui/IntroCard";
 import { MapFooter } from "@/components/ui/MapFooter";
+import { PhoneBanner } from "@/components/ui/PhoneBanner";
 import { YearSlider } from "@/components/time-slider/YearSlider";
 import { ScenarioPanel } from "@/components/scenarios/ScenarioPanel";
 import { useScenario } from "@/components/scenarios/useScenario";
 import { importsNoun } from "@/components/scenarios/overlay";
+import { ShareMenu } from "@/components/share/ShareMenu";
 import { useAssets } from "@/lib/data/assets";
+import {
+  applyMode,
+  DEFAULT_APP_STATE,
+  layersOpenByDefault,
+  type ExampleQuestion,
+  type Mode,
+} from "@/lib/modes";
 import type { Commodity, ScenarioId } from "@/lib/scenarios/types";
 import { useUrlState } from "@/lib/url-state/useUrlState";
-import type { AppState } from "@/lib/url-state/encode";
 import { RESERVES_LATEST_YEAR, YEAR_MAX, YEAR_MIN } from "@/lib/time/range";
 
-const DEFAULT_LAYERS: LayerState = {
-  reserves: true,
-  basins: true,
-  extraction: true,
-  pipelines: true,
-  refineries: true,
-  storage: true,
-  ports: true,
-  gas_pipelines: true,
-  lng_terminals: true,
-  lng_voyages: false, // Phase 6: opt-in only — high visual noise
-};
-
-// Default 2020 = RESERVES_LATEST_YEAR, so first load shows a live (not
-// frozen) reserves value.
-const DEFAULTS: AppState = {
-  year: RESERVES_LATEST_YEAR,
-  commodity: "oil",
-  scenario: null,
-  layers: DEFAULT_LAYERS,
-};
+/** First focusable control inside the scenario panel (its picker). */
+const SCENARIO_PICKER = "select, input, button, [tabindex]:not([tabindex='-1'])";
 
 function HomeInner() {
-  const [state, setState] = useUrlState(DEFAULTS);
-  const { year, commodity, scenario: scenarioId, layers } = state;
+  const [state, setState] = useUrlState(DEFAULT_APP_STATE);
+  const { mode, year, commodity, scenario: scenarioId, layers } = state;
 
   const setYear = useCallback((y: number) => { setState({ year: y }); }, [setState]);
   const setCommodity = useCallback((c: Commodity) => { setState({ commodity: c }); }, [setState]);
@@ -55,6 +46,43 @@ function HomeInner() {
     [setState],
   );
 
+  // --- modes ------------------------------------------------------------------
+  const scenarioSlotRef = useRef<HTMLDivElement>(null);
+  /** Set by a Scenarios tab click; consumed once the panel has rendered. */
+  const focusPickerRef = useRef(false);
+  /** Phone (< 768 px) only: the scenario panel is collapsed to its header. */
+  const [scenarioOpenOnPhone, setScenarioOpenOnPhone] = useState(false);
+
+  const selectMode = useCallback(
+    (next: Mode, via: "pointer" | "keyboard" = "pointer") => {
+      // Re-selecting the current tab re-applies its preset (a "reset" gesture).
+      setState(applyMode(state, next));
+      if (next === "scenarios") {
+        // Arrow keys keep focus in the tablist; a click hands it to the picker.
+        focusPickerRef.current = via === "pointer";
+        setScenarioOpenOnPhone(true);
+      }
+    },
+    [setState, state],
+  );
+
+  const pickExample = useCallback(
+    (q: ExampleQuestion) => {
+      setState(q.state);
+      if (q.state.mode === "scenarios") setScenarioOpenOnPhone(true);
+    },
+    [setState],
+  );
+
+  const showScenarioPanel = mode === "scenarios" || scenarioId !== null;
+
+  useEffect(() => {
+    if (!focusPickerRef.current || !showScenarioPanel) return;
+    focusPickerRef.current = false;
+    scenarioSlotRef.current?.querySelector<HTMLElement>(SCENARIO_PICKER)?.focus();
+  }, [mode, showScenarioPanel]);
+
+  // --- data -------------------------------------------------------------------
   // One assets.parquet read shared by every point layer and the scenario.
   const assets = useAssets(needsAssets(layers, scenarioId !== null));
   const scenario = useScenario(scenarioId, year, commodity, assets);
@@ -87,33 +115,87 @@ function HomeInner() {
 
   return (
     <main
-      className="relative h-screen w-screen"
+      className="flex h-dvh w-full flex-col overflow-hidden bg-white"
       data-ready={pending === 0 ? "true" : "false"}
+      data-mode={mode}
     >
-      <MapShell layers={deckLayers} getTooltip={getTooltip} />
-      <TitleBar pending={pending} />
-      <LayerPanel
-        state={layers}
-        onChange={setLayers}
-        scenarioNoun={scenarioId !== null ? importsNoun(commodity) : undefined}
+      <Header
+        mode={mode}
+        onModeChange={selectMode}
+        pending={pending}
+        actions={<ShareMenu scenario={scenario} />}
       />
-      <div className="pointer-events-none absolute bottom-28 left-1/2 z-10 -translate-x-1/2">
-        <CommoditySelector value={commodity} onChange={setCommodity} />
+      <PhoneBanner />
+      {/* Map area: every panel below is positioned against this box, so none
+          can ride up under the header. */}
+      <div className="relative min-h-0 flex-1">
+        {/*
+          DOM order is focus order (header → intro → layers → scenario →
+          commodity → year → map): the map is
+          last in the DOM and painted beneath the panels by its own z-0
+          stacking context; every panel carries z-10 or higher.
+        */}
+        <IntroCard onPick={pickExample} />
+        <LayerPanel
+          // Remount on mode change so the Layers disclosure re-applies its
+          // per-mode default (open in Infrastructure, closed otherwise).
+          key={mode}
+          state={layers}
+          onChange={setLayers}
+          scenarioNoun={scenarioId !== null ? importsNoun(commodity) : undefined}
+          defaultOpen={layersOpenByDefault(mode)}
+        />
+        {showScenarioPanel && (
+          <>
+            <button
+              type="button"
+              className="pointer-events-auto absolute right-4 top-4 z-10 flex items-center gap-2 rounded-md border border-slate-200 bg-white/95 px-3 py-2 text-xs font-medium uppercase tracking-wide text-slate-700 shadow-lg md:hidden"
+              aria-expanded={scenarioOpenOnPhone}
+              onClick={() => {
+                setScenarioOpenOnPhone((v) => !v);
+              }}
+            >
+              <Chevron open={scenarioOpenOnPhone} />
+              Scenario
+            </button>
+            {/*
+              The panel positions itself (absolute right-4 top-4); this slot
+              is its containing block. It ends above the commodity toggle and the
+              slider and scrolls, so a long result list never runs under them; on
+              phones it sits below the collapsed header button.
+            */}
+            <div
+              ref={scenarioSlotRef}
+              data-testid="scenario-slot"
+              className={
+                "pointer-events-none absolute bottom-40 right-0 top-0 z-20 w-[min(26rem,100%)] overflow-y-auto overscroll-contain max-md:top-10 " +
+                (scenarioOpenOnPhone ? "" : "max-md:hidden")
+              }
+            >
+              <ScenarioPanel
+                active={scenarioId}
+                onChange={setScenarioId}
+                commodity={commodity}
+                result={scenario}
+              />
+            </div>
+          </>
+        )}
+        <div className="pointer-events-none absolute bottom-32 left-1/2 z-10 -translate-x-1/2">
+          <CommoditySelector value={commodity} onChange={setCommodity} />
+        </div>
+        <YearSlider
+          min={YEAR_MIN}
+          max={YEAR_MAX}
+          value={year}
+          onChange={setYear}
+          note={reservesNote}
+        />
+        <MapFooter />
+        <div className="absolute inset-0 z-0">
+          <MapShell layers={deckLayers} getTooltip={getTooltip} />
+        </div>
       </div>
-      <YearSlider
-        min={YEAR_MIN}
-        max={YEAR_MAX}
-        value={year}
-        onChange={setYear}
-        note={reservesNote}
-      />
-      <ScenarioPanel
-        active={scenarioId}
-        onChange={setScenarioId}
-        commodity={commodity}
-        result={scenario}
-      />
-      <MapFooter />
     </main>
   );
 }

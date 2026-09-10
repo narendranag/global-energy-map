@@ -29,7 +29,8 @@ Next.js 16 + React 19 + TypeScript strict; deck.gl 9 over MapLibre; DuckDB-WASM 
 
 - **`CLAUDE.md`** — tech stack, schema, sources, conventions, phase status
 - **`docs/data-sources.md`** — researcher-facing inventory: in-production sources, evaluated-and-rejected sources (with reasons), and Phase 7+ candidates
-- **`docs/methodology.md`** — chronological per-phase narrative (rendered into `/about`)
+- **`docs/methodology.md`** — current-state methodology, rendered at `/methodology` (the per-phase narrative lives in `docs/history.md`)
+- **`/data`** — every shipped file with licence, rows, size and sha256; downloads for openly licensed files
 - **`docs/superpowers/specs/`** — per-phase design specs + master design
 - **`docs/superpowers/plans/`** — per-phase implementation plans
 
@@ -52,6 +53,6 @@ pnpm test:e2e           # Playwright
 
 ## License and citation
 
-The code in this repository is licensed under the **MIT License** (see `LICENSE`). The data is sourced under each source's own license, listed per-dataset in `CLAUDE.md`, `docs/data-sources.md`, and `public/data/catalog.json` (rendered on the live `/about` page). GEM and LNG-T3 datasets require visible attribution ("Data: Global Energy Monitor, CC BY 4.0" and "Data: Zhou et al. 2026, LNG-T3, CC BY 4.0 (Zenodo 10.5281/zenodo.19571058)" respectively). NETL and EIA data are US Government work (public domain, 17 USC §105). BACI (CEPII) is free for academic/research use. OpenStreetMap derivatives are under ODbL.
+The code in this repository is licensed under the **MIT License** (see `LICENSE`). The data is sourced under each source's own license, listed per-dataset in `CLAUDE.md`, `docs/data-sources.md`, and `public/data/catalog.json` (rendered on the live `/methodology` and `/data` pages). GEM and LNG-T3 datasets require visible attribution ("Data: Global Energy Monitor, CC BY 4.0" and "Data: Zhou et al. 2026, LNG-T3, CC BY 4.0 (Zenodo 10.5281/zenodo.19571058)" respectively). NETL and EIA data are US Government work (public domain, 17 USC §105). BACI (CEPII) is free for academic/research use. OpenStreetMap derivatives are under ODbL.
 
 If you use this project, please cite it via `CITATION.cff` (also readable through GitHub's "Cite this repository" button).

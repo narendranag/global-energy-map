@@ -85,3 +85,22 @@ export function useScenario(
     return scenarioFromInputs(inputs, assets);
   }, [scenarioId, inputs, assets]);
 }
+
+/**
+ * The inputs behind `result` (trade flows + cited route shares + voyages),
+ * for the panel's provenance list and "Why 0 %?" lookup. Shares the cached
+ * loaders `useScenario` already ran, so it issues no new queries; null until
+ * the inputs match `result`.
+ */
+export function useScenarioInputsFor(result: ScenarioResult | null): ScenarioInputs | null {
+  const { data } = useAsync(
+    loadScenarioInputs,
+    result === null ? null : [result.scenarioId, result.year, result.commodity],
+  );
+  if (data === null || result === null) return null;
+  return data.scenarioId === result.scenarioId &&
+    data.year === result.year &&
+    data.commodity === result.commodity
+    ? data
+    : null;
+}

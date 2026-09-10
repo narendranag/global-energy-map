@@ -1,15 +1,17 @@
 // tests/e2e/map.spec.ts — the map itself: basemap, chrome, and rendered fills.
-import { test, expect } from "@playwright/test";
 import {
   SPEC_TIMEOUT,
   collectConsoleErrors,
+  expect,
   gotoReady,
   greenness,
+  headerLink,
   press,
   project,
   samplePixels,
   saudiGreenness,
   SAUDI_POINTS,
+  test,
   waitForReady,
 } from "./helpers";
 
@@ -54,19 +56,27 @@ test.describe("Map", () => {
     await expect(attribution).toContainText("OpenStreetMap");
   });
 
-  // The one full default-view load in this spec: all nine default layers.
-  test("default view: title bar, controls, every default layer loaded, no fatal errors", async ({
+  // The one full default-view load in this spec: the five default layers.
+  test("default view: header, controls, every default layer loaded, no fatal errors", async ({
     page,
   }) => {
     const errors = collectConsoleErrors(page);
     await gotoReady(page, "/");
 
-    // Phase 7: title bar with an <h1> and a link to the methodology page.
+    // Phase 9 header: <h1>, mode tabs (Infrastructure selected), share menu,
+    // Methodology and Data links.
     await expect(page.getByRole("heading", { level: 1, name: "Global Energy Map" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Methodology & sources" })).toBeVisible();
+    await expect(page.getByRole("tab", { name: "Infrastructure" })).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByRole("tab", { name: "Flows" })).toHaveAttribute("aria-selected", "false");
+    await expect(page.getByRole("tab", { name: "Scenarios" })).toHaveAttribute("aria-selected", "false");
+    await expect(page.getByTestId("share-button")).toBeVisible();
+    await expect(headerLink(page, "Methodology")).toHaveAttribute("href", "/methodology");
+    await expect(headerLink(page, "Data")).toHaveAttribute("href", "/data");
+    await expect(page.locator("main")).toHaveAttribute("data-mode", "infrastructure");
 
     await expect(page.locator('input[type="range"]')).toBeVisible();
-    await expect(page.locator("select").first()).toBeVisible();
+    // No scenario picker outside Scenarios mode (and no scenario in the URL).
+    await expect(page.getByRole("combobox", { name: "Scenario" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Oil" })).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByRole("button", { name: "Gas" })).toBeVisible();
 
@@ -84,7 +94,7 @@ test.describe("Map", () => {
     await expect.poll(() => saudiGreenness(page), { timeout: 60_000 }).toBeGreaterThan(30);
 
     // Control: open ocean in the Arabian Sea carries no green cast.
-    const [ocean] = await samplePixels(page, [project(page, 64, 12)]);
+    const [ocean] = await samplePixels(page, [await project(page, 64, 12)]);
     expect(ocean && greenness(ocean)).toBeLessThan(10);
   });
 
@@ -92,7 +102,7 @@ test.describe("Map", () => {
     await gotoReady(page, "/?layers=reserves&year=2020");
     await expect.poll(() => saudiGreenness(page), { timeout: 60_000 }).toBeGreaterThan(30);
 
-    const probe = project(page, SAUDI_POINTS[0].lon, SAUDI_POINTS[0].lat);
+    const probe = await project(page, SAUDI_POINTS[0].lon, SAUDI_POINTS[0].lat);
     const [oil] = await samplePixels(page, [probe]);
     if (!oil) throw new Error("no pixel");
 

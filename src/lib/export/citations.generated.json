@@ -1,0 +1,217 @@
+{
+  "_generated_by": "scripts/transform/build_catalog.py — do not edit",
+  "site": {
+    "title": "Global Energy Map",
+    "version": "1.0.0",
+    "date-released": "2026-09-09",
+    "repository-code": "https://github.com/narendranag/global-energy-map",
+    "url": "https://global-energy-map-one.vercel.app",
+    "license": "MIT",
+    "authors": [
+      {
+        "family-names": "Nag",
+        "given-names": "Narendra"
+      }
+    ]
+  },
+  "scenario_shares": [
+    {
+      "disruption_id": "hormuz",
+      "kind": "chokepoint",
+      "exporter_iso3": "IRN",
+      "importer_iso3": null,
+      "share": 1.0,
+      "source_title": "IEA, Strait of Hormuz (Oil security and emergency response)",
+      "source_url": "https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz",
+      "source_year": 2026,
+      "source_note": "IEA (2025 data): Iran, Iraq, Kuwait, Qatar and Bahrain 'rely on the Strait to deliver the vast majority of their oil exports'; only Saudi Arabia and the UAE have bypass routes. Iran's Goreh-Jask/Jask terminal is 'effectively non-operational' (one test cargo, late 2024)."
+    },
+    {
+      "disruption_id": "hormuz",
+      "kind": "chokepoint",
+      "exporter_iso3": "IRQ",
+      "importer_iso3": null,
+      "share": 0.9,
+      "source_title": "IEA, Strait of Hormuz (Oil security and emergency response)",
+      "source_url": "https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz",
+      "source_year": 2026,
+      "source_note": "IEA (2025 data): Iran, Iraq, Kuwait, Qatar and Bahrain 'rely on the Strait to deliver the vast majority of their oil exports'; only Saudi Arabia and the UAE have bypass routes. Iraq's northern Kirkuk-Ceyhan exports (roughly 0.4 mb/d before the Mar 2023 shutdown; figure not from the cited source) bypass Hormuz, so 0.90 is the long-run share; ~1.0 in 2023-24 while that line was shut (shares are static across years). Was 1.00 before 2026-09-10."
+    },
+    {
+      "disruption_id": "hormuz",
+      "kind": "chokepoint",
+      "exporter_iso3": "KWT",
+      "importer_iso3": null,
+      "share": 1.0,
+      "source_title": "IEA, Strait of Hormuz (Oil security and emergency response)",
+      "source_url": "https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz",
+      "source_year": 2026,
+      "source_note": "IEA (2025 data): Iran, Iraq, Kuwait, Qatar and Bahrain 'rely on the Strait to deliver the vast majority of their oil exports'; only Saudi Arabia and the UAE have bypass routes."
+    },
+    {
+      "disruption_id": "hormuz",
+      "kind": "chokepoint",
+      "exporter_iso3": "QAT",
+      "importer_iso3": null,
+      "share": 1.0,
+      "source_title": "IEA, Strait of Hormuz (Oil security and emergency response)",
+      "source_url": "https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz",
+      "source_year": 2026,
+      "source_note": "IEA (2025 data): Iran, Iraq, Kuwait, Qatar and Bahrain 'rely on the Strait to deliver the vast majority of their oil exports'; only Saudi Arabia and the UAE have bypass routes."
+    },
+    {
+      "disruption_id": "hormuz",
+      "kind": "chokepoint",
+      "exporter_iso3": "SAU",
+      "importer_iso3": null,
+      "share": 0.88,
+      "source_title": "Argus Media, Yanbu gives Aramco limited option for rerouting crude (Kpler data)",
+      "source_url": "https://www.argusmedia.com/en/news-and-insights/latest-market-news/2798868-yanbu-gives-aramco-limited-option-for-rerouting-crude",
+      "source_year": 2026,
+      "source_note": "Kpler 2025: ~5.5 mb/d of Saudi crude shipped via Hormuz vs ~0.76 mb/d via the Red Sea (Yanbu) -> 5.5 / 6.26 = 0.88. Consistent with IEA (5.43 mb/d Saudi crude through Hormuz, 2025)."
+    },
+    {
+      "disruption_id": "hormuz",
+      "kind": "chokepoint",
+      "exporter_iso3": "ARE",
+      "importer_iso3": null,
+      "share": 0.65,
+      "source_title": "IEA, Strait of Hormuz (Oil security and emergency response)",
+      "source_url": "https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz",
+      "source_year": 2026,
+      "source_note": "IEA 2025: 2.02 mb/d of UAE crude through Hormuz; ~1.1 mb/d of domestic crude exported via the Habshan-Fujairah (ADCOP) pipeline -> 2.02 / 3.12 = 0.65."
+    },
+    {
+      "disruption_id": "hormuz",
+      "kind": "chokepoint",
+      "exporter_iso3": "BHR",
+      "importer_iso3": null,
+      "share": 1.0,
+      "source_title": "IEA, Strait of Hormuz (Oil security and emergency response)",
+      "source_url": "https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz",
+      "source_year": 2026,
+      "source_note": "IEA (2025 data): Iran, Iraq, Kuwait, Qatar and Bahrain 'rely on the Strait to deliver the vast majority of their oil exports'; only Saudi Arabia and the UAE have bypass routes. Bahrain's own crude exports are ~0 (IEA table: 0.00 mb/d crude, 0.21 mb/d products)."
+    },
+    {
+      "disruption_id": "hormuz_lng",
+      "kind": "chokepoint",
+      "exporter_iso3": "QAT",
+      "importer_iso3": null,
+      "share": 1.0,
+      "source_title": "IEA, Strait of Hormuz (Oil security and emergency response)",
+      "source_url": "https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz",
+      "source_year": 2026,
+      "source_note": "Structural: the LNG export terminal loads inside the Persian Gulf and there is no pipeline or alternative port for LNG, so all LNG exports transit Hormuz. IEA puts Hormuz LNG flows at about a fifth of global LNG trade, almost all from Qatar and the UAE. Ras Laffan (Qatar)."
+    },
+    {
+      "disruption_id": "hormuz_lng",
+      "kind": "chokepoint",
+      "exporter_iso3": "ARE",
+      "importer_iso3": null,
+      "share": 1.0,
+      "source_title": "IEA, Strait of Hormuz (Oil security and emergency response)",
+      "source_url": "https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz",
+      "source_year": 2026,
+      "source_note": "Structural: the LNG export terminal loads inside the Persian Gulf and there is no pipeline or alternative port for LNG, so all LNG exports transit Hormuz. IEA puts Hormuz LNG flows at about a fifth of global LNG trade, almost all from Qatar and the UAE. Das Island (ADNOC Gas); the crude-only 0.65 share reflects the Fujairah oil bypass, which does not apply to LNG."
+    },
+    {
+      "disruption_id": "druzhba",
+      "kind": "pipeline",
+      "exporter_iso3": "RUS",
+      "importer_iso3": "BLR",
+      "share": 1.0,
+      "source_title": "Global Energy Monitor, Druzhba Oil Pipeline (GEM.wiki)",
+      "source_url": "https://www.gem.wiki/Druzhba_Oil_Pipeline",
+      "source_year": 2026,
+      "source_note": "Structural: Belarus is landlocked; its two refineries (Mozyr, Naftan/Novopolotsk) are fed by Druzhba and the Unecha-Polotsk line. Residual rail volumes not quantified in the source."
+    },
+    {
+      "disruption_id": "druzhba",
+      "kind": "pipeline",
+      "exporter_iso3": "RUS",
+      "importer_iso3": "POL",
+      "share": 0.47,
+      "source_title": "IEA, Russian supplies to global energy markets — Oil market and Russian supply",
+      "source_url": "https://www.iea.org/reports/russian-supplies-to-global-energy-markets/oil-market-and-russian-supply-2",
+      "source_year": 2022,
+      "source_note": "IEA: ~750 kb/d to Europe via Druzhba, ~250 kb/d on the southern branch -> ~500 kb/d on the northern branch shared by Poland and Germany. Poland imported 372 kb/d and Germany 687 kb/d from Russia (Nov 2021); IEA does not give the split, so the branch is allocated pro-rata: 500 / (372 + 687) = 0.47. Was 0.95 before 2026-09-10."
+    },
+    {
+      "disruption_id": "druzhba",
+      "kind": "pipeline",
+      "exporter_iso3": "RUS",
+      "importer_iso3": "DEU",
+      "share": 0.47,
+      "source_title": "IEA, Russian supplies to global energy markets — Oil market and Russian supply",
+      "source_url": "https://www.iea.org/reports/russian-supplies-to-global-energy-markets/oil-market-and-russian-supply-2",
+      "source_year": 2022,
+      "source_note": "Northern branch ~500 kb/d allocated pro-rata across Poland (372 kb/d) and Germany (687 kb/d) Russian imports (IEA, Nov 2021): 500 / 1059 = 0.47; the remainder arrived by tanker. Was 0.60 before 2026-09-10."
+    },
+    {
+      "disruption_id": "druzhba",
+      "kind": "pipeline",
+      "exporter_iso3": "RUS",
+      "importer_iso3": "SVK",
+      "share": 1.0,
+      "source_title": "IEA, Russian supplies to global energy markets — Oil market and Russian supply",
+      "source_url": "https://www.iea.org/reports/russian-supplies-to-global-energy-markets/oil-market-and-russian-supply-2",
+      "source_year": 2022,
+      "source_note": "IEA: ~250 kb/d via the southern branch to Hungary, Slovakia, Czechia; their Nov 2021 imports from Russia (SVK 109 + HUN 79 + CZE 52 = 240 kb/d) match that volume, i.e. essentially all by pipeline."
+    },
+    {
+      "disruption_id": "druzhba",
+      "kind": "pipeline",
+      "exporter_iso3": "RUS",
+      "importer_iso3": "HUN",
+      "share": 1.0,
+      "source_title": "IEA, Russian supplies to global energy markets — Oil market and Russian supply",
+      "source_url": "https://www.iea.org/reports/russian-supplies-to-global-energy-markets/oil-market-and-russian-supply-2",
+      "source_year": 2022,
+      "source_note": "IEA: southern branch ~250 kb/d vs HUN+SVK+CZE Russian imports 240 kb/d (Nov 2021) — essentially all by pipeline."
+    },
+    {
+      "disruption_id": "druzhba",
+      "kind": "pipeline",
+      "exporter_iso3": "RUS",
+      "importer_iso3": "CZE",
+      "share": 1.0,
+      "source_title": "IEA, Russian supplies to global energy markets — Oil market and Russian supply",
+      "source_url": "https://www.iea.org/reports/russian-supplies-to-global-energy-markets/oil-market-and-russian-supply-2",
+      "source_year": 2022,
+      "source_note": "IEA: southern branch ~250 kb/d vs HUN+SVK+CZE Russian imports 240 kb/d (Nov 2021) — essentially all by pipeline. Was 0.90 before 2026-09-10."
+    },
+    {
+      "disruption_id": "btc",
+      "kind": "pipeline",
+      "exporter_iso3": "AZE",
+      "importer_iso3": null,
+      "share": 0.83,
+      "source_title": "EIA, Regional Analysis Brief: Caspian Sea",
+      "source_url": "https://www.eia.gov/international/content/analysis/regions_of_interest/caspian_sea/",
+      "source_year": 2025,
+      "source_note": "EIA: 'about 83% of Azerbaijan's oil exports go through the BTC pipeline' (IEA 2023 profile: ~80%). The 'over 90%' EIA figure is cumulative ACG output, not the share of exports. Was 0.90 before 2026-09-10."
+    },
+    {
+      "disruption_id": "cpc",
+      "kind": "pipeline",
+      "exporter_iso3": "KAZ",
+      "importer_iso3": null,
+      "share": 0.8,
+      "source_title": "EIA, Regional Analysis Brief: Caspian Sea",
+      "source_url": "https://www.eia.gov/international/content/analysis/regions_of_interest/caspian_sea/",
+      "source_year": 2025,
+      "source_note": "EIA: 'The CPC carries about 80% of Kazakhstan's crude oil export'."
+    },
+    {
+      "disruption_id": "cpc",
+      "kind": "pipeline",
+      "exporter_iso3": "RUS",
+      "importer_iso3": null,
+      "share": 0.035,
+      "source_title": "Analyst estimate (unsourced)",
+      "source_url": null,
+      "source_year": 2026,
+      "source_note": "Derived, no single document: non-Kazakh (Russian-field) CPC volumes are ~8 Mt/y (63 Mt total 2024 minus 54.9 Mt Kazakh) against ~230 Mt/y of Russian crude exports -> ~0.035. The earlier 0.10 conflated Russia's share of CPC throughput with CPC's share of Russian exports. Was 0.10 before 2026-09-10."
+    }
+  ]
+}

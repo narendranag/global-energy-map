@@ -19,6 +19,9 @@ export interface MapShellProps {
  */
 const PICKING_RADIUS = 4;
 
+/** Accessible name of the map canvas (MapLibre's keyboard handler: arrows pan, +/− zoom). */
+export const MAP_LABEL = "Map — arrow keys pan, plus and minus zoom";
+
 /** Where deck layers go in the MapLibre layer stack, once the style is loaded. */
 interface LabelAnchor {
   /** First label layer; `undefined` when the style has none (deck draws on top). */
@@ -80,6 +83,9 @@ export function MapShell({ layers, getTooltip }: MapShellProps) {
       // Always show the full text (OpenStreetMap / OpenMapTiles require visible
       // attribution); the default collapses to an "i" button under 640 px.
       attributionControl: { compact: false },
+      // The canvas is the map's focus target (role="region"); its name is
+      // the only hint that the map is keyboard-operable.
+      locale: { "Map.Title": MAP_LABEL },
     });
     map.touchZoomRotate.disableRotation();
 

@@ -11,13 +11,24 @@ sha256 of each shipped file (tests/python/test_data_integrity.py checks them).
 Hand-written fields per entry (REGISTRY):
     id, label, path, format, source_name, source_url, license, as_of, layers,
     attribution (optional), runtime (default True — False for artefacts shipped
-    for reproducibility that no layer or scenario reads)
+    for reproducibility that no layer or scenario reads),
+    redistributable (licence policy: True only for CC BY 4.0, public-domain and
+    project-derived rows — the Phase 9 decision limits downloads to these),
+    download_note (one-line reason, for entries that are not redistributable)
 
 Computed fields per entry:
     bytes, sha256   of the file at ``path``
     rows            rows this entry contributes: the whole file, or the subset
                     selected by the registry's ``subset`` filter when several
                     sources share one file (assets.parquet, pipelines.geojson)
+    downloadable    the file at ``path`` may be offered as-is on /data: every
+                    entry sharing the file is redistributable (assets.parquet is
+                    not, because of its 88 ODbL OpenStreetMap refinery rows)
+    download_note   why a non-downloadable entry is view-only
+
+It also writes ``src/lib/export/citations.generated.json`` (site citation from
+CITATION.cff + scenario route-share citations from disruption_route.parquet),
+which /methodology, /data and the Share menu import — see ``build_citations``.
 
 ``generated_at`` is deterministic so that rebuilding unchanged inputs leaves
 catalog.json byte-identical (``scripts.build_all`` run twice → clean git tree):
@@ -68,6 +79,11 @@ REGISTRY: list[dict[str, Any]] = [
         "license": "Free; see Energy Institute terms",
         "as_of": "2025-06-26",
         "layers": ["reserves", "reserves:gas", "production"],
+        "redistributable": False,
+        "download_note": (
+            "Energy Institute terms restrict redistribution of the dataset itself; "
+            "shown in the app, not offered for download."
+        ),
         "attribution": "Data: Energy Institute Statistical Review of World Energy 2025",
     },
     {
@@ -81,6 +97,7 @@ REGISTRY: list[dict[str, Any]] = [
         "license": "CC BY 4.0",
         "as_of": "2023-07-01",
         "layers": ["extraction"],
+        "redistributable": True,
         "attribution": GEM_ATTRIBUTION,
     },
     {
@@ -97,6 +114,7 @@ REGISTRY: list[dict[str, Any]] = [
         "license": NETL_LICENSE,
         "as_of": NETL_SNAPSHOT,
         "layers": ["refineries"],
+        "redistributable": True,
     },
     {
         "id": "osm_refineries",
@@ -109,6 +127,10 @@ REGISTRY: list[dict[str, Any]] = [
         "license": "ODbL (Open Database License)",
         "as_of": "2026-05-15",
         "layers": ["refineries"],
+        "redistributable": False,
+        "download_note": (
+            "ODbL (share-alike) rows; downloads are limited to CC BY 4.0 and public-domain sources."
+        ),
         "attribution": "© OpenStreetMap contributors, ODbL",
     },
     {
@@ -122,6 +144,7 @@ REGISTRY: list[dict[str, Any]] = [
         "license": NETL_LICENSE,
         "as_of": NETL_SNAPSHOT,
         "layers": ["storage"],
+        "redistributable": True,
     },
     {
         "id": "netl_ports",
@@ -134,6 +157,7 @@ REGISTRY: list[dict[str, Any]] = [
         "license": NETL_LICENSE,
         "as_of": NETL_SNAPSHOT,
         "layers": ["ports"],
+        "redistributable": True,
     },
     {
         "id": "lng_t3_terminals",
@@ -149,6 +173,7 @@ REGISTRY: list[dict[str, Any]] = [
         "license": "CC BY 4.0",
         "as_of": "2026-04-01",
         "layers": ["lng_terminals"],
+        "redistributable": True,
         "attribution": LNG_T3_ATTRIBUTION,
     },
     {
@@ -165,6 +190,7 @@ REGISTRY: list[dict[str, Any]] = [
         "license": "CC BY 4.0",
         "as_of": "2026-02-20",
         "layers": ["lng_terminals"],
+        "redistributable": True,
         "attribution": GEM_ATTRIBUTION,
     },
     {
@@ -178,6 +204,7 @@ REGISTRY: list[dict[str, Any]] = [
         "license": "CC BY 4.0",
         "as_of": "2025-04-09",
         "layers": ["pipelines"],
+        "redistributable": True,
         "attribution": GEM_ATTRIBUTION,
     },
     {
@@ -191,6 +218,7 @@ REGISTRY: list[dict[str, Any]] = [
         "license": "CC BY 4.0",
         "as_of": "2026-02-20",
         "layers": ["gas_pipelines"],
+        "redistributable": True,
         "attribution": GEM_ATTRIBUTION,
     },
     {
@@ -203,6 +231,7 @@ REGISTRY: list[dict[str, Any]] = [
         "license": NETL_LICENSE,
         "as_of": NETL_SNAPSHOT,
         "layers": ["basins"],
+        "redistributable": True,
     },
     {
         "id": "baci_2709",
@@ -213,7 +242,19 @@ REGISTRY: list[dict[str, Any]] = [
         "source_url": "https://www.cepii.fr/CEPII/en/bdd_modele/bdd_modele_item.asp?id=37",
         "license": "Free for academic/research use; see CEPII terms",
         "as_of": "2026-01-01",
-        "layers": ["trade", "scenario:hormuz", "scenario:hormuz-lng"],
+        "layers": [
+            "trade",
+            "scenario:hormuz",
+            "scenario:hormuz-lng",
+            "scenario:druzhba",
+            "scenario:btc",
+            "scenario:cpc",
+        ],
+        "redistributable": False,
+        "download_note": (
+            "CEPII licenses BACI for academic/research use; the bilateral table "
+            "stays behind the app and is not offered for bulk download."
+        ),
         "attribution": "Data: CEPII BACI (release V202601)",
     },
     {
@@ -225,7 +266,14 @@ REGISTRY: list[dict[str, Any]] = [
         "source_url": "https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz",
         "license": "Hand-set shares derived from public reports; per-row citations",
         "as_of": "2026-09-10",
-        "layers": ["scenario:hormuz", "scenario:druzhba", "scenario:btc", "scenario:cpc"],
+        "layers": [
+            "scenario:hormuz",
+            "scenario:hormuz-lng",
+            "scenario:druzhba",
+            "scenario:btc",
+            "scenario:cpc",
+        ],
+        "redistributable": True,
     },
     {
         "id": "natural_earth_countries",
@@ -237,6 +285,7 @@ REGISTRY: list[dict[str, Any]] = [
         "license": "Public domain",
         "as_of": "2024-10-01",
         "layers": ["basemap", "reserves"],
+        "redistributable": True,
     },
     {
         "id": "lng_t3_voyages",
@@ -248,6 +297,7 @@ REGISTRY: list[dict[str, Any]] = [
         "license": "CC BY 4.0",
         "as_of": "2026-04-01",
         "layers": ["lng_voyages", "scenario:hormuz-lng"],
+        "redistributable": True,
         "attribution": LNG_T3_ATTRIBUTION,
     },
     {
@@ -260,6 +310,7 @@ REGISTRY: list[dict[str, Any]] = [
         "license": "CC BY 4.0",
         "as_of": "2026-04-01",
         "layers": [],
+        "redistributable": True,
         "attribution": LNG_T3_ATTRIBUTION,
         "runtime": False,
     },
@@ -273,6 +324,7 @@ REGISTRY: list[dict[str, Any]] = [
         "license": "CC BY 4.0",
         "as_of": "2026-04-01",
         "layers": [],
+        "redistributable": True,
         "attribution": LNG_T3_ATTRIBUTION,
         "runtime": False,
     },
@@ -291,6 +343,9 @@ _FIELD_ORDER = [
     "layers",
     "attribution",
     "runtime",
+    "redistributable",
+    "downloadable",
+    "download_note",
     "rows",
     "bytes",
     "sha256",
@@ -331,10 +386,51 @@ def _count_rows(path: Path, subset: dict[str, list[str]] | None) -> int:
     raise ValueError(f"don't know how to count rows in {path}")
 
 
+def _download_flags(registry: list[dict[str, Any]]) -> dict[str, tuple[bool, str | None]]:
+    """``id → (downloadable, download_note)``.
+
+    A file is offered as-is only when EVERY entry sharing its ``path`` is
+    redistributable; one ODbL / restricted subset makes the whole file
+    view-only. The note is the entry's own reason, or — for a redistributable
+    subset of a mixed file — which co-tenant blocks the download.
+    """
+    by_path: dict[str, list[dict[str, Any]]] = {}
+    for spec in registry:
+        by_path.setdefault(spec["path"], []).append(spec)
+    flags: dict[str, tuple[bool, str | None]] = {}
+    for spec in registry:
+        tenants = by_path[spec["path"]]
+        blockers = [t for t in tenants if not t.get("redistributable", False)]
+        if not blockers:
+            flags[spec["id"]] = (True, None)
+        elif not spec.get("redistributable", False):
+            flags[spec["id"]] = (False, spec.get("download_note") or "Not offered for download.")
+        else:
+            file = spec["path"].rsplit("/", 1)[-1]
+            parts = {
+                f"{b.get('source_name', b['label'])} rows under {b['license']}" for b in blockers
+            }
+            names = "; ".join(sorted(parts))
+            blocked_layers = {tag for b in blockers for tag in b.get("layers", [])}
+            same_layer = any(tag in blocked_layers for tag in spec.get("layers", []))
+            advice = (
+                f"The {', '.join(spec['layers'])} layer includes those rows too, "
+                "so it is view-only."
+                if same_layer
+                else "Export this layer's rows from the map's Share / cite menu instead."
+            )
+            flags[spec["id"]] = (
+                False,
+                f"{file} also contains {names}, so the file is not offered as-is. {advice}",
+            )
+    return flags
+
+
 def build_catalog(public: Path = PUBLIC) -> dict[str, Any]:
     ids = [e["id"] for e in REGISTRY]
     if len(ids) != len(set(ids)):
         raise ValueError("duplicate catalog ids")
+    flags = _download_flags(REGISTRY)
     entries = []
     for spec in REGISTRY:
         if not _DATE_RE.match(spec["as_of"]):
@@ -342,8 +438,13 @@ def build_catalog(public: Path = PUBLIC) -> dict[str, Any]:
         path = _disk_path(spec["path"], public)
         if not path.exists():
             raise FileNotFoundError(f"{spec['id']}: {path} does not exist")
-        entry = {k: v for k, v in spec.items() if k != "subset"}
+        entry = {k: v for k, v in spec.items() if k not in ("subset", "download_note")}
         entry.setdefault("runtime", True)
+        entry["redistributable"] = bool(spec.get("redistributable", False))
+        downloadable, note = flags[spec["id"]]
+        entry["downloadable"] = downloadable
+        if note is not None:
+            entry["download_note"] = note
         entry["rows"] = _count_rows(path, spec.get("subset"))
         entry["bytes"] = path.stat().st_size
         entry["sha256"] = _sha256(path)
@@ -356,12 +457,111 @@ def build_catalog(public: Path = PUBLIC) -> dict[str, Any]:
     }
 
 
+# ── citations sidecar (CITATION.cff + disruption_route.parquet) ─────────────
+#
+# The /methodology page, the /data page and the map's Share menu cite the site
+# (APA/BibTeX) and the scenario route shares. Both come from files the browser
+# cannot parse cheaply (YAML, Parquet), so this step writes them to a small
+# JSON module the app imports at build time. It is build input for the app,
+# not a shipped data file, so it lives under src/ and is not catalogued;
+# tests/python/test_build_catalog.py fails if it drifts from its sources.
+
+CITATION_CFF = Path("CITATION.cff")
+CITATIONS_OUT = Path("src/lib/export/citations.generated.json")
+DISRUPTION_ROUTE = PUBLIC / "data" / "disruption_route.parquet"
+_CFF_SCALARS = ("title", "version", "date-released", "url", "repository-code", "license", "doi")
+
+
+def _unquote(value: str) -> str:
+    v = value.strip()
+    if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
+        return v[1:-1]
+    return v
+
+
+def parse_cff(text: str) -> dict[str, Any]:
+    """The top-level scalars and ``authors`` of a CITATION.cff.
+
+    A deliberately small parser for the subset of YAML CFF files use at the
+    top level (``key: value`` scalars and an ``authors:`` list of mappings) —
+    the project has no YAML dependency. Nested blocks other than ``authors``
+    (``references``, folded ``abstract``) are skipped.
+    """
+    out: dict[str, Any] = {}
+    authors: list[dict[str, str]] = []
+    section: str | None = None
+    for raw in text.splitlines():
+        if not raw.strip() or raw.lstrip().startswith("#"):
+            continue
+        if not raw[0].isspace():
+            key, _, value = raw.partition(":")
+            section = key.strip()
+            value = value.strip()
+            if section in _CFF_SCALARS and value and value not in (">", ">-", "|", "|-"):
+                out[section] = _unquote(value)
+            continue
+        if section != "authors":
+            continue
+        line = raw.strip()
+        if line.startswith("- "):
+            authors.append({})
+            line = line[2:].strip()
+        if not authors or ":" not in line:
+            continue
+        k, _, v = line.partition(":")
+        authors[-1][k.strip()] = _unquote(v)
+    out["authors"] = [
+        {k: a[k] for k in ("family-names", "given-names", "name", "orcid") if k in a and a[k]}
+        for a in authors
+    ]
+    missing = [k for k in ("title", "version", "date-released", "url") if k not in out]
+    if missing or not out["authors"]:
+        raise ValueError(f"CITATION.cff is missing {missing or ['authors']}")
+    return out
+
+
+def scenario_share_rows(path: Path = DISRUPTION_ROUTE) -> list[dict[str, Any]]:
+    """disruption_route.parquet as JSON-safe rows, in file order."""
+    df = pd.read_parquet(path)
+
+    def text(v: Any) -> str | None:
+        return None if v is None or pd.isna(v) or str(v).strip() == "" else str(v)
+
+    return [
+        {
+            "disruption_id": str(r.disruption_id),
+            "kind": str(r.kind),
+            "exporter_iso3": str(r.exporter_iso3),
+            "importer_iso3": text(r.importer_iso3),
+            "share": float(r.share),
+            "source_title": str(r.source_title),
+            "source_url": text(r.source_url),
+            "source_year": int(r.source_year),
+            "source_note": text(r.source_note),
+        }
+        for r in df.itertuples(index=False)
+    ]
+
+
+def build_citations(cff: Path = CITATION_CFF, routes: Path = DISRUPTION_ROUTE) -> dict[str, Any]:
+    return {
+        "_generated_by": "scripts/transform/build_catalog.py — do not edit",
+        "site": parse_cff(cff.read_text()),
+        "scenario_shares": scenario_share_rows(routes),
+    }
+
+
 def main() -> None:
     catalog = build_catalog()
     OUT.write_text(json.dumps(catalog, indent=2, ensure_ascii=False) + "\n")
     print(f"wrote {OUT}  entries={len(catalog['entries'])}")
     for e in catalog["entries"]:
-        print(f"  {e['id']:<26} rows={e['rows']:>7}  bytes={e['bytes']:>10}  {e['path']}")
+        dl = "download" if e["downloadable"] else "view-only"
+        print(f"  {e['id']:<26} rows={e['rows']:>7}  bytes={e['bytes']:>10}  {dl:<9}  {e['path']}")
+    citations = build_citations()
+    CITATIONS_OUT.parent.mkdir(parents=True, exist_ok=True)
+    CITATIONS_OUT.write_text(json.dumps(citations, indent=2, ensure_ascii=False) + "\n")
+    print(f"wrote {CITATIONS_OUT}  scenario_shares={len(citations['scenario_shares'])}")
 
 
 if __name__ == "__main__":

@@ -12,10 +12,18 @@ import { formatCapacity, joinLines, orNa, type TooltipFormatter } from "./toolti
 
 export const EXTRACTION_LAYER_ID = "extraction";
 
+export interface ExtractionStyle {
+  /** Glyph-size multiplier from `glyphScale(zoom)`. */
+  readonly scale?: number;
+  /** Layer opacity from `extractionOpacity(zoom)`. */
+  readonly opacity?: number;
+}
+
 /** Extraction sites commissioned by `year` (undated sites always show). */
 export function buildExtractionLayer(
   rows: readonly ExtractionAsset[],
   year: number,
+  { scale = 1, opacity = 1 }: ExtractionStyle = {},
 ): ScatterplotLayer<ExtractionAsset> {
   return new ScatterplotLayer<ExtractionAsset>({
     id: EXTRACTION_LAYER_ID,
@@ -23,8 +31,9 @@ export function buildExtractionLayer(
     getPosition: (d) => [d.lon, d.lat],
     getRadius: (d) => extractionRadius(d.capacity),
     radiusUnits: "meters",
-    radiusMinPixels: EXTRACTION_RADIUS.minPixels,
-    radiusMaxPixels: EXTRACTION_RADIUS.maxPixels,
+    radiusMinPixels: EXTRACTION_RADIUS.minPixels * scale,
+    radiusMaxPixels: EXTRACTION_RADIUS.maxPixels * scale,
+    opacity,
     getFillColor: [...EXTRACTION_FILL],
     stroked: true,
     getLineColor: [...EXTRACTION_LINE],

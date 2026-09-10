@@ -1,13 +1,15 @@
 // tests/e2e/layers.spec.ts — the layer panel: toggles, per-layer boots, hover.
-import { test, expect } from "@playwright/test";
 import {
   SPEC_TIMEOUT,
   collectConsoleErrors,
   countRedPixels,
+  expect,
   gotoReady,
-  project,
+  mapBox,
+  projectAll,
   saudiGreenness,
   setChecked,
+  test,
   waitForReady,
 } from "./helpers";
 
@@ -27,12 +29,24 @@ const LAYER_LABELS = [
   "LNG voyages (2020–2024)",
 ] as const;
 
+/** Infrastructure (the default mode) shows exactly these five (D1). */
+const DEFAULT_ON = [
+  "Reserves (country)",
+  "Oil pipelines",
+  "Refineries",
+  "Gas pipelines",
+  "LNG terminals",
+] as const;
+
 /**
- * Map area clear of the floating panels (LayerPanel left, title bar top,
- * scenario panel right, commodity + slider bottom) at 1280×720; at the
- * default view it covers Europe, Africa and the Middle East.
+ * Map area clear of the floating panels (LayerPanel left, commodity + slider
+ * bottom; the header is above the canvas) at 1280×720, relative to the
+ * canvas; at the default view it covers Europe, Africa and the Middle East.
  */
-const MAP_CENTRE_CLIP = { x: 280, y: 120, width: 640, height: 420 };
+async function mapCentreClip(page: Parameters<typeof mapBox>[0]) {
+  const box = await mapBox(page);
+  return { x: box.x + 320, y: box.y + 60, width: 600, height: box.height - 260 };
+}
 
 test.describe("Layer panel", () => {
   test("toggles switch off and back on", async ({ page }) => {
@@ -46,14 +60,15 @@ test.describe("Layer panel", () => {
   });
 
   // Starts from the full default view: the panel lists every layer with the
-  // default set checked; then "only extraction" — every other layer unticked,
-  // the extraction layer must still render (red site markers on the canvas).
-  test("default layer set; unticking all but Extraction sites keeps extraction rendered (canvas probe)", async ({
+  // five-layer default set checked; then "only extraction" — Extraction sites
+  // ticked, every default unticked — and the extraction layer must render
+  // (burnt-orange site markers on the canvas).
+  test("default layer set; switching to Extraction sites only keeps extraction rendered (canvas probe)", async ({
     page,
   }) => {
-    // The only spec that boots the full nine-layer default map and then re-renders
-    // it eight times; under ubuntu-latest software WebGL that alone exceeds the
-    // shared 180 s budget (CI run 34521062431), so it gets its own.
+    // The only spec that boots the full default map and then re-renders it
+    // six times; under ubuntu-latest software WebGL that alone has exceeded
+    // the shared 180 s budget (CI run 34521062431), so it gets its own.
     test.setTimeout(420_000);
     const errors = collectConsoleErrors(page);
     await gotoReady(page, "/");
@@ -61,23 +76,23 @@ test.describe("Layer panel", () => {
     for (const label of LAYER_LABELS) {
       await expect(page.getByLabel(label, { exact: true })).toBeVisible();
     }
-    // Defaults: everything but LNG voyages (opt-in; high visual noise).
-    for (const label of LAYER_LABELS.slice(0, -1)) {
-      await expect(page.getByLabel(label, { exact: true })).toBeChecked();
-    }
-    await expect(page.getByLabel("LNG voyages (2020–2024)")).not.toBeChecked();
-
     for (const label of LAYER_LABELS) {
-      if (label === "Extraction sites") continue;
+      const box = page.getByLabel(label, { exact: true });
+      if ((DEFAULT_ON as readonly string[]).includes(label)) await expect(box).toBeChecked();
+      else await expect(box).not.toBeChecked();
+    }
+    await expect(page.getByRole("button", { name: /^Layers\s*5 on$/ })).toBeVisible();
+
+    await setChecked(page.getByLabel("Extraction sites", { exact: true }), true, 60_000, 10_000);
+    for (const label of DEFAULT_ON) {
       await setChecked(page.getByLabel(label, { exact: true }), false, 60_000, 10_000);
     }
     await expect(page.getByLabel("Extraction sites")).toBeChecked();
     await expect(page).toHaveURL(/layers=extraction(&|$)/);
     await waitForReady(page);
 
-    await expect
-      .poll(() => countRedPixels(page, MAP_CENTRE_CLIP), { timeout: 60_000 })
-      .toBeGreaterThan(200);
+    const clip = await mapCentreClip(page);
+    await expect.poll(() => countRedPixels(page, clip), { timeout: 60_000 }).toBeGreaterThan(200);
     expect(errors).toEqual([]);
   });
 
@@ -116,19 +131,18 @@ test.describe("Layer panel", () => {
 
   test("basin tooltip on hover", async ({ page }) => {
     await gotoReady(page, "/?layers=basins");
-    const canvas = page.locator(".maplibregl-canvas");
 
     // Basin-dense points at the default view: Ghawar / Arabian basin, the
     // Mesopotamian foredeep, the Gulf, the Sirte basin.
-    const points = [
-      project(page, 49.5, 25.5),
-      project(page, 45.5, 32.0),
-      project(page, 51.5, 27.0),
-      project(page, 19.0, 29.5),
-    ];
+    const points = await projectAll(page, [
+      { lon: 49.5, lat: 25.5 },
+      { lon: 45.5, lat: 32.0 },
+      { lon: 51.5, lat: 27.0 },
+      { lon: 19.0, lat: 29.5 },
+    ]);
     await expect(async () => {
       for (const position of points) {
-        await canvas.hover({ position });
+        await page.mouse.move(position.x, position.y);
         try {
           await expect(page.locator("body")).toContainText("Basin:", { timeout: 2_000 });
           return;

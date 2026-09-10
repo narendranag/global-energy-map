@@ -40,7 +40,7 @@ A public web app that lets serious analysts interrogate global energy dependenci
 ```
 global-energy-map/
 ├── src/
-│   ├── app/                       # Next.js App Router (page.tsx, about/)
+│   ├── app/                       # Next.js App Router: page.tsx (map), methodology/, data/ (/about → /methodology redirect in next.config.ts)
 │   ├── components/
 │   │   ├── map/                   # MapShell: MapLibre map + deck.gl via MapboxOverlay (interleaved, beneath basemap labels)
 │   │   ├── layers/                # pure builders `buildXLayer(rows, opts)` + `formatXTooltip` per layer; useMapLayers memoises them; LayerPanel, generated Legend
@@ -70,7 +70,8 @@ global-energy-map/
 │   └── e2e/                       # Playwright feature specs (map, layers, time, scenarios, url, about) + helpers.ts
 ├── docs/
 │   ├── data-sources.md            # researcher-facing source inventory
-│   ├── methodology.md             # rendered into /about
+│   ├── methodology.md             # current-state methodology, rendered at /methodology
+│   ├── history.md                 # per-phase narrative (Phases 1–8), verbatim
 │   └── superpowers/
 │       ├── specs/                 # design specs (per phase + master)
 │       └── plans/                 # implementation plans (per phase)
@@ -158,7 +159,7 @@ CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typec
 
 - **TDD where it pays:** scenario engine, data transforms, query helpers — write failing test first. UI components covered by Playwright e2e smoke tests, not unit-tested by default.
 - **Pure functions for scenarios:** `src/lib/scenarios/` exports pure functions that take in baseline data + scenario params and return derived layer styling. No side effects, no map handles. Easy to unit-test.
-- **Catalog manifest is the source of truth for `/about` and pipeline metadata** (license, source URL, as-of date). The methodology page (`src/app/about/page.tsx`) reads `public/data/catalog.json` at build time and renders the source table from it.
+- **Catalog manifest is the source of truth for `/methodology`, `/data`, tooltips and Share/cite** (license, source URL, as-of, rows, sha256, `redistributable` / `downloadable`). `build_catalog.py` also writes `src/lib/export/citations.generated.json` (scenario-share citations + CITATION.cff) — regenerate, never hand-edit.
 - **Runtime data paths are hardcoded by design.** Loaders in `src/lib/data/` call `read_parquet('/data/<file>.parquet')` directly in DuckDB SQL (or `fetch` a GeoJSON sidecar). Do not try to thread catalog `path` fields through the runtime — the catalog is metadata, not a config table. When you add a new layer, add a `public/data/catalog.json` entry AND hardcode the path in the SQL.
 - **Geometry ships as simplified GeoJSON sidecars** (`pipelines.geojson`, `basins.geojson`, `countries.geojson`); the DuckDB-WASM `spatial` extension is not reliable in the pinned dev build. Full-resolution GeoParquet stays build-time only in `data/derived/`.
 - **One data path.** Layers never query on their own: `src/lib/data/` loaders are module-cached promises (cache the promise, not the result), `useAssets()` scans `assets.parquet` once and groups by `kind`, and layer files are pure `buildXLayer(rows, opts)` functions memoised in `useMapLayers`. Year/vintage filtering happens in memory. Layer ids are stable (tooltips and e2e key on them).
@@ -166,7 +167,7 @@ CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typec
 - **Tooltips are per layer.** Each layer exports `formatXTooltip`; `page.tsx` dispatches by layer id. Every tooltip ends with source + as-of from the statically imported catalog.
 - **State and URL.** `src/lib/state/store.ts` owns `AppState` + map view; `useUrlState` wraps it. The URL is written with a debounced `history.replaceState` — never `router.replace` (that turned every slider tick into a Next navigation).
 - **Map rendering.** deck.gl runs inside MapLibre via `MapboxOverlay({ interleaved: true })`; MapShell inserts deck layers before the style's first symbol layer so basemap labels draw above fills. There is one canvas (`.maplibregl-canvas`).
-- **Citations:** Every layer must register a source entry in `catalog.json` (source URL, license, version/as-of). The `/about` page enumerates them — no manual list.
+- **Citations:** Every layer must register a source entry in `catalog.json` (source URL, license, version/as-of). `/methodology` and `/data` enumerate them — no manual list.
 - **GEM data attribution:** All GEM outputs require visible "Data: Global Energy Monitor, CC BY 4.0" attribution in the methodology page and any layer-level metadata UI.
 - **No client-side calls to data-provider APIs.** BACI, EIA, NETL, GEM, etc. are hit only at build time by Python ingestion scripts. The runtime analytics path is pure HTTP range reads over Parquet/GeoJSON.
 - **Idempotent transforms.** Every `build_*.py` drops prior rows of its kind from the target Parquet before appending — re-running is safe.
@@ -175,6 +176,10 @@ CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typec
 - **e2e is CPU-bound.** Every Playwright spec boots DuckDB-WASM and deck.gl under headless software WebGL. `playwright.config.ts` runs `workers: 1` unconditionally; scenario-panel expects need ~120 s inside 180 s test budgets to pass on ubuntu-latest (a Mac passes at 60 s). CI runs e2e against `pnpm build && pnpm start` under `CI=1`; the push trigger is limited to `main` so a PR branch runs once.
 - **Parallel implementer agents do not commit or stage.** Give each a disjoint file set, have them report changed files, then commit each set with an explicit `git add <files>`. Never `git add -A` on a shared tree. An agent's `git rm` stages a deletion that the next commit sweeps up — agents delete with plain `rm`.
 - **e2e waits on `main[data-ready="true"]`** (data loaded for the current inputs), clicks through the hydration-safe helpers in `tests/e2e/helpers.ts`, and proves rendering with screenshot pixel probes at projected lon/lat points — never fixed sleeps.
+- **Modes are presets, not filters.** `mode` (infrastructure | flows | scenarios) fills in only what the URL leaves out; explicit `layers`/`year`/`commodity`/`scenario` params always win, so old shared links render unchanged. Presets live in `src/lib/modes/`.
+- **Downloads follow the licensing decision.** Only files whose every source is CC BY 4.0 or public domain are downloadable (`downloadable` in the catalog). EI reserves, BACI trade and `assets.parquet` (88 ODbL OSM rows mixed in) are view-only. The scenario-results CSV is treated as derived analysis and ships with citation header lines.
+- **Palette discipline.** Oil = warm family, gas = cool family, reserves = olive sequential, red only for scenario exposure; `tests/unit/symbology-contrast.test.ts` guards contrast against the Positron basemap and between key pairs. Storage and ports render only from zoom 4.
+- **a11y is tested.** `tests/e2e/a11y.spec.ts` runs axe on `/`, `/methodology`, `/data` (zero serious/critical) and checks focus order (DOM order = header → intro → panels → map). Panel text must stay ≥ 4.5:1 composited over black (worst case); slate-500 fails — use slate-600 or darker.
 - **Light-only UI.** There is no dark theme (decided 2026-09-10); `globals.css` sets `color-scheme: light` and has no `prefers-color-scheme` block. Panels still set their own text colour (`text-slate-800`) so they never inherit from the host.
 - **Tailwind v4 layers vs. third-party CSS.** Tailwind utilities live in `@layer utilities`; unlayered library CSS (e.g. `maplibre-gl.css`) beats them regardless of order. Size the MapLibre container with inline styles (see `MapShell.tsx`).
 - **deck.gl accessors need `updateTriggers`.** Recolouring a layer from a `useMemo` with fresh closures does nothing unless the trigger changes; keep `updateTriggers` keyed on the input that drives the colour.
@@ -202,5 +207,5 @@ CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typec
 - **Phase 6** — _shipped 2026-09-09_ (LNG-T3 terminals + voyages + BACI-anchored Hormuz-LNG attribution + CI + MIT/CITATION). Live: https://global-energy-map-one.vercel.app
 - **Phase 7 — Correctness** — _shipped 2026-09-10_ (PR #16: EI year parsing, basemap render + OpenFreeMap, 1990–2024 time axis, honest scenario overlay, generated catalog, cited scenario shares, data-integrity tests). Plan: `docs/superpowers/plans/2026-09-10-global-energy-map-phase-7.md`. Roadmap from the refactor/redesign review (`docs/superpowers/specs/2026-09-10-refactor-redesign-review.md`): Phase 7 Correctness → Phase 8 Consolidation → Phase 9 Product redesign → Phase 10 Launch hardening.
 - **Phase 8 — Consolidation** — _in review_ on branch `phase-8-consolidation` (plan: `docs/superpowers/plans/2026-09-10-global-energy-map-phase-8.md`): one cached asset load + pure layer builders, symbology module + generated Legend, per-layer tooltips, app store + `replaceState` URL sync with map view, MapboxOverlay interleaved, `build_all.py` with byte-identical rebuilds, NETL refinery dedup (2,360 → 1,163), NGL pipelines drawn, feature e2e with pixel probes, dependency sweep. Deferred per review: daily-throughput tooltip, vintage filter on scenario inputs.
-- **Phase 9 — Product redesign** — next: three-mode IA + sane defaults, visual pass, time controls, Methodology/Data pages, export + cite + copy link, scenario panel v2, phone banner, accessibility.
+- **Phase 9 — Product redesign** — _in review_ on branch `phase-9-product` (plan: `docs/superpowers/plans/2026-09-10-global-energy-map-phase-9.md`): three-mode IA + sane defaults, visual pass, time controls, Methodology/Data pages, export + cite + copy link, scenario panel v2, phone banner, accessibility.
 - **Going public** — decided: after Phase 9, with `LICENSE-DATA.md`, map-footer attribution, downloads limited to CC BY / public-domain subsets. Light-only UI; phones get a "best on desktop" banner; keep DuckDB-WASM (export + query console in scope).

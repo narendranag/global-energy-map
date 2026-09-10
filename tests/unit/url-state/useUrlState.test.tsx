@@ -26,7 +26,7 @@ const LAYERS: LayerState = {
   lng_terminals: true,
   lng_voyages: false,
 };
-const DEFAULTS: AppState = { year: 2020, commodity: "oil", scenario: null, layers: LAYERS };
+const DEFAULTS: AppState = { mode: "infrastructure", year: 2020, commodity: "oil", scenario: null, layers: LAYERS };
 
 beforeEach(() => {
   vi.useFakeTimers();

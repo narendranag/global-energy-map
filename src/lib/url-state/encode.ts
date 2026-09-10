@@ -2,6 +2,7 @@ import type { Commodity, ScenarioId } from "@/lib/scenarios/types";
 import { SCENARIOS } from "@/lib/scenarios/registry";
 import { clampYear } from "@/lib/time/range";
 import type { LayerState } from "@/components/layers/LayerPanel";
+import { normalizeView, type MapView } from "@/lib/state/view";
 
 export interface AppState {
   readonly year: number;
@@ -72,4 +73,43 @@ export function decodeAppState(
   }
 
   return { year, commodity, scenario, layers };
+}
+
+/**
+ * Serialise the map camera as `lon`, `lat`, `z` params (2 decimals, wrapped
+ * and clamped). Kept separate from `encodeAppState` so `AppState` — the shape
+ * page.tsx builds its defaults from — does not change.
+ */
+export function encodeView(view: MapView): string {
+  const v = normalizeView(view);
+  const params = new URLSearchParams();
+  params.set("lon", String(v.lon));
+  params.set("lat", String(v.lat));
+  params.set("z", String(v.zoom));
+  return params.toString();
+}
+
+function parseFiniteParam(params: URLSearchParams, key: string): number | null {
+  const raw = params.get(key);
+  if (raw === null || raw.trim() === "") return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Decode `lon`/`lat`/`z`. Each param falls back to the default independently
+ * when missing or unparseable; parsed values are wrapped/clamped to the map's
+ * limits and rounded to URL precision.
+ */
+export function decodeView(params: URLSearchParams, defaults: MapView): MapView {
+  return normalizeView({
+    lon: parseFiniteParam(params, "lon") ?? defaults.lon,
+    lat: parseFiniteParam(params, "lat") ?? defaults.lat,
+    zoom: parseFiniteParam(params, "z") ?? defaults.zoom,
+  });
+}
+
+/** Full querystring (no leading `?`) for the app state plus the map view. */
+export function encodeUrlState(state: AppState, view: MapView): string {
+  return `${encodeAppState(state)}&${encodeView(view)}`;
 }

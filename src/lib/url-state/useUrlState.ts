@@ -1,54 +1,34 @@
 "use client";
-import { useCallback, useEffect, useMemo, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { encodeAppState, decodeAppState, type AppState } from "./encode";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { useSearchParams } from "next/navigation";
+import { adoptAppStore } from "@/lib/state/store";
+import type { AppState } from "./encode";
 
+/**
+ * Thin React binding over the app store (`src/lib/state/store.ts`).
+ *
+ * State lives in memory; the URL is written by the store with a debounced
+ * `history.replaceState` — never `router.replace`, so a slider tick is not a
+ * Next navigation (R16). Consecutive setter calls compose synchronously.
+ *
+ * `useSearchParams()` is read only to seed the store on mount: it is the one
+ * source that agrees between the server render and the first client render
+ * (so no hydration mismatch), and it keeps this page's client-rendering
+ * boundary exactly where it was. Later URL changes come *from* the store, so
+ * its value is ignored after mount.
+ */
 export function useUrlState(defaults: AppState): [
   AppState,
   (next: Partial<AppState>) => void,
 ] {
-  const router = useRouter();
   const searchParams = useSearchParams();
+  const [store] = useState(() => adoptAppStore(defaults, searchParams.toString()));
 
-  // Decode current state from the URL on each render. searchParams is stable
-  // when the URL hasn't changed, so this is cheap.
-  const state = useMemo(
-    () => decodeAppState(new URLSearchParams(searchParams.toString()), defaults),
-    [searchParams, defaults],
-  );
+  const state = useSyncExternalStore(store.subscribe, store.getApp, store.getApp);
 
-  // router.replace() is asynchronous: the URL (and therefore `searchParams`
-  // and the `state` above) doesn't update until the navigation round-trips
-  // and this hook re-renders. If setState is called twice in quick
-  // succession — e.g. a commodity toggle immediately followed by a scenario
-  // pick — the second call would otherwise merge against the stale
-  // pre-navigation `state`, silently reverting the first change. Track the
-  // latest merged state in a ref so consecutive calls compose correctly
-  // regardless of whether the URL has caught up yet.
-  const stateRef = useRef(state);
-  useEffect(() => {
-    stateRef.current = state;
-  }, [state]);
+  // Leaving the page drops a not-yet-written URL update rather than letting
+  // it land on the next route.
+  useEffect(() => () => { store.cancel(); }, [store]);
 
-  const setState = useCallback(
-    (partial: Partial<AppState>) => {
-      const current = stateRef.current;
-      const merged: AppState = {
-        ...current,
-        ...partial,
-        layers: { ...current.layers, ...(partial.layers ?? {}) },
-      };
-      // Optimistic: assumes router.replace() below succeeds. If it's
-      // dropped (e.g. interrupted by a rapid navigation elsewhere), this
-      // ref can drift from the URL — but the effect above re-syncs
-      // stateRef.current from searchParams on the next navigation that
-      // does land, so a dropped replace() self-heals rather than sticking.
-      stateRef.current = merged;
-      const qs = encodeAppState(merged);
-      router.replace(`?${qs}`, { scroll: false });
-    },
-    [router],
-  );
-
-  return [state, setState];
+  return [state, store.patch];
 }

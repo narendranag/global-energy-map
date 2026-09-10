@@ -1,5 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { encodeAppState, decodeAppState, type AppState } from "@/lib/url-state/encode";
+import {
+  encodeAppState,
+  decodeAppState,
+  encodeView,
+  decodeView,
+  encodeUrlState,
+  type AppState,
+} from "@/lib/url-state/encode";
+import { DEFAULT_VIEW, MAX_LAT, MAX_ZOOM, MIN_ZOOM, type MapView } from "@/lib/state/view";
 import type { LayerState } from "@/components/layers/LayerPanel";
 
 const ALL_ON: LayerState = {
@@ -125,5 +133,63 @@ describe("decodeAppState", () => {
       DEFAULTS,
     );
     expect(decoded.layers.lng_voyages).toBe(false);
+  });
+});
+
+describe("encodeView / decodeView", () => {
+  const view = (qs: string): MapView => decodeView(new URLSearchParams(qs), DEFAULT_VIEW);
+
+  it("encodes lon, lat, z to two decimals", () => {
+    const params = new URLSearchParams(encodeView({ lon: 12.34567, lat: -45.6789, zoom: 3.14159 }));
+    expect(params.get("lon")).toBe("12.35");
+    expect(params.get("lat")).toBe("-45.68");
+    expect(params.get("z")).toBe("3.14");
+  });
+
+  it("drops trailing zeros and negative zero", () => {
+    const params = new URLSearchParams(encodeView({ lon: -0.001, lat: 25, zoom: 2 }));
+    expect(params.get("lon")).toBe("0");
+    expect(params.get("lat")).toBe("25");
+    expect(params.get("z")).toBe("2");
+  });
+
+  it("round-trips a view (at URL precision)", () => {
+    const original: MapView = { lon: 56.25, lat: 26.57, zoom: 5.5 };
+    expect(view(encodeView(original))).toEqual(original);
+  });
+
+  it("falls back to the default view when params are missing", () => {
+    expect(view("year=2020")).toEqual(DEFAULT_VIEW);
+  });
+
+  it("falls back per param for garbage values", () => {
+    expect(view("lon=banana&lat=10&z=")).toEqual({ lon: DEFAULT_VIEW.lon, lat: 10, zoom: DEFAULT_VIEW.zoom });
+    expect(view("lon=Infinity&lat=NaN&z=abc")).toEqual(DEFAULT_VIEW);
+  });
+
+  it("clamps zoom to the map's range", () => {
+    expect(view("z=99").zoom).toBe(MAX_ZOOM);
+    expect(view("z=-3").zoom).toBe(MIN_ZOOM);
+  });
+
+  it("clamps latitude to the Web-Mercator limit", () => {
+    expect(view("lat=90").lat).toBeCloseTo(MAX_LAT, 2);
+    expect(view("lat=-1000").lat).toBeCloseTo(-MAX_LAT, 2);
+  });
+
+  it("wraps longitude into [-180, 180)", () => {
+    expect(view("lon=190").lon).toBe(-170);
+    expect(view("lon=-190").lon).toBe(170);
+    expect(view("lon=720").lon).toBe(0);
+  });
+});
+
+describe("encodeUrlState", () => {
+  it("round-trips app state and view through one querystring", () => {
+    const app: AppState = { ...DEFAULTS, year: 2023, scenario: "hormuz" };
+    const v: MapView = { lon: -100.5, lat: 40.25, zoom: 4 };
+    const params = new URLSearchParams(encodeUrlState(app, v));
+    expect(decodeAppState(params, DEFAULTS)).toEqual(app);
+    expect(decodeView(params, DEFAULT_VIEW)).toEqual(v);
   });
 });

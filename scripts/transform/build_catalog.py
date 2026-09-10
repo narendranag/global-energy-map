@@ -12,8 +12,8 @@ Hand-written fields per entry (REGISTRY):
     id, label, path, format, source_name, source_url, license, as_of, layers,
     attribution (optional), runtime (default True — False for artefacts shipped
     for reproducibility that no layer or scenario reads),
-    redistributable (licence policy: True only for CC BY 4.0, public-domain and
-    project-derived rows — the Phase 9 decision limits downloads to these),
+    redistributable (licence policy: True only for CC BY 4.0, public-domain,
+    Etalab Open Licence 2.0 (BACI, Phase 10) and project-derived rows),
     download_note (one-line reason, for entries that are not redistributable)
 
 Computed fields per entry:

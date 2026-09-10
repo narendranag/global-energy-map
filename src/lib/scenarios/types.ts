@@ -9,7 +9,7 @@ export interface TradeFlowRow {
   readonly qty: number;
 }
 
-/** Generalizes Phase 1's ChokepointRouteRow. */
+/** Share of an exporter's flows routed through a chokepoint or pipeline. */
 export interface DisruptionRouteRow {
   readonly disruption_id: ScenarioId;
   readonly kind: "chokepoint" | "pipeline";
@@ -18,9 +18,6 @@ export interface DisruptionRouteRow {
   readonly importer_iso3: string | null;
   readonly share: number;
 }
-
-/** Back-compat alias used by Phase 1's hormuz.ts wrapper. */
-export type ChokepointRouteRow = DisruptionRouteRow;
 
 export interface RefineryRow {
   readonly asset_id: string;
@@ -112,7 +109,4 @@ export interface ScenarioResult {
   readonly rankedRefineries: readonly RefineryImpact[];
   readonly byLngImport: readonly LngImportImpact[];
   readonly rankedLngImports: readonly LngImportImpact[];
-  /** Back-compat shims for Phase 1's ScenarioPanel — kept. */
-  readonly chokepoint_id?: string;
-  readonly ranked?: readonly ImporterImpact[];
 }

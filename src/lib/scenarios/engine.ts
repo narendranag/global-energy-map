@@ -116,8 +116,5 @@ export function computeScenarioImpact(input: ScenarioInput): ScenarioResult {
     rankedRefineries,
     byLngImport,
     rankedLngImports,
-    // Back-compat shims for Phase 1's older ScenarioPanel:
-    chokepoint_id: input.scenarioId,
-    ranked: rankedImporters,
   };
 }

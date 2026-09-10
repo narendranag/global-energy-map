@@ -12,12 +12,28 @@ _OPEN_LICENCES = ("CC BY 4.0", "public domain", "Public domain")
 
 def test_download_flags_block_mixed_files():
     reg = [
-        {"id": "a", "path": "/data/x.parquet", "label": "A", "license": "CC BY 4.0",
-         "redistributable": True},
-        {"id": "b", "path": "/data/x.parquet", "label": "B", "license": "ODbL",
-         "redistributable": False, "download_note": "share-alike"},
-        {"id": "c", "path": "/data/y.parquet", "label": "C", "license": "CC BY 4.0",
-         "redistributable": True},
+        {
+            "id": "a",
+            "path": "/data/x.parquet",
+            "label": "A",
+            "license": "CC BY 4.0",
+            "redistributable": True,
+        },
+        {
+            "id": "b",
+            "path": "/data/x.parquet",
+            "label": "B",
+            "license": "ODbL",
+            "redistributable": False,
+            "download_note": "share-alike",
+        },
+        {
+            "id": "c",
+            "path": "/data/y.parquet",
+            "label": "C",
+            "license": "CC BY 4.0",
+            "redistributable": True,
+        },
         {"id": "d", "path": "/data/z.parquet", "label": "D", "license": "?"},
     ]
     flags = bc._download_flags(reg)
@@ -51,8 +67,8 @@ def test_shipped_catalog_download_policy():
 
 def test_parse_cff_reads_core_fields_and_authors():
     text = (
-        'cff-version: 1.2.0\n'
-        'message: >-\n  folded text: with a colon\n'
+        "cff-version: 1.2.0\n"
+        "message: >-\n  folded text: with a colon\n"
         'title: "My Tool"\nversion: 2.1.0\ndate-released: 2026-01-02\n'
         'authors:\n  - family-names: Doe\n    given-names: Jane\n  - name: "Some Lab"\n'
         'url: "https://example.org"\n'

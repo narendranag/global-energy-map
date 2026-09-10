@@ -50,9 +50,7 @@ export function computeScenarioImpact(input: ScenarioInput): ScenarioResult {
   const atRisk = new Map<string, number>();
   const flowsByImporter = new Map<string, { iso3: string; qty: number }[]>();
   for (const row of input.tradeFlows) {
-    // Coerce via unknown to handle BigInt values that Arrow may return for BIGINT parquet columns.
-    // The TypeScript type says `number` but Apache Arrow deserialises BIGINT as BigInt at runtime.
-    if ((row.year as unknown as number | bigint) != input.year) continue; // == intentional: coerces BigInt
+    if (row.year !== input.year) continue;
     totals.set(row.importer_iso3, (totals.get(row.importer_iso3) ?? 0) + row.qty);
     const share = lookupShare(row.exporter_iso3, row.importer_iso3);
     if (share > 0) {

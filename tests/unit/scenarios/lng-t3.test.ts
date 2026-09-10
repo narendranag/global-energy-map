@@ -205,27 +205,8 @@ describe("computeLngImportImpactsFromVoyages", () => {
     expect(a1.atRiskQty + a2.atRiskQty + b.atRiskQty).toBeCloseTo(900, 6);
   });
 
-  it("handles BigInt amount_cbm (Arrow deserialises the BIGINT column as BigInt)", () => {
-    // lng_voyage.parquet stores amount_cbm as BIGINT; duckdb-wasm hands it
-    // back as a JS BigInt at runtime even though the TS type says number.
-    // Without coercion, summing it against a number accumulator throws.
-    const bigintVoyage = (terminal: string, from: string, cbm: bigint): LngVoyageRow => ({
-      ...v(terminal, "JPN", from, 0),
-      amount_cbm: cbm,
-    });
-    const out = computeLngImportImpactsFromVoyages({
-      lngImports: [T_A, T_B],
-      voyages: [bigintVoyage("T_A", "QAT", 100n), bigintVoyage("T_B", "QAT", 200n)],
-      flowsByImporter: flows({ JPN: [{ iso3: "QAT", qty: 900 }] }),
-      lookupShare: () => 1.0,
-    });
-    const a = out.find((x) => x.asset_id === "T_A");
-    const b = out.find((x) => x.asset_id === "T_B");
-    if (!a || !b) throw new Error("missing terminal");
-    expect(a.atRiskQty).toBeCloseTo(300, 6);
-    expect(b.atRiskQty).toBeCloseTo(600, 6);
-    expect(a.coverage).toBe("measured");
-  });
+  // BigInt amount_cbm is no longer this module's concern: query() normalises
+  // BIGINT → number at the DuckDB boundary (tests/unit/duckdb/normalize.test.ts).
 
   it("keys terminal buckets by (country, name) so a same-named terminal in two countries doesn't mix voyages", () => {
     // Both countries have a terminal literally named "LNG Terminal". Each

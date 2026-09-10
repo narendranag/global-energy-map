@@ -1,5 +1,6 @@
 import type { Table } from "apache-arrow";
 import { getDuckDB } from "./bootstrap";
+import { normalizeRows } from "./normalize";
 
 export interface QueryResult<TRow> {
   readonly rows: readonly TRow[];
@@ -32,7 +33,13 @@ export async function query<TRow extends Record<string, unknown>>(
       // symbol level. We cast via `unknown` to bridge the version mismatch —
       // the runtime shape is identical and toArray() works correctly.
       const arrow = (await stmt.query(...params)) as unknown as Table;
-      const rows = arrow.toArray() as TRow[];
+      // Plain objects with BIGINT → number (see normalize.ts): callers type
+      // integer columns as `number` and never coerce.
+      const fields = arrow.schema.fields.map((f) => f.name);
+      const rows = normalizeRows(
+        arrow.toArray() as Record<string, unknown>[],
+        fields,
+      ) as TRow[];
       return { rows, count: rows.length };
     } finally {
       await stmt.close();

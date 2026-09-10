@@ -17,6 +17,7 @@
     "@deck.gl/layers": "^9.3.2",
     "@deck.gl/mapbox": "^9.3.2",
     "@duckdb/duckdb-wasm": "1.33.1-dev45.0",
+    "@vercel/analytics": "^2.0.1",
     "apache-arrow": "^21.1.0",
     "maplibre-gl": "^5.24.0",
     "marked": "^18.0.12",

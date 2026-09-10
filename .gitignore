@@ -55,3 +55,7 @@ data/raw/**/*.csv
 data/raw/**/*.zip
 data/raw/**/*.json
 data/raw/**/*.geojson
+
+# Derived full-resolution artefacts with no runtime consumer (written by
+# build_pipelines / build_basins; the public/ GeoJSON sidecars are shipped)
+data/derived/

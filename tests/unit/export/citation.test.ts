@@ -95,8 +95,8 @@ describe("site citation (from CITATION.cff)", () => {
 });
 
 describe("scenario share citations", () => {
-  it("carries all 16 disruption_route rows with a source title", () => {
-    expect(SCENARIO_SHARES).toHaveLength(16);
+  it("carries all 18 disruption_route rows with a source title", () => {
+    expect(SCENARIO_SHARES).toHaveLength(18);
     for (const r of SCENARIO_SHARES) {
       expect(r.source_title.length).toBeGreaterThan(0);
       expect(r.share).toBeGreaterThan(0);

@@ -22,6 +22,12 @@ function getSnapshot(): MapView {
  * the server) it returns `DEFAULT_VIEW`. The snapshot object is stable until
  * the view actually changes, so app-state patches do not re-render callers.
  */
+// Server render and hydration must agree: always the default view there, even
+// when the client store already holds a URL-restored camera.
+function getServerSnapshot(): MapView {
+  return DEFAULT_VIEW;
+}
+
 export function useMapView(): MapView {
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }

@@ -40,16 +40,77 @@ export const READY_TIMEOUT = 120_000;
 // Navigation + ready signal
 // ---------------------------------------------------------------------------
 
+/** How long `data-ready` must hold "true" before {@link waitForReady} trusts it. */
+export const READY_STABLE_MS = 500;
+
+/**
+ * In-page: resolve true if `<main data-ready="true">` holds for `ms` without
+ * ever leaving "true" (a MutationObserver sees every flip, however brief, and
+ * a re-mounted <main> counts as a flip).
+ */
+function holdsReady(page: Page, ms: number): Promise<boolean> {
+  return page.evaluate(
+    (holdMs) =>
+      new Promise<boolean>((resolve) => {
+        const el = document.querySelector("main");
+        if (el?.getAttribute("data-ready") !== "true") {
+          resolve(false);
+          return;
+        }
+        const obs = new MutationObserver(() => {
+          if (!el.isConnected || el.getAttribute("data-ready") !== "true") {
+            obs.disconnect();
+            resolve(false);
+          }
+        });
+        obs.observe(el, { attributes: true, attributeFilter: ["data-ready"] });
+        setTimeout(() => {
+          obs.disconnect();
+          resolve(el.isConnected && el.getAttribute("data-ready") === "true");
+        }, holdMs);
+      }),
+    ms,
+  );
+}
+
 /**
  * Wait until the map is mounted and `<main data-ready="true">` — every visible
- * layer (and the active scenario) has data for the current inputs.
+ * layer (and the active scenario) has data for the current inputs — and has
+ * stayed "true" for {@link READY_STABLE_MS}.
  *
  * The MapLibre canvas is created in MapShell's mount effect, so its presence
  * also proves the page has hydrated: controls are live after this returns.
+ *
+ * Why the retry loop (Phase 10, O4): a single long `toHaveAttribute` can be cut
+ * short by a *non-retriable* Playwright error (renderer session hiccup,
+ * execution context torn down mid-evaluate) — the Phase 9 flake failed after
+ * 2.7 s of a 120 s budget with no "Timeout" line in the report, i.e. it did not
+ * time out. Any such error is retried until the deadline; each attempt gets
+ * the *whole* remaining budget (a CPU-starved renderer can take 80 s+ to get
+ * ready, so short fixed attempts would only burn it). The stability hold
+ * additionally guards against a true→false→true flicker resolving early; once
+ * ready, the hold always gets its window even past the deadline — a busy
+ * renderer answering late is not a failure.
  */
 export async function waitForReady(page: Page, timeout = READY_TIMEOUT): Promise<void> {
-  await expect(page.locator(".maplibregl-canvas")).toBeVisible({ timeout });
-  await expect(page.locator("main")).toHaveAttribute("data-ready", "true", { timeout });
+  const deadline = Date.now() + timeout;
+  const left = () => Math.max(1_000, deadline - Date.now());
+  let lastError: unknown;
+  for (;;) {
+    try {
+      await expect(page.locator(".maplibregl-canvas")).toBeVisible({ timeout: left() });
+      await expect(page.locator("main")).toHaveAttribute("data-ready", "true", { timeout: left() });
+      if (await holdsReady(page, READY_STABLE_MS)) return;
+      lastError = new Error(
+        `data-ready flipped back to "false" within ${READY_STABLE_MS.toString()} ms of turning "true"`,
+      );
+    } catch (err) {
+      lastError = err;
+    }
+    if (Date.now() >= deadline) throw lastError;
+    // Throws (ending the loop) if the page has been closed.
+    await page.waitForTimeout(250);
+  }
 }
 
 /** `page.goto(url)` then {@link waitForReady}. */

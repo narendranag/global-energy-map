@@ -416,13 +416,6 @@ export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioP
                 {unsourcedCount > 0 &&
                   ` ${unsourcedCount.toString()} ${unsourcedCount === 1 ? "is an analyst estimate" : "are analyst estimates"} with no single supporting document.`}
               </p>
-              {commodity === "gas" && (
-                <p className="mb-1 text-[11px] leading-snug text-amber-800">
-                  These shares were derived for crude and are applied unchanged to LNG. Where a
-                  crude bypass exists (the UAE&apos;s Fujairah pipeline) LNG has none, so LNG
-                  exposure to those exporters is understated.
-                </p>
-              )}
               <ul className="space-y-1">
                 {routeRows.map((r) => (
                   <RouteShareItem key={r.key} row={r} nameOf={nameOf} />

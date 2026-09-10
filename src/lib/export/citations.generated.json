@@ -93,6 +93,28 @@
       "source_note": "IEA (2025 data): Iran, Iraq, Kuwait, Qatar and Bahrain 'rely on the Strait to deliver the vast majority of their oil exports'; only Saudi Arabia and the UAE have bypass routes. Bahrain's own crude exports are ~0 (IEA table: 0.00 mb/d crude, 0.21 mb/d products)."
     },
     {
+      "disruption_id": "hormuz_lng",
+      "kind": "chokepoint",
+      "exporter_iso3": "QAT",
+      "importer_iso3": null,
+      "share": 1.0,
+      "source_title": "IEA, Strait of Hormuz (Oil security and emergency response)",
+      "source_url": "https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz",
+      "source_year": 2026,
+      "source_note": "Structural: the LNG export terminal loads inside the Persian Gulf and there is no pipeline or alternative port for LNG, so all LNG exports transit Hormuz. IEA puts Hormuz LNG flows at about a fifth of global LNG trade, almost all from Qatar and the UAE. Ras Laffan (Qatar)."
+    },
+    {
+      "disruption_id": "hormuz_lng",
+      "kind": "chokepoint",
+      "exporter_iso3": "ARE",
+      "importer_iso3": null,
+      "share": 1.0,
+      "source_title": "IEA, Strait of Hormuz (Oil security and emergency response)",
+      "source_url": "https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz",
+      "source_year": 2026,
+      "source_note": "Structural: the LNG export terminal loads inside the Persian Gulf and there is no pipeline or alternative port for LNG, so all LNG exports transit Hormuz. IEA puts Hormuz LNG flows at about a fifth of global LNG trade, almost all from Qatar and the UAE. Das Island (ADNOC Gas); the crude-only 0.65 share reflects the Fujairah oil bypass, which does not apply to LNG."
+    },
+    {
       "disruption_id": "druzhba",
       "kind": "pipeline",
       "exporter_iso3": "RUS",

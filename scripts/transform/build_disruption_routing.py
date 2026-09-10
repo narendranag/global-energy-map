@@ -281,8 +281,43 @@ CPC = [
 ]
 
 
+# ── Hormuz, LNG (used when the scenario runs on the gas axis) ───────────────
+# The crude shares above do not transfer to LNG: the UAE's crude bypass (the
+# Habshan-Fujairah pipeline) carries no gas, and both Gulf LNG export plants
+# (Qatar's Ras Laffan, the UAE's Das Island) load inside the strait.
+_LNG_NO_BYPASS = (
+    "Structural: the LNG export terminal loads inside the Persian Gulf and there is no "
+    "pipeline or alternative port for LNG, so all LNG exports transit Hormuz. IEA puts "
+    "Hormuz LNG flows at about a fifth of global LNG trade, almost all from Qatar and "
+    "the UAE."
+)
+HORMUZ_LNG = [
+    _row(
+        "hormuz_lng",
+        "chokepoint",
+        "QAT",
+        None,
+        1.00,
+        SRC_EIA,
+        IEA_HORMUZ,
+        _LNG_NO_BYPASS + " Ras Laffan (Qatar).",
+    ),
+    _row(
+        "hormuz_lng",
+        "chokepoint",
+        "ARE",
+        None,
+        1.00,
+        SRC_EIA,
+        IEA_HORMUZ,
+        _LNG_NO_BYPASS + " Das Island (ADNOC Gas); the crude-only 0.65 share reflects "
+        "the Fujairah oil bypass, which does not apply to LNG.",
+    ),
+]
+
+
 def all_rows() -> list[dict]:
-    return HORMUZ + DRUZHBA + BTC + CPC
+    return HORMUZ + HORMUZ_LNG + DRUZHBA + BTC + CPC
 
 
 def main() -> None:

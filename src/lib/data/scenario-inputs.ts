@@ -46,8 +46,16 @@ export function isUnsourced(r: Pick<RouteShareRow, "source_title">): boolean {
   return r.source_title === UNSOURCED_TITLE;
 }
 
+/**
+ * Which `disruption_route` rows a scenario reads. Hormuz on the gas axis uses
+ * its own LNG shares (`hormuz_lng`): the UAE's crude bypass carries no LNG.
+ */
+export function routeKeyFor(scenarioId: ScenarioId, commodity: Commodity): string {
+  return scenarioId === "hormuz" && commodity === "gas" ? "hormuz_lng" : scenarioId;
+}
+
 export const loadRoutes = cachedLoader(
-  async (scenarioId: ScenarioId): Promise<readonly RouteShareRow[]> => {
+  async (scenarioId: ScenarioId, commodity: Commodity): Promise<readonly RouteShareRow[]> => {
     const res = await query<RouteShareRow & Record<string, unknown>>(
       `SELECT disruption_id, kind, exporter_iso3, importer_iso3, share,
               COALESCE(source_title, '') AS source_title,
@@ -56,9 +64,10 @@ export const loadRoutes = cachedLoader(
               COALESCE(source_note, '') AS source_note
        FROM read_parquet('/data/disruption_route.parquet')
        WHERE disruption_id = ?`,
-      [scenarioId],
+      [routeKeyFor(scenarioId, commodity)],
     );
-    return res.rows;
+    // The engine and panel match rows on the active scenario id.
+    return res.rows.map((r) => ({ ...r, disruption_id: scenarioId }));
   },
 );
 
@@ -82,7 +91,7 @@ export async function loadScenarioInputs(
 ): Promise<ScenarioInputs> {
   const [tradeFlows, routes, lngVoyages] = await Promise.all([
     loadTradeFlows(year, commodity),
-    loadRoutes(scenarioId),
+    loadRoutes(scenarioId, commodity),
     commodity === "gas" ? loadVoyages(year) : Promise.resolve([]),
   ]);
   return { scenarioId, year, commodity, tradeFlows, routes, lngVoyages };

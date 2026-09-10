@@ -129,8 +129,7 @@ REGISTRY: list[dict[str, Any]] = [
         "layers": ["refineries"],
         "redistributable": False,
         "download_note": (
-            "ODbL (share-alike) rows; downloads are limited to CC BY 4.0 and "
-            "public-domain sources."
+            "ODbL (share-alike) rows; downloads are limited to CC BY 4.0 and public-domain sources."
         ),
         "attribution": "© OpenStreetMap contributors, ODbL",
     },
@@ -512,11 +511,7 @@ def parse_cff(text: str) -> dict[str, Any]:
         k, _, v = line.partition(":")
         authors[-1][k.strip()] = _unquote(v)
     out["authors"] = [
-        {
-            k: a[k]
-            for k in ("family-names", "given-names", "name", "orcid")
-            if k in a and a[k]
-        }
+        {k: a[k] for k in ("family-names", "given-names", "name", "orcid") if k in a and a[k]}
         for a in authors
     ]
     missing = [k for k in ("title", "version", "date-released", "url") if k not in out]
@@ -548,9 +543,7 @@ def scenario_share_rows(path: Path = DISRUPTION_ROUTE) -> list[dict[str, Any]]:
     ]
 
 
-def build_citations(
-    cff: Path = CITATION_CFF, routes: Path = DISRUPTION_ROUTE
-) -> dict[str, Any]:
+def build_citations(cff: Path = CITATION_CFF, routes: Path = DISRUPTION_ROUTE) -> dict[str, Any]:
     return {
         "_generated_by": "scripts/transform/build_catalog.py — do not edit",
         "site": parse_cff(cff.read_text()),
@@ -564,9 +557,7 @@ def main() -> None:
     print(f"wrote {OUT}  entries={len(catalog['entries'])}")
     for e in catalog["entries"]:
         dl = "download" if e["downloadable"] else "view-only"
-        print(
-            f"  {e['id']:<26} rows={e['rows']:>7}  bytes={e['bytes']:>10}  {dl:<9}  {e['path']}"
-        )
+        print(f"  {e['id']:<26} rows={e['rows']:>7}  bytes={e['bytes']:>10}  {dl:<9}  {e['path']}")
     citations = build_citations()
     CITATIONS_OUT.parent.mkdir(parents=True, exist_ok=True)
     CITATIONS_OUT.write_text(json.dumps(citations, indent=2, ensure_ascii=False) + "\n")

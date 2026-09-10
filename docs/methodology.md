@@ -31,7 +31,7 @@ This is the **current-state** methodology of Global Energy Map: for every map la
 - **Colour scale:** logarithmic, so both Venezuela-scale and small producers are distinguishable. Countries with no reserves row in the source get a neutral no-data tint, not the bottom of the ramp.
 - **Gaps:** country aggregates only (no field, basin or sub-national split); EI's regional "Other …" residuals are not attributed to any country.
 - **Scenarios:** not used. When a scenario is active the country fill switches from reserves to exposure.
-- **Licence:** free to use with attribution; EI's terms restrict redistributing the dataset itself, so the Data page does not offer it for download.
+- **Licence:** free to quote with attribution; the Energy Institute asks for permission before extensive reproduction of its tables, so the Data page does not offer the series for download (see [Licences](#licences)).
 
 ### Basins
 
@@ -74,7 +74,7 @@ This is the **current-state** methodology of Global Energy Map: for every map la
 - **Units:** capacity in kb/d, parsed from NETL's free-text field; known for **350 of 1,163 (30 %)**; OSM rows never carry capacity.
 - **Time:** no vintage in either source; refineries appear in every year.
 - **Scenarios:** oil scenarios attribute each country's at-risk crude imports to its refineries — see [Refinery attribution](#refinery-attribution).
-- **Licence:** the 88 OSM rows are ODbL (share-alike), so the refinery layer — and `assets.parquet`, which mixes them with CC BY and public-domain rows — is view-only.
+- **Licence:** the 88 OSM rows are ODbL (share-alike), so the refinery layer — and `assets.parquet`, which mixes them with CC BY and public-domain rows — is view-only. The 1,075 NETL refineries are in the downloadable `assets_open.parquet`.
 
 ### Storage hubs
 
@@ -152,7 +152,7 @@ This is a **static first-order exposure measure**: what fraction of last year's 
 - **Cleaning:** BACI pseudo-country aggregates are removed and duplicate country-pair rows summed.
 - **Iran suppression:** BACI reports almost no Iranian crude exports in 2023–2024 (one near-zero pair). Exposure of importers that historically bought Iranian crude is **understated** for those years; the scenario panel says so.
 - **Volumes:** panels show crude in kb/d using 7.33 barrels per tonne (EI's mean conversion) and LNG in Mt.
-- **Licence:** BACI is free for academic and research use; the bilateral table stays behind the app and is not offered for bulk download. Cite Gaulier & Zignago (2010), CEPII Working Paper 2010-23.
+- **Licence:** CEPII publishes BACI under the Etalab Open Licence 2.0 (reuse with attribution). By project policy our processed bilateral table stays behind the app and is not offered for bulk download; the full dataset is free from CEPII. Cite Gaulier & Zignago (2010), CEPII Working Paper 2010-23.
 
 ### Route shares
 
@@ -198,11 +198,22 @@ Because LNG-T3 covers only 22–41 % of world LNG trade, it is used only for *sh
 
 ## Reproducibility
 
-Every shipped file is built by a Python script from public inputs: `uv run python -m scripts.build_all` runs every ingest and transform in order and finishes with `scripts.transform.build_catalog`, which records each file's size and sha256 in `public/data/catalog.json`. Rebuilding unchanged inputs is byte-identical, and `tests/python/test_data_integrity.py` fails if a shipped file drifts from its catalog entry. The browser reads the files directly (DuckDB-WASM over Parquet, plus GeoJSON sidecars); there is no server-side analytics path and no client-side call to any data provider.
+Every shipped file is built by a Python script from public inputs: `uv run python -m scripts.build_all` runs every transform in order (add `--ingest` to re-download the pinned sources first) and finishes with `scripts.transform.build_catalog`, which records each file's size and sha256 in `public/data/catalog.json`. Every source's URL and release is pinned in one module (`scripts/common/sources.py`); how and when each is refreshed is in [`docs/refresh.md`](https://github.com/narendranag/global-energy-map/blob/main/docs/refresh.md). Rebuilding unchanged inputs is byte-identical, and `tests/python/test_data_integrity.py` fails if a shipped file drifts from its catalog entry. The browser reads the files directly (DuckDB-WASM over Parquet, plus GeoJSON sidecars); there is no server-side analytics path and no client-side call to any data provider.
 
-## Licences and downloads
+## Licences
 
-The code is MIT-licensed. The data keeps its original licences, listed per file on the [Data page](/data). Downloads are offered only for CC BY 4.0 and public-domain sources and for the project's own route-share table; Energy Institute reserves and BACI trade data are shown in the app but not offered for download, and `assets.parquet` is not offered as-is because it contains 88 ODbL OpenStreetMap refinery rows. From the map, **Share / cite** exports the rows of any visible CC BY or public-domain layer (CSV or GeoJSON) and the active scenario table (CSV; derived analysis, with every input cited in the file header).
+The code is MIT-licensed. The data keeps its original licences; [`LICENSE-DATA.md`](https://github.com/narendranag/global-energy-map/blob/main/LICENSE-DATA.md) sets out, source by source and in plain language, the licence, what we redistribute and in which file, the attribution line to keep, and the restrictions (it is a summary, not legal advice). In short:
+
+- **CC BY 4.0** — Global Energy Monitor (extraction sites, pipelines, supplementary LNG terminals) and LNG-T3 (LNG terminals, voyages, daily flows). Reuse freely with the attribution line and a note of changes.
+- **Public domain / attribution** — NETL GOGI (basins, storage, ports, refineries) is a US Government work; NETL's data portal lists it under a Creative Commons Attribution licence, so credit NETL. Natural Earth (country polygons) is public domain.
+- **ODbL (share-alike)** — the 88 OpenStreetMap refineries. Shown on the map, never offered for download.
+- **Energy Institute** — reserves and production: quoting with attribution is welcome, extensive reproduction needs EI permission. Shown in the app only.
+- **CEPII BACI** — Etalab Open Licence 2.0. Our bilateral extract is shown in the app only (project policy); get the full dataset from CEPII.
+- **Basemap** — OpenFreeMap tiles © OpenMapTiles, data © OpenStreetMap contributors (ODbL); credited on the map.
+
+### Downloads
+
+The [Data page](/data) offers a file only when every row in it is CC BY 4.0, public domain, or the project's own route-share table. The map reads `assets.parquet`, which is view-only because it includes the OpenStreetMap rows; **`assets_open.parquet`** is the downloadable asset table — every other row (GEM, LNG-T3 and NETL: extraction sites, refineries, storage, ports and LNG terminals), same columns, with a `source` column naming each row's origin. From the map, **Share / cite** exports the rows of any visible CC BY or public-domain layer (CSV or GeoJSON) and the active scenario table (CSV; derived analysis, with every input cited in the file header).
 
 ## How to cite
 

@@ -6,7 +6,7 @@ Interactive OSINT visualization of the world's hydrocarbon energy system — res
 
 ## Status
 
-Phases 1–6 shipped; Phase 7 (correctness) in progress — see `docs/superpowers/specs/2026-09-10-refactor-redesign-review.md` for the roadmap. See `CLAUDE.md` for current state, schema, and conventions.
+Phases 1–9 shipped; Phase 10 (public-launch hardening) in progress — see `docs/superpowers/specs/2026-09-10-refactor-redesign-review.md` for the roadmap. See `CLAUDE.md` for current state, schema, and conventions.
 
 ## What's on the map today
 
@@ -30,6 +30,8 @@ Next.js 16 + React 19 + TypeScript strict; deck.gl 9 over MapLibre; DuckDB-WASM 
 - **`CLAUDE.md`** — tech stack, schema, sources, conventions, phase status
 - **`docs/data-sources.md`** — researcher-facing inventory: in-production sources, evaluated-and-rejected sources (with reasons), and Phase 7+ candidates
 - **`docs/methodology.md`** — current-state methodology, rendered at `/methodology` (the per-phase narrative lives in `docs/history.md`)
+- **`LICENSE-DATA.md`** — data licences per source, in plain language
+- **`docs/refresh.md`** — data refresh runbook: cadence per source, commands, checks, data changelog
 - **`/data`** — every shipped file with licence, rows, size and sha256; downloads for openly licensed files
 - **`docs/superpowers/specs/`** — per-phase design specs + master design
 - **`docs/superpowers/plans/`** — per-phase implementation plans
@@ -40,10 +42,10 @@ Next.js 16 + React 19 + TypeScript strict; deck.gl 9 over MapLibre; DuckDB-WASM 
 pnpm install
 pnpm dev           # localhost:3000
 
-# Data pipeline (one-time setup)
+# Data pipeline (sources pinned in scripts/common/sources.py; runbook: docs/refresh.md)
 uv sync
-uv run python -m scripts.ingest.<source>
-uv run python -m scripts.transform.build_<table>
+uv run python -m scripts.build_all --ingest   # first time: download pinned sources, then build
+uv run python -m scripts.build_all            # rebuild public/data/ from data/raw/ (byte-identical)
 
 # Tests
 pnpm test                # Vitest unit
@@ -53,6 +55,8 @@ pnpm test:e2e           # Playwright
 
 ## License and citation
 
-The code in this repository is licensed under the **MIT License** (see `LICENSE`). The data is sourced under each source's own license, listed per-dataset in `CLAUDE.md`, `docs/data-sources.md`, and `public/data/catalog.json` (rendered on the live `/methodology` and `/data` pages). GEM and LNG-T3 datasets require visible attribution ("Data: Global Energy Monitor, CC BY 4.0" and "Data: Zhou et al. 2026, LNG-T3, CC BY 4.0 (Zenodo 10.5281/zenodo.19571058)" respectively). NETL and EIA data are US Government work (public domain, 17 USC §105). BACI (CEPII) is free for academic/research use. OpenStreetMap derivatives are under ODbL.
+The **code** is licensed under the **MIT License** (see `LICENSE`). The **data** keeps each publisher's own licence — see **[`LICENSE-DATA.md`](LICENSE-DATA.md)** for a plain-language, per-source summary (licence, what we redistribute and in which file, the attribution line to keep, restrictions; not legal advice), and the live [`/data`](https://global-energy-map-one.vercel.app/data) page for per-file licence, rows, size and sha256.
+
+In short: GEM and LNG-T3 are CC BY 4.0 ("Data: Global Energy Monitor, CC BY 4.0"; "Data: Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0"); NETL GOGI is a US Government work (credit NETL); Natural Earth is public domain; the 88 OpenStreetMap refinery rows are ODbL and are never offered for download; Energy Institute and CEPII BACI data are shown in the app but not redistributed. The downloadable asset table is `public/data/assets_open.parquet` (every asset row except the OSM ones).
 
 If you use this project, please cite it via `CITATION.cff` (also readable through GitHub's "Cite this repository" button).

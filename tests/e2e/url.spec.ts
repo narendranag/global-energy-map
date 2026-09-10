@@ -1,10 +1,14 @@
 // tests/e2e/url.spec.ts — shareable URL state: decode, encode, round-trip, no navigations.
-import { test, expect, type Page, type Request } from "@playwright/test";
+import type { Page, Request } from "@playwright/test";
 import {
   SPEC_TIMEOUT,
+  expect,
   gotoReady,
+  openLayers,
   saudiGreenness,
+  scenarioSelect,
   setChecked,
+  test,
   waitForReady,
 } from "./helpers";
 
@@ -20,7 +24,9 @@ test.describe("URL state", () => {
 
     await expect(page.locator('input[type="range"]')).toHaveValue("2015");
     await expect(page.getByRole("button", { name: "Gas" })).toHaveAttribute("aria-pressed", "true");
-    await expect(page.locator("select").first()).toHaveValue("hormuz");
+    // A URL without `mode` decodes as Infrastructure; its scenario still shows the panel.
+    await expect(page.locator("main")).toHaveAttribute("data-mode", "infrastructure");
+    await expect(scenarioSelect(page)).toHaveValue("hormuz");
 
     // Not in the querystring → off.
     await expect(page.getByLabel("Basins")).not.toBeChecked();
@@ -59,15 +65,21 @@ test.describe("URL state", () => {
   });
 
   test("a share link round-trips layers, year, scenario and view", async ({ page, context }) => {
-    await gotoReady(page, "/?layers=reserves,pipelines&year=2020");
+    await gotoReady(page, "/?mode=scenarios&layers=reserves,pipelines&year=2020");
+    // Explicit `layers` beat the Scenarios preset (which would add refineries
+    // and LNG terminals).
+    await expect(page.getByLabel("Refineries")).not.toBeChecked();
+    await expect(page.getByLabel("LNG terminals")).not.toBeChecked();
 
+    // The Layers disclosure starts closed in Scenarios mode.
+    await openLayers(page);
     await setChecked(page.getByLabel("Refineries"), true);
     await setChecked(page.getByLabel("Oil pipelines"), false);
     const slider = page.locator('input[type="range"]');
     await slider.focus();
     await page.keyboard.press("ArrowLeft");
     await expect(slider).toHaveValue("2019");
-    await page.locator("select").first().selectOption("druzhba");
+    await scenarioSelect(page).selectOption("druzhba");
 
     // Pan the map: MapLibre's moveend writes the camera back to the store.
     const canvas = page.locator(".maplibregl-canvas");
@@ -103,13 +115,14 @@ test.describe("URL state", () => {
     const other = await context.newPage();
     await gotoReady(other, `/?${shared.toString()}`);
     await expect(other.locator('input[type="range"]')).toHaveValue("2019");
-    await expect(other.locator("select").first()).toHaveValue("druzhba");
+    await expect(other.locator("main")).toHaveAttribute("data-mode", "scenarios");
+    await expect(scenarioSelect(other)).toHaveValue("druzhba");
     await expect(other.getByLabel("Refineries")).toBeChecked();
     await expect(other.getByLabel("Reserves (country)")).toBeChecked();
     await expect(other.getByLabel("Oil pipelines")).not.toBeChecked();
     // The camera came from the link (and was not reset by the new map).
     const restored = params(other);
-    for (const key of ["lon", "lat", "z", "year", "scenario", "commodity", "layers"]) {
+    for (const key of ["mode", "lon", "lat", "z", "year", "scenario", "commodity", "layers"]) {
       expect(restored.get(key), key).toBe(shared.get(key));
     }
   });

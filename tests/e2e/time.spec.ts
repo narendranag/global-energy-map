@@ -1,10 +1,11 @@
 // tests/e2e/time.spec.ts — the 1990–2024 time axis, reserves freeze, vintage filters.
-import { test, expect } from "@playwright/test";
 import {
   SPEC_TIMEOUT,
   collectConsoleErrors,
+  expect,
   gotoReady,
   saudiGreenness,
+  test,
   waitForReady,
 } from "./helpers";
 

@@ -1,5 +1,6 @@
 import type { Table } from "apache-arrow";
 import { getDuckDB } from "./bootstrap";
+import { fetchDataBytes, needsPrefetch, referencedDataFiles, registerDataFile } from "./files";
 import { normalizeRows } from "./normalize";
 
 export interface QueryResult<TRow> {
@@ -8,25 +9,32 @@ export interface QueryResult<TRow> {
 }
 
 /**
- * Rewrite `/data/...` paths in SQL to absolute HTTP URLs so DuckDB-WASM
- * can fetch them via its built-in HTTPFS. This allows callers to use
- * convenient root-relative paths (e.g. `/data/foo.parquet`) that work
- * both in dev and production regardless of hostname/port.
+ * Callers write `read_parquet('/data/<file>.parquet')` with the logical path
+ * hardcoded (CLAUDE.md). Before the query runs, each referenced file is
+ * registered with DuckDB under that exact name (files.ts) — once per file —
+ * so the SQL runs unchanged. Small files are fetched in parallel with the
+ * DuckDB boot, not after it.
  */
-function resolveParquetPaths(sql: string): string {
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  return sql.replace(/'\/data\//g, `'${origin}/data/`);
+async function prepareFiles(sql: string) {
+  const files = referencedDataFiles(sql);
+  const bytes = new Map(
+    files
+      .filter(needsPrefetch)
+      .map((f) => [f, fetchDataBytes(f)] as const),
+  );
+  const db = await getDuckDB();
+  await Promise.all(files.map((f) => registerDataFile(db, f, bytes.get(f))));
+  return db;
 }
 
 export async function query<TRow extends Record<string, unknown>>(
   sql: string,
   params: readonly (string | number)[] = [],
 ): Promise<QueryResult<TRow>> {
-  const db = await getDuckDB();
+  const db = await prepareFiles(sql);
   const conn = await db.connect();
-  const resolvedSql = resolveParquetPaths(sql);
   try {
-    const stmt = await conn.prepare(resolvedSql);
+    const stmt = await conn.prepare(sql);
     try {
       // DuckDB-WASM bundles apache-arrow@17 internally while the project uses
       // apache-arrow@21. The two Table types are structurally incompatible at the

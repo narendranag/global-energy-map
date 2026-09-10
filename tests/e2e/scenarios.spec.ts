@@ -1,13 +1,16 @@
 // tests/e2e/scenarios.spec.ts — disruption scenarios: panel, ranked lists, overlay.
-import { test, expect } from "@playwright/test";
 import {
   SPEC_TIMEOUT,
+  clickUntil,
   collectConsoleErrors,
+  expect,
   gotoReady,
   press,
-  project,
+  projectAll,
   redness,
   samplePixels,
+  scenarioSelect,
+  test,
   waitForReady,
 } from "./helpers";
 
@@ -24,8 +27,9 @@ const INDIA_POINTS = [
 
 test.describe("Scenarios", () => {
   test("oil dropdown lists all four scenarios; gas lists only Hormuz", async ({ page }) => {
-    await gotoReady(page, "/?layers=reserves");
-    const select = page.locator("select").first();
+    // The picker lives in Scenarios mode (or wherever a scenario is active).
+    await gotoReady(page, "/?mode=scenarios&layers=reserves");
+    const select = scenarioSelect(page);
     const oil = await select.locator("option").allTextContents();
     expect(oil.some((s) => /Hormuz/i.test(s))).toBe(true);
     expect(oil.some((s) => /Druzhba/i.test(s))).toBe(true);
@@ -38,9 +42,17 @@ test.describe("Scenarios", () => {
     expect(gas.some((s) => /Druzhba|Baku-Tbilisi-Ceyhan|Caspian/i.test(s))).toBe(false);
   });
 
-  test("selecting Hormuz on the default map populates the ranked list", async ({ page }) => {
+  test("Scenarios tab from the default map, then Hormuz, populates the ranked list", async ({
+    page,
+  }) => {
     await gotoReady(page, "/");
-    await page.locator("select").first().selectOption("hormuz");
+    await expect(scenarioSelect(page)).toHaveCount(0);
+    await clickUntil(page.getByRole("tab", { name: "Scenarios" }), async () => {
+      await expect(scenarioSelect(page)).toBeVisible({ timeout: 2_000 });
+    });
+    // A tab click hands focus to the picker.
+    await expect(scenarioSelect(page)).toBeFocused();
+    await scenarioSelect(page).selectOption("hormuz");
     await expect(page.locator("ol li").filter({ hasText: /%/ }).first()).toBeVisible({
       timeout: RESULT_TIMEOUT,
     });
@@ -48,8 +60,8 @@ test.describe("Scenarios", () => {
   });
 
   test("Druzhba: ranked importer and refinery lists populate", async ({ page }) => {
-    await gotoReady(page, "/?layers=reserves,refineries");
-    await page.locator("select").first().selectOption("druzhba");
+    await gotoReady(page, "/?mode=scenarios&layers=reserves,refineries");
+    await scenarioSelect(page).selectOption("druzhba");
     await expect(page.getByText(/Top importers at risk/i)).toBeVisible({ timeout: RESULT_TIMEOUT });
     await expect(page.getByText(/Top refineries at risk/i)).toBeVisible({ timeout: RESULT_TIMEOUT });
     await expect(page.locator("ol li").filter({ hasText: /%/ }).first()).toBeVisible({
@@ -58,9 +70,9 @@ test.describe("Scenarios", () => {
   });
 
   test("Hormuz under commodity=gas (via the UI) shows the LNG ranked panel", async ({ page }) => {
-    await gotoReady(page, "/?layers=reserves,lng_terminals");
+    await gotoReady(page, "/?mode=scenarios&layers=reserves,lng_terminals");
     await press(page.getByRole("button", { name: "Gas" }));
-    await page.locator("select").first().selectOption("hormuz");
+    await scenarioSelect(page).selectOption("hormuz");
     await expect(page.getByText("Top LNG import terminals at risk")).toBeVisible({
       timeout: RESULT_TIMEOUT,
     });
@@ -99,10 +111,7 @@ test.describe("Scenarios", () => {
     await expect
       .poll(
         async () => {
-          const px = await samplePixels(
-            page,
-            INDIA_POINTS.map((p) => project(page, p.lon, p.lat)),
-          );
+          const px = await samplePixels(page, await projectAll(page, INDIA_POINTS));
           return Math.min(...px.map(redness));
         },
         { timeout: 60_000 },
@@ -120,6 +129,31 @@ test.describe("Scenarios", () => {
       timeout: RESULT_TIMEOUT,
     });
     await expect(page.getByTestId("ranked-importers")).not.toContainText("S19");
+  });
+
+  // Hormuz on the gas axis uses the LNG shares (QAT and ARE = 1.00: the UAE's
+  // Fujairah bypass is crude-only), so UAE-sourced LNG is exposed.
+  test("Hormuz (gas): UAE-sourced LNG is exposed (ARE → all importers 100%)", async ({ page }) => {
+    const errors = collectConsoleErrors(page);
+    await gotoReady(page, "/?mode=scenarios&scenario=hormuz&commodity=gas&year=2023&layers=reserves,lng_terminals");
+
+    const routes = page.getByTestId("route-shares");
+    await expect(routes).toBeVisible({ timeout: RESULT_TIMEOUT });
+    for (const exporter of ["United Arab Emirates", "Qatar"]) {
+      const row = routes.locator("li").filter({ hasText: `${exporter} → all importers` });
+      await expect(row).toHaveCount(1);
+      await expect(row).toContainText("100%");
+    }
+    // The LNG table: exactly those two rows (not the seven crude rows, where
+    // the UAE's share is 65% because of the crude-only Fujairah bypass).
+    await expect(routes.locator(":scope > ul > li")).toHaveCount(2);
+
+    await expect(page.getByTestId("ranked-importers").locator("li").first()).toBeVisible({
+      timeout: RESULT_TIMEOUT,
+    });
+    // The screen-reader summary names the scenario and a most-exposed importer.
+    await expect(page.getByTestId("scenario-announcement")).toContainText(/importers exposed; most exposed/);
+    expect(errors).toEqual([]);
   });
 
   test("Hormuz gas scenario shows the LNG-T3 footnote in 2023", async ({ page }) => {

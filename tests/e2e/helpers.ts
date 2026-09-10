@@ -1,7 +1,33 @@
 // tests/e2e/helpers.ts — shared e2e plumbing: navigation + ready signal,
 // hydration-safe interactions, console-error capture, and a canvas probe.
-import { expect, type Locator, type Page } from "@playwright/test";
+import { test as base, expect, type Locator, type Page } from "@playwright/test";
 import { DEFAULT_VIEW, type MapView } from "../../src/lib/state/view";
+
+export { expect };
+
+/** localStorage key the first-run intro card writes when dismissed (IntroCard.tsx). */
+export const INTRO_DISMISSED_KEY = "gem.intro.dismissed.v1";
+
+/**
+ * `test` with the first-run intro card pre-dismissed: it floats over the map
+ * centre and would sit under pixel probes and hovers. A spec that exercises
+ * the card opts back in with `test.use({ showIntro: true })`.
+ */
+export const test = base.extend<{ showIntro: boolean }>({
+  showIntro: [false, { option: true }],
+  page: async ({ page, showIntro }, provide) => {
+    if (!showIntro) {
+      await page.addInitScript((key) => {
+        try {
+          window.localStorage.setItem(key, "1");
+        } catch {
+          // storage blocked: the card shows; specs that care assert on it
+        }
+      }, INTRO_DISMISSED_KEY);
+    }
+    await provide(page);
+  },
+});
 
 /**
  * Every spec boots DuckDB-WASM + deck.gl under headless software WebGL and is
@@ -68,6 +94,28 @@ export async function setChecked(
   }).toPass({ timeout });
 }
 
+/**
+ * Expand the Layers disclosure (open by default only in Infrastructure mode)
+ * so its checkboxes can be clicked.
+ */
+export async function openLayers(page: Page, timeout = 30_000): Promise<void> {
+  const toggle = page.getByRole("button", { name: /^Layers\s*\d+ on$/ });
+  await expect(async () => {
+    if ((await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click();
+    await expect(toggle).toHaveAttribute("aria-expanded", "true", { timeout: 2_000 });
+  }).toPass({ timeout });
+}
+
+/** The scenario picker (rendered in Scenarios mode or while a scenario is active). */
+export function scenarioSelect(page: Page): Locator {
+  return page.getByRole("combobox", { name: "Scenario" });
+}
+
+/** Header link by name (the map footer repeats "Methodology"). */
+export function headerLink(page: Page, name: string): Locator {
+  return page.getByRole("navigation", { name: "Site" }).getByRole("link", { name, exact: true });
+}
+
 /** Press a `aria-pressed` toggle button (e.g. the Oil/Gas selector) until it reads pressed. */
 export async function press(button: Locator, timeout = 30_000): Promise<void> {
   await expect(async () => {
@@ -122,12 +170,26 @@ export interface Rgb {
   readonly b: number;
 }
 
+/** Page-space box of the map canvas (it sits below the header, not under it). */
+export async function mapBox(
+  page: Page,
+): Promise<{ x: number; y: number; width: number; height: number }> {
+  const box = await page.locator(".maplibregl-canvas").boundingBox();
+  if (!box) throw new Error("map canvas not laid out");
+  return box;
+}
+
 /**
- * Screen position of lon/lat for a Web-Mercator view (MapLibre: 512 px tiles)
- * on a map that fills the viewport (`<main>` is `h-screen w-screen`).
+ * Page position of lon/lat for a Web-Mercator view (MapLibre: 512 px tiles):
+ * the view's centre is the centre of the map canvas.
  */
-export function project(page: Page, lon: number, lat: number, view: MapView = DEFAULT_VIEW): Px {
-  const size = page.viewportSize() ?? { width: 1280, height: 720 };
+export async function project(
+  page: Page,
+  lon: number,
+  lat: number,
+  view: MapView = DEFAULT_VIEW,
+): Promise<Px> {
+  const box = await mapBox(page);
   const world = 512 * 2 ** view.zoom;
   const mx = (lng: number) => ((lng + 180) / 360) * world;
   const my = (la: number) => {
@@ -135,9 +197,20 @@ export function project(page: Page, lon: number, lat: number, view: MapView = DE
     return (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * world;
   };
   return {
-    x: Math.round(size.width / 2 + mx(lon) - mx(view.lon)),
-    y: Math.round(size.height / 2 + my(lat) - my(view.lat)),
+    x: Math.round(box.x + box.width / 2 + mx(lon) - mx(view.lon)),
+    y: Math.round(box.y + box.height / 2 + my(lat) - my(view.lat)),
   };
+}
+
+/** {@link project} for several points. */
+export async function projectAll(
+  page: Page,
+  points: readonly { lon: number; lat: number }[],
+  view: MapView = DEFAULT_VIEW,
+): Promise<Px[]> {
+  const out: Px[] = [];
+  for (const p of points) out.push(await project(page, p.lon, p.lat, view));
+  return out;
 }
 
 /** Rows of RGBA bytes for `clip`, decoded in-page from a viewport screenshot. */
@@ -192,7 +265,7 @@ export async function samplePixels(page: Page, points: readonly Px[], radius = 3
   return out;
 }
 
-/** Count pixels in `clip` that read as the extraction-site red (#dc3c28 family). */
+/** Count pixels in `clip` that read as the extraction-site burnt orange (#b85a14). */
 export async function countRedPixels(
   page: Page,
   clip: { x: number; y: number; width: number; height: number },
@@ -208,9 +281,9 @@ export async function countRedPixels(
   return n;
 }
 
-/** Green cast of a pixel (reserves ramp is ColorBrewer Greens; the basemap is neutral). */
+/** Green cast of a pixel (the reserves ramp is olive-green; the basemap is neutral). */
 export const greenness = (c: Rgb): number => c.g - Math.max(c.r, c.b);
-/** Red cast of a pixel (scenario exposure ramp is ColorBrewer Reds). */
+/** Red cast of a pixel (the scenario exposure ramp is red). */
 export const redness = (c: Rgb): number => c.r - Math.max(c.g, c.b);
 
 /**
@@ -225,9 +298,6 @@ export const SAUDI_POINTS = [
 
 /** Median greenness across the Saudi probe points at `view`. */
 export async function saudiGreenness(page: Page, view: MapView = DEFAULT_VIEW): Promise<number> {
-  const px = await samplePixels(
-    page,
-    SAUDI_POINTS.map((p) => project(page, p.lon, p.lat, view)),
-  );
+  const px = await samplePixels(page, await projectAll(page, SAUDI_POINTS, view));
   return median(px.map(greenness));
 }

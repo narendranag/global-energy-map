@@ -4,6 +4,7 @@ Uses pytest-style monkeypatching of httpx.get to avoid real network calls.
 The integration smoke test that hits a real NETL layer lives in the ingest
 scripts themselves (Tasks 3-5).
 """
+
 from __future__ import annotations
 
 import json

@@ -25,6 +25,7 @@ shares (see docs/methodology.md, Phase 6).
 Usage:
     uv run python -m scripts.validate.lng_t3_vs_giignl
 """
+
 from __future__ import annotations
 
 import sys
@@ -44,6 +45,7 @@ GIIGNL_MT_PER_YEAR: dict[int, float] = {
     2024: 407.0,  # 2025 GIIGNL report; treat as ±5
 }
 
+
 def main() -> None:
     if not TRADE_DAILY.exists():
         sys.exit(f"missing {TRADE_DAILY} — run build_lng_voyages first")
@@ -56,7 +58,8 @@ def main() -> None:
 
     # Convert cbm → tonnes
     annual = (
-        arrivals.groupby("year")["amount_cbm"].sum()
+        arrivals.groupby("year")["amount_cbm"]
+        .sum()
         .reset_index()
         .rename(columns={"amount_cbm": "lng_t3_cbm"})
     )

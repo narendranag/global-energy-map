@@ -1,4 +1,5 @@
 """Unit tests for NETL refinery capacity string parser."""
+
 from __future__ import annotations
 
 from scripts.transform._refinery_capacity import parse_netl_capacity_kbpd

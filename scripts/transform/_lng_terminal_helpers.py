@@ -4,6 +4,7 @@ Kept separate so they're trivially unit-testable without loading the full
 transform module (which touches raw CSV/geojson paths at import time via
 constants — though not at import, this keeps parity with _refinery_dedup.py).
 """
+
 from __future__ import annotations
 
 import sys

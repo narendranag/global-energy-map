@@ -4,6 +4,7 @@ Kept separate so they're trivially unit-testable without loading the full
 transform module (which touches raw CSV paths at import time via
 constants — parity with _lng_terminal_helpers.py / _refinery_dedup.py).
 """
+
 from __future__ import annotations
 
 import pandas as pd
@@ -27,7 +28,5 @@ def make_unique_ids(base_ids: pd.Series) -> pd.Series:
 
     out = base_ids.copy()
     suffix = base_ids.groupby(base_ids).cumcount()
-    out.loc[dup_mask] = (
-        base_ids.loc[dup_mask] + "_" + suffix.loc[dup_mask].astype(str)
-    )
+    out.loc[dup_mask] = base_ids.loc[dup_mask] + "_" + suffix.loc[dup_mask].astype(str)
     return out

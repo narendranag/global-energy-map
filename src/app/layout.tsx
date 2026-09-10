@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { AppErrorBoundary } from "@/components/errors/AppErrorBoundary";
+import { GlobalErrorListener } from "@/components/errors/GlobalErrorListener";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -41,7 +44,13 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col font-sans text-ink">{children}</body>
+      <body className="flex min-h-full flex-col font-sans text-ink">
+        <AppErrorBoundary>{children}</AppErrorBoundary>
+        <GlobalErrorListener />
+        {/* Vercel Web Analytics: cookieless page views; a no-op until enabled
+            in the Vercel project. No other trackers. */}
+        <Analytics />
+      </body>
     </html>
   );
 }

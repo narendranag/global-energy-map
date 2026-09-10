@@ -14,6 +14,7 @@ Public functions:
 
 License: NETL data is US Government work (17 USC §105), public domain.
 """
+
 from __future__ import annotations
 
 import json

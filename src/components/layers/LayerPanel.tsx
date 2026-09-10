@@ -3,12 +3,12 @@ import { Legend } from "./Legend";
 
 export interface LayerState {
   reserves: boolean;
-  basins: boolean;          // NEW
+  basins: boolean;
   extraction: boolean;
   pipelines: boolean;
   refineries: boolean;
-  storage: boolean;         // NEW
-  ports: boolean;           // NEW
+  storage: boolean;
+  ports: boolean;
   gas_pipelines: boolean;
   lng_terminals: boolean;
   lng_voyages: boolean;     // Phase 6
@@ -17,6 +17,8 @@ export interface LayerState {
 export interface LayerPanelProps {
   readonly state: LayerState;
   readonly onChange: (next: LayerState) => void;
+  /** Imports noun while a scenario is active — adds the exposure ramp to the legend. */
+  readonly scenarioNoun?: string | undefined;
 }
 
 type Row =
@@ -39,7 +41,7 @@ const ROWS: readonly Row[] = [
   { kind: "toggle", key: "lng_voyages", label: "LNG voyages (2020–2024)" },
 ];
 
-export function LayerPanel({ state, onChange }: LayerPanelProps) {
+export function LayerPanel({ state, onChange, scenarioNoun }: LayerPanelProps) {
   return (
     <div className="pointer-events-auto absolute left-4 top-4 z-10 w-60 rounded-md bg-white/90 p-3 text-sm text-slate-800 shadow-lg backdrop-blur">
       <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-600">Layers</div>
@@ -68,7 +70,7 @@ export function LayerPanel({ state, onChange }: LayerPanelProps) {
       </div>
       <div className="mt-3 border-t border-slate-200 pt-2">
         <div className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-600">Legend</div>
-        <Legend />
+        <Legend layers={state} scenarioNoun={scenarioNoun} />
       </div>
     </div>
   );

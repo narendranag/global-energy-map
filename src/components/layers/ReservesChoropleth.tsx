@@ -1,18 +1,19 @@
-"use client";
-import { useEffect, useMemo, useState } from "react";
 import { GeoJsonLayer } from "@deck.gl/layers";
 import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson";
-import { loadCountries, type CountryProps } from "@/lib/geo/countries";
-import { query } from "@/lib/duckdb/query";
-import { reservesDataYear } from "@/lib/time/range";
+import type { CountryCollection, CountryProps } from "@/lib/geo/countries";
+import type { ReservesData } from "@/lib/data/reserves";
+import { sourceLine } from "@/lib/data/sources";
+import { RESERVES_LATEST_YEAR } from "@/lib/time/range";
 import type { Commodity } from "@/lib/scenarios/types";
-import type { OverlayEntry } from "@/components/scenarios/overlay";
-import { reservesColor } from "./reservesRamp";
+import { importsNoun, type OverlayEntry } from "@/components/scenarios/overlay";
+import {
+  COUNTRY_OUTLINE_COLOR,
+  COUNTRY_OUTLINE_MIN_PX,
+  reservesColor,
+} from "@/lib/symbology";
+import { joinLines, type TooltipFormatter } from "./tooltip";
 
-interface ReservesRow extends Record<string, unknown> {
-  iso3: string;
-  value: number;
-}
+export const RESERVES_LAYER_ID = "reserves";
 
 /** Country feature properties with the reserves reading attached for tooltips. */
 export interface ReservesProps extends CountryProps {
@@ -23,80 +24,81 @@ export interface ReservesProps extends CountryProps {
   readonly data_year: number;
 }
 
-type ReservesCollection = FeatureCollection<Polygon | MultiPolygon, ReservesProps>;
+export type ReservesFeature = Feature<Polygon | MultiPolygon, ReservesProps>;
+export type ReservesCollection = FeatureCollection<Polygon | MultiPolygon, ReservesProps>;
 
-export type { OverlayEntry };
-
-export interface ReservesChoroplethInput {
-  readonly year: number;
-  readonly commodity: Commodity;
-  readonly overlayByIso3?: ReadonlyMap<string, OverlayEntry>;
+/** Attach each country's reserves reading (or null) to its polygon. */
+export function reservesFeatures(
+  countries: CountryCollection,
+  data: ReservesData,
+): ReservesCollection {
+  return {
+    type: "FeatureCollection",
+    features: countries.features.map(
+      (f): ReservesFeature => ({
+        ...f,
+        properties: {
+          ...f.properties,
+          value: data.values.get(f.properties.iso3) ?? null,
+          commodity: data.commodity,
+          data_year: data.dataYear,
+        },
+      }),
+    ),
+  };
 }
 
 /**
- * Reserves choropleth. EI stopped publishing proved reserves after
- * RESERVES_LATEST_YEAR, so a later selected year shows the latest value.
- *
- * The layer id is stable ("reserves"): year/commodity/scenario changes update
- * `data` or trip `updateTriggers` instead of rebuilding the layer.
+ * Reserves choropleth (log ramp) with the scenario exposure overlay painted
+ * over importers. The id is stable: year/commodity changes swap `data`, a
+ * scenario change trips `updateTriggers`, and the layer is never rebuilt (R17).
  */
-export function useReservesChoropleth({ year, commodity, overlayByIso3 }: ReservesChoroplethInput) {
-  const dataYear = reservesDataYear(year);
-  const [data, setData] = useState<{ fc: ReservesCollection; max: number } | null>(null);
-
-  useEffect(() => {
-    const metric =
-      commodity === "oil" ? "proved_reserves_oil_bbn_bbl" : "proved_reserves_gas_tcm";
-    const ctrl = { cancelled: false };
-    void (async () => {
-      try {
-        const countries = await loadCountries();
-        const res = await query<ReservesRow>(
-          `SELECT iso3, value FROM read_parquet('/data/country_year_series.parquet')
-           WHERE metric = ? AND year = ?`,
-          [metric, dataYear],
-        );
-        if (ctrl.cancelled) return;
-        const byIso = new Map(res.rows.map((r) => [r.iso3, r.value]));
-        const max = Math.max(0, ...res.rows.map((r) => r.value));
-        const features = countries.features.map(
-          (f): Feature<Polygon | MultiPolygon, ReservesProps> => ({
-            ...f,
-            properties: {
-              ...f.properties,
-              value: byIso.get(f.properties.iso3) ?? null,
-              commodity,
-              data_year: dataYear,
-            },
-          }),
-        );
-        setData({ fc: { type: "FeatureCollection", features }, max });
-      } catch (err) {
-        console.error("ReservesChoropleth load failed:", err);
-      }
-    })();
-    return () => {
-      ctrl.cancelled = true;
-    };
-  }, [dataYear, commodity]);
-
-  return useMemo(() => {
-    if (!data) return null;
-    const { fc, max } = data;
-    return new GeoJsonLayer<ReservesProps>({
-      id: "reserves",
-      data: fc,
-      filled: true,
-      stroked: true,
-      getFillColor: (f) => {
-        const override = overlayByIso3?.get(f.properties.iso3)?.color;
-        if (override) return [...override];
-        return [...reservesColor(f.properties.value, max)];
-      },
-      getLineColor: [120, 120, 120, 180],
-      lineWidthMinPixels: 0.5,
-      pickable: true,
-      updateTriggers: { getFillColor: [fc, max, overlayByIso3] },
-    });
-  }, [data, overlayByIso3]);
+export function buildReservesLayer(
+  fc: ReservesCollection,
+  max: number,
+  overlayByIso3?: ReadonlyMap<string, OverlayEntry>,
+): GeoJsonLayer<ReservesProps> {
+  return new GeoJsonLayer<ReservesProps>({
+    id: RESERVES_LAYER_ID,
+    data: fc,
+    filled: true,
+    stroked: true,
+    getFillColor: (f) => {
+      const override = overlayByIso3?.get(f.properties.iso3)?.color;
+      return [...(override ?? reservesColor(f.properties.value, max))];
+    },
+    getLineColor: [...COUNTRY_OUTLINE_COLOR],
+    lineWidthMinPixels: COUNTRY_OUTLINE_MIN_PX,
+    pickable: true,
+    updateTriggers: { getFillColor: [max, overlayByIso3] },
+  });
 }
+
+/** Tooltip value string, e.g. "297.5 bn bbl" or "6.02 tcm". */
+export function formatReserves(value: number, commodity: Commodity): string {
+  const digits = value >= 10 ? 1 : value >= 1 ? 2 : 3;
+  return `${value.toFixed(digits)} ${commodity === "oil" ? "bn bbl" : "tcm"}`;
+}
+
+export const formatReservesTooltip: TooltipFormatter<ReservesFeature> = (f, ctx) => {
+  const p = f.properties;
+  const c = p.commodity;
+  const dataYear = p.data_year.toString();
+  const scenarioLine =
+    ctx.scenario === null
+      ? null
+      : (ctx.overlay?.get(p.iso3)?.tooltip ??
+        `Scenario: no ${ctx.scenario.year.toString()} ${importsNoun(ctx.commodity)} recorded in BACI`);
+  return joinLines(
+    `${p.name} (${p.iso3})`,
+    p.value !== null
+      ? `Proved ${c} reserves: ${formatReserves(p.value, c)} (${dataYear})`
+      : `Proved ${c} reserves: no data in source (${dataYear})`,
+    ctx.year > RESERVES_LATEST_YEAR &&
+      `(latest in source; year selected: ${ctx.year.toString()})`,
+    sourceLine("reserves"),
+    scenarioLine !== null && "",
+    scenarioLine,
+    scenarioLine !== null && sourceLine("trade"),
+  );
+};

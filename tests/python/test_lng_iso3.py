@@ -1,7 +1,8 @@
 """Unit tests for the LNG country-name → ISO3 lookup."""
+
 from __future__ import annotations
 
-from scripts.transform._lng_iso3 import lookup_iso3
+from scripts.common.iso3 import lookup_iso3
 
 
 def test_lookup_resolves_lng_t3_specific_name():

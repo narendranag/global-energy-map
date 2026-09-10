@@ -1,41 +1,27 @@
-"use client";
-import { useEffect, useState } from "react";
 import { IconLayer } from "@deck.gl/layers";
-import { query } from "@/lib/duckdb/query";
-import { isVisibleAtYear } from "@/lib/vintage/filter";
+import type { LngTerminalAsset } from "@/lib/data/assets";
+import { sourceLine } from "@/lib/data/sources";
 import type { LngImportImpact } from "@/lib/scenarios/types";
+import { isVisibleAtYear } from "@/lib/vintage/filter";
+import {
+  LNG_TERMINAL_SIZE,
+  LNG_TRIANGLE_POINTS,
+  LNG_TRIANGLE_STROKE,
+  lngTerminalColor,
+  lngTerminalSize,
+} from "@/lib/symbology";
+import { formatCapacity, joinLines, orNa, type TooltipFormatter } from "./tooltip";
 
-interface LngTerminalRow extends Record<string, unknown> {
-  asset_id: string;
-  kind: "lng_export" | "lng_import";
-  name: string;
-  country_iso3: string;
-  lon: number;
-  lat: number;
-  capacity: number | null;
-  operator: string | null;
-  status: string | null;
-  commissioned_year: number | null;
-  unit_count: number | null;
-  total_processed_bcm: number | null;
-  un_locode: string | null;
-  source: string | null;
-}
+export const LNG_TERMINALS_LAYER_ID = "lng-terminals";
 
-export interface LngTerminalsLayerInput {
-  readonly visible: boolean;
-  readonly year: number;
-  readonly impactByAssetId?: ReadonlyMap<string, LngImportImpact>;
-}
-
-// Inline SVG icons rendered to dataURI so we don't ship sprite assets.
-// Filled triangle (export) and hollow triangle (import).
+// Triangle glyphs rendered to a data URI (no sprite asset): filled = export,
+// hollow = import. mask=true so getColor tints them.
 const ICON_ATLAS =
   "data:image/svg+xml;utf8," +
   encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="32" viewBox="0 0 64 32">
-  <polygon points="16,4 28,28 4,28" fill="white"/>
-  <polygon points="48,4 60,28 36,28" fill="none" stroke="white" stroke-width="3"/>
+  <polygon points="${LNG_TRIANGLE_POINTS}" fill="white"/>
+  <g transform="translate(32 0)"><polygon points="${LNG_TRIANGLE_POINTS}" fill="none" stroke="white" stroke-width="${LNG_TRIANGLE_STROKE.toString()}"/></g>
 </svg>
 `);
 
@@ -44,69 +30,61 @@ const ICON_MAPPING = {
   lng_import: { x: 32, y: 0, width: 32, height: 32, anchorX: 16, anchorY: 28, mask: true },
 } as const;
 
-export function useLngTerminalsLayer({ visible, year, impactByAssetId }: LngTerminalsLayerInput) {
-  const [layer, setLayer] = useState<IconLayer<LngTerminalRow> | null>(null);
-  useEffect(() => {
-    const ctrl = { cancelled: false };
-    if (!visible) {
-      // Schedule the clear asynchronously to avoid calling setState synchronously
-      // inside the effect body — avoids the react-hooks/set-state-in-effect lint rule.
-      void Promise.resolve().then(() => {
-        if (!ctrl.cancelled) setLayer(null);
-      });
-      return () => {
-        ctrl.cancelled = true;
-      };
-    }
-    void (async () => {
-      const res = await query<LngTerminalRow>(
-        `SELECT asset_id, kind, name, country_iso3, lon, lat, capacity, operator, status,
-                CAST(commissioned_year AS INTEGER) AS commissioned_year,
-                CAST(unit_count AS INTEGER) AS unit_count,
-                CAST(total_processed_bcm AS DOUBLE) AS total_processed_bcm,
-                un_locode, source
-         FROM read_parquet('/data/assets.parquet')
-         WHERE kind IN ('lng_export', 'lng_import')`,
-      );
-      if (ctrl.cancelled) return;
-      const filtered = (res.rows as LngTerminalRow[]).filter((r) =>
-        isVisibleAtYear(r.commissioned_year, year),
-      );
-      const l = new IconLayer<LngTerminalRow>({
-        id: "lng-terminals",
-        data: filtered,
-        iconAtlas: ICON_ATLAS,
-        iconMapping: ICON_MAPPING,
-        getIcon: (d) => d.kind,
-        getPosition: (d) => [d.lon, d.lat],
-        // Capacity in mtpa; scale similar to refineries (sqrt for area perception)
-        getSize: (d) => 14 + Math.sqrt(Math.max(0, d.capacity ?? 0)) * 2.2,
-        sizeUnits: "pixels",
-        sizeMinPixels: 10,
-        sizeMaxPixels: 36,
-        getColor: (d) => {
-          const impact = impactByAssetId?.get(d.asset_id);
-          if (impact?.coverage === "none") {
-            // No measured voyages to this terminal under the active scenario's
-            // year — a data gap, not a real "safe" reading. Render neutral grey
-            // rather than the base teal (which would look like "no exposure").
-            return [140, 140, 140, 200];
-          }
-          if (impact && impact.shareAtRisk > 0) {
-            const red = Math.round(80 + 175 * impact.shareAtRisk);
-            return [red, 30, 30, 230];
-          }
-          // Base: cyan/teal to contrast with oil's warm palette
-          return [20, 130, 160, 230];
-        },
-        pickable: true,
-        updateTriggers: { getColor: [impactByAssetId] },
-      });
-      setLayer(l);
-    })();
-    return () => {
-      ctrl.cancelled = true;
-    };
-  }, [visible, year, impactByAssetId]);
-  return layer;
+/** LNG terminals commissioned by `year` (undated always show), tinted by scenario impact. */
+export function buildLngTerminalsLayer(
+  rows: readonly LngTerminalAsset[],
+  year: number,
+  impactByAssetId?: ReadonlyMap<string, LngImportImpact>,
+): IconLayer<LngTerminalAsset> {
+  return new IconLayer<LngTerminalAsset>({
+    id: LNG_TERMINALS_LAYER_ID,
+    data: rows.filter((r) => isVisibleAtYear(r.commissioned_year, year)),
+    iconAtlas: ICON_ATLAS,
+    iconMapping: ICON_MAPPING,
+    getIcon: (d) => d.kind,
+    getPosition: (d) => [d.lon, d.lat],
+    getSize: (d) => lngTerminalSize(d.capacity),
+    sizeUnits: "pixels",
+    sizeMinPixels: LNG_TERMINAL_SIZE.minPixels,
+    sizeMaxPixels: LNG_TERMINAL_SIZE.maxPixels,
+    getColor: (d) => [...lngTerminalColor(impactByAssetId?.get(d.asset_id))],
+    pickable: true,
+    updateTriggers: { getColor: [impactByAssetId] },
+  });
 }
+
+export const formatLngTerminalTooltip: TooltipFormatter<LngTerminalAsset> = (o, ctx) => {
+  const impact = ctx.lngImpacts?.get(o.asset_id);
+  const kind = o.kind === "lng_export" ? "LNG export terminal" : "LNG import terminal";
+  const scenarioLines: string[] = [];
+  if (impact) {
+    if (impact.coverage === "none") {
+      scenarioLines.push("", `No measured voyages to this terminal in ${(ctx.scenario?.year ?? ctx.year).toString()}`);
+    } else if (impact.topSources.length > 0) {
+      scenarioLines.push("", "Historical top sources (t/yr):");
+      for (const s of impact.topSources) scenarioLines.push(`  ${s.iso3}: ${s.qty.toFixed(1)}`);
+      if (impact.shareAtRisk > 0) {
+        scenarioLines.push("", `At-risk under scenario: ${(impact.shareAtRisk * 100).toFixed(1)}%`);
+      }
+    }
+    if (impact.coverage === "measured") {
+      scenarioLines.push("", "Attribution: measured voyages (LNG-T3), scaled to BACI country total");
+    } else if (impact.coverage === "capacity-proxy") {
+      scenarioLines.push("", "Attribution: BACI, capacity-weighted");
+    }
+  }
+  return joinLines(
+    `${kind}: ${o.name}`,
+    `Country: ${o.country_iso3}`,
+    `Operator: ${orNa(o.operator)}`,
+    `Capacity: ${formatCapacity(o.capacity, o.capacity_unit ?? "mtpa", 1)}`,
+    o.commissioned_year !== null && `Start year: ${o.commissioned_year.toString()}`,
+    o.unit_count !== null && o.unit_count > 0 && `Units: ${o.unit_count.toString()}`,
+    o.total_processed_bcm !== null &&
+      o.total_processed_bcm > 0 &&
+      `Total processed 2020–2024: ${o.total_processed_bcm.toFixed(0)} bcm`,
+    o.un_locode !== null && o.un_locode.length > 0 && `UN/LOCODE: ${o.un_locode}`,
+    sourceLine("lng_terminals", o.source),
+    ...scenarioLines,
+  );
+};

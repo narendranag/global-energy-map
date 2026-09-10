@@ -2,7 +2,8 @@
 import type { Commodity, ScenarioId, ScenarioResult } from "@/lib/scenarios/types";
 import { SCENARIOS, scenarioDescription, type ScenarioDef } from "@/lib/scenarios/registry";
 import { useCountryNames } from "@/lib/geo/useCountryNames";
-import { exposureColor, importsNoun, rankAssetsByCapacityAtRisk, rankImportersByShare } from "./overlay";
+import { EXPOSURE_LEGEND_STOPS, gradientCss } from "@/lib/symbology";
+import { importsNoun, rankAssetsByCapacityAtRisk, rankImportersByShare } from "./overlay";
 
 export interface ScenarioPanelProps {
   readonly active: ScenarioId | null;
@@ -15,13 +16,7 @@ function findScenario(id: ScenarioId): ScenarioDef | undefined {
   return SCENARIOS.find((s) => s.id === id);
 }
 
-function rgbaCss(t: number): string {
-  const c = exposureColor(t);
-  if (!c) return "transparent";
-  return `rgba(${Math.round(c[0]).toString()},${Math.round(c[1]).toString()},${Math.round(c[2]).toString()},${(c[3] / 255).toFixed(3)})`;
-}
-
-const LEGEND_GRADIENT = `linear-gradient(to right, ${[0.01, 0.25, 0.5, 0.75, 1].map(rgbaCss).join(", ")})`;
+const LEGEND_GRADIENT = gradientCss(EXPOSURE_LEGEND_STOPS);
 
 function pct(t: number): string {
   return `${(t * 100).toFixed(1)}%`;

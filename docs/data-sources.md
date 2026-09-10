@@ -171,7 +171,7 @@ LNG-T3 covers **22–41% of GIIGNL's global LNG trade, 2020–2024** — every y
 - **Where it lands:** `assets.parquet` rows where `kind = 'refinery'` and `source = 'National Energy Technology Laboratory (US DOE) — GOGI Refineries'`
 - **Layers/scenarios using it:** refineries point layer; refinery feedstock attribution math
 
-**What we ingest:** All 2,272 refinery point features. Per-refinery: location, country (via `NETL_NAME_TO_ISO3`), facility name (75% populated), operator (80% populated), capacity (15% populated — parsed from string field via `scripts/transform/_refinery_capacity.py`), status (14% populated; nulls default to `"operating"` since the source layer's purpose is current infrastructure).
+**What we ingest:** All 2,272 refinery point features. NETL lists many plants more than once (English name, numbered "333 - …" and French "Raffinerie de …" variants within ~100 m); since Phase 8 these are merged within source (same country, ≤ 1 km, never merging two rows whose known capacities differ by > 5 %), leaving 1,075 NETL rows. A few probable duplicates with conflicting capacities (e.g. Pemex Tula/Salamanca/Madero/Cadereyta, Irving) remain as two rows. Per-refinery: location, country (via `NETL_NAME_TO_ISO3`), facility name (75% populated), operator (80% populated), capacity (15% populated — parsed from string field via `scripts/transform/_refinery_capacity.py`), status (14% populated; nulls default to `"operating"` since the source layer's purpose is current infrastructure).
 
 **Coverage:**
 - 13× more refineries than the prior OSM-only source.

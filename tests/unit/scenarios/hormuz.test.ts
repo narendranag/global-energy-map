@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { computeHormuzImpact } from "@/lib/scenarios/hormuz";
+import { computeScenarioImpact } from "@/lib/scenarios/engine";
+import type { ScenarioResult, TradeFlowRow, DisruptionRouteRow } from "@/lib/scenarios/types";
+
+function computeHormuzImpact(input: {
+  year: number;
+  tradeFlows: readonly TradeFlowRow[];
+  routes: readonly DisruptionRouteRow[];
+}): ScenarioResult {
+  return computeScenarioImpact({ scenarioId: "hormuz", commodity: "oil", ...input });
+}
 
 const tradeFlows = [
   // importer, exporter, qty
@@ -19,7 +28,7 @@ const routes = [
   { disruption_id: "hormuz" as const, kind: "chokepoint" as const, exporter_iso3: "BHR", importer_iso3: null, share: 1.0 },
 ];
 
-describe("computeHormuzImpact", () => {
+describe("computeScenarioImpact — Hormuz (oil)", () => {
   it("computes per-importer at-risk share for a given year", () => {
     const r = computeHormuzImpact({ year: 2024, tradeFlows, routes });
     // India: SAU 100*0.88 = 88; IRQ 50*1 = 50; sum at risk = 138 of total 175 → 0.788...

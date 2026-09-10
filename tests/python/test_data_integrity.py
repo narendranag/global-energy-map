@@ -167,3 +167,26 @@ def test_disruption_route_rows_are_cited():
     assert dr["source_year"].notna().all()
     sourced = dr[dr["source_title"] != UNSOURCED]
     assert sourced["source_url"].str.startswith("https://").all()
+
+
+def test_no_two_netl_refineries_within_1km_same_country(assets):
+    from scripts.transform._refinery_dedup import NETL_SELF_DEDUP_KM, cluster_same_country
+    from scripts.transform.build_refineries import NETL_SOURCE
+
+    netl = assets[(assets["kind"] == "refinery") & (assets["source"] == NETL_SOURCE)]
+    labels = cluster_same_country(netl.reset_index(drop=True), NETL_SELF_DEDUP_KM)
+    assert len(set(labels)) == len(netl), (
+        f"{len(netl) - len(set(labels))} NETL refineries have a same-country neighbour "
+        f"within {NETL_SELF_DEDUP_KM} km without a conflicting capacity — re-run "
+        "scripts.transform.build_refineries"
+    )
+
+
+def test_netl_refinery_names_unique_where_the_source_allows(assets):
+    from scripts.transform.build_refineries import NETL_SOURCE
+
+    netl = assets[(assets["kind"] == "refinery") & (assets["source"] == NETL_SOURCE)]
+    # Plants whose only listings share a name can still repeat, but the
+    # generic Myanmar operator name must not (it had located variants).
+    mmr = netl.loc[netl["country_iso3"] == "MMR", "name"]
+    assert mmr.is_unique, mmr.tolist()

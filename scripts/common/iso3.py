@@ -1,7 +1,13 @@
-"""ISO 3166-1 alpha-3 lookup tables for source-specific country name spellings.
+"""ISO 3166-1 alpha-3 lookups for source-specific country name spellings.
 
-EI Statistical Review and GEM use slightly different country name spellings,
-so we keep two separate dicts. Future sources can add their own.
+The single ISO3 API for the pipeline. Each source spells country names its own
+way, so there is one dict per source (EI, GEM, NETL, LNG-T3) plus:
+
+    lookup(name, source)       exact lookup in one source's dict
+    lookup_iso3(name)          lookup across all dicts merged (LNG-T3 mixes styles)
+    netl_country_iso3(value)   NETL ``md_country`` field (may list several countries)
+    gem_first_iso3(areas)      first resolvable country in a GEM ``areas`` list
+    gem_endpoints_iso3(areas)  (first, last) countries of a GEM ``areas`` list
 """
 
 from __future__ import annotations
@@ -408,7 +414,6 @@ NETL_NAME_TO_ISO3: dict[str, str] = {
 }
 
 
-
 # LNG-T3 country-name → ISO3 mapping (Phase 6).
 # LNG-T3 uses a mix of UN-style and short English names. Most overlap with
 # GEM/NETL/EI dicts; this covers Phase 6 deltas.
@@ -436,17 +441,136 @@ LNG_T3_NAME_TO_ISO3: dict[str, str] = {
 #   PUS  "US Misc. Pacific Isds"                    (BACI code; ISO is UMI)
 TRADE_ISO3_ALLOWLIST: frozenset[str] = frozenset(
     {
-        "ABW", "AIA", "AND", "ANT", "ASM", "ATG", "BES", "BHR", "BLM", "BMU",
-        "BRB", "CCK", "COK", "COM", "CPV", "CUW", "CXR", "CYM", "DMA", "FSM",
-        "GIB", "GRD", "GUM", "HKG", "IOT", "KIR", "KNA", "LCA", "MAC", "MDV",
-        "MHL", "MLT", "MNP", "MSR", "MUS", "MYT", "NFK", "NIU", "NRU", "PCN",
-        "PLW", "PSE", "PYF", "SCG", "SGP", "SHN", "SMR", "SPM", "SSD", "STP",
-        "SXM", "SYC", "TCA", "TKL", "TON", "TUV", "VCT", "VGB", "WLF", "WSM",
+        "ABW",
+        "AIA",
+        "AND",
+        "ANT",
+        "ASM",
+        "ATG",
+        "BES",
+        "BHR",
+        "BLM",
+        "BMU",
+        "BRB",
+        "CCK",
+        "COK",
+        "COM",
+        "CPV",
+        "CUW",
+        "CXR",
+        "CYM",
+        "DMA",
+        "FSM",
+        "GIB",
+        "GRD",
+        "GUM",
+        "HKG",
+        "IOT",
+        "KIR",
+        "KNA",
+        "LCA",
+        "MAC",
+        "MDV",
+        "MHL",
+        "MLT",
+        "MNP",
+        "MSR",
+        "MUS",
+        "MYT",
+        "NFK",
+        "NIU",
+        "NRU",
+        "PCN",
+        "PLW",
+        "PSE",
+        "PYF",
+        "SCG",
+        "SGP",
+        "SHN",
+        "SMR",
+        "SPM",
+        "SSD",
+        "STP",
+        "SXM",
+        "SYC",
+        "TCA",
+        "TKL",
+        "TON",
+        "TUV",
+        "VCT",
+        "VGB",
+        "WLF",
+        "WSM",
     }
 )
 
 
+_BY_SOURCE: dict[str, dict[str, str]] = {
+    "ei": EI_NAME_TO_ISO3,
+    "gem": GEM_NAME_TO_ISO3,
+    "netl": NETL_NAME_TO_ISO3,
+    "lng_t3": LNG_T3_NAME_TO_ISO3,
+}
+
+# All source dicts merged. No name maps to two different codes across the dicts
+# (asserted in tests/python/test_iso3.py), so merge order does not matter.
+_MERGED: dict[str, str] = {
+    **GEM_NAME_TO_ISO3,
+    **NETL_NAME_TO_ISO3,
+    **EI_NAME_TO_ISO3,
+    **LNG_T3_NAME_TO_ISO3,
+}
+
+
 def lookup(name: str, source: str) -> str | None:
-    """Return iso3 for a name; source in {'ei', 'gem', 'netl'}."""
-    table = {"ei": EI_NAME_TO_ISO3, "gem": GEM_NAME_TO_ISO3, "netl": NETL_NAME_TO_ISO3}[source]
+    """Return iso3 for a name; source in {'ei', 'gem', 'netl', 'lng_t3'}."""
+    table = _BY_SOURCE[source]
     return table.get(name) or table.get(name.strip())
+
+
+def lookup_iso3(name: str | None) -> str | None:
+    """Return the ISO3 code for a country name in any source's spelling, or None."""
+    if not name:
+        return None
+    return _MERGED.get(name.strip())
+
+
+def netl_country_iso3(md_country: object) -> str | None:
+    """Resolve NETL's ``md_country`` field to ISO3 (first country when several).
+
+    NETL separates multiple countries with ``;``. Without a ``;`` the whole
+    string is tried first (``"Venezuela, Bolivarian Republic of"`` contains a
+    comma), then the part before the first comma. GeoJSON-escaped quotes
+    (``"Cote D''Ivoire"``) are unescaped.
+    """
+    if not isinstance(md_country, str) or not md_country.strip():
+        return None
+    val = md_country.strip().replace("''", "'")
+    if ";" in val:
+        return NETL_NAME_TO_ISO3.get(val.split(";")[0].strip())
+    return NETL_NAME_TO_ISO3.get(val) or NETL_NAME_TO_ISO3.get(val.split(",")[0].strip())
+
+
+def gem_first_iso3(areas: object) -> str | None:
+    """First country in a GEM ``;``-separated ``areas`` string that resolves to ISO3."""
+    if not isinstance(areas, str):
+        return None
+    for part in areas.split(";"):
+        iso3 = GEM_NAME_TO_ISO3.get(part.strip())
+        if iso3:
+            return iso3
+    return None
+
+
+def gem_endpoints_iso3(areas: object) -> tuple[str | None, str | None]:
+    """``(start, end)`` ISO3 of a GEM ``areas`` string (a pipeline's first/last country).
+
+    ``end`` is None for a single-country string; either side is None when its
+    name does not resolve.
+    """
+    if not isinstance(areas, str) or not areas.strip():
+        return None, None
+    parts = [p.strip() for p in areas.split(";") if p.strip()]
+    start = GEM_NAME_TO_ISO3.get(parts[0]) if parts else None
+    end = GEM_NAME_TO_ISO3.get(parts[-1]) if len(parts) > 1 else None
+    return start, end

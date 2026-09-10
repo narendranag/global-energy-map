@@ -39,8 +39,10 @@ Note on GEM status field:
 Usage:
     uv run python -m scripts.transform.build_pipelines
 """
+
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -48,7 +50,8 @@ import geopandas as gpd
 import pandas as pd
 from shapely.geometry.collection import GeometryCollection
 
-from scripts.common.iso3 import GEM_NAME_TO_ISO3
+from scripts.common.iso3 import gem_endpoints_iso3
+from scripts.common.paths import latest
 
 OUT = Path("data/derived/pipelines.parquet")
 OUT_GEOJSON = Path("public/data/pipelines.geojson")
@@ -70,6 +73,7 @@ STATUS_MAP: dict[str, str] = {
 # Shared helpers
 # ---------------------------------------------------------------------------
 
+
 def _filter_geometry(g: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     """Drop GeometryCollections, null, and empty geometries."""
     g = g[~g.geometry.apply(lambda x: isinstance(x, GeometryCollection))].copy()
@@ -77,23 +81,10 @@ def _filter_geometry(g: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     return g
 
 
-def _parse_areas_iso3(areas: str | None) -> tuple[str | None, str | None]:
-    """Return (start_iso3, end_iso3) from a semicolon-separated areas string.
-
-    Gas GeoJSON uses semicolons; oil uses semicolons too.  Takes first country
-    as start and last (if different) as end.  Returns None for unresolved names.
-    """
-    if not isinstance(areas, str) or not areas.strip():
-        return None, None
-    parts = [p.strip() for p in areas.split(";") if p.strip()]
-    start = GEM_NAME_TO_ISO3.get(parts[0]) if parts else None
-    end = GEM_NAME_TO_ISO3.get(parts[-1]) if len(parts) > 1 else None
-    return start, end
-
-
 # ---------------------------------------------------------------------------
 # Oil pipeline loader (existing logic, refactored into helper)
 # ---------------------------------------------------------------------------
+
 
 def _normalize_oil_capacity(row: pd.Series) -> float | None:
     """Convert oil capacity to kbpd. Units in GEM are typically 'boe/d' or 'kbpd'."""
@@ -125,9 +116,7 @@ def _fuel_to_commodity(v: object) -> str:
 
 def _load_oil_pipelines() -> gpd.GeoDataFrame:
     """Load and process GEM oil infrastructure GeoJSON → GeoDataFrame."""
-    src = next(OIL_RAW_DIR.glob("*.geojson"), None)
-    if src is None:
-        sys.exit("no GEM oil infra geojson — run scripts.ingest.gem_oil_infra first")
+    src = latest(OIL_RAW_DIR, "*.geojson")
 
     g = gpd.read_file(src)
     print(f"[oil] loaded {len(g)} features", file=sys.stderr)
@@ -145,10 +134,7 @@ def _load_oil_pipelines() -> gpd.GeoDataFrame:
 
     g["capacity_kbpd"] = g.apply(_normalize_oil_capacity, axis=1)
 
-    def _areas_iso3(a: object) -> tuple[str | None, str | None]:
-        return _parse_areas_iso3(a) if isinstance(a, str) else (None, None)
-
-    iso3_pairs = g["areas"].apply(_areas_iso3)
+    iso3_pairs = g["areas"].apply(gem_endpoints_iso3)
     g["start_iso3"] = iso3_pairs.apply(lambda x: x[0])
     g["end_iso3"] = iso3_pairs.apply(lambda x: x[1])
 
@@ -182,6 +168,7 @@ def _load_oil_pipelines() -> gpd.GeoDataFrame:
 # Gas pipeline loader (new)
 # ---------------------------------------------------------------------------
 
+
 def _extract_gas_capacity(row: pd.Series) -> float | None:
     """Extract gas pipeline capacity in bcm/y from GEM gas GeoJSON properties.
 
@@ -206,11 +193,7 @@ def _extract_gas_capacity(row: pd.Series) -> float | None:
 
 def _load_gas_pipelines() -> gpd.GeoDataFrame:
     """Load GGIT gas pipeline features from GEM gas infrastructure GeoJSON."""
-    src = next(GAS_RAW_DIR.glob("*.geojson"), None)
-    if src is None:
-        sys.exit("no GEM gas infra geojson — run scripts.ingest.gem_gas_infra first")
-
-    import json
+    src = latest(GAS_RAW_DIR, "*.geojson")
 
     print(f"[gas] reading {src} …", file=sys.stderr)
     with open(src) as fh:
@@ -218,8 +201,7 @@ def _load_gas_pipelines() -> gpd.GeoDataFrame:
 
     # Filter to GGIT (gas pipeline) features only — exclude LNG terminal variants
     pipeline_features = [
-        f for f in raw["features"]
-        if (f.get("properties") or {}).get("tracker-custom") == "GGIT"
+        f for f in raw["features"] if (f.get("properties") or {}).get("tracker-custom") == "GGIT"
     ]
     print(f"[gas] GGIT features: {len(pipeline_features)}", file=sys.stderr)
 
@@ -237,10 +219,7 @@ def _load_gas_pipelines() -> gpd.GeoDataFrame:
     g["capacity_bcm_y"] = g.apply(_extract_gas_capacity, axis=1)
 
     # Country ISO3 from semicolon-separated areas
-    def _areas_iso3_gas(a: object) -> tuple[str | None, str | None]:
-        return _parse_areas_iso3(a) if isinstance(a, str) else (None, None)
-
-    iso3_pairs = g["areas"].apply(_areas_iso3_gas)
+    iso3_pairs = g["areas"].apply(gem_endpoints_iso3)
     g["start_iso3"] = iso3_pairs.apply(lambda x: x[0])
     g["end_iso3"] = iso3_pairs.apply(lambda x: x[1])
 
@@ -279,6 +258,7 @@ def _load_gas_pipelines() -> gpd.GeoDataFrame:
 # Main
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     oil = _load_oil_pipelines()
     print(f"oil rows: {len(oil)}", file=sys.stderr)
@@ -310,9 +290,17 @@ def main() -> None:
     # Full-resolution geometry is preserved in data/derived/pipelines.parquet.
     SIMPLIFY_TOLERANCE_DEG = 0.005
     geojson_cols = [
-        "pipeline_id", "name", "status", "commodity",
-        "capacity_kbpd", "capacity_unit", "start_country_iso3", "end_country_iso3",
-        "operator", "start_year", "geometry",
+        "pipeline_id",
+        "name",
+        "status",
+        "commodity",
+        "capacity_kbpd",
+        "capacity_unit",
+        "start_country_iso3",
+        "end_country_iso3",
+        "operator",
+        "start_year",
+        "geometry",
     ]
     sidecar = combined[geojson_cols].copy()
     sidecar["geometry"] = sidecar.geometry.simplify(

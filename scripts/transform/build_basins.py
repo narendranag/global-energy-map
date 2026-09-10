@@ -33,6 +33,7 @@ Output schema:
 Usage:
     uv run python -m scripts.transform.build_basins
 """
+
 from __future__ import annotations
 
 import sys
@@ -42,7 +43,7 @@ import geopandas as gpd
 import pandas as pd
 from shapely.geometry.collection import GeometryCollection
 
-from scripts.common.iso3 import NETL_NAME_TO_ISO3
+from scripts.common.iso3 import netl_country_iso3
 
 SRC = Path("data/raw/netl/basins.geojson")
 OUT = Path("data/derived/basins.parquet")
@@ -57,16 +58,6 @@ SOURCE_VERSION = "2026-05-17"
 # Basins are continent-scale polygons; we don't need pipeline-grade precision
 # in the browser-shipped sidecar.
 SIMPLIFY_TOLERANCE = 0.01
-
-
-def _country_iso3(md_country: str | None) -> str | None:
-    """First country from semicolon-delimited md_country, mapped to ISO3."""
-    if not isinstance(md_country, str) or not md_country.strip():
-        return None
-    first = md_country.split(";")[0].strip()
-    # Handle escaped single-quotes from GeoJSON (e.g. "Cote D''Ivoire")
-    first = first.replace("''", "'")
-    return NETL_NAME_TO_ISO3.get(first)
 
 
 def _nullable_area(area_km2: float | None) -> float | None:
@@ -109,7 +100,7 @@ def main() -> None:
     # Build output dataframe
     basin_ids = gdf["basin_id"].astype(str).str.strip()
     names = gdf["reg_tl_nam"].map(_name_or_none) if "reg_tl_nam" in gdf.columns else None
-    country_iso3s = gdf["md_country"].map(_country_iso3)
+    country_iso3s = gdf["md_country"].map(netl_country_iso3)
     areas = (
         gdf["area_km2"].map(lambda v: _nullable_area(float(v)) if pd.notna(v) else None)
         if "area_km2" in gdf.columns
@@ -136,7 +127,7 @@ def main() -> None:
     hits = out["country_iso3"].notna().sum()
     misses = out[out["country_iso3"].isna() & out["basin_id"].str.strip().ne("")]
     print(
-        f"country_iso3 hit rate: {hits}/{total} = {hits/total*100:.1f}%",
+        f"country_iso3 hit rate: {hits}/{total} = {hits / total * 100:.1f}%",
         file=sys.stderr,
     )
     if not misses.empty:
@@ -158,8 +149,7 @@ def main() -> None:
     parquet_mb = OUT.stat().st_size / 1_048_576
     geojson_mb = OUT_GEOJSON.stat().st_size / 1_048_576
     print(
-        f"wrote {OUT} ({parquet_mb:.1f} MB) + {OUT_GEOJSON} ({geojson_mb:.1f} MB)"
-        f"  rows={len(out)}"
+        f"wrote {OUT} ({parquet_mb:.1f} MB) + {OUT_GEOJSON} ({geojson_mb:.1f} MB)  rows={len(out)}"
     )
 
 

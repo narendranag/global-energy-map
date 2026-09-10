@@ -1,27 +1,10 @@
 """Transform GEM Oil & Gas Extraction Tracker workbook → extraction rows in assets.parquet.
 
 assets.parquet is shared by five transforms, each of which owns one or more
-``kind`` values and follows the same drop-kind-then-append pattern (re-running
-any one of them is safe and leaves the other kinds untouched):
-
-    kind(s)                    transform
-    extraction_site            build_assets        (this module)
-    refinery                   build_refineries
-    storage                    build_storage
-    port                       build_ports
-    lng_export, lng_import     build_lng_terminals
-
-Canonical full rebuild order (the build_all DAG is Phase 8):
-
-    uv run python -m scripts.transform.build_assets
-    uv run python -m scripts.transform.build_refineries
-    uv run python -m scripts.transform.build_storage
-    uv run python -m scripts.transform.build_ports
-    uv run python -m scripts.transform.build_lng_terminals
-
-build_lng_terminals runs last because it adds the Phase 6 columns
-(unit_count, total_processed_bcm, un_locode) and back-fills them as NULL on
-the other kinds. Every transform tolerates a missing assets.parquet.
+``kind`` values; all of them write through scripts.common.parquet.append_kind
+(drop own kinds → conform to ASSETS_SCHEMA → concat → stable order by kind →
+write), so re-running any one of them is safe and leaves the other kinds
+untouched. The full rebuild is ``uv run python -m scripts.build_all``.
 
 Source:  data/raw/gem_extraction/Global-Oil-and-Gas-Extraction-Tracker-July-2023.xlsx
          Sheet "Main data" (probed 2026-05-15):
@@ -69,15 +52,16 @@ Usage:
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import pandas as pd
 
 from scripts.common.iso3 import GEM_NAME_TO_ISO3 as NAME_TO_ISO3
+from scripts.common.parquet import ASSETS_PATH, append_kind
+from scripts.common.paths import latest
 
 RAW_DIR = Path("data/raw/gem_extraction")
-OUT_PATH = Path("public/data/assets.parquet")
+OUT_PATH = ASSETS_PATH
 SOURCE = "Global Energy Monitor – Global Oil and Gas Extraction Tracker"
 SOURCE_VERSION = "July 2023"
 EXTRACTION_KIND = "extraction_site"
@@ -99,7 +83,7 @@ def _coerce_year(val: object) -> int | None:
 def build(xlsx: Path | None = None) -> pd.DataFrame:
     """Read GEM Main data sheet and return normalised assets DataFrame."""
     if xlsx is None:
-        xlsx = next(RAW_DIR.glob("*.xlsx"))
+        xlsx = latest(RAW_DIR, "*.xlsx")
     # Read the "Main data" sheet verbatim (all columns as-is)
     df = pd.read_excel(xlsx, sheet_name="Main data")
 
@@ -140,72 +124,22 @@ def build(xlsx: Path | None = None) -> pd.DataFrame:
         }
     )
 
-    # Enforce proper nullable int dtype for year columns
-    assets["commissioned_year"] = pd.array(assets["commissioned_year"], dtype=pd.Int32Dtype())
-    assets["decommissioned_year"] = pd.array(
-        [None] * len(assets), dtype=pd.Int32Dtype()
-    )
-
-    # Enforce forward-compatible dtypes for currently-all-null columns
-    # to avoid Pandas inferring wrong types when writing to Parquet
-    assets["capacity"] = assets["capacity"].astype("Float64")  # nullable float
-    assets["capacity_unit"] = assets["capacity_unit"].astype(pd.StringDtype())  # nullable string
-
+    # Column dtypes (nullable years, Float64 capacity, …) are applied by
+    # append_kind from ASSETS_SCHEMA.
     return assets.reset_index(drop=True)
-
-
-def append_extraction(assets_path: Path, extraction: pd.DataFrame) -> pd.DataFrame:
-    """Replace the extraction_site rows of *assets_path* with *extraction*.
-
-    Reads the existing parquet (if any), drops every ``kind == extraction_site``
-    row, appends the new rows (column union, existing column order first) and
-    writes the result back. A missing file is written fresh. Returns the
-    combined frame.
-    """
-    if assets_path.exists():
-        existing = pd.read_parquet(assets_path)
-        n_before = len(existing)
-        existing = existing[existing["kind"] != EXTRACTION_KIND]
-        if n_before != len(existing):
-            print(
-                f"dropped {n_before - len(existing)} stale {EXTRACTION_KIND} rows",
-                file=sys.stderr,
-            )
-    else:
-        existing = pd.DataFrame(columns=extraction.columns)
-
-    all_cols = list(dict.fromkeys([*existing.columns, *extraction.columns]))
-    extraction = extraction.copy()
-    for col in existing.columns:
-        if col not in extraction.columns:
-            # Keep the existing dtype (e.g. Int64 unit_count) so an all-null
-            # column on the new rows doesn't widen the column's type.
-            extraction[col] = pd.Series(index=extraction.index, dtype=existing[col].dtype)
-    existing = existing.reindex(columns=all_cols)
-    extraction = extraction[all_cols]
-    frames = [f for f in (existing, extraction) if not f.empty]
-    combined = (
-        pd.concat(frames, ignore_index=True) if frames else extraction.reset_index(drop=True)
-    )
-
-    assets_path.parent.mkdir(parents=True, exist_ok=True)
-    combined.to_parquet(assets_path, index=False, compression="zstd")
-    return combined
 
 
 def main() -> None:
     df = build()
-    combined = append_extraction(OUT_PATH, df)
+    combined = append_kind(df, EXTRACTION_KIND, OUT_PATH)
     print(
         f"wrote {OUT_PATH}  extraction_rows={len(df)}  "
         f"by_kind={combined['kind'].value_counts().to_dict()}"
     )
-    top_countries = (
-        df.groupby("country_iso3").size().sort_values(ascending=False).head(10)
-    )
+    top_countries = df.groupby("country_iso3").size().sort_values(ascending=False).head(10)
     print("top 10 countries by extraction site count:")
     print(top_countries.to_string())
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

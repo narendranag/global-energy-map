@@ -6,40 +6,12 @@ import type {
   ScenarioResult,
 } from "@/lib/scenarios/types";
 import { getScenario } from "@/lib/scenarios/registry";
-
-export type Rgba = readonly [number, number, number, number];
+import { exposureColor, type Rgba } from "@/lib/symbology";
 
 export interface OverlayEntry {
   /** Undefined = no override; the country keeps its base (reserves) fill. */
   readonly color?: Rgba;
   readonly tooltip: string;
-}
-
-// Sequential red ramp (ColorBrewer "Reds" end-points): light salmon at low
-// exposure → dark red at full exposure. Alpha rises with exposure so small
-// shares read as a faint tint and large shares as a solid fill.
-const LOW: readonly [number, number, number] = [252, 187, 161]; // #fcbba1
-const HIGH: readonly [number, number, number] = [153, 0, 13]; // #99000d
-const ALPHA_MIN = 40;
-const ALPHA_MAX = 240;
-
-/**
- * Colour for a country whose `t` share of imports is at risk under the active
- * scenario. `t <= 0` (or non-finite) → undefined: no override, so a country
- * with zero exposure is not painted as if it were exposed.
- */
-export function exposureColor(t: number): Rgba | undefined {
-  if (!Number.isFinite(t) || t <= 0) return undefined;
-  const u = Math.min(1, t);
-  // Unrounded on purpose: deck.gl quantises to Uint8 itself, and rounding
-  // here would flatten small differences between nearby shares.
-  const lerp = (a: number, b: number) => a + (b - a) * u;
-  return [
-    lerp(LOW[0], HIGH[0]),
-    lerp(LOW[1], HIGH[1]),
-    lerp(LOW[2], HIGH[2]),
-    lerp(ALPHA_MIN, ALPHA_MAX),
-  ];
 }
 
 export function importsNoun(commodity: Commodity): string {
@@ -86,7 +58,6 @@ export function rankImportersByShare(
     .sort((a, b) => b.shareAtRisk - a.shareAtRisk || b.atRiskQty - a.atRiskQty);
 }
 
-/** Asset rows (refineries / LNG import terminals) ranked by displayed share. */
 /**
  * Rank refineries / LNG import terminals by capacity at risk (share × capacity).
  * Assets without a known capacity are omitted: ranking them by share alone let

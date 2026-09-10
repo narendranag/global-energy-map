@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import json
 import re
-import sys
+from collections.abc import Callable
 from pathlib import Path
 
 import pandas as pd
@@ -44,16 +44,24 @@ COUNTRIES_GEOJSON = Path("public/data/countries.geojson")
 SOURCE = "BACI (CEPII)"
 YEAR_MIN = 1995
 
+
 # ---------------------------------------------------------------------------
 # HS source definitions: (output hs_code label, glob pattern, year-extractor)
 # ---------------------------------------------------------------------------
 # Crude (Phase 1, HS 270900): BACI_HS92_Y{year}_crude.csv
 # LNG   (Phase 3, HS 271111): baci_271111_{year}.csv
-HS_SOURCES: list[tuple[str, str, object]] = [
+def _crude_year(p: Path) -> int:
+    m = re.search(r"_Y(\d{4})_", p.name)
+    if m is None:
+        raise ValueError(f"no year in BACI crude file name {p.name}")
+    return int(m.group(1))
+
+
+HS_SOURCES: list[tuple[str, str, Callable[[Path], int]]] = [
     (
         "2709",
         "BACI_HS92_Y*_crude.csv",
-        lambda p: int(re.search(r"_Y(\d{4})_", p.name).group(1)),  # type: ignore[union-attr]
+        _crude_year,
     ),
     (
         "271111",
@@ -139,9 +147,7 @@ def load_natural_earth_iso3(path: Path = COUNTRIES_GEOJSON) -> set[str]:
     with open(path) as fh:
         gj = json.load(fh)
     return {
-        str(f["properties"]["iso3"])
-        for f in gj["features"]
-        if f.get("properties", {}).get("iso3")
+        str(f["properties"]["iso3"]) for f in gj["features"] if f.get("properties", {}).get("iso3")
     }
 
 
@@ -150,9 +156,7 @@ def valid_trade_iso3(path: Path = COUNTRIES_GEOJSON) -> set[str]:
     return load_natural_earth_iso3(path) | set(TRADE_ISO3_ALLOWLIST)
 
 
-def drop_non_country_codes(
-    df: pd.DataFrame, valid: set[str]
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+def drop_non_country_codes(df: pd.DataFrame, valid: set[str]) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Drop rows whose exporter or importer is not a real country/territory code.
 
     BACI's country_codes file maps aggregates to 3-char placeholders (``S19``
@@ -186,7 +190,7 @@ def drop_non_country_codes(
 def _process_hs_source(
     out_hs: str,
     glob: str,
-    year_fn: object,
+    year_fn: Callable[[Path], int],
     num_to_iso3: dict[int, str],
 ) -> tuple[list[pd.DataFrame], int, int]:
     """Process all CSVs for one HS source. Returns (frames, skipped_unmapped, skipped_self)."""
@@ -204,7 +208,7 @@ def _process_hs_source(
         if df.empty:
             continue
 
-        year = year_fn(csv_path)  # type: ignore[operator]
+        year = year_fn(csv_path)
         if year < YEAR_MIN:
             continue
 
@@ -328,4 +332,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

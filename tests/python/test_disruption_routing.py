@@ -38,6 +38,7 @@ def test_every_row_is_cited():
 
 
 def test_shares_unchanged():
-    got = {(r["disruption_id"], r["exporter_iso3"], r["importer_iso3"]): r["share"]
-           for r in all_rows()}
+    got = {
+        (r["disruption_id"], r["exporter_iso3"], r["importer_iso3"]): r["share"] for r in all_rows()
+    }
     assert got == EXPECTED_SHARES

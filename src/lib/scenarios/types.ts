@@ -9,7 +9,7 @@ export interface TradeFlowRow {
   readonly qty: number;
 }
 
-/** Generalizes Phase 1's ChokepointRouteRow. */
+/** Share of an exporter's flows routed through a chokepoint or pipeline. */
 export interface DisruptionRouteRow {
   readonly disruption_id: ScenarioId;
   readonly kind: "chokepoint" | "pipeline";
@@ -18,9 +18,6 @@ export interface DisruptionRouteRow {
   readonly importer_iso3: string | null;
   readonly share: number;
 }
-
-/** Back-compat alias used by Phase 1's hormuz.ts wrapper. */
-export type ChokepointRouteRow = DisruptionRouteRow;
 
 export interface RefineryRow {
   readonly asset_id: string;
@@ -48,15 +45,8 @@ export interface LngVoyageRow {
   readonly to_terminal: string;
   readonly from_country_iso3: string;
   readonly to_country_iso3: string;
-  /**
-   * `amount_cbm` is BIGINT in lng_voyage.parquet, and Apache Arrow
-   * deserialises BIGINT as a JS BigInt — so at runtime this really can be a
-   * bigint, not a number. The type says so on purpose: summing a bigint
-   * against a number accumulator throws "Cannot mix BigInt and other types",
-   * and every consumer must coerce with `Number()` first. (engine.ts works
-   * around the same hazard for `TradeFlowRow.year` with its `!=` comparison.)
-   */
-  readonly amount_cbm: number | bigint;
+  /** BIGINT in lng_voyage.parquet; `query()` normalises it to a number. */
+  readonly amount_cbm: number;
   readonly confidence_score: number;  // 1-5
 }
 
@@ -119,7 +109,4 @@ export interface ScenarioResult {
   readonly rankedRefineries: readonly RefineryImpact[];
   readonly byLngImport: readonly LngImportImpact[];
   readonly rankedLngImports: readonly LngImportImpact[];
-  /** Back-compat shims for Phase 1's ScenarioPanel — kept. */
-  readonly chokepoint_id?: string;
-  readonly ranked?: readonly ImporterImpact[];
 }

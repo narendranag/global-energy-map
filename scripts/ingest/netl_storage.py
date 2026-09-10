@@ -1,27 +1,10 @@
-"""Ingest NETL GOGI Storage layer.
+"""Ingest the NETL GOGI storage layer (shim over scripts.ingest.netl_gogi)."""
 
-Source: https://prod.arcgis.netl.doe.gov/server/rest/services/Hosted/Storage/FeatureServer/0
-License: US Government work, public domain (17 USC §105)
-Expected feature count: ~26,103 points (14 pages at PAGE_SIZE=2000)
-
-Usage:
-    uv run python -m scripts.ingest.netl_storage
-"""
-from __future__ import annotations
-
-import sys
-from pathlib import Path
-
-from scripts.common.netl import fetch_netl_layer
-
-OUT = Path("data/raw/netl/storage.geojson")
-LAYER = "Storage"
+from scripts.ingest.netl_gogi import ingest_layer
 
 
 def main() -> None:
-    print(f"Fetching NETL {LAYER}... (~14 pages, takes a few minutes)", file=sys.stderr)
-    count = fetch_netl_layer(LAYER, OUT)
-    print(f"Wrote {OUT}  features={count}")
+    ingest_layer("storage")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 """Unit tests for LNG terminal transform helpers."""
+
 from __future__ import annotations
 
 import pandas as pd
@@ -36,11 +37,13 @@ def test_assert_unique_asset_ids_raises_on_duplicate():
 
 
 def test_collapse_duplicate_names_operating_wins():
-    df = pd.DataFrame([
-        {"name": "Dahej LNG Terminal", "status": "construction", "capacity": 5.0},
-        {"name": "Dahej LNG Terminal", "status": "operating", "capacity": 17.5},
-        {"name": "Unique Terminal", "status": "operating", "capacity": 1.0},
-    ])
+    df = pd.DataFrame(
+        [
+            {"name": "Dahej LNG Terminal", "status": "construction", "capacity": 5.0},
+            {"name": "Dahej LNG Terminal", "status": "operating", "capacity": 17.5},
+            {"name": "Unique Terminal", "status": "operating", "capacity": 1.0},
+        ]
+    )
     out = collapse_duplicate_names(df)
     assert len(out) == 2
     dahej = out[out["name"] == "Dahej LNG Terminal"]
@@ -49,20 +52,24 @@ def test_collapse_duplicate_names_operating_wins():
 
 
 def test_collapse_duplicate_names_same_status_higher_capacity_wins():
-    df = pd.DataFrame([
-        {"name": "Foo Terminal", "status": "operating", "capacity": 3.0},
-        {"name": "Foo Terminal", "status": "operating", "capacity": 9.0},
-    ])
+    df = pd.DataFrame(
+        [
+            {"name": "Foo Terminal", "status": "operating", "capacity": 3.0},
+            {"name": "Foo Terminal", "status": "operating", "capacity": 9.0},
+        ]
+    )
     out = collapse_duplicate_names(df)
     assert len(out) == 1
     assert out.iloc[0]["capacity"] == 9.0
 
 
 def test_collapse_duplicate_names_no_duplicates_is_noop():
-    df = pd.DataFrame([
-        {"name": "A", "status": "operating", "capacity": 1.0},
-        {"name": "B", "status": "construction", "capacity": 2.0},
-    ])
+    df = pd.DataFrame(
+        [
+            {"name": "A", "status": "operating", "capacity": 1.0},
+            {"name": "B", "status": "construction", "capacity": 2.0},
+        ]
+    )
     out = collapse_duplicate_names(df)
     assert len(out) == 2
     pd.testing.assert_frame_equal(
@@ -73,11 +80,13 @@ def test_collapse_duplicate_names_no_duplicates_is_noop():
 
 def test_collapse_duplicate_names_honours_key_argument():
     """GEM per-unit features collapse on asset_id, not name."""
-    df = pd.DataFrame([
-        {"asset_id": "gem/T1", "name": "Train 1", "status": "construction", "capacity": 5.0},
-        {"asset_id": "gem/T1", "name": "Train 2", "status": "operating", "capacity": 5.0},
-        {"asset_id": "gem/T2", "name": "Other", "status": "operating", "capacity": 1.0},
-    ])
+    df = pd.DataFrame(
+        [
+            {"asset_id": "gem/T1", "name": "Train 1", "status": "construction", "capacity": 5.0},
+            {"asset_id": "gem/T1", "name": "Train 2", "status": "operating", "capacity": 5.0},
+            {"asset_id": "gem/T2", "name": "Other", "status": "operating", "capacity": 1.0},
+        ]
+    )
     out = collapse_duplicate_names(df, key="asset_id")
     assert len(out) == 2
     t1 = out[out["asset_id"] == "gem/T1"]

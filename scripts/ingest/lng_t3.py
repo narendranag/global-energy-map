@@ -10,6 +10,7 @@ data/raw/lng_t3/<version>/. data/raw/ is gitignored.
 Usage:
     uv run python -m scripts.ingest.lng_t3 [--force]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -33,10 +34,10 @@ EXPECTED_FILES = [
 ]
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--force", action="store_true", help="Re-download even if cached")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
 
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     archive = RAW_DIR / "all.zip"
@@ -50,8 +51,7 @@ def main() -> None:
             with archive.open("wb") as f:
                 for chunk in r.iter_bytes(chunk_size=65536):
                     f.write(chunk)
-        print(f"[lng_t3] wrote {archive} ({archive.stat().st_size // 1024} KB)",
-              file=sys.stderr)
+        print(f"[lng_t3] wrote {archive} ({archive.stat().st_size // 1024} KB)", file=sys.stderr)
 
     print(f"[lng_t3] extracting CSVs to {RAW_DIR}", file=sys.stderr)
     with zipfile.ZipFile(archive) as zf:

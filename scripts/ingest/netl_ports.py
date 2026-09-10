@@ -1,27 +1,10 @@
-"""Ingest NETL GOGI Ports layer.
+"""Ingest the NETL GOGI ports layer (shim over scripts.ingest.netl_gogi)."""
 
-Source: https://prod.arcgis.netl.doe.gov/server/rest/services/Hosted/Ports/FeatureServer/0
-License: US Government work, public domain (17 USC §105)
-Expected feature count: ~3,702 points
-
-Usage:
-    uv run python -m scripts.ingest.netl_ports
-"""
-from __future__ import annotations
-
-import sys
-from pathlib import Path
-
-from scripts.common.netl import fetch_netl_layer
-
-OUT = Path("data/raw/netl/ports.geojson")
-LAYER = "Ports"
+from scripts.ingest.netl_gogi import ingest_layer
 
 
 def main() -> None:
-    print(f"Fetching NETL {LAYER}...", file=sys.stderr)
-    count = fetch_netl_layer(LAYER, OUT)
-    print(f"Wrote {OUT}  features={count}")
+    ingest_layer("ports")
 
 
 if __name__ == "__main__":

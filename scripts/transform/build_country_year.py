@@ -29,6 +29,7 @@ from pathlib import Path
 import pandas as pd
 
 from scripts.common.iso3 import EI_NAME_TO_ISO3 as NAME_TO_ISO3
+from scripts.common.paths import latest
 
 RAW_DIR = Path("data/raw/ei_statistical_review")
 OUT_PATH = Path("public/data/country_year_series.parquet")
@@ -189,9 +190,7 @@ def _parse_wide_sheet(
             file=sys.stderr,
         )
 
-    return pd.DataFrame(
-        records, columns=["iso3", "year", "metric", "value", "unit", "source"]
-    )
+    return pd.DataFrame(records, columns=["iso3", "year", "metric", "value", "unit", "source"])
 
 
 def _read_sheet(xlsx: Path, sheet_name: str) -> pd.DataFrame:
@@ -201,7 +200,7 @@ def _read_sheet(xlsx: Path, sheet_name: str) -> pd.DataFrame:
 def build(xlsx: Path | None = None) -> pd.DataFrame:
     """Build and return the combined long-format DataFrame."""
     if xlsx is None:
-        xlsx = next(RAW_DIR.glob("*.xlsx"))
+        xlsx = latest(RAW_DIR, "*.xlsx")
     # --- Proved Reserves (from 'Oil - Proved reserves history') ---
     # Sheet layout: row 0 = disclaimer, rows 1-3 = multi-line header,
     # row 4 = year header, row 5 = blank, rows 6+ = country data
@@ -253,4 +252,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

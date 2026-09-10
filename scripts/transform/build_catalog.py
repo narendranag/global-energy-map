@@ -19,6 +19,12 @@ Computed fields per entry:
                     selected by the registry's ``subset`` filter when several
                     sources share one file (assets.parquet, pipelines.geojson)
 
+``generated_at`` is deterministic so that rebuilding unchanged inputs leaves
+catalog.json byte-identical (``scripts.build_all`` run twice → clean git tree):
+it is the newest ``as_of`` in the registry (the date of the most recent source
+snapshot the catalog describes), as midnight UTC. It is NOT the wall-clock
+build time and NOT a file mtime (mtimes change on every rebuild and checkout).
+
 ``as_of`` rule: always ``YYYY-MM-DD``. The date is the source's own release /
 as-of date when it publishes one; a source that only gives a month uses the
 first of that month; unversioned live services (NETL ArcGIS, OSM Overpass)
@@ -30,8 +36,6 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-import sys
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -43,9 +47,7 @@ OUT = PUBLIC / "data" / "catalog.json"
 CATALOG_VERSION = 6
 
 GEM_ATTRIBUTION = "Data: Global Energy Monitor, CC BY 4.0"
-LNG_T3_ATTRIBUTION = (
-    "Data: Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0"
-)
+LNG_T3_ATTRIBUTION = "Data: Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0"
 NETL_SOURCE_NAME = "National Energy Technology Laboratory (US DOE)"
 NETL_LICENSE = "US Government work, public domain (17 USC §105)"
 NETL_GOGI_URL = (
@@ -278,8 +280,20 @@ REGISTRY: list[dict[str, Any]] = [
 
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _FIELD_ORDER = [
-    "id", "label", "path", "format", "source_name", "source_url", "license",
-    "as_of", "layers", "attribution", "runtime", "rows", "bytes", "sha256",
+    "id",
+    "label",
+    "path",
+    "format",
+    "source_name",
+    "source_url",
+    "license",
+    "as_of",
+    "layers",
+    "attribution",
+    "runtime",
+    "rows",
+    "bytes",
+    "sha256",
 ]
 
 
@@ -334,9 +348,10 @@ def build_catalog(public: Path = PUBLIC) -> dict[str, Any]:
         entry["bytes"] = path.stat().st_size
         entry["sha256"] = _sha256(path)
         entries.append({k: entry[k] for k in _FIELD_ORDER if k in entry})
+    newest = max(e["as_of"] for e in REGISTRY)
     return {
         "version": CATALOG_VERSION,
-        "generated_at": datetime.now(UTC).isoformat(),
+        "generated_at": f"{newest}T00:00:00+00:00",
         "entries": entries,
     }
 
@@ -350,4 +365,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

@@ -26,12 +26,13 @@ Schema (assets.parquet for LNG rows — Phase 6 adds three columns):
   unit_count, total_processed_bcm, un_locode,
   source, source_version
 
-Idempotent — drops prior lng_export + lng_import rows (plus any orphan
-rows with a null kind left by earlier buggy runs), then appends.
+Idempotent — append_kind drops prior lng_export + lng_import rows (plus any
+orphan rows with a null kind left by earlier buggy runs), then appends.
 
 Usage:
     uv run python -m scripts.transform.build_lng_terminals
 """
+
 from __future__ import annotations
 
 import json
@@ -40,11 +41,11 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import pyarrow as pa
-import pyarrow.parquet as pq
 
-from scripts.common.iso3 import GEM_NAME_TO_ISO3
-from scripts.transform._lng_iso3 import lookup_iso3
+from scripts.common.iso3 import gem_first_iso3, lookup_iso3
+from scripts.common.parquet import ASSETS_PATH, append_kind
+from scripts.common.paths import latest
+from scripts.common.values import to_float
 from scripts.transform._lng_terminal_helpers import (
     assert_unique_asset_ids,
     collapse_duplicate_names,
@@ -55,7 +56,8 @@ from scripts.transform._refinery_dedup import haversine_km  # reuse Phase 5 help
 
 LNG_T3_RAW = Path("data/raw/lng_t3/v1-2026-04-01/LNG_terminal.csv")
 GEM_RAW_DIR = Path("data/raw/gem_gas_infra")
-ASSETS = Path("public/data/assets.parquet")
+ASSETS = ASSETS_PATH
+KINDS = ("lng_export", "lng_import")
 
 LNG_T3_SOURCE = "Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058)"
 LNG_T3_SOURCE_VERSION = "v1-2026-04-01"
@@ -65,11 +67,23 @@ DEDUP_THRESHOLD_KM = 25.0
 
 # Schema columns (Phase 6 adds unit_count, total_processed_bcm, un_locode at the end)
 SCHEMA_COLS = [
-    "asset_id", "kind", "name", "country_iso3", "lon", "lat",
-    "capacity", "capacity_unit", "operator", "status",
-    "commissioned_year", "decommissioned_year",
-    "unit_count", "total_processed_bcm", "un_locode",
-    "source", "source_version",
+    "asset_id",
+    "kind",
+    "name",
+    "country_iso3",
+    "lon",
+    "lat",
+    "capacity",
+    "capacity_unit",
+    "operator",
+    "status",
+    "commissioned_year",
+    "decommissioned_year",
+    "unit_count",
+    "total_processed_bcm",
+    "un_locode",
+    "source",
+    "source_version",
 ]
 
 
@@ -77,10 +91,11 @@ SCHEMA_COLS = [
 # LNG-T3 loader
 # ---------------------------------------------------------------------------
 
-def _load_lng_t3() -> pd.DataFrame:
-    if not LNG_T3_RAW.exists():
-        sys.exit(f"no LNG-T3 raw at {LNG_T3_RAW} — run scripts.ingest.lng_t3 first")
-    df = pd.read_csv(LNG_T3_RAW)
+
+def _load_lng_t3(path: Path = LNG_T3_RAW) -> pd.DataFrame:
+    if not path.exists():
+        sys.exit(f"no LNG-T3 raw at {path} — run scripts.ingest.lng_t3 first")
+    df = pd.read_csv(path)
     print(f"LNG-T3: loaded {len(df)} terminals", file=sys.stderr)
 
     # Filter to active terminals
@@ -99,25 +114,28 @@ def _load_lng_t3() -> pd.DataFrame:
     df = collapse_duplicate_names(df)
     print(f"LNG-T3: {len(df)} after collapsing duplicate terminal names", file=sys.stderr)
 
-    out = pd.DataFrame({
-        "asset_id": "lngt3/" + df["name"].astype(str).str.replace(r"[^A-Za-z0-9]", "_", regex=True),
-        "kind": df["kind"],
-        "name": df["name"].astype(str),
-        "country_iso3": df["country_iso3"],
-        "lon": df["lon"].astype(float),
-        "lat": df["lat"].astype(float),
-        "capacity": df["capacity"].astype("Float64"),  # mtpa
-        "capacity_unit": "mtpa",
-        "operator": pd.NA,
-        "status": df["status"].map(normalize_status).astype(pd.StringDtype()),
-        "commissioned_year": pd.to_numeric(df["start_year"], errors="coerce").astype("Int64"),
-        "decommissioned_year": pd.Series([pd.NA] * len(df), dtype="Int64", index=df.index),
-        "unit_count": df["unit_count"].astype("Int64"),
-        "total_processed_bcm": df["total_processed_bcm"].astype("Int64"),
-        "un_locode": df["UN_LOCODE"].astype(pd.StringDtype()),
-        "source": LNG_T3_SOURCE,
-        "source_version": LNG_T3_SOURCE_VERSION,
-    })
+    out = pd.DataFrame(
+        {
+            "asset_id": "lngt3/"
+            + df["name"].astype(str).str.replace(r"[^A-Za-z0-9]", "_", regex=True),
+            "kind": df["kind"],
+            "name": df["name"].astype(str),
+            "country_iso3": df["country_iso3"],
+            "lon": df["lon"].astype(float),
+            "lat": df["lat"].astype(float),
+            "capacity": df["capacity"].astype("Float64"),  # mtpa
+            "capacity_unit": "mtpa",
+            "operator": pd.NA,
+            "status": df["status"].map(normalize_status).astype(pd.StringDtype()),
+            "commissioned_year": pd.to_numeric(df["start_year"], errors="coerce").astype("Int64"),
+            "decommissioned_year": pd.Series([pd.NA] * len(df), dtype="Int64", index=df.index),
+            "unit_count": df["unit_count"].astype("Int64"),
+            "total_processed_bcm": df["total_processed_bcm"].astype("Int64"),
+            "un_locode": df["UN_LOCODE"].astype(pd.StringDtype()),
+            "source": LNG_T3_SOURCE,
+            "source_version": LNG_T3_SOURCE_VERSION,
+        }
+    )
     # Ensure asset_id is a regular column
     out["asset_id"] = out["asset_id"].astype(pd.StringDtype())
     assert_unique_asset_ids(out)
@@ -128,25 +146,15 @@ def _load_lng_t3() -> pd.DataFrame:
 # GEM loader (Phase 3 logic preserved + adapted)
 # ---------------------------------------------------------------------------
 
-def _gem_areas_iso3(areas: str | None) -> str | None:
-    if not isinstance(areas, str):
-        return None
-    for part in areas.split(";"):
-        iso3 = GEM_NAME_TO_ISO3.get(part.strip())
-        if iso3:
-            return iso3
-    return None
 
-
-def _load_gem() -> pd.DataFrame:
-    src = next(GEM_RAW_DIR.glob("*.geojson"), None)
-    if src is None:
-        sys.exit(f"no GEM gas infra geojson in {GEM_RAW_DIR}")
+def _load_gem(raw_dir: Path = GEM_RAW_DIR) -> pd.DataFrame:
+    src = latest(raw_dir, "*.geojson")
 
     with src.open() as f:
         gj = json.load(f)
     feats = [
-        f for f in gj.get("features", [])
+        f
+        for f in gj.get("features", [])
         if (f.get("properties") or {}).get("tracker-custom") in ("GGIT-import", "GGIT-export")
     ]
     print(f"GEM: {len(feats)} LNG terminal features pre-filter", file=sys.stderr)
@@ -163,7 +171,7 @@ def _load_gem() -> pd.DataFrame:
         if p.get("status") not in ("operating", "construction"):
             continue
 
-        iso3 = _gem_areas_iso3(p.get("areas"))
+        iso3 = gem_first_iso3(p.get("areas"))
         if not iso3:
             continue
 
@@ -173,31 +181,29 @@ def _load_gem() -> pd.DataFrame:
             if is_export
             else "totimportlngterminalcapacityinmtpa"
         )
-        cap = p.get(cap_key)
-        try:
-            cap_f = float(cap) if cap not in (None, "") else None
-        except (TypeError, ValueError):
-            cap_f = None
+        cap_f = to_float(p.get(cap_key))
 
-        rows.append({
-            "asset_id": f"gem/{p.get('id') or p.get('pid')}",
-            "kind": "lng_export" if is_export else "lng_import",
-            "name": str(p.get("name") or "LNG terminal"),
-            "country_iso3": iso3,
-            "lon": float(coords[0]),
-            "lat": float(coords[1]),
-            "capacity": cap_f,
-            "capacity_unit": "mtpa",
-            "operator": (p.get("owner") or p.get("operator")),
-            "status": "operating" if p.get("status") == "operating" else "in-construction",
-            "commissioned_year": pd.to_numeric(p.get("start-year"), errors="coerce"),
-            "decommissioned_year": pd.NA,
-            "unit_count": pd.NA,
-            "total_processed_bcm": pd.NA,
-            "un_locode": None,
-            "source": GEM_SOURCE,
-            "source_version": src.name,
-        })
+        rows.append(
+            {
+                "asset_id": f"gem/{p.get('id') or p.get('pid')}",
+                "kind": "lng_export" if is_export else "lng_import",
+                "name": str(p.get("name") or "LNG terminal"),
+                "country_iso3": iso3,
+                "lon": float(coords[0]),
+                "lat": float(coords[1]),
+                "capacity": cap_f,
+                "capacity_unit": "mtpa",
+                "operator": (p.get("owner") or p.get("operator")),
+                "status": "operating" if p.get("status") == "operating" else "in-construction",
+                "commissioned_year": pd.to_numeric(p.get("start-year"), errors="coerce"),
+                "decommissioned_year": pd.NA,
+                "unit_count": pd.NA,
+                "total_processed_bcm": pd.NA,
+                "un_locode": None,
+                "source": GEM_SOURCE,
+                "source_version": src.name,
+            }
+        )
 
     df = pd.DataFrame(rows)
     print(f"GEM: {len(df)} after geometry + status + iso3 attribution", file=sys.stderr)
@@ -216,8 +222,10 @@ def _load_gem() -> pd.DataFrame:
     df = collapse_duplicate_names(df, key="asset_id")
     n_dropped = n_before - len(df)
     if n_dropped:
-        print(f"GEM: collapsed {n_dropped} extra per-unit feature(s) into their "
-              f"terminal rows", file=sys.stderr)
+        print(
+            f"GEM: collapsed {n_dropped} extra per-unit feature(s) into their terminal rows",
+            file=sys.stderr,
+        )
 
     return df.reset_index(drop=True)
 
@@ -225,6 +233,7 @@ def _load_gem() -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 # Dedup
 # ---------------------------------------------------------------------------
+
 
 def _gem_records_not_in_lngt3(gem: pd.DataFrame, lng_t3: pd.DataFrame) -> pd.DataFrame:
     """Return GEM rows with NO LNG-T3 counterpart, by name or by proximity.
@@ -244,8 +253,11 @@ def _gem_records_not_in_lngt3(gem: pd.DataFrame, lng_t3: pd.DataFrame) -> pd.Dat
     name_dupe = name_matches_in_country(gem, lng_t3)
     n_name_dupe = int(name_dupe.sum())
     if n_name_dupe:
-        print(f"GEM: {n_name_dupe} row(s) dropped by name-equality pre-pass "
-              f"(same country, same name as an LNG-T3 terminal)", file=sys.stderr)
+        print(
+            f"GEM: {n_name_dupe} row(s) dropped by name-equality pre-pass "
+            f"(same country, same name as an LNG-T3 terminal)",
+            file=sys.stderr,
+        )
     gem = gem.loc[~name_dupe].copy()
 
     t3_by_country: dict[str, pd.DataFrame] = {
@@ -263,86 +275,44 @@ def _gem_records_not_in_lngt3(gem: pd.DataFrame, lng_t3: pd.DataFrame) -> pd.Dat
 
 
 # ---------------------------------------------------------------------------
-# Main
+# Build
 # ---------------------------------------------------------------------------
 
-def main() -> None:
-    lng_t3 = _load_lng_t3()
-    gem = _load_gem()
 
+def build(lng_t3: pd.DataFrame, gem: pd.DataFrame) -> pd.DataFrame:
+    """LNG-T3 rows plus the GEM rows with no LNG-T3 counterpart."""
     gem_kept = _gem_records_not_in_lngt3(gem, lng_t3)
     print(f"GEM: {len(gem_kept)} kept after 25 km dedup vs LNG-T3", file=sys.stderr)
 
-    # Enforce schema cols on both
-    for df in (lng_t3, gem_kept):
-        for col in SCHEMA_COLS:
-            if col not in df.columns:
-                df[col] = pd.NA
-
-    combined = pd.concat([lng_t3[SCHEMA_COLS], gem_kept[SCHEMA_COLS]], ignore_index=True)
-    # Type discipline (matches Phase 5 conventions)
-    combined["capacity"] = combined["capacity"].astype("Float64")
-    combined["capacity_unit"] = combined["capacity_unit"].astype(pd.StringDtype())
-    combined["operator"] = combined["operator"].astype(pd.StringDtype())
-    combined["status"] = combined["status"].astype(pd.StringDtype())
-    combined["commissioned_year"] = combined["commissioned_year"].astype("Int64")
-    combined["decommissioned_year"] = combined["decommissioned_year"].astype("Int64")
-    combined["unit_count"] = combined["unit_count"].astype("Int64")
-    combined["total_processed_bcm"] = combined["total_processed_bcm"].astype("Int64")
-    combined["un_locode"] = combined["un_locode"].astype(pd.StringDtype())
-    combined["source"] = combined["source"].astype(pd.StringDtype())
-    combined["source_version"] = combined["source_version"].astype(pd.StringDtype())
+    combined = pd.concat(
+        [lng_t3.reindex(columns=SCHEMA_COLS), gem_kept.reindex(columns=SCHEMA_COLS)],
+        ignore_index=True,
+    )
     assert_unique_asset_ids(combined)
-    name_keys = list(zip(
-        combined["country_iso3"],
-        combined["name"].str.strip().str.casefold(),
-        strict=True,
-    ))
+    name_keys = list(
+        zip(
+            combined["country_iso3"],
+            combined["name"].str.strip().str.casefold(),
+            strict=True,
+        )
+    )
     assert len(name_keys) == len(set(name_keys)), (
         "duplicate (country_iso3, name) pairs survived dedup: "
         f"{[k for k in name_keys if name_keys.count(k) > 1]}"
     )
+    return combined
 
-    # Idempotent: drop prior LNG rows, append new
-    if ASSETS.exists():
-        existing = pd.read_parquet(ASSETS)
-    else:
-        existing = pd.DataFrame(columns=combined.columns)
-    n_before = len(existing)
-    existing = existing[~existing["kind"].isin(["lng_export", "lng_import"])]
-    n_kept = len(existing)
-    if n_before != n_kept:
-        print(f"dropped {n_before - n_kept} stale LNG rows from assets.parquet",
-              file=sys.stderr)
 
-    # A `kind` of NA escapes the isin() drop above, so any all-null rows left
-    # behind by an earlier buggy run (index-misaligned pd.DataFrame construction
-    # produced 131 such LNG-T3 rows) would otherwise be carried forward for
-    # ever. `kind` is required for every asset, so drop them unconditionally.
-    n_pre_orphan = len(existing)
-    existing = existing[existing["kind"].notna()]
-    n_orphans = n_pre_orphan - len(existing)
-    if n_orphans:
-        print(f"dropped {n_orphans} orphan rows with null kind from assets.parquet",
-              file=sys.stderr)
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
 
-    # Phase 6 schema additions: bring existing rows up to the new column set
-    for col in ("unit_count", "total_processed_bcm", "un_locode"):
-        if col not in existing.columns:
-            existing[col] = pd.NA
-    existing["unit_count"] = existing["unit_count"].astype("Int64")
-    existing["total_processed_bcm"] = existing["total_processed_bcm"].astype("Int64")
-    existing["un_locode"] = existing["un_locode"].astype(pd.StringDtype())
 
-    out = pd.concat([existing, combined], ignore_index=True)
-    # Uniqueness must hold across the whole assets table, not just LNG rows.
-    assert_unique_asset_ids(out)
-    assert out["kind"].notna().all(), "assets.parquet rows with null kind"
-    pq.write_table(
-        pa.Table.from_pandas(out, preserve_index=False),
-        ASSETS,
-        compression="zstd",
-    )
+def main() -> None:
+    combined = build(_load_lng_t3(), _load_gem())
+    # append_kind also drops orphan rows with a null kind left by earlier buggy
+    # runs (an index-misaligned construction once produced 131 such rows).
+    out = append_kind(combined, KINDS, ASSETS)
 
     counts = out.groupby("kind").size().to_dict()
     by_source = combined.groupby("source").size().to_dict()

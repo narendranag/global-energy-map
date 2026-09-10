@@ -3,6 +3,7 @@
 Caches the raw Overpass JSON response in data/raw/osm_refineries/.
 Idempotent: re-running without --force uses the cached file.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -58,15 +59,13 @@ def _fetch(query: str) -> dict:
         except (httpx.HTTPStatusError, httpx.RequestError) as exc:
             print(f"  failed ({exc}), trying next endpoint…", file=sys.stderr)
             last_exc = exc
-    raise RuntimeError(
-        f"All Overpass endpoints failed. Last error: {last_exc}"
-    )
+    raise RuntimeError(f"All Overpass endpoints failed. Last error: {last_exc}")
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--force", action="store_true")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     out = CACHE_DIR / "refineries.json"

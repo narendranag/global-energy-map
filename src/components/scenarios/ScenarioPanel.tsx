@@ -2,7 +2,7 @@
 import type { Commodity, ScenarioId, ScenarioResult } from "@/lib/scenarios/types";
 import { SCENARIOS, scenarioDescription, type ScenarioDef } from "@/lib/scenarios/registry";
 import { useCountryNames } from "@/lib/geo/useCountryNames";
-import { exposureColor, importsNoun, rankAssetsByShare, rankImportersByShare } from "./overlay";
+import { exposureColor, importsNoun, rankAssetsByCapacityAtRisk, rankImportersByShare } from "./overlay";
 
 export interface ScenarioPanelProps {
   readonly active: ScenarioId | null;
@@ -39,15 +39,16 @@ export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioP
       : [];
   const showLng = commodity === "gas";
   const topAssets = result
-    ? rankAssetsByShare<{
+    ? rankAssetsByCapacityAtRisk<{
         asset_id: string;
         iso3: string;
         name?: string;
         shareAtRisk: number;
-        atRiskQty: number;
+        capacity: number;
       }>(showLng ? result.byLngImport : result.byRefinery).slice(0, 6)
     : [];
   const assetLabel = showLng ? "Top LNG import terminals at risk" : "Top refineries at risk";
+  const assetUnit = showLng ? "mtpa" : "kbpd";
   const showLngT3Footnote =
     showLng && (result?.byLngImport.some((i) => i.dataSource === "lng-t3") ?? false);
   const metricYear = result?.year;
@@ -126,6 +127,10 @@ export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioP
                 </li>
               ))}
             </ol>
+            <p className="mt-1 text-[10px] leading-tight text-slate-500">
+              Ranked by capacity at risk (share × {assetUnit}); assets without capacity data in
+              the source omitted.
+            </p>
           </div>
           {showLngT3Footnote && (
             <p className="mt-2 text-[10px] leading-tight text-slate-500">

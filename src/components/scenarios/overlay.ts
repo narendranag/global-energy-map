@@ -87,12 +87,19 @@ export function rankImportersByShare(
 }
 
 /** Asset rows (refineries / LNG import terminals) ranked by displayed share. */
-export function rankAssetsByShare<T extends { shareAtRisk: number; atRiskQty: number }>(
-  assets: readonly T[],
-): T[] {
+/**
+ * Rank refineries / LNG import terminals by capacity at risk (share × capacity).
+ * Assets without a known capacity are omitted: ranking them by share alone let
+ * tiny or duplicated plants with no capacity data (e.g. three NETL rows for the
+ * same Myanmar refinery) fill the list at 100%.
+ */
+export function rankAssetsByCapacityAtRisk<
+  T extends { shareAtRisk: number; capacity: number | null | undefined },
+>(assets: readonly T[]): T[] {
+  const capAtRisk = (a: T) => a.shareAtRisk * (a.capacity ?? 0);
   return assets
-    .filter((a) => a.shareAtRisk > 0)
-    .sort((a, b) => b.shareAtRisk - a.shareAtRisk || b.atRiskQty - a.atRiskQty);
+    .filter((a) => a.shareAtRisk > 0 && (a.capacity ?? 0) > 0)
+    .sort((a, b) => capAtRisk(b) - capAtRisk(a));
 }
 
 export function refineryImpactMap(r: ScenarioResult | null): ReadonlyMap<string, RefineryImpact> | undefined {

@@ -3,6 +3,7 @@ import {
   exposureColor,
   importerOverlay,
   lngVoyageImpactByTerminalName,
+  rankAssetsByCapacityAtRisk,
   rankImportersByShare,
 } from "@/components/scenarios/overlay";
 import type { ImporterImpact, LngImportImpact, ScenarioResult } from "@/lib/scenarios/types";
@@ -206,5 +207,19 @@ describe("rankImportersByShare", () => {
       0.01,
     );
     expect(ranked.map((r) => r.iso3)).toEqual(["LBR", "JPN"]);
+  });
+});
+
+describe("rankAssetsByCapacityAtRisk", () => {
+  it("ranks by share × capacity and omits assets with unknown or zero capacity", () => {
+    const assets = [
+      { id: "tiny-100pct", shareAtRisk: 1, atRiskQty: 1, capacity: 20 },
+      { id: "unknown-cap", shareAtRisk: 1, atRiskQty: 5, capacity: null },
+      { id: "zero-cap", shareAtRisk: 1, atRiskQty: 5, capacity: 0 },
+      { id: "big-40pct", shareAtRisk: 0.4, atRiskQty: 3, capacity: 500 },
+      { id: "unexposed", shareAtRisk: 0, atRiskQty: 0, capacity: 900 },
+    ];
+    const ranked = rankAssetsByCapacityAtRisk(assets);
+    expect(ranked.map((a) => a.id)).toEqual(["big-40pct", "tiny-100pct"]);
   });
 });

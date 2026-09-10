@@ -47,7 +47,7 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     kind: "pipeline",
     commodities: ["oil"],
     description:
-      "Carries ~90% of Azerbaijani crude from the Caspian to the Mediterranean via Georgia and Turkey, bypassing Russia and the Bosporus.",
+      "Carries about 83% of Azerbaijan's oil exports from the Caspian to the Mediterranean via Georgia and Turkey, bypassing Russia and the Bosporus.",
     routeName: "the Baku-Tbilisi-Ceyhan pipeline",
   },
   {
@@ -56,10 +56,50 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     kind: "pipeline",
     commodities: ["oil"],
     description:
-      "Moves ~80% of Kazakh crude (and ~10% of Russian crude) to Novorossiysk on the Black Sea. Has been disrupted multiple times by Russian regulatory and infrastructure decisions.",
+      "Moves about 80% of Kazakhstan's crude exports (plus a small Russian volume, ~3.5% of Russia's crude exports) to Novorossiysk on the Black Sea. Has been disrupted multiple times by Russian regulatory and infrastructure decisions.",
     routeName: "the CPC pipeline",
   },
 ];
+
+/** First and last year LNG-T3 voyages cover (per-terminal attribution). */
+export const LNG_T3_FIRST_YEAR = 2020;
+export const LNG_T3_LAST_YEAR = 2024;
+
+/** Mean crude conversion used for volume display (EI Statistical Review: 1 t ≈ 7.33 bbl). */
+export const BARRELS_PER_TONNE_CRUDE = 7.33;
+
+/**
+ * Plain-language steps behind the scenario numbers, for the panel's
+ * "How this is computed" disclosure. Mirrors engine.ts / refinery.ts /
+ * lng.ts / lng-t3.ts — change those and this text must follow.
+ */
+export function howComputed(def: ScenarioDef, commodity: Commodity, year: number): readonly string[] {
+  const noun = commodity === "gas" ? "LNG (HS 271111)" : "crude (HS 2709)";
+  const shareRule =
+    def.kind === "chokepoint"
+      ? `Each exporter has one share: the fraction of its exports that transits ${def.routeName}. It applies to every importer.`
+      : `Shares are set per exporter → importer pair (or per exporter where the pipeline serves all its buyers).`;
+  const steps = [
+    `Take ${year.toString()} bilateral ${noun} imports by volume (tonnes) from BACI (CEPII).`,
+    shareRule,
+    `An importer's volume at risk = Σ over its suppliers of (imports from that supplier × route share). % at risk = volume at risk ÷ its total ${noun} imports.`,
+  ];
+  if (commodity === "oil") {
+    steps.push(
+      "Refineries: a country's imports are split across its refineries by capacity (evenly where no refinery has capacity data), then the same shares apply. Refineries without capacity in the source are not ranked.",
+      `Volumes shown in kb/d use ${BARRELS_PER_TONNE_CRUDE.toString()} barrels per tonne.`,
+    );
+  } else {
+    const inT3 = year >= LNG_T3_FIRST_YEAR && year <= LNG_T3_LAST_YEAR;
+    steps.push(
+      inT3
+        ? `Terminals (${LNG_T3_FIRST_YEAR.toString()}–${LNG_T3_LAST_YEAR.toString()}): LNG-T3 voyage data (a partial AIS sample) gives each terminal's share of its country's arrivals and its supplier mix; the BACI country total is split by those shares. Terminals in countries with no voyage coverage fall back to a split by capacity ("capacity proxy").`
+        : `Terminals: the BACI country total is split across the country's import terminals by capacity ("capacity proxy"); per-terminal voyage data only covers ${LNG_T3_FIRST_YEAR.toString()}–${LNG_T3_LAST_YEAR.toString()}.`,
+      "Volumes shown in Mt (million tonnes per year).",
+    );
+  }
+  return steps;
+}
 
 export function getScenario(id: ScenarioId): ScenarioDef {
   const found = SCENARIOS.find((s) => s.id === id);

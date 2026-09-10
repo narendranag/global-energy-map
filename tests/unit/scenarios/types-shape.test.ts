@@ -42,6 +42,7 @@ describe("Phase 3 type extensions", () => {
       kind: "chokepoint",
       commodities: ["oil", "gas"],
       description: "test",
+      routeName: "the test route",
     };
     expect(def.commodities).toContain("gas");
   });

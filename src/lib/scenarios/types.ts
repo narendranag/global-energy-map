@@ -101,6 +101,8 @@ export interface ImporterImpact {
 export interface RefineryImpact {
   readonly asset_id: string;
   readonly iso3: string;
+  /** Display name; attached by the useScenario hook from assets.parquet (the engine does not need it). */
+  readonly name?: string;
   readonly capacity: number;
   readonly atRiskQty: number;
   readonly shareAtRisk: number;

@@ -62,6 +62,8 @@ Other speeds (median, cold / warm):
 
 Unthrottled runs are noisy (±0.8 s): the M1 is CPU-bound there, on wasm compile and deck.gl layer builds.
 
+**Final (after self-hosting the parquet extension, 2026-09-10, same method, 5 runs, 40 Mb/s / 30 ms):** cold `/` **5.0 s** (5.03–5.09), cold scenario URL **5.2 s** (5.23–5.30); warm 1.4 s / 1.3 s; cold transfer ≈ 19.5 / 20.5 MB (DuckDB 7.8 MB, data 4.5 / 5.5 MB, rest basemap tiles + app JS); 0 jsDelivr and 0 extensions.duckdb.org requests; revisit re-downloads 0 bytes of `/data`. Net vs. the Phase 9 baseline: −2.0 s (`/`) and −2.6 s (scenario). The scenario target (< 5 s) is missed by ~0.2 s and the `/` target (< 3 s) by ~2 s — both are now bound by bytes on the wire (lever 2 below).
+
 The warm-revisit target is met, and the jsDelivr dependency is gone. Cold load improved by 1.2–1.6 s at broadband speeds but still misses the < 3 s and < 5 s targets. The next section explains why.
 
 ## What dominates the remaining cold time
@@ -85,7 +87,7 @@ About 18 MB crosses the wire before `data-ready`: basemap 6.4, wasm 7.1, pipelin
 
 ## Next levers, in order of payoff
 
-1. **Self-host the parquet extension.** DuckDB autoloads it from `https://extensions.duckdb.org/v1.5.1/wasm_eh/parquet.duckdb_extension.wasm` (and `wasm_mvp`) after instantiation. That is a serial ~0.6 s and a second third-party runtime dependency, which this track did *not* remove. Fix: have `copy-duckdb.mjs` fetch the signed extension files at build (or vendor them), then `SET custom_extension_repository` to `/duckdb/extensions`. This is a build-time download from DuckDB's repository and needs the maintainer's OK.
+1. ~~**Self-host the parquet extension.**~~ **Done** (maintainer-approved): `copy-duckdb.mjs` downloads the signed `parquet` extension for core v1.5.1 at build, verifies sha256, and the bootstrap sets `custom_extension_repository` to `/duckdb/extensions` (≈ −0.8 s cold).
 2. **Take DuckDB off the first-paint path.** The default view needs only a reserves lookup (40 KB) and asset points. Precomputed Arrow/JSON for the default layers would render in about 2 s cold and leave DuckDB for scenarios and export (review §4.3).
 3. **Pipelines as PMTiles** (tippecanoe → MVT). Replaces 3 MB of GeoJSON, blurred by simplification, with range-read tiles of full detail.
 4. **`<link rel="preload" as="fetch" crossorigin>` for `duckdb-eh.wasm?v=…`** in `layout.tsx`: a head start of about 250 ms (the worker currently requests the wasm at ~650 ms). The worker's fetch reuses the HTTP-cache entry.

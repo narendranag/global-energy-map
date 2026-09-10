@@ -9,6 +9,7 @@ import {
 } from "@/lib/url-state/encode";
 import { DEFAULT_VIEW, MAX_LAT, MAX_ZOOM, MIN_ZOOM, type MapView } from "@/lib/state/view";
 import type { LayerState } from "@/components/layers/LayerPanel";
+import { applyMode, MODE_LAYERS } from "@/lib/modes";
 
 const ALL_ON: LayerState = {
   reserves: true,
@@ -23,7 +24,21 @@ const ALL_ON: LayerState = {
   lng_voyages: true,
 };
 
+const ALL_OFF: LayerState = {
+  reserves: false,
+  basins: false,
+  extraction: false,
+  pipelines: false,
+  refineries: false,
+  storage: false,
+  ports: false,
+  gas_pipelines: false,
+  lng_terminals: false,
+  lng_voyages: false,
+};
+
 const DEFAULTS: AppState = {
+  mode: "infrastructure",
   year: 2020,
   commodity: "oil",
   scenario: null,
@@ -33,6 +48,7 @@ const DEFAULTS: AppState = {
 describe("encodeAppState", () => {
   it("encodes a non-default state to a querystring", () => {
     const qs = encodeAppState({
+      mode: "infrastructure",
       year: 2015,
       commodity: "gas",
       scenario: "hormuz",
@@ -52,6 +68,7 @@ describe("encodeAppState", () => {
 describe("decodeAppState", () => {
   it("round-trips a full state", () => {
     const original: AppState = {
+      mode: "infrastructure",
       year: 2015,
       commodity: "gas",
       scenario: "hormuz",
@@ -116,6 +133,7 @@ describe("decodeAppState", () => {
 
   it("round-trips with lng_voyages flag toggled on", () => {
     const state: AppState = {
+      mode: "infrastructure",
       year: 2023,
       commodity: "gas",
       scenario: "hormuz",
@@ -133,6 +151,56 @@ describe("decodeAppState", () => {
       DEFAULTS,
     );
     expect(decoded.layers.lng_voyages).toBe(false);
+  });
+});
+
+describe("decodeAppState — mode", () => {
+  const decode = (qs: string) => decodeAppState(new URLSearchParams(qs), DEFAULTS);
+
+  it("encodes the mode", () => {
+    expect(new URLSearchParams(encodeAppState({ ...DEFAULTS, mode: "flows" })).get("mode")).toBe("flows");
+  });
+
+  it("round-trips every mode", () => {
+    for (const mode of ["infrastructure", "flows", "scenarios"] as const) {
+      const state: AppState = { ...DEFAULTS, mode, year: 2021, commodity: "gas" };
+      expect(decode(encodeAppState(state))).toEqual(state);
+    }
+  });
+
+  it("missing or unknown mode → Infrastructure, decoded against the defaults unchanged", () => {
+    expect(decode("")).toEqual(DEFAULTS);
+    expect(decode("mode=coal")).toEqual(DEFAULTS);
+    expect(decode("mode=")).toEqual(DEFAULTS);
+  });
+
+  it("an old (pre-mode) URL decodes exactly as encoded", () => {
+    const decoded = decode("year=2015&commodity=gas&scenario=hormuz&layers=reserves,lng_terminals");
+    expect(decoded).toEqual({
+      mode: "infrastructure",
+      year: 2015,
+      commodity: "gas",
+      scenario: "hormuz",
+      layers: { ...ALL_OFF, reserves: true, lng_terminals: true },
+    });
+  });
+
+  it("an explicit mode with no other params takes that mode's preset", () => {
+    expect(decode("mode=flows")).toEqual(applyMode(DEFAULTS, "flows"));
+    expect(decode("mode=scenarios")).toEqual(applyMode(DEFAULTS, "scenarios"));
+  });
+
+  it("explicit params win over the mode preset", () => {
+    const decoded = decode("mode=flows&year=2012&commodity=oil&layers=reserves");
+    expect(decoded.mode).toBe("flows");
+    expect(decoded.year).toBe(2012);
+    expect(decoded.commodity).toBe("oil");
+    expect(decoded.layers).toEqual({ ...ALL_OFF, reserves: true });
+    expect(decoded.layers).not.toEqual(MODE_LAYERS.flows);
+  });
+
+  it("an empty layers param means no layers, even under a mode preset", () => {
+    expect(Object.values(decode("mode=flows&layers=").layers).some(Boolean)).toBe(false);
   });
 });
 

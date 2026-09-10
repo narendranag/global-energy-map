@@ -3,8 +3,11 @@ import { SCENARIOS } from "@/lib/scenarios/registry";
 import { clampYear } from "@/lib/time/range";
 import type { LayerState } from "@/components/layers/LayerPanel";
 import { normalizeView, type MapView } from "@/lib/state/view";
+import { DEFAULT_MODE, modeBaseState, parseMode, type Mode } from "@/lib/modes";
 
 export interface AppState {
+  /** Phase 9 IA mode (URL `mode`). Missing/unknown → Infrastructure. */
+  readonly mode: Mode;
   readonly year: number;
   readonly commodity: Commodity;
   readonly scenario: ScenarioId | null;
@@ -27,6 +30,7 @@ const LAYER_KEYS: readonly (keyof LayerState)[] = [
 
 export function encodeAppState(state: AppState): string {
   const params = new URLSearchParams();
+  params.set("mode", state.mode);
   params.set("year", String(state.year));
   params.set("commodity", state.commodity);
   if (state.scenario !== null) params.set("scenario", state.scenario);
@@ -35,10 +39,23 @@ export function encodeAppState(state: AppState): string {
   return params.toString();
 }
 
+/**
+ * Decode app state. An explicit, known `mode` swaps the base from `defaults`
+ * to that mode's preset (`modeBaseState`); every other param present in the
+ * URL then overrides the base field by field — so a mode preset only fills
+ * gaps and never changes what an explicit param says. Missing or unknown
+ * `mode` decodes as Infrastructure against `defaults`, exactly as pre-mode
+ * URLs always did.
+ */
 export function decodeAppState(
   params: URLSearchParams,
-  defaults: AppState,
+  appDefaults: AppState,
 ): AppState {
+  const explicitMode = parseMode(params.get("mode"));
+  const mode: Mode = explicitMode ?? DEFAULT_MODE;
+  const defaults =
+    explicitMode !== null ? modeBaseState(appDefaults, explicitMode) : { ...appDefaults, mode };
+
   const rawYear = params.get("year");
   let year = defaults.year;
   if (rawYear !== null) {
@@ -72,7 +89,7 @@ export function decodeAppState(
     layers = next;
   }
 
-  return { year, commodity, scenario, layers };
+  return { mode, year, commodity, scenario, layers };
 }
 
 /**

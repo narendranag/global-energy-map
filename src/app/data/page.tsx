@@ -4,6 +4,7 @@ import { CitationBlock } from "@/components/share/CitationBlock";
 import { CopyButton } from "@/components/share/CopyButton";
 import { BUNDLED_CATALOG, isDownloadable } from "@/lib/data-catalog/bundled";
 import type { CatalogEntry } from "@/lib/data-catalog/types";
+import { dataUrl } from "@/lib/data/urls";
 import { attributionsFor } from "@/lib/export/citation";
 
 const LICENSE_DATA_URL = "https://github.com/narendranag/global-energy-map/blob/main/LICENSE-DATA.md";
@@ -109,7 +110,7 @@ function EntryRow({ e, tenants }: { e: CatalogEntry; tenants: readonly CatalogEn
       <td className="border-t border-panel-border py-3 pr-1">
         {downloadable ? (
           <a
-            href={e.path}
+            href={dataUrl(e.path)}
             download={fileName(e.path)}
             className="inline-block whitespace-nowrap rounded border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-ink hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-700"
             data-testid={`download-${e.id}`}

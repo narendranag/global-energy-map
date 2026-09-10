@@ -2,24 +2,79 @@
 
 /*
  * Light-only UI by design (Phase 7 decision). There is deliberately no
- * `prefers-color-scheme: dark` override: panels are `bg-white/90` and the
+ * `prefers-color-scheme: dark` override: panels are light cards and the
  * basemap is a light style, so flipping the body colours only produced
  * unreadable text and a dark void behind the map.
+ *
+ * Design tokens (Phase 9): light, editorial, restrained. Use the Tailwind
+ * utilities generated from `@theme` below — `bg-panel`, `border-panel-border`,
+ * `text-ink`, `text-ink-muted`, `text-ink-subtle`, `text-2xs` — rather than
+ * ad-hoc slate shades, so panels read as one system.
+ *
+ * Type scale (never below 11 px anywhere):
+ *   2xs 11 px  captions, legend notes, tick labels
+ *   xs  12 px  legend rows, secondary panel text, section labels
+ *   sm  14 px  panel body, controls
+ *   base 16 px page body (methodology / data)
  */
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1c1f23;
+
+  --panel: rgb(255 255 255 / 0.94);
+  --panel-solid: #ffffff;
+  --panel-border: #e3e4e0;
+  --panel-divider: #ecedea;
+  --ink: #1c1f23; /* 16.1:1 on white */
+  --ink-muted: #4b5058; /* 8.0:1 on white */
+  --ink-subtle: #686d75; /* 5.3:1 on white — the lightest text allowed */
+  --accent: #1c1f23;
+  --focus: #2f4fa6;
+
   color-scheme: light;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-panel: var(--panel);
+  --color-panel-solid: var(--panel-solid);
+  --color-panel-border: var(--panel-border);
+  --color-panel-divider: var(--panel-divider);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-accent: var(--accent);
+  --color-focus: var(--focus);
+
+  --text-2xs: 0.6875rem; /* 11px */
+  --text-2xs--line-height: 1rem;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+}
+
+/* Tabular figures wherever numbers line up (years, values, percentages). */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* One visible focus ring for every control. */
+:where(button, a, input, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Year slider: thin track, round thumb, in the ink colour. */
+input[type="range"].year-range {
+  accent-color: var(--ink);
+  height: 1.25rem;
+  cursor: pointer;
 }

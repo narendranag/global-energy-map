@@ -2,6 +2,10 @@ import { describe, it, expect } from "vitest";
 import {
   EXPOSURE_LEGEND_STOPS,
   LEGEND,
+  LEGEND_GROUPS,
+  LNG_TERMINAL_COLOR,
+  REFINERY_FILL,
+  legendSections,
   exposureColor,
   gradientCss,
   lngTerminalColor,
@@ -49,11 +53,23 @@ describe("ramps are monotonic", () => {
     expect(monotonic(cs.map((c) => c[3]), "up")).toBe(true);
   });
 
-  it("asset at-risk reds deepen with share", () => {
-    expect(monotonic(TS.slice(1).map((t) => refineryColor(t)[0]), "up")).toBe(true);
-    expect(monotonic(TS.slice(1).map((t) => voyageTargetColor(t)[0]), "up")).toBe(true);
-    const lng = TS.slice(1).map((t) => lngTerminalColor({ shareAtRisk: t, coverage: "measured" })[0]);
-    expect(monotonic(lng, "up")).toBe(true);
+  it("asset at-risk reds darken with share (and stay red)", () => {
+    expect(monotonic(TS.slice(1).map((t) => luminance(refineryColor(t))), "down")).toBe(true);
+    expect(monotonic(TS.slice(1).map((t) => luminance(voyageTargetColor(t))), "down")).toBe(true);
+    const lng = TS.slice(1).map((t) => luminance(lngTerminalColor({ shareAtRisk: t, coverage: "measured" })));
+    expect(monotonic(lng, "down")).toBe(true);
+    for (const t of TS.slice(1)) {
+      const [r, g, b] = refineryColor(t);
+      expect(r).toBeGreaterThan(3 * Math.max(g, b));
+    }
+  });
+
+  it("muted (scenario) reserves ramp keeps the lightness steps but drops the hue", () => {
+    expect(monotonic(TS.map((t) => luminance(reservesRampColor(t, true))), "down")).toBe(true);
+    for (const t of TS) {
+      const [r, g, b] = reservesRampColor(t, true);
+      expect(Math.max(r, g, b) - Math.min(r, g, b)).toBeLessThanOrEqual(12);
+    }
   });
 
   it("size rules grow with capacity / cargo", () => {
@@ -65,8 +81,13 @@ describe("ramps are monotonic", () => {
 });
 
 describe("colour helpers", () => {
-  it("pipeline status is opacity, commodity is hue", () => {
-    expect(pipelineColor("crude", "operating")[3]).toBeGreaterThan(pipelineColor("crude", "in-construction")[3]);
+  it("commodity is hue; in construction is the same hue, lighter and more transparent", () => {
+    const op = pipelineColor("crude", "operating");
+    const ic = pipelineColor("crude", "in-construction");
+    expect(op[3]).toBeGreaterThan(ic[3]);
+    expect(luminance(ic)).toBeGreaterThan(luminance(op));
+    // Same hue family: channel order preserved (r > g > b for the warm oil line).
+    expect(ic[0] > ic[1] && ic[1] > ic[2]).toBe(true);
     expect(pipelineColor("crude", "operating").slice(0, 3)).not.toEqual(
       pipelineColor("gas", "operating").slice(0, 3),
     );
@@ -104,7 +125,7 @@ describe("legend", () => {
     Object.fromEntries(ALL_LAYER_KEYS.map((x) => [x, x === k])) as unknown as LayerState;
 
   it("shows rows only for visible layers", () => {
-    const items = legendItems(only("ports"));
+    const items = legendItems(only("ports"), undefined, 6);
     expect(items).toEqual(LEGEND.ports);
     expect(legendItems(Object.fromEntries(ALL_LAYER_KEYS.map((x) => [x, false])) as unknown as LayerState)).toEqual(
       [],
@@ -113,6 +134,40 @@ describe("legend", () => {
 
   it("adds the exposure ramp while a scenario is active", () => {
     const items = legendItems(only("reserves"), "crude imports");
-    expect(items.some((i) => i.label.includes("share of crude imports at risk"))).toBe(true);
+    expect(items.some((i) => i.label.includes("Share of crude imports at risk"))).toBe(true);
+    // No asset rows when no asset layer is visible.
+    expect(items.some((i) => i.label.includes("Asset at risk"))).toBe(false);
+    expect(legendItems(only("refineries"), "crude imports").some((i) => i.label.includes("Asset at risk"))).toBe(
+      true,
+    );
+  });
+
+  it("groups sections by commodity, in a fixed order", () => {
+    const all = Object.fromEntries(ALL_LAYER_KEYS.map((x) => [x, true])) as unknown as LayerState;
+    expect(legendSections(all, undefined, 6).map((s) => s.title)).toEqual([
+      "Reserves & geology",
+      "Oil",
+      "Gas",
+      "Shipping",
+    ]);
+    expect(legendSections(all, "LNG imports", 6).map((s) => s.title).at(-1)).toBe("Scenario");
+    // Every layer key appears in exactly one group.
+    expect(LEGEND_GROUPS.flatMap((g) => g.keys).sort()).toEqual([...ALL_LAYER_KEYS].sort());
+  });
+
+  it("notes zoom-gated layers instead of hiding their rows", () => {
+    const gated = legendItems(only("storage"), undefined, 2);
+    expect(gated[0]?.note).toBe("visible from zoom 4");
+    expect(legendItems(only("storage"), undefined, 4)[0]?.note).toBeUndefined();
+    expect(legendItems(only("refineries"), undefined, 2)[0]?.note).toBeUndefined();
+  });
+
+  it("legend swatches are the map's own colours", () => {
+    const refinery = LEGEND.refineries[0]?.swatch;
+    expect(refinery?.kind === "dot" ? refinery.color : null).toEqual(REFINERY_FILL);
+    const lng = LEGEND.lng_terminals[0]?.swatch;
+    expect(lng?.kind === "triangle" ? lng.color : null).toEqual(LNG_TERMINAL_COLOR);
+    const gas = LEGEND.gas_pipelines[1]?.swatch;
+    expect(gas?.kind === "line" ? gas.color : null).toEqual(pipelineColor("gas", "in-construction"));
   });
 });

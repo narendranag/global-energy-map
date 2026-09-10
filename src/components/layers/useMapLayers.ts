@@ -13,6 +13,8 @@ import {
 import { loadCountries } from "@/lib/geo/countries";
 import type { Commodity, ScenarioResult } from "@/lib/scenarios/types";
 import { reservesDataYear } from "@/lib/time/range";
+import { useMapView } from "@/lib/state";
+import { extractionOpacity, glyphScale, isZoomGated } from "@/lib/symbology";
 import {
   importerOverlay,
   lngImportImpactMap,
@@ -68,6 +70,13 @@ export interface MapLayers {
  * fetched until first shown.
  */
 export function useMapLayers({ layers, year, commodity, scenario, assets }: MapLayersInput): MapLayers {
+  // --- zoom (settled camera; quantised so a pan does not rebuild layers) -----
+  const { zoom } = useMapView();
+  const scale = glyphScale(zoom);
+  const extractionAlpha = extractionOpacity(zoom);
+  const storageVisible = !isZoomGated("storage", zoom);
+  const portsVisible = !isZoomGated("ports", zoom);
+
   // --- data -----------------------------------------------------------------
   const countries = useAsync(loadCountries, layers.reserves ? [] : null);
   const reserves = useAsync(loadReserves, layers.reserves ? [commodity, reservesDataYear(year)] : null);
@@ -97,8 +106,11 @@ export function useMapLayers({ layers, year, commodity, scenario, assets }: MapL
     [layers.basins, basins.data],
   );
   const extractionLayer = useMemo(
-    () => (layers.extraction && assets ? buildExtractionLayer(assets.extraction, year) : null),
-    [layers.extraction, assets, year],
+    () =>
+      layers.extraction && assets
+        ? buildExtractionLayer(assets.extraction, year, { scale, opacity: extractionAlpha })
+        : null,
+    [layers.extraction, assets, year, scale, extractionAlpha],
   );
   const oilPipesLayer = useMemo(
     () => (layers.pipelines && pipelines.data ? buildPipelinesLayer(pipelines.data, "crude", year) : null),
@@ -109,16 +121,24 @@ export function useMapLayers({ layers, year, commodity, scenario, assets }: MapL
     [layers.gas_pipelines, pipelines.data, year],
   );
   const refineriesLayer = useMemo(
-    () => (layers.refineries && assets ? buildRefineriesLayer(assets.refinery, refineryImpacts) : null),
-    [layers.refineries, assets, refineryImpacts],
+    () => (layers.refineries && assets ? buildRefineriesLayer(assets.refinery, refineryImpacts, scale) : null),
+    [layers.refineries, assets, refineryImpacts, scale],
   );
   const storageLayer = useMemo(
-    () => (layers.storage && assets ? buildStorageLayer(assets.storage) : null),
-    [layers.storage, assets],
+    // Below the minimum zoom the layer stays built but `visible: false`, so
+    // zooming in shows it without a rebuild.
+    () =>
+      layers.storage && assets
+        ? buildStorageLayer(assets.storage, { scale, visible: storageVisible })
+        : null,
+    [layers.storage, assets, scale, storageVisible],
   );
   const portsLayer = useMemo(
-    () => (layers.ports && assets ? buildPortsLayer(assets.port) : null),
-    [layers.ports, assets],
+    () =>
+      layers.ports && assets
+        ? buildPortsLayer(assets.port, { scale, visible: portsVisible })
+        : null,
+    [layers.ports, assets, scale, portsVisible],
   );
   const lngTerminalRows = useMemo(
     () => (assets ? [...assets.lngExport, ...assets.lngImport] : null),
@@ -127,9 +147,9 @@ export function useMapLayers({ layers, year, commodity, scenario, assets }: MapL
   const lngTerminalsLayer = useMemo(
     () =>
       layers.lng_terminals && lngTerminalRows
-        ? buildLngTerminalsLayer(lngTerminalRows, year, lngImpacts)
+        ? buildLngTerminalsLayer(lngTerminalRows, year, lngImpacts, scale)
         : null,
-    [layers.lng_terminals, lngTerminalRows, year, lngImpacts],
+    [layers.lng_terminals, lngTerminalRows, year, lngImpacts, scale],
   );
   const terminalCoords = useMemo(
     () => (lngTerminalRows ? terminalCoordinates(lngTerminalRows) : null),

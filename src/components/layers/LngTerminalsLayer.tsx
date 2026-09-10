@@ -35,6 +35,8 @@ export function buildLngTerminalsLayer(
   rows: readonly LngTerminalAsset[],
   year: number,
   impactByAssetId?: ReadonlyMap<string, LngImportImpact>,
+  /** Glyph-size multiplier from `glyphScale(zoom)`. */
+  scale = 1,
 ): IconLayer<LngTerminalAsset> {
   return new IconLayer<LngTerminalAsset>({
     id: LNG_TERMINALS_LAYER_ID,
@@ -45,8 +47,9 @@ export function buildLngTerminalsLayer(
     getPosition: (d) => [d.lon, d.lat],
     getSize: (d) => lngTerminalSize(d.capacity),
     sizeUnits: "pixels",
-    sizeMinPixels: LNG_TERMINAL_SIZE.minPixels,
-    sizeMaxPixels: LNG_TERMINAL_SIZE.maxPixels,
+    sizeScale: scale,
+    sizeMinPixels: LNG_TERMINAL_SIZE.minPixels * scale,
+    sizeMaxPixels: LNG_TERMINAL_SIZE.maxPixels * scale,
     getColor: (d) => [...lngTerminalColor(impactByAssetId?.get(d.asset_id))],
     pickable: true,
     updateTriggers: { getColor: [impactByAssetId] },

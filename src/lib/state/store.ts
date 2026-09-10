@@ -1,6 +1,6 @@
 /**
- * App store: the single source of truth for `AppState` (year, commodity,
- * scenario, layers) and the map view (lon/lat/zoom).
+ * App store: the single source of truth for `AppState` (mode, year,
+ * commodity, scenario, layers) and the map view (lon/lat/zoom).
  *
  * The URL is a *serialisation* of this store, not the store itself (R16):
  * changes land in memory synchronously and are mirrored to the address bar by
@@ -45,7 +45,12 @@ export interface AppStore {
 }
 
 function sameApp(a: AppState, b: AppState): boolean {
-  if (a.year !== b.year || a.commodity !== b.commodity || a.scenario !== b.scenario) {
+  if (
+    a.mode !== b.mode ||
+    a.year !== b.year ||
+    a.commodity !== b.commodity ||
+    a.scenario !== b.scenario
+  ) {
     return false;
   }
   const keys = new Set([...Object.keys(a.layers), ...Object.keys(b.layers)]);

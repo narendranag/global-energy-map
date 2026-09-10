@@ -19,6 +19,7 @@ EI_NAME_TO_ISO3: dict[str, str] = {
     "Ecuador": "ECU",
     "Guyana": "GUY",
     "Peru": "PER",
+    "Bolivia": "BOL",
     "Trinidad & Tobago": "TTO",
     "Venezuela": "VEN",
     # Europe
@@ -27,6 +28,11 @@ EI_NAME_TO_ISO3: dict[str, str] = {
     "Norway": "NOR",
     "Romania": "ROU",
     "United Kingdom": "GBR",
+    # Gas-reserves sheet only (holders without an oil-reserves row)
+    "Germany": "DEU",
+    "Netherlands": "NLD",
+    "Poland": "POL",
+    "Ukraine": "UKR",
     # CIS / Former USSR
     "Azerbaijan": "AZE",
     "Kazakhstan": "KAZ",
@@ -43,6 +49,8 @@ EI_NAME_TO_ISO3: dict[str, str] = {
     "Syria": "SYR",
     "United Arab Emirates": "ARE",
     "Yemen": "YEM",
+    "Bahrain": "BHR",
+    "Israel": "ISR",
     # Africa
     "Algeria": "DZA",
     "Angola": "AGO",
@@ -66,6 +74,10 @@ EI_NAME_TO_ISO3: dict[str, str] = {
     "Malaysia": "MYS",
     "Thailand": "THA",
     "Vietnam": "VNM",
+    "Bangladesh": "BGD",
+    "Myanmar": "MMR",
+    "Pakistan": "PAK",
+    "Papua New Guinea": "PNG",
 }
 
 # Global Energy Monitor (extraction tracker, oil infrastructure tracker)
@@ -405,6 +417,33 @@ LNG_T3_NAME_TO_ISO3: dict[str, str] = {
     "Republic of the Congo": "COG",
     "South Korea": "KOR",
 }
+
+
+# Real ISO 3166-1 alpha-3 codes that appear in BACI trade data but have no
+# polygon in Natural Earth admin-0 1:110m (public/data/countries.geojson) —
+# small island states and territories, city-states, and codes NE spells
+# differently (NE uses SDS for South Sudan, PSX for Palestine). Derived on
+# 2026-09-10 by listing every trade_flow code absent from countries.geojson.
+#
+# ANT (Netherlands Antilles, dissolved 2010) and SCG (Serbia and Montenegro,
+# dissolved 2006) are withdrawn-but-genuine ISO 3166-1 codes for real
+# territories; BACI uses them for pre-dissolution years, so they stay.
+#
+# Deliberately EXCLUDED (BACI pseudo-codes, not territories):
+#   S19  "Other Asia, nes"  — never reaches the filter: build_trade_flow remaps
+#        it to TWN first (BACI reports Taiwan under this code)
+#   ZA1  "Southern African Customs Union (...1999)" (customs-union aggregate)
+#   PUS  "US Misc. Pacific Isds"                    (BACI code; ISO is UMI)
+TRADE_ISO3_ALLOWLIST: frozenset[str] = frozenset(
+    {
+        "ABW", "AIA", "AND", "ANT", "ASM", "ATG", "BES", "BHR", "BLM", "BMU",
+        "BRB", "CCK", "COK", "COM", "CPV", "CUW", "CXR", "CYM", "DMA", "FSM",
+        "GIB", "GRD", "GUM", "HKG", "IOT", "KIR", "KNA", "LCA", "MAC", "MDV",
+        "MHL", "MLT", "MNP", "MSR", "MUS", "MYT", "NFK", "NIU", "NRU", "PCN",
+        "PLW", "PSE", "PYF", "SCG", "SGP", "SHN", "SMR", "SPM", "SSD", "STP",
+        "SXM", "SYC", "TCA", "TKL", "TON", "TUV", "VCT", "VGB", "WLF", "WSM",
+    }
+)
 
 
 def lookup(name: str, source: str) -> str | None:

@@ -29,14 +29,18 @@ Usage:
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 from pathlib import Path
 
 import pandas as pd
 
+from scripts.common.iso3 import TRADE_ISO3_ALLOWLIST
+
 RAW_DIR = Path("data/raw/baci")
 OUT_PATH = Path("public/data/trade_flow.parquet")
+COUNTRIES_GEOJSON = Path("public/data/countries.geojson")
 SOURCE = "BACI (CEPII)"
 YEAR_MIN = 1995
 
@@ -93,6 +97,92 @@ def _load_baci_country_map() -> dict[int, str]:
     return mapping
 
 
+# BACI placeholder codes that stand for a single real territory. BACI's
+# country_codes_V202601.csv lists code 490 as "Other Asia, nes" with the
+# placeholder iso3 "S19" and has no separate Taiwan row: following UN Comtrade
+# practice, Taiwan's trade is reported under "Other Asia, nes", so S19 is
+# remapped to TWN (which has a Natural Earth polygon). True aggregates (ZA1
+# SACU, …) are not remapped — drop_non_country_codes() removes them.
+BACI_CODE_REMAP: dict[str, str] = {"S19": "TWN"}
+
+_KEY_COLS = ["year", "hs_code", "exporter_iso3", "importer_iso3"]
+
+
+def remap_baci_codes(df: pd.DataFrame, remap: dict[str, str] | None = None) -> pd.DataFrame:
+    """Apply BACI_CODE_REMAP to exporter/importer codes.
+
+    If a remapped row collides with an existing row on
+    ``(year, hs_code, exporter_iso3, importer_iso3)`` the two are summed
+    (``value_usd`` and ``qty``; NaN-only groups stay NaN).
+    """
+    remap = BACI_CODE_REMAP if remap is None else remap
+    out = df.copy()
+    out["exporter_iso3"] = out["exporter_iso3"].replace(remap)
+    out["importer_iso3"] = out["importer_iso3"].replace(remap)
+    dup = out.duplicated(_KEY_COLS, keep=False)
+    if not dup.any():
+        return out
+    print(f"  remap collisions: summing {int(dup.sum())} rows sharing a key after remap")
+    other_cols = [c for c in out.columns if c not in (*_KEY_COLS, "value_usd", "qty")]
+    agg: dict[str, object] = {
+        "value_usd": lambda s: s.sum(min_count=1),
+        "qty": lambda s: s.sum(min_count=1),
+    }
+    agg.update({c: "first" for c in other_cols})
+    merged = out[dup].groupby(_KEY_COLS, as_index=False, sort=False).agg(agg)
+    combined = pd.concat([out[~dup], merged[out.columns]], ignore_index=True)
+    return combined
+
+
+def load_natural_earth_iso3(path: Path = COUNTRIES_GEOJSON) -> set[str]:
+    """Return the ISO3 codes carried by the shipped Natural Earth admin-0 GeoJSON."""
+    with open(path) as fh:
+        gj = json.load(fh)
+    return {
+        str(f["properties"]["iso3"])
+        for f in gj["features"]
+        if f.get("properties", {}).get("iso3")
+    }
+
+
+def valid_trade_iso3(path: Path = COUNTRIES_GEOJSON) -> set[str]:
+    """Natural Earth ISO3 set ∪ the explicit allowlist of real non-NE codes."""
+    return load_natural_earth_iso3(path) | set(TRADE_ISO3_ALLOWLIST)
+
+
+def drop_non_country_codes(
+    df: pd.DataFrame, valid: set[str]
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Drop rows whose exporter or importer is not a real country/territory code.
+
+    BACI's country_codes file maps aggregates to 3-char placeholders (``S19``
+    "Other Asia, nes", ``ZA1`` SACU, …) that look like ISO3 but are not.
+
+    Returns ``(kept, dropped_summary)`` where ``dropped_summary`` has one row per
+    offending code with columns ``code, rows, value_usd, qty`` (a row with both
+    sides invalid is counted against each code).
+    """
+    exp_bad = ~df["exporter_iso3"].isin(valid)
+    imp_bad = ~df["importer_iso3"].isin(valid)
+    bad = exp_bad | imp_bad
+    parts = [
+        df.loc[exp_bad, ["exporter_iso3", "value_usd", "qty"]].rename(
+            columns={"exporter_iso3": "code"}
+        ),
+        df.loc[imp_bad, ["importer_iso3", "value_usd", "qty"]].rename(
+            columns={"importer_iso3": "code"}
+        ),
+    ]
+    stacked = pd.concat(parts, ignore_index=True)
+    summary = (
+        stacked.groupby("code", as_index=False)
+        .agg(rows=("code", "size"), value_usd=("value_usd", "sum"), qty=("qty", "sum"))
+        .sort_values("value_usd", ascending=False)
+        .reset_index(drop=True)
+    )
+    return df.loc[~bad].copy(), summary
+
+
 def _process_hs_source(
     out_hs: str,
     glob: str,
@@ -122,9 +212,9 @@ def _process_hs_source(
         df["exporter_iso3"] = df["i"].map(num_to_iso3)
         df["importer_iso3"] = df["j"].map(num_to_iso3)
 
-        # Drop rows where either country code is unmapped (non-standard BACI aggregates
-        # like "Europe EFTA, nes" with placeholder iso3="R20" are 3 chars and kept;
-        # truly unmapped codes yield NaN)
+        # Drop rows where either country code is unmapped (NaN). Non-standard BACI
+        # aggregates with 3-char placeholders (S19, ZA1, …) survive this step and
+        # are removed later by drop_non_country_codes().
         n_before = len(df)
         df = df.dropna(subset=["exporter_iso3", "importer_iso3"])
         skipped_unmapped += n_before - len(df)
@@ -190,6 +280,30 @@ def build() -> pd.DataFrame:
         print(f"\n  Skipped {total_skipped_unmapped:,} rows with unmapped country codes")
     if total_skipped_self_trade > 0:
         print(f"  Skipped {total_skipped_self_trade:,} self-trade rows")
+
+    n_remapped = int(
+        result["exporter_iso3"].isin(BACI_CODE_REMAP).sum()
+        + result["importer_iso3"].isin(BACI_CODE_REMAP).sum()
+    )
+    result = remap_baci_codes(result)
+    print(f"\n  Remapped {n_remapped:,} BACI placeholder codes via {BACI_CODE_REMAP}")
+    # Remapping can create self-trade (e.g. S19→TWN re-exports); drop it too.
+    self_mask = result["exporter_iso3"] == result["importer_iso3"]
+    if self_mask.any():
+        print(f"  Dropped {int(self_mask.sum()):,} self-trade rows created by remap")
+        result = result[~self_mask]
+    result, dropped = drop_non_country_codes(result, valid_trade_iso3())
+    result = result.sort_values(_KEY_COLS).reset_index(drop=True)
+    if not dropped.empty:
+        print(
+            f"\n  Dropped rows touching {len(dropped)} non-country BACI codes "
+            "(not in Natural Earth ∪ TRADE_ISO3_ALLOWLIST):"
+        )
+        for r in dropped.itertuples(index=False):
+            print(
+                f"    {r.code}: rows={r.rows:,}  value_usd={r.value_usd:,.0f}  "
+                f"qty_tonnes={r.qty:,.0f}"
+            )
 
     return result
 

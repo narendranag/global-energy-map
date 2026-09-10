@@ -30,10 +30,11 @@ import pandas as pd
 
 from scripts.common.iso3 import EI_NAME_TO_ISO3 as NAME_TO_ISO3
 
-XLSX = next(Path("data/raw/ei_statistical_review").glob("*.xlsx"))
+RAW_DIR = Path("data/raw/ei_statistical_review")
 OUT_PATH = Path("public/data/country_year_series.parquet")
 YEAR_MIN = 1990
 SOURCE = "Energy Institute Statistical Review of World Energy 2025"
+KEY_COLS = ["iso3", "metric", "year"]
 
 
 def _is_aggregate(name: str) -> bool:
@@ -47,7 +48,9 @@ def _is_aggregate(name: str) -> bool:
         "Source",
         "Note",
         "Please",
-        "Can",
+        # Sub-rows of Canada ("Canadian Oil Sands: Total"). A bare "Can" prefix
+        # used to match "Canada" itself and silently dropped the country.
+        "Canadian Oil Sands",
         "Venezuela: Orinoco",
         "#",
         "^",
@@ -69,45 +72,86 @@ def _is_aggregate(name: str) -> bool:
     return len(stripped) > 60
 
 
+def _as_year(val: object) -> int | None:
+    """Return *val* as a calendar year (1900-2100) or None."""
+    if val is None or (isinstance(val, float) and pd.isna(val)):
+        return None
+    try:
+        year = int(float(val))  # type: ignore[arg-type]
+    except (ValueError, TypeError):
+        return None
+    return year if 1900 <= year <= 2100 else None
+
+
+def _leading_year_columns(header: list[object]) -> list[tuple[int, int]]:
+    """Return ``(col_idx, year)`` for the leading run of strictly increasing years.
+
+    EI sheets end with "Growth rate per annum" and "Share" columns whose header
+    cell repeats the last year (e.g. ``..., 2019.0, 2020.0, 2020, "2009-19", 2020``).
+    Accepting every cell that parses as a year turned those trailing ratio
+    columns into extra rows for the final year. We therefore take only the
+    first contiguous run of strictly increasing year headers (column 0 is the
+    row-label column and is skipped; blank cells before the run are ignored)
+    and stop at the first non-year or non-increasing header.
+    """
+    year_cols: list[tuple[int, int]] = []
+    for col_idx, val in enumerate(header):
+        if col_idx == 0:
+            continue
+        year = _as_year(val)
+        if not year_cols:
+            if year is not None:
+                year_cols.append((col_idx, year))
+            continue
+        if year is None or year <= year_cols[-1][1]:
+            break
+        year_cols.append((col_idx, year))
+    return year_cols
+
+
+def assert_unique_keys(df: pd.DataFrame) -> None:
+    """Raise ValueError if ``(iso3, metric, year)`` is not unique."""
+    dup_mask = df.duplicated(KEY_COLS, keep=False)
+    if dup_mask.any():
+        sample = (
+            df.loc[dup_mask, [*KEY_COLS, "value"]]
+            .sort_values(KEY_COLS)
+            .head(12)
+            .to_string(index=False)
+        )
+        raise ValueError(
+            f"country_year_series has {int(dup_mask.sum())} rows with a duplicated "
+            f"(iso3, metric, year) key — check the EI header parsing. Sample:\n{sample}"
+        )
+
+
 def _parse_wide_sheet(
-    sheet_name: str,
+    df_raw: pd.DataFrame,
     *,
     header_row: int,
     data_start_row: int,
     metric: str,
     unit: str,
+    year_min: int = YEAR_MIN,
 ) -> pd.DataFrame:
     """Parse a wide-format EI sheet (countries as rows, years as columns).
 
     Args:
-        sheet_name:    Excel sheet name.
+        df_raw:        Sheet read with ``header=None`` (raw cell grid).
         header_row:    0-indexed row number containing year values.
         data_start_row: 0-indexed row number of first data row (country row).
         metric:        Metric identifier string for output.
         unit:          Unit label string for output.
+        year_min:      Years before this are skipped.
 
     Returns:
         Long-format DataFrame with columns [iso3, year, metric, value, unit, source].
     """
-    df_raw = pd.read_excel(XLSX, sheet_name=sheet_name, header=None)
-
-    # Extract year header from header_row
     header = df_raw.iloc[header_row].tolist()
-    # Column 0 = country name; columns 1..N = year values
-    # Year values are floats like 1990.0 or ints; last cols may be text (growth rate)
-    year_cols: list[tuple[int, int]] = []
-    for col_idx, val in enumerate(header):
-        if col_idx == 0:
-            continue
-        try:
-            year = int(float(val))
-        except (ValueError, TypeError):
-            continue
-        if 1900 <= year <= 2100:
-            year_cols.append((col_idx, year))
+    year_cols = _leading_year_columns(header)
 
-    # Data rows
     records: list[dict] = []
+    unmapped: dict[str, int] = {}
     for row_idx in range(data_start_row, len(df_raw)):
         row = df_raw.iloc[row_idx]
         name = str(row.iloc[0]).strip() if pd.notna(row.iloc[0]) else ""
@@ -115,10 +159,10 @@ def _parse_wide_sheet(
             continue
         iso3 = NAME_TO_ISO3.get(name)
         if iso3 is None:
-            # Unknown country — skip silently (will include only mapped ones)
+            unmapped[name] = unmapped.get(name, 0) + 1
             continue
         for col_idx, year in year_cols:
-            if year < YEAR_MIN:
+            if year < year_min:
                 continue
             raw_val = row.iloc[col_idx]
             if pd.isna(raw_val):
@@ -138,16 +182,31 @@ def _parse_wide_sheet(
                 }
             )
 
-    return pd.DataFrame(records)
+    if unmapped:
+        print(
+            f"[{metric}] skipped {len(unmapped)} unmapped row labels "
+            f"(not in EI_NAME_TO_ISO3): {sorted(unmapped)}",
+            file=sys.stderr,
+        )
+
+    return pd.DataFrame(
+        records, columns=["iso3", "year", "metric", "value", "unit", "source"]
+    )
 
 
-def build() -> pd.DataFrame:
+def _read_sheet(xlsx: Path, sheet_name: str) -> pd.DataFrame:
+    return pd.read_excel(xlsx, sheet_name=sheet_name, header=None)
+
+
+def build(xlsx: Path | None = None) -> pd.DataFrame:
     """Build and return the combined long-format DataFrame."""
+    if xlsx is None:
+        xlsx = next(RAW_DIR.glob("*.xlsx"))
     # --- Proved Reserves (from 'Oil - Proved reserves history') ---
     # Sheet layout: row 0 = disclaimer, rows 1-3 = multi-line header,
     # row 4 = year header, row 5 = blank, rows 6+ = country data
     df_reserves = _parse_wide_sheet(
-        sheet_name="Oil - Proved reserves history",
+        _read_sheet(xlsx, "Oil - Proved reserves history"),
         header_row=4,
         data_start_row=6,
         metric="proved_reserves_oil_bbn_bbl",
@@ -158,7 +217,7 @@ def build() -> pd.DataFrame:
     # Sheet layout: row 0 = title, row 1 = blank, row 2 = year header,
     # row 3 = blank, rows 4+ = country data
     df_production = _parse_wide_sheet(
-        sheet_name="Oil Production - barrels",
+        _read_sheet(xlsx, "Oil Production - barrels"),
         header_row=2,
         data_start_row=4,
         metric="production_crude_kbpd",
@@ -170,7 +229,7 @@ def build() -> pd.DataFrame:
     # row 4 = "Trillion cubic metres" + year headers, row 5 = blank,
     # rows 6+ = country data. Matches oil-reserves layout exactly.
     df_gas_reserves = _parse_wide_sheet(
-        sheet_name="Gas - Proved reserves history ",
+        _read_sheet(xlsx, "Gas - Proved reserves history "),
         header_row=4,
         data_start_row=6,
         metric="proved_reserves_gas_tcm",
@@ -181,6 +240,7 @@ def build() -> pd.DataFrame:
     combined["year"] = combined["year"].astype(int)
     combined["value"] = combined["value"].astype(float)
     combined = combined.sort_values(["metric", "iso3", "year"]).reset_index(drop=True)
+    assert_unique_keys(combined)
     return combined
 
 

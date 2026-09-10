@@ -2,7 +2,7 @@
 
 > An interactive OSINT visualization of the world's hydrocarbon energy system — reserves, extraction, transport, refining, distribution — for academics, energy-policy researchers, and IR/economics scholars who think in systems.
 >
-> Status: Phases 1–6 shipped (live at https://global-energy-map-one.vercel.app). See `docs/superpowers/specs/2026-05-15-global-energy-map-design.md` for the full design and `docs/superpowers/plans/` for per-phase plans.
+> Status: Phases 1–7 shipped (live at https://global-energy-map-one.vercel.app). See `docs/superpowers/specs/2026-05-15-global-energy-map-design.md` for the full design and `docs/superpowers/plans/` for per-phase plans.
 
 ## One-liner
 
@@ -200,6 +200,6 @@ CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typec
 - **Phase 4** — _shipped 2026-05-17_ (NETL basins + storage + ports + shareable URL state). Live: https://global-energy-map-one.vercel.app
 - **Phase 5** — _shipped 2026-05-17_ (NETL refineries augmentation + vintage-aware pipeline/extraction filtering + pipelines.geojson simplification). Live: https://global-energy-map-one.vercel.app
 - **Phase 6** — _shipped 2026-09-09_ (LNG-T3 terminals + voyages + BACI-anchored Hormuz-LNG attribution + CI + MIT/CITATION). Live: https://global-energy-map-one.vercel.app
-- **Phase 7 — Correctness** — _in progress 2026-09-10_ on branch `phase-7-correctness` (plan: `docs/superpowers/plans/2026-09-10-global-energy-map-phase-7.md`). Roadmap from the refactor/redesign review (`docs/superpowers/specs/2026-09-10-refactor-redesign-review.md`): Phase 7 Correctness → Phase 8 Consolidation → Phase 9 Product redesign → Phase 10 Launch hardening.
-- **Phase 8 — Consolidation** — the former Phase 7 backlog, resequenced: consolidation phase (shared asset query cache so five layer hooks stop scanning assets.parquet separately; app state store that syncs to the URL; explicit ready signals for e2e; Legend driven by LayerState; the daily-throughput tooltip and vintage-on-scenario-inputs are deferred per the review; skip the voyage-layer query outside 2020–2024). Data candidates in docs/data-sources.md deferred list.
+- **Phase 7 — Correctness** — _shipped 2026-09-10_ (PR #16: EI year parsing, basemap render + OpenFreeMap, 1990–2024 time axis, honest scenario overlay, generated catalog, cited scenario shares, data-integrity tests). Plan: `docs/superpowers/plans/2026-09-10-global-energy-map-phase-7.md`. Roadmap from the refactor/redesign review (`docs/superpowers/specs/2026-09-10-refactor-redesign-review.md`): Phase 7 Correctness → Phase 8 Consolidation → Phase 9 Product redesign → Phase 10 Launch hardening.
+- **Phase 8 — Consolidation** — _in progress_ on branch `phase-8-consolidation` (plan: `docs/superpowers/plans/2026-09-10-global-energy-map-phase-8.md`). The former Phase 7 backlog, resequenced: consolidation phase (shared asset query cache so five layer hooks stop scanning assets.parquet separately; app state store that syncs to the URL; explicit ready signals for e2e; Legend driven by LayerState; the daily-throughput tooltip and vintage-on-scenario-inputs are deferred per the review; skip the voyage-layer query outside 2020–2024). Data candidates in docs/data-sources.md deferred list.
 - **Going public** — decided: after Phase 9, with `LICENSE-DATA.md`, map-footer attribution, downloads limited to CC BY / public-domain subsets. Light-only UI; phones get a "best on desktop" banner; keep DuckDB-WASM (export + query console in scope).

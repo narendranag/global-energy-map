@@ -10,7 +10,7 @@ test("phase 1 critical path", async ({ page }) => {
   await page.goto("/");
 
   // Map canvas attaches
-  await expect(page.locator("#deck-canvas")).toBeVisible();
+  await expect(page.locator(".maplibregl-canvas")).toBeVisible();
 
   // Phase 7: title bar with an <h1> and a link to the methodology page
   await expect(page.getByRole("heading", { level: 1, name: "Global Energy Map" })).toBeVisible();

@@ -25,7 +25,7 @@ test.describe("Phase 6 — LNG-T3 voyages", () => {
   test("lng_voyages layer boots with the checkbox checked", async ({ page }) => {
     const errors = collectConsoleErrors(page);
     await page.goto("/?layers=reserves,lng_terminals,lng_voyages&year=2023");
-    await page.waitForSelector("#deck-canvas");
+    await page.waitForSelector(".maplibregl-canvas");
 
     await expect(page.getByLabel("LNG voyages (2020–2024)")).toBeChecked();
     await expect(page.locator("canvas").first()).toBeVisible();
@@ -37,7 +37,7 @@ test.describe("Phase 6 — LNG-T3 voyages", () => {
     await page.goto(
       "/?commodity=gas&scenario=hormuz&year=2023&layers=reserves,lng_terminals",
     );
-    await page.waitForSelector("#deck-canvas");
+    await page.waitForSelector(".maplibregl-canvas");
 
     await expect(page.getByText("LNG-T3 voyages")).toBeVisible({ timeout: 15_000 });
     expect(errors).toEqual([]);
@@ -48,7 +48,7 @@ test.describe("Phase 6 — LNG-T3 voyages", () => {
     await page.goto(
       "/?commodity=gas&scenario=hormuz&year=2019&layers=reserves,lng_terminals",
     );
-    await page.waitForSelector("#deck-canvas");
+    await page.waitForSelector(".maplibregl-canvas");
 
     // Give the scenario engine time to resolve before asserting absence.
     await expect(page.getByText("Top LNG import terminals at risk")).toBeVisible({
@@ -67,7 +67,7 @@ test.describe("Phase 6 — LNG-T3 voyages", () => {
   test("a URL without lng_voyages leaves the checkbox unchecked", async ({ page }) => {
     const errors = collectConsoleErrors(page);
     await page.goto("/?layers=reserves,lng_terminals&year=2023");
-    await page.waitForSelector("#deck-canvas");
+    await page.waitForSelector(".maplibregl-canvas");
 
     await expect(page.getByLabel("LNG voyages (2020–2024)")).not.toBeChecked();
     expect(errors).toEqual([]);

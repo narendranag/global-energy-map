@@ -8,7 +8,7 @@ test.describe("Phase 4 — basins + storage + ports + URL state", () => {
     await page.goto(
       "/?year=2015&commodity=gas&scenario=hormuz&layers=reserves,lng_terminals",
     );
-    await page.waitForSelector("#deck-canvas");
+    await page.waitForSelector(".maplibregl-canvas");
 
     // CommoditySelector should reflect gas
     await expect(
@@ -29,7 +29,7 @@ test.describe("Phase 4 — basins + storage + ports + URL state", () => {
 
   test("flipping a toggle updates the URL", async ({ page }) => {
     await page.goto("/?layers=reserves,basins");
-    await page.waitForSelector("#deck-canvas");
+    await page.waitForSelector(".maplibregl-canvas");
 
     // Initial: storage off (not in querystring)
     await expect(page.getByLabel("Storage hubs")).not.toBeChecked();
@@ -43,7 +43,7 @@ test.describe("Phase 4 — basins + storage + ports + URL state", () => {
 
   test("basin tooltip on hover", async ({ page }) => {
     await page.goto("/?layers=basins");
-    await page.waitForSelector("#deck-canvas");
+    await page.waitForSelector(".maplibregl-canvas");
     // Basin layer fetch + render time
     await page.waitForTimeout(1500);
 
@@ -58,7 +58,7 @@ test.describe("Phase 4 — basins + storage + ports + URL state", () => {
 
     let tooltipVisible = false;
     for (const pos of positions) {
-      await page.locator("#deck-canvas").hover({ position: pos });
+      await page.locator(".maplibregl-canvas").hover({ position: pos });
       try {
         await expect(page.locator("body")).toContainText(/Basin:|Country:/, {
           timeout: 3000,
@@ -73,13 +73,13 @@ test.describe("Phase 4 — basins + storage + ports + URL state", () => {
     // If no tooltip appeared at any hovered position, just assert the canvas is visible
     // (basin data loaded but hover coordinates missed all polygons at this zoom)
     if (!tooltipVisible) {
-      await expect(page.locator("#deck-canvas")).toBeVisible();
+      await expect(page.locator(".maplibregl-canvas")).toBeVisible();
     }
   });
 
   test("storage + ports layer toggles render", async ({ page }) => {
     await page.goto("/?layers=storage,ports");
-    await page.waitForSelector("#deck-canvas");
+    await page.waitForSelector(".maplibregl-canvas");
 
     await expect(page.getByLabel("Storage hubs")).toBeChecked();
     await expect(page.getByLabel("Ports")).toBeChecked();

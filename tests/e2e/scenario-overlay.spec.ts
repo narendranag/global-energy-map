@@ -8,7 +8,7 @@ test.describe("Scenario overlay + panel", () => {
   test("Hormuz (oil): metric defined, importers named, no pseudo-countries", async ({ page }) => {
     page.on("pageerror", (err) => { console.error("PAGE ERROR:", err.message); });
     await page.goto("/?scenario=hormuz&commodity=oil&year=2020&layers=reserves");
-    await page.waitForSelector("#deck-canvas");
+    await page.waitForSelector(".maplibregl-canvas");
 
     const metric = page.getByTestId("scenario-metric");
     await expect(metric).toBeVisible();
@@ -34,7 +34,7 @@ test.describe("Scenario overlay + panel", () => {
   test("Hormuz (gas): LNG-specific description and metric", async ({ page }) => {
     page.on("pageerror", (err) => { console.error("PAGE ERROR:", err.message); });
     await page.goto("/?scenario=hormuz&commodity=gas&year=2020&layers=reserves");
-    await page.waitForSelector("#deck-canvas");
+    await page.waitForSelector(".maplibregl-canvas");
 
     await expect(page.getByText(/no pipeline bypass for LNG/)).toBeVisible();
     const metric = page.getByTestId("scenario-metric");

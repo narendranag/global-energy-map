@@ -22,7 +22,7 @@ test.describe("Phase 5 — refineries + vintage-aware layers", () => {
   test("refineries layer boots and the checkbox is checked", async ({ page }) => {
     const errors = collectConsoleErrors(page);
     await page.goto("/?layers=refineries&year=2020");
-    await page.waitForSelector("#deck-canvas");
+    await page.waitForSelector(".maplibregl-canvas");
 
     await expect(page.getByLabel("Refineries")).toBeChecked();
     expect(errors).toEqual([]);
@@ -31,7 +31,7 @@ test.describe("Phase 5 — refineries + vintage-aware layers", () => {
   test("pipelines respect the vintage filter at year=1995 without console errors", async ({ page }) => {
     const errors = collectConsoleErrors(page);
     await page.goto("/?layers=pipelines&year=1995");
-    await page.waitForSelector("#deck-canvas");
+    await page.waitForSelector(".maplibregl-canvas");
     await expect(page.getByLabel("Oil pipelines")).toBeChecked();
     await page.waitForTimeout(1000);
 
@@ -41,7 +41,7 @@ test.describe("Phase 5 — refineries + vintage-aware layers", () => {
   test("pipelines respect the vintage filter at year=2024 without console errors", async ({ page }) => {
     const errors = collectConsoleErrors(page);
     await page.goto("/?layers=pipelines&year=2024");
-    await page.waitForSelector("#deck-canvas");
+    await page.waitForSelector(".maplibregl-canvas");
     await expect(page.getByLabel("Oil pipelines")).toBeChecked();
     await page.waitForTimeout(1000);
 
@@ -57,7 +57,7 @@ test.describe("Phase 5 — refineries + vintage-aware layers", () => {
       if (new URL(req.url()).pathname === "/data/pipelines.geojson") hits.push(req.url());
     });
     await page.goto("/?layers=pipelines,gas_pipelines&year=2020");
-    await page.waitForSelector("#deck-canvas");
+    await page.waitForSelector(".maplibregl-canvas");
     await expect(page.locator("main")).toHaveAttribute("data-ready", "true", {
       timeout: 120_000,
     });

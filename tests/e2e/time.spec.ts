@@ -25,7 +25,7 @@ const RESERVES_BADGE = "Reserves: 2020 value (latest in EI Statistical Review)";
 test.describe("Time axis — 1990–2024", () => {
   test("slider spans 1990–2024 and an out-of-range URL year is clamped", async ({ page }) => {
     await page.goto("/?year=99999&layers=reserves");
-    await page.waitForSelector("#deck-canvas");
+    await page.waitForSelector(".maplibregl-canvas");
 
     const slider = page.locator('input[type="range"]');
     await expect(slider).toHaveAttribute("min", "1990");
@@ -36,7 +36,7 @@ test.describe("Time axis — 1990–2024", () => {
   test("stepping past 2020 by keyboard shows the reserves badge", async ({ page }) => {
     const errors = collectConsoleErrors(page);
     await page.goto("/?year=2020&layers=reserves");
-    await page.waitForSelector("#deck-canvas");
+    await page.waitForSelector(".maplibregl-canvas");
 
     const slider = page.locator('input[type="range"]');
     await expect(slider).toHaveValue("2020");
@@ -61,7 +61,7 @@ test.describe("Time axis — 1990–2024", () => {
 
   test("no reserves badge when the reserves layer is off", async ({ page }) => {
     await page.goto("/?year=2023&layers=pipelines");
-    await page.waitForSelector("#deck-canvas");
+    await page.waitForSelector(".maplibregl-canvas");
     await expect(page.locator('input[type="range"]')).toHaveValue("2023");
     await expect(page.getByText(RESERVES_BADGE)).toHaveCount(0);
   });
@@ -69,7 +69,7 @@ test.describe("Time axis — 1990–2024", () => {
   test("LNG voyages layer loads at 2023", async ({ page }) => {
     const errors = collectConsoleErrors(page);
     await page.goto("/?layers=lng_terminals,lng_voyages&year=2023");
-    await page.waitForSelector("#deck-canvas");
+    await page.waitForSelector(".maplibregl-canvas");
 
     await expect(page.getByLabel("LNG voyages (2020–2024)")).toBeChecked();
     // data-ready flips only once every visible layer hook — including the

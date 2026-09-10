@@ -12,7 +12,7 @@ test.describe("Phase 3 — gas + LNG + Hormuz-LNG", () => {
     await page.waitForSelector("canvas");
     const gasBtn = page.getByRole("button", { name: "Gas" });
     await expect(gasBtn).toBeVisible();
-    // #deck-canvas is server-rendered, so the button can be visible before React
+    // .maplibregl-canvas is server-rendered, so the button can be visible before React
     // hydrates and a first click is dropped; retry the click until it sticks.
     await expect(async () => {
       await gasBtn.click();
@@ -20,7 +20,7 @@ test.describe("Phase 3 — gas + LNG + Hormuz-LNG", () => {
     }).toPass({ timeout: 30_000 });
     // Canvas should still be present (a soft check — full pixel-diff is overkill here)
     await page.waitForTimeout(500);
-    await expect(page.locator("#deck-canvas")).toBeVisible();
+    await expect(page.locator(".maplibregl-canvas")).toBeVisible();
   });
 
   test("gas pipeline + LNG layer toggles in the layer panel", async ({ page }) => {

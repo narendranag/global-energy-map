@@ -8,7 +8,7 @@ test("phase 2 critical path", async ({ page }) => {
   await page.goto("/");
 
   // Map canvas attaches
-  await expect(page.locator("#deck-canvas")).toBeVisible();
+  await expect(page.locator(".maplibregl-canvas")).toBeVisible();
 
   // All four layer checkboxes present in the LayerPanel
   await expect(page.getByLabel(/Reserves \(country\)/i)).toBeVisible();

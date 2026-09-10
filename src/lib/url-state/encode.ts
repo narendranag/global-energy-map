@@ -1,5 +1,6 @@
 import type { Commodity, ScenarioId } from "@/lib/scenarios/types";
 import { SCENARIOS } from "@/lib/scenarios/registry";
+import { clampYear } from "@/lib/time/range";
 import type { LayerState } from "@/components/layers/LayerPanel";
 
 export interface AppState {
@@ -41,7 +42,9 @@ export function decodeAppState(
   let year = defaults.year;
   if (rawYear !== null) {
     const n = Number(rawYear);
-    if (Number.isFinite(n) && Number.isInteger(n)) year = n;
+    if (rawYear.trim() !== "" && Number.isFinite(n) && Number.isInteger(n)) {
+      year = clampYear(n);
+    }
   }
 
   const rawCommodity = params.get("commodity");

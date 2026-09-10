@@ -86,7 +86,12 @@ class PipelineLinesLayer extends CompositeLayer<PipelineLinesProps> {
   }
 }
 
-/** Features of one pipeline commodity that existed by `year` (undated always show). */
+/** Which map layer a GEM pipeline commodity belongs to: NGL lines are oil-sector infrastructure. */
+export function pipelineLayerGroup(featureCommodity: string): PipelineCommodity {
+  return featureCommodity === "gas" ? "gas" : "crude";
+}
+
+/** Features of one pipeline layer group that existed by `year` (undated always show). */
 export function filterPipelines(
   fc: PipelineCollection,
   commodity: PipelineCommodity,
@@ -95,7 +100,7 @@ export function filterPipelines(
   return {
     ...fc,
     features: fc.features.filter(
-      (f) => f.properties.commodity === commodity && isVisibleAtYear(f.properties.start_year, year),
+      (f) => pipelineLayerGroup(f.properties.commodity) === commodity && isVisibleAtYear(f.properties.start_year, year),
     ),
   };
 }

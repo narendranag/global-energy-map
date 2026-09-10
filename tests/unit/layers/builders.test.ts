@@ -58,12 +58,16 @@ describe("pipelines builder", () => {
     pipeline("o3", "crude", null),
     pipeline("g1", "gas", 2000),
     pipeline("n1", "ngl", 1990),
+    pipeline("cn1", "crude+ngl", null),
   );
 
-  it("keeps one commodity and respects start_year", () => {
+  it("keeps one layer group and respects start_year", () => {
+    // NGL and crude+NGL lines belong to the oil layer (they were silently dropped before Phase 8).
     expect(filterPipelines(fc, "crude", 2020).features.map((f) => f.properties.pipeline_id)).toEqual([
       "o1",
       "o3",
+      "n1",
+      "cn1",
     ]);
     expect(filterPipelines(fc, "gas", 1999).features).toHaveLength(0);
   });
@@ -73,7 +77,7 @@ describe("pipelines builder", () => {
     const gas = buildPipelinesLayer(fc, "gas", 2024);
     expect(oil.id).toBe("pipelines-crude");
     expect(gas.id).toBe("pipelines-gas");
-    expect(dataLength(oil)).toBe(3);
+    expect(dataLength(oil)).toBe(5);
     expect(dataLength(gas)).toBe(1);
     expect(oil.props.pickable).toBe(true);
   });

@@ -159,9 +159,10 @@ export default function DataPage() {
             checked in CI, so a download can be verified against this page.
           </p>
           <p>
-            <strong className="text-ink">Downloads are limited to CC BY 4.0 and public-domain sources</strong>{" "}and
-            the project&apos;s own route-share table — {downloadableFiles.length} of {files.length}{" "}files. Energy
-            Institute reserves and CEPII BACI trade data are shown in the app but not redistributed. Each
+            <strong className="text-ink">Downloads are limited to openly licensed sources</strong>{" "}(CC BY 4.0,
+            public domain, and CEPII BACI under the Etalab Open Licence 2.0) and the project&apos;s own route-share
+            table — {downloadableFiles.length} of {files.length}{" "}files. Energy Institute reserves are shown in the
+            app but not redistributed. Each
             source&apos;s licence, what we redistribute and what you may do with it are summarised in{" "}
             <a href={LICENSE_DATA_URL} className={LINK}>
               LICENSE-DATA.md

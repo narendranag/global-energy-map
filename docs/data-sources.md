@@ -175,11 +175,11 @@ LNG-T3 covers **22–41% of GIIGNL's global LNG trade, 2020–2024** — every y
 - **Where it lands:** `assets.parquet` rows where `kind = 'refinery'` and `source = 'National Energy Technology Laboratory (US DOE) — GOGI Refineries'`
 - **Layers/scenarios using it:** refineries point layer; refinery feedstock attribution math
 
-**What we ingest:** All 2,272 refinery point features. NETL lists many plants more than once (English name, numbered "333 - …" and French "Raffinerie de …" variants within ~100 m); since Phase 8 these are merged within source (same country, ≤ 1 km, never merging two rows whose known capacities differ by > 5 %), leaving 1,075 NETL rows. A few probable duplicates with conflicting capacities (e.g. Pemex Tula/Salamanca/Madero/Cadereyta, Irving) remain as two rows. Per-refinery: location, country (via `NETL_NAME_TO_ISO3`), facility name (75% populated), operator (80% populated), capacity (15% populated — parsed from string field via `scripts/transform/_refinery_capacity.py`), status (14% populated; nulls default to `"operating"` since the source layer's purpose is current infrastructure).
+**What we ingest:** All 2,272 refinery point features. NETL lists many plants more than once (English name, numbered "333 - …" and French "Raffinerie de …" variants within ~100 m); since Phase 8 these are merged within source (same country, ≤ 1 km, never merging two rows whose known capacities differ by > 5 %), leaving 1,075 NETL rows. A few probable duplicates with conflicting capacities (e.g. Pemex Tula/Salamanca/Madero/Cadereyta, Irving) remain as two rows. Per-refinery: location, country (via `NETL_NAME_TO_ISO3`), facility name (75% populated), operator (80% populated), capacity (33% of the 1,075 deduplicated rows; parsed from a string field via `scripts/transform/_refinery_capacity.py`), status (14% populated; nulls default to `"operating"` since the source layer's purpose is current infrastructure).
 
 **Coverage:**
 - 13× more refineries than the prior OSM-only source.
-- Strong coverage of major refining hubs that OSM under-tagged: China (192), USA (166), Russia (119), Canada (117), Japan (105) lead the count.
+- Strong coverage of major refining hubs that OSM under-tagged. After the within-source dedup, USA (141), China (100), Russia (65), Argentina (57) and Canada (44) lead the count.
 - Capacity coverage rises from 0% (OSM-only) to ~15% (NETL's populated subset). Records without parseable capacity fall back to uniform-within-country attribution in the scenario engine.
 
 **Coverage gaps:**
@@ -210,7 +210,7 @@ LNG-T3 covers **22–41% of GIIGNL's global LNG trade, 2020–2024** — every y
 ### BACI bilateral trade (CEPII)
 
 - **URL:** https://www.cepii.fr/CEPII/en/bdd_modele/bdd_modele_item.asp?id=37
-- **License:** Etalab Open Licence 2.0 (checked 2026-09-10 — reuse and redistribution with attribution; earlier project docs said "academic/research use"). Cite Gaulier & Zignago (2010), CEPII Working Paper 2010-23. By project policy `trade_flow.parquet` stays view-only; revisiting that is a user decision.
+- **License:** Etalab Open Licence 2.0 (checked 2026-09-10 — reuse and redistribution with attribution; earlier project docs said "academic/research use"). Cite Gaulier & Zignago (2010), CEPII Working Paper 2010-23. `trade_flow.parquet` is downloadable from `/data` under the same licence (maintainer decision, 2026-09-10).
 - **As-of:** 2026-01 release (HS92 1995–2024 series)
 - **Where it lands:** `trade_flow.parquet`
 - **Layers/scenarios using it:** all scenarios — crude routing (HS 2709) and LNG routing (HS 271111)
@@ -239,7 +239,7 @@ Each row: year, exporter ISO3, importer ISO3, quantity (tonnes).
 - **License:** Public domain (US government)
 - **As-of:** 2026-05-15 (consolidated EIA + IEA references)
 - **Where it lands:** `disruption_route.parquet` (each row carries `source_title`, `source_url`, `source_year`)
-- **Layers/scenarios using it:** all four scenarios (Hormuz, Druzhba, BTC, CPC)
+- **Layers/scenarios using it:** all five scenarios (Hormuz crude, Hormuz LNG via `hormuz_lng` rows, Druzhba, BTC, CPC)
 
 **What we ingest:** static routing-share tables that encode how each exporter's crude or LNG flows through each chokepoint or pipeline. Example: Saudi Arabia's crude is 88% Hormuz-dependent, 12% bypasses via East-West pipeline. Druzhba routing shares: DEU and POL 47% of Russian crude (IEA northern-branch volume allocated pro-rata), BLR/SVK/HUN/CZE 100%. Each row in `disruption_route.parquet` carries its citation and derivation (`source_title`, `source_url`, `source_year`, `source_note`); six shares were revised to source-derived values on 2026-09-10.
 

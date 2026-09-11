@@ -20,7 +20,7 @@ export interface LngImportFromVoyagesInput {
 /**
  * Phase 6: LNG import terminal impacts derived from voyage-level data.
  *
- * LNG-T3 is a partial AIS sample (measured at 21-41% of global LNG trade
+ * LNG-T3 is a partial AIS sample (measured at 22-41% of global LNG trade
  * against GIIGNL public totals — see data/validation/lng_t3_vs_giignl.txt).
  * Absolute country totals therefore still come from BACI (`flowsByImporter`,
  * tonnes); voyages are used only to redistribute a country's known total

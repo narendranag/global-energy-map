@@ -83,6 +83,8 @@ Timeline for cold `/` at 40 Mb/s (after):
 | 5 296–5 862 | `parquet.duckdb_extension.wasm` from **extensions.duckdb.org** (0.7 MB, serial) |
 | ~6 370 | queries run, layers built, `data-ready` |
 
+Since measured: `build_pipelines.py` now merges line fragments before simplifying, so `pipelines.geojson` is 7.7 MB raw (was 14 MB; brotli 1.9 → 1.2 MB) with half the vertices, and the gas layer no longer draws a second, transparent 8 px hit band (hover uses the overlay's `pickingRadius`). Under software WebGL a gas-pipeline frame fell from ~6.9 s to ~1.8 s (Mac, SwiftShader) — the cause of the Linux CI e2e timeouts.
+
 About 18 MB crosses the wire before `data-ready`: basemap 6.4, wasm 7.1, pipelines 3.0, parquet and countries 1.5. At 40 Mb/s that alone takes about 3.6 s, and a serial tail of about 1.7 s follows (instantiate, then the extension fetch, then query and render). Under 3 s at 40 Mb/s is not reachable while DuckDB-WASM is on the critical path.
 
 ## Next levers, in order of payoff

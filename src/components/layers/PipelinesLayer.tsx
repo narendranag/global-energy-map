@@ -1,15 +1,9 @@
-import { CompositeLayer } from "@deck.gl/core";
-import { GeoJsonLayer, type GeoJsonLayerProps } from "@deck.gl/layers";
-import type { Feature, FeatureCollection, LineString, MultiLineString } from "geojson";
+import { GeoJsonLayer } from "@deck.gl/layers";
+import type { Feature, FeatureCollection, Geometry, LineString, MultiLineString } from "geojson";
 import { cachedLoader, fetchJson } from "@/lib/data/cache";
 import { sourceLine } from "@/lib/data/sources";
 import { isVisibleAtYear } from "@/lib/vintage/filter";
-import {
-  PIPELINE_HIT_WIDTH_PX,
-  PIPELINE_LINE_MIN_PX,
-  pipelineColor,
-  type PipelineCommodity,
-} from "@/lib/symbology";
+import { PIPELINE_LINE_MIN_PX, pipelineColor, type PipelineCommodity } from "@/lib/symbology";
 import { formatCapacity, joinLines, orNa, type TooltipFormatter } from "./tooltip";
 
 export const PIPELINE_LAYER_IDS: Record<PipelineCommodity, string> = {
@@ -40,52 +34,6 @@ export const loadPipelines = cachedLoader(() =>
   fetchJson<PipelineCollection>("/data/pipelines.geojson"),
 );
 
-interface PipelineLinesProps {
-  readonly data: PipelineCollection;
-  readonly commodity: PipelineCommodity;
-}
-
-/**
- * Visible 1.2 px lines plus a transparent 8 px pickable band underneath, so a
- * pipeline is hoverable at world zoom (D5). Transparent fragments still write
- * to deck.gl's picking buffer. Tooltips see the top-level layer id and the
- * GeoJSON feature, exactly as with a plain GeoJsonLayer.
- */
-class PipelineLinesLayer extends CompositeLayer<PipelineLinesProps> {
-  static override layerName = "PipelineLinesLayer";
-
-  override renderLayers() {
-    const { data, commodity } = this.props;
-    return [
-      new GeoJsonLayer<PipelineProps>(
-        this.getSubLayerProps({
-          id: "lines",
-          data,
-          stroked: true,
-          filled: false,
-          lineWidthMinPixels: PIPELINE_LINE_MIN_PX,
-          getLineColor: (f: PipelineFeature) => [...pipelineColor(commodity, f.properties.status)],
-          pickable: false,
-          updateTriggers: { getLineColor: [commodity] },
-        }) as GeoJsonLayerProps<PipelineProps>,
-      ),
-      new GeoJsonLayer<PipelineProps>(
-        this.getSubLayerProps({
-          id: "hit",
-          data,
-          stroked: true,
-          filled: false,
-          lineWidthUnits: "pixels",
-          getLineWidth: PIPELINE_HIT_WIDTH_PX,
-          lineWidthMinPixels: PIPELINE_HIT_WIDTH_PX,
-          getLineColor: [0, 0, 0, 0],
-          pickable: true,
-        }) as GeoJsonLayerProps<PipelineProps>,
-      ),
-    ];
-  }
-}
-
 /** Which map layer a GEM pipeline commodity belongs to: NGL lines are oil-sector infrastructure. */
 export function pipelineLayerGroup(featureCommodity: string): PipelineCommodity {
   return featureCommodity === "gas" ? "gas" : "crude";
@@ -105,16 +53,28 @@ export function filterPipelines(
   };
 }
 
+/**
+ * Thin (1.25 px) lines. Hover tolerance comes from the overlay's
+ * `pickingRadius` (MapShell), which keeps them pickable at world zoom (D5).
+ * An extra transparent 8 px hit band used to sit underneath: under software
+ * WebGL it doubled the gas layer's frame time (every GGIT path drawn twice)
+ * and added nothing the picking radius does not already give.
+ */
 export function buildPipelinesLayer(
   fc: PipelineCollection,
   commodity: PipelineCommodity,
   year: number,
-): PipelineLinesLayer {
-  return new PipelineLinesLayer({
+): GeoJsonLayer<PipelineProps> {
+  return new GeoJsonLayer<PipelineProps>({
     id: PIPELINE_LAYER_IDS[commodity],
     data: filterPipelines(fc, commodity, year),
-    commodity,
+    stroked: true,
+    filled: false,
+    lineWidthMinPixels: PIPELINE_LINE_MIN_PX,
+    // GeoJsonLayer types its accessors over any Geometry; only lines reach it.
+    getLineColor: (f: Feature<Geometry, PipelineProps>) => [...pipelineColor(commodity, f.properties.status)],
     pickable: true,
+    updateTriggers: { getLineColor: [commodity] },
   });
 }
 

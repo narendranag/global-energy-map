@@ -5,6 +5,7 @@ import {
   SCENARIOS,
   howComputed,
   scenarioDescription,
+  sourceGapNote,
   type ScenarioDef,
 } from "@/lib/scenarios/registry";
 import { useCountryNames } from "@/lib/geo/useCountryNames";
@@ -268,8 +269,10 @@ export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioP
           {scenarioDescription(def, commodity)}
         </p>
       )}
-      {def?.noteRecentYears && commodity === "oil" && (
-        <p className="mt-2 text-[11px] leading-snug text-amber-800">{def.noteRecentYears}</p>
+      {def && current && sourceGapNote(def, commodity, current.year) && (
+        <p className="mt-2 text-[11px] leading-snug text-amber-800" data-testid="source-gap">
+          {sourceGapNote(def, commodity, current.year)}
+        </p>
       )}
       {def && (
         <div className="mt-3" data-testid="scenario-metric">

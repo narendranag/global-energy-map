@@ -10,11 +10,18 @@ export interface ScenarioDef {
   readonly descriptionByCommodity?: Partial<Record<Commodity, string>>;
   /** Used in metric definitions: "… routed through {routeName}". */
   readonly routeName: string;
-  readonly noteRecentYears?: string;
+  /** A known BACI gap that understates the scenario from `fromYear` on (oil axis). */
+  readonly sourceGap?: { readonly fromYear: number; readonly text: string };
 }
 
 export function scenarioDescription(def: ScenarioDef, commodity: Commodity): string {
   return def.descriptionByCommodity?.[commodity] ?? def.description;
+}
+
+/** The scenario's source-gap warning if it applies to (commodity, year), else null. */
+export function sourceGapNote(def: ScenarioDef, commodity: Commodity, year: number): string | null {
+  const gap = def.sourceGap;
+  return gap !== undefined && commodity === "oil" && year >= gap.fromYear ? gap.text : null;
 }
 
 export const SCENARIOS: readonly ScenarioDef[] = [
@@ -29,8 +36,10 @@ export const SCENARIOS: readonly ScenarioDef[] = [
       gas: "Strait between the Persian Gulf and the Gulf of Oman. All LNG exported from Qatar and the UAE (Das Island) — roughly 20% of global LNG trade — must transit here; unlike crude, there is no pipeline bypass for LNG cargoes.",
     },
     routeName: "the Strait of Hormuz",
-    noteRecentYears:
-      "BACI suppresses Iran exports in 2023+. Recent-year impact for partners that historically imported Iranian crude may be understated.",
+    sourceGap: {
+      fromYear: 2019,
+      text: "BACI records little Iranian crude from 2019 (about 4 Mt in 2020–21, near zero in 2023–24) while sanctioned cargoes are relabelled, e.g. as Malaysian. Exposure of Iran's buyers, China above all, is understated.",
+    },
   },
   {
     id: "druzhba",
@@ -40,6 +49,10 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     description:
       "Soviet-era pipeline carrying Russian crude to Belarus, Poland, Germany (mostly halted 2023), Slovakia, Hungary, and Czechia. Southern branch remains active under EU sanctions exemptions.",
     routeName: "the Druzhba pipeline",
+    sourceGap: {
+      fromYear: 2022,
+      text: "BACI records no Russian crude into Belarus from 2022 (16 Mt in 2021), so Belarus, Druzhba's largest single buyer, drops out of the results from 2022.",
+    },
   },
   {
     id: "btc",

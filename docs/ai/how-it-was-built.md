@@ -67,7 +67,7 @@ Each phase followed the same loop. The [agent playbook](agent-playbook.md) has t
 ## Numbers worth knowing
 
 - Review: one agent, about 15 minutes, 58 tool calls, a 267-line document that set the next four phases.
-- Phases 7–10: 13 parallel implementer tracks, 4 of them second waves; about 20,000 changed lines across 4 PRs.
+- Phases 7–10: **15 parallel implementer tracks** — 13 in first waves (3 + 3 + 4 + 3) and 2 second waves (Phase 8's e2e reorganisation and dependency sweep, Phase 9's accessibility and e2e pass). Integration in each phase was the orchestrator's own work, not a subagent. About 20,000 changed lines across 4 PRs.
 - Every phase ended with the full local suite green. CI caught two things local runs did not: an unformatted Python file, and an e2e budget too small for the slower CI runner.
 - The data changes were all traceable. Row counts before and after each rebuild went into the commit messages, and disputed numbers (six scenario route shares) were flagged with sources, not changed silently. Only the human's "update them" changed them.
 

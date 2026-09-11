@@ -42,6 +42,10 @@ The site, its data and its code are provided **"as is" and "as available"**, wit
 
 To the fullest extent the law allows, Narendra Nag and Marain are not liable for any loss or damage arising from use of, or inability to use, the site, its data or its results. This includes direct, indirect, incidental or consequential loss, lost profits and decisions made in reliance on the site. Nothing in these terms limits liability that cannot be limited by law.
 
+## Indemnity
+
+If you use the site, its data or its results in breach of these terms or of a dataset's licence, for example by redistributing view-only data, removing required attributions, or presenting results as official figures or as endorsed by us, you agree to indemnify Narendra Nag and Marain against any third-party claims, losses and reasonable costs (including legal fees) that result.
+
 ## Changes to the site and these terms
 
 The site is maintained on a best-effort basis. Features, datasets and scenarios may change or be withdrawn, and the site may be unavailable at times. These terms may be updated. The effective date above will change when they are, and past versions are in the project's [public history](https://github.com/narendranag/global-energy-map/commits/main/docs/legal/terms.md). Continued use after a change means you accept the updated terms.

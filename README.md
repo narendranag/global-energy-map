@@ -4,6 +4,8 @@ An interactive map of the world's oil and gas system: reserves, extraction, pipe
 
 **Live: https://energymap.marain.space**
 
+Built and maintained by [Narendra Nag](https://narendranag.com) as a project of [Marain](https://marain.space). [Terms of use](https://energymap.marain.space/terms) · [Privacy](https://energymap.marain.space/privacy)
+
 ## What it answers
 
 - **What exists, and since when?** Pipelines, extraction sites and LNG terminals respond to the year slider, where their build year is known.
@@ -49,6 +51,7 @@ See [data and coverage](docs/researchers/data-and-coverage.md).
 - **Downloads.** Openly licensed files (CC BY 4.0, public domain, Etalab 2.0) are downloadable from [`/data`](https://energymap.marain.space/data) and from the map's Share menu. The Energy Institute series and the mixed-licence asset table are view-only; `assets_open.parquet` is the downloadable asset table without the OpenStreetMap rows. Per-source terms and the attribution lines to keep are in [`LICENSE-DATA.md`](LICENSE-DATA.md) (plain language, not legal advice).
 - **Cite the map:** Nag, N. (2026). *Global Energy Map* (Version 1.0.0) [Computer software]. https://energymap.marain.space. See [`CITATION.cff`](CITATION.cff) or GitHub's "Cite this repository". To cite a specific view with its source dates, use Share → Cite this view.
 - **Code licence:** MIT ([`LICENSE`](LICENSE)).
+- **Terms and privacy:** [`/terms`](https://energymap.marain.space/terms) (not advice, no warranty, attribution and acceptable use) and [`/privacy`](https://energymap.marain.space/privacy) (no accounts or cookies; cookieless Vercel analytics; OpenFreeMap tiles). Sources: [`docs/legal/`](docs/legal/).
 
 ## Run it locally
 

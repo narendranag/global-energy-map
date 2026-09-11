@@ -4,6 +4,8 @@
 
 The page renders client-side, so fetching the HTML gives no data. Build view links from URL parameters, and read the data files directly. Respect each file's licence: only files with `downloadable: true` in the catalog may be redistributed.
 
+Built and maintained by Narendra Nag (https://narendranag.com) as a project of Marain (https://marain.space). Use is governed by the terms at https://energymap.marain.space/terms; privacy at https://energymap.marain.space/privacy.
+
 ## Views (URL parameters)
 
 - Base: https://energymap.marain.space/
@@ -33,6 +35,7 @@ The page renders client-side, so fetching the HTML gives no data. Build view lin
 - [Machine interface guide](https://github.com/narendranag/global-energy-map/blob/main/docs/ai/machine-interface.md): URL grammar, schemas, DuckDB/pandas recipes, how to reproduce a scenario number
 - [Researcher docs](https://github.com/narendranag/global-energy-map/tree/main/docs/researchers)
 - [Data licences](https://github.com/narendranag/global-energy-map/blob/main/LICENSE-DATA.md)
+- [Terms of use](https://energymap.marain.space/terms) and [Privacy](https://energymap.marain.space/privacy)
 
 ## Caveats to carry with any number
 

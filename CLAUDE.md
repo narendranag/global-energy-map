@@ -72,6 +72,7 @@ global-energy-map/
 ├── docs/
 │   ├── data-sources.md            # researcher-facing source inventory
 │   ├── methodology.md             # current-state methodology, rendered at /methodology
+│   ├── legal/                     # terms.md + privacy.md, rendered at /terms and /privacy (git history = change log)
 │   ├── history.md                 # per-phase narrative (Phases 1–8), verbatim
 │   └── superpowers/
 │       ├── specs/                 # design specs (per phase + master)
@@ -188,6 +189,7 @@ CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typec
 - **Downloads follow the licensing decision.** Only files whose every source is CC BY 4.0 or public domain are downloadable (`downloadable` in the catalog). EI reserves, BACI trade and `assets.parquet` (88 ODbL OSM rows mixed in) are view-only. The scenario-results CSV is treated as derived analysis and ships with citation header lines.
 - **Palette discipline.** Oil = warm family, gas = cool family, reserves = olive sequential, red only for scenario exposure; `tests/unit/symbology-contrast.test.ts` guards contrast against the Positron basemap and between key pairs. Storage and ports render only from zoom 4.
 - **a11y is tested.** `tests/e2e/a11y.spec.ts` runs axe on `/`, `/methodology`, `/data` (zero serious/critical) and checks focus order (DOM order = header → intro → panels → map). Panel text must stay ≥ 4.5:1 composited over black (worst case); slate-500 fails — use slate-600 or darker.
+- **Provenance and legal.** Author/practice names, URLs and contact emails live in `src/components/ui/provenance.ts`; the map footer and `SiteFooter` (on /methodology, /data, /terms, /privacy) link narendranag.com, marain.space, /terms and /privacy. If what the site collects changes (a new third-party host, cookie, storage key or tracker), update `docs/legal/privacy.md` and its effective date in the same PR. The map footer's last link must stay "Methodology" (a11y focus-order test).
 - **Light-only UI.** There is no dark theme (decided 2026-09-10); `globals.css` sets `color-scheme: light` and has no `prefers-color-scheme` block. Panels still set their own text colour (`text-slate-800`) so they never inherit from the host.
 - **Tailwind v4 layers vs. third-party CSS.** Tailwind utilities live in `@layer utilities`; unlayered library CSS (e.g. `maplibre-gl.css`) beats them regardless of order. Size the MapLibre container with inline styles (see `MapShell.tsx`).
 - **deck.gl accessors need `updateTriggers`.** Recolouring a layer from a `useMemo` with fresh closures does nothing unless the trigger changes; keep `updateTriggers` keyed on the input that drives the colour.

@@ -11,7 +11,7 @@ authors:
   - family-names: Nag
     given-names: Narendra
 repository-code: "https://github.com/narendranag/global-energy-map"
-url: "https://global-energy-map-one.vercel.app"
+url: "https://energymap.marain.space"
 license: MIT
 abstract: >-
   An interactive OSINT visualization of the world's hydrocarbon energy

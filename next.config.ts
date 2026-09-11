@@ -20,11 +20,24 @@ function cacheRules(source: string) {
   ];
 }
 
+/** Canonical public origin (Phase 10 launch). */
+export const CANONICAL_ORIGIN = "https://energymap.marain.space";
+/** The Phase 1–10 production alias; permanently redirected so old links and citations resolve. */
+export const LEGACY_HOST = "global-energy-map-one.vercel.app";
+
 const nextConfig: NextConfig = {
-  // Phase 9: /about became /methodology (sources, coverage, scenario method,
-  // how to cite). Permanent so old links and citations keep resolving.
   redirects() {
-    return Promise.resolve([{ source: "/about", destination: "/methodology", permanent: true }]);
+    return Promise.resolve([
+      // Phase 9: /about became /methodology. Permanent so old links keep resolving.
+      { source: "/about", destination: "/methodology", permanent: true },
+      // Launch: the vercel.app alias → the custom domain, path and query kept.
+      {
+        source: "/:path*",
+        has: [{ type: "host" as const, value: LEGACY_HOST }],
+        destination: `${CANONICAL_ORIGIN}/:path*`,
+        permanent: true,
+      },
+    ]);
   },
   headers() {
     return Promise.resolve([...cacheRules("/data/:path*"), ...cacheRules("/duckdb/:path*")]);

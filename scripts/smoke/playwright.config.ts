@@ -1,7 +1,7 @@
 // scripts/smoke/playwright.config.ts — one browser check against a *deployed*
 // URL (Phase 10, O3). No webServer: the target is SMOKE_URL.
 //
-//   SMOKE_URL=https://global-energy-map-one.vercel.app \
+//   SMOKE_URL=https://energymap.marain.space \
 //     pnpm exec playwright test -c scripts/smoke/playwright.config.ts
 import { defineConfig, devices } from "@playwright/test";
 

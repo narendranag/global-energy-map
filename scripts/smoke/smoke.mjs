@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // scripts/smoke/smoke.mjs — HTTP smoke checks against a deployed URL (Phase 10, O3).
 //
-//   node scripts/smoke/smoke.mjs https://global-energy-map-one.vercel.app
+//   node scripts/smoke/smoke.mjs https://energymap.marain.space
 //   node scripts/smoke/smoke.mjs <preview-url> --allow-protected
 //
 // Checks: `/`, `/methodology`, `/data` render; `/data/catalog.json` parses and

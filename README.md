@@ -2,7 +2,7 @@
 
 Interactive OSINT visualization of the world's hydrocarbon energy system — reserves, extraction, pipelines, refining, LNG, storage, ports, and bilateral trade — with chokepoint and pipeline disruption scenarios. Built for academics, energy-policy researchers, and IR/economics scholars who think in systems.
 
-**Live:** https://global-energy-map-one.vercel.app
+**Live:** https://energymap.marain.space
 
 ## Status
 
@@ -55,7 +55,7 @@ pnpm test:e2e           # Playwright
 
 ## License and citation
 
-The **code** is licensed under the **MIT License** (see `LICENSE`). The **data** keeps each publisher's own licence — see **[`LICENSE-DATA.md`](LICENSE-DATA.md)** for a plain-language, per-source summary (licence, what we redistribute and in which file, the attribution line to keep, restrictions; not legal advice), and the live [`/data`](https://global-energy-map-one.vercel.app/data) page for per-file licence, rows, size and sha256.
+The **code** is licensed under the **MIT License** (see `LICENSE`). The **data** keeps each publisher's own licence — see **[`LICENSE-DATA.md`](LICENSE-DATA.md)** for a plain-language, per-source summary (licence, what we redistribute and in which file, the attribution line to keep, restrictions; not legal advice), and the live [`/data`](https://energymap.marain.space/data) page for per-file licence, rows, size and sha256.
 
 In short: GEM and LNG-T3 are CC BY 4.0 ("Data: Global Energy Monitor, CC BY 4.0"; "Data: Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0"); NETL GOGI is a US Government work (credit NETL); Natural Earth is public domain; the 88 OpenStreetMap refinery rows are ODbL and are never offered for download; Energy Institute and CEPII BACI data are shown in the app but not redistributed. The downloadable asset table is `public/data/assets_open.parquet` (every asset row except the OSM ones).
 

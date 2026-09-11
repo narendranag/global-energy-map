@@ -8,7 +8,7 @@
 # Optional: VERCEL_AUTOMATION_BYPASS_SECRET for protected preview URLs.
 set -euo pipefail
 
-URL="${1:-https://global-energy-map-one.vercel.app}"
+URL="${1:-https://energymap.marain.space}"
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 

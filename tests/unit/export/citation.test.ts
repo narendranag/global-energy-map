@@ -21,7 +21,7 @@ const SITE: SiteCitation = {
   title: "Global Energy Map",
   version: "1.0.0",
   "date-released": "2026-09-09",
-  url: "https://global-energy-map-one.vercel.app",
+  url: "https://energymap.marain.space",
   authors: [{ "family-names": "Nag", "given-names": "Narendra" }],
 };
 
@@ -43,7 +43,7 @@ function entry(over: Partial<CatalogEntry>): CatalogEntry {
 describe("site citation (from CITATION.cff)", () => {
   it("APA 7 software reference", () => {
     expect(apaCitation(SITE)).toBe(
-      "Nag, N. (2026). Global Energy Map (Version 1.0.0) [Computer software]. https://global-energy-map-one.vercel.app",
+      "Nag, N. (2026). Global Energy Map (Version 1.0.0) [Computer software]. https://energymap.marain.space",
     );
   });
 

@@ -250,3 +250,26 @@ def test_pipelines_sidecar_fragments_are_merged():
     assert n_parts < 70_000, n_parts
     assert n_vertices < 260_000, n_vertices
     assert by_name["Tennessee Gas Pipeline"] < 2_000
+
+
+def test_trade_flow_unit_values_are_plausible_or_imputed():
+    """Every quantity implies a unit value within 5x of its (hs_code, year) median,
+    or was re-estimated (qty_imputed) with BACI's original kept in qty_reported."""
+    import duckdb
+
+    bad = duckdb.sql(
+        f"""
+        WITH t AS (SELECT *, value_usd / qty AS uv FROM read_parquet('{DATA / "trade_flow.parquet"}')
+                   WHERE qty > 0 AND value_usd > 0),
+             m AS (SELECT hs_code, year, median(value_usd / coalesce(qty_reported, qty)) AS med
+                   FROM t GROUP BY 1, 2)
+        SELECT count(*) FROM t JOIN m USING (hs_code, year)
+        WHERE NOT qty_imputed AND (uv < med / 5 OR uv > med * 5)
+        """
+    ).fetchone()[0]
+    assert bad == 0
+    imputed = duckdb.sql(
+        f"SELECT count(*) FROM read_parquet('{DATA / 'trade_flow.parquet'}') "
+        "WHERE qty_imputed AND qty_reported IS NULL"
+    ).fetchone()[0]
+    assert imputed == 0

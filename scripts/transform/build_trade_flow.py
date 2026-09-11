@@ -18,6 +18,8 @@ Output schema:
     qty           float   quantity in metric tonnes (nullable)
     qty_unit      str     "tonnes"
     source        str     "BACI (CEPII)"
+    qty_reported  float   BACI's original quantity where it was re-estimated, else null
+    qty_imputed   bool    True where qty = value_usd / median unit value (see repair_quantities)
 
 IMPORTANT: crude rows keep hs_code="2709" (4-digit) so that the existing
 scenario engine query `WHERE hs_code = '2709'` (Hormuz scenario) continues
@@ -251,6 +253,40 @@ def _process_hs_source(
     return frames, skipped_unmapped, skipped_self_trade
 
 
+QTY_REPAIR_BAND = 5.0
+
+
+def repair_quantities(
+    df: pd.DataFrame, band: float = QTY_REPAIR_BAND
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Re-estimate BACI quantities whose implied unit value is implausible.
+
+    BACI's values are reliable but some reported quantities are off by one to
+    three orders of magnitude (e.g. PHL<-SAU crude 2023: 80.9 Mt at 26 USD/t,
+    against a ~650 USD/t median; TWN<-SAU 2014: 14 kt for 10.5 bn USD). The
+    scenario engine works in quantities, so these rows distort exposure.
+
+    For each (hs_code, year) the median unit value (USD per tonne) is taken
+    over rows with positive value and quantity. A row whose unit value lies
+    outside [median / band, median * band] gets ``qty = value_usd / median``;
+    the original is kept in ``qty_reported`` and ``qty_imputed`` is set.
+    Values are never changed. Returns (repaired frame, report of changed rows).
+    """
+    out = df.copy()
+    ok = (out["qty"] > 0) & (out["value_usd"] > 0)
+    uv = (out["value_usd"] / out["qty"]).where(ok)
+    median = uv.groupby([out["hs_code"], out["year"]]).transform("median")
+    bad = ok & ((uv < median / band) | (uv > median * band))
+    out["qty_reported"] = out["qty"].where(bad)
+    out.loc[bad, "qty"] = out.loc[bad, "value_usd"] / median[bad]
+    out["qty_imputed"] = bad
+    report = out.loc[
+        bad,
+        ["year", "hs_code", "importer_iso3", "exporter_iso3", "value_usd", "qty_reported", "qty"],
+    ]
+    return out, report
+
+
 def build() -> pd.DataFrame:
     """Read all per-year CSVs for all HS sources, map BACI codes to ISO3.
 
@@ -310,6 +346,15 @@ def build() -> pd.DataFrame:
                 f"qty_tonnes={r.qty:,.0f}"
             )
 
+    result, repaired = repair_quantities(result)
+    if not repaired.empty:
+        moved = (repaired["qty"] - repaired["qty_reported"]).groupby(repaired["hs_code"]).sum()
+        print(
+            f"\n  Re-estimated {len(repaired):,} quantities with unit values outside "
+            f"{QTY_REPAIR_BAND:g}x of the (hs_code, year) median; net tonnes change by hs_code:"
+        )
+        for hs, t in moved.items():
+            print(f"    {hs}: {t / 1e6:+,.1f} Mt")
     return result
 
 

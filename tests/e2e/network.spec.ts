@@ -12,15 +12,19 @@ test.describe("Network", () => {
     page,
   }) => {
     const banned: string[] = [];
-    // Context-level: also sees the DuckDB worker's own fetches.
+    const duckdb: string[] = [];
+    // Context-level: also sees any worker's own fetches.
     page.context().on("request", (req) => {
-      const { hostname } = new URL(req.url());
-      if (BANNED_HOSTS.has(hostname)) banned.push(req.url());
+      const url = new URL(req.url());
+      if (BANNED_HOSTS.has(url.hostname)) banned.push(req.url());
+      if (url.pathname.startsWith("/duckdb/")) duckdb.push(url.pathname);
     });
 
-    // Default view + a scenario, so every DuckDB-backed path runs.
+    // Default view + a scenario, so every parquet-backed loader runs.
     await gotoReady(page, "/?mode=scenarios&scenario=hormuz&commodity=gas&year=2023");
     await expect(page.getByTestId("ranked-importers")).toBeVisible();
     expect([...new Set(banned)]).toEqual([]);
+    // Loaders read parquet with hyparquet: the 7 MB DuckDB wasm stays off the load path.
+    expect(duckdb).toEqual([]);
   });
 });

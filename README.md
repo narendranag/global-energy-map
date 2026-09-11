@@ -67,7 +67,7 @@ uv run python -m pytest tests/python          # transforms, schemas, data integr
 pnpm build && CI=1 pnpm test:e2e              # Playwright against a production build (~15 min)
 ```
 
-**Stack:** Next.js 16, React 19, TypeScript strict; deck.gl 9 inside MapLibre (OpenFreeMap basemap); DuckDB-WASM querying Parquet in the browser. There is no backend: data files are served as static assets with immutable, content-versioned caching. The build-time pipeline is Python (pandas, pyarrow, geopandas, duckdb). CI runs lint, typecheck, unit, Python and e2e tests (including an axe accessibility scan), plus a post-deploy smoke test.
+**Stack:** Next.js 16, React 19, TypeScript strict; deck.gl 9 inside MapLibre (OpenFreeMap basemap); Parquet read in the browser by hyparquet (DuckDB-WASM stays self-hosted for an upcoming query console but is off the load path). There is no backend: data files are served as static assets with immutable, content-versioned caching. The build-time pipeline is Python (pandas, pyarrow, geopandas, duckdb). CI runs lint, typecheck, unit, Python and e2e tests (including an axe accessibility scan), plus a post-deploy smoke test.
 
 ## Project status
 

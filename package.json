@@ -22,6 +22,8 @@
     "@duckdb/duckdb-wasm": "1.33.1-dev45.0",
     "@vercel/analytics": "^2.0.1",
     "apache-arrow": "^21.1.0",
+    "fzstd": "0.1.1",
+    "hyparquet": "1.30.1",
     "maplibre-gl": "^5.24.0",
     "marked": "^18.0.12",
     "next": "16.2.6",

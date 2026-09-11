@@ -154,7 +154,7 @@ LNG-T3 covers **22–41% of GIIGNL's global LNG trade, 2020–2024** — every y
 
 **What we ingest:**
 - **Basins:** 1,046 petroleum-bearing geological basin polygons with area, country, region.
-- **Storage:** 26,102 storage facilities (oil + gas). The schema has a capacity field in barrels, but it is populated on only 4 rows.
+- **Storage:** 7,733 storage facilities (oil + gas) after dropping 18,369 EPA regulatory records that are not bulk storage: leaking-tank cleanup sites, SPCC spill plans (anything over 1,320 gal), a state master list and rail/truck/air transfer points (`build_storage.is_bulk_storage`, 2026-09-11). NETL ships 26,102. The schema has a capacity field in barrels, but it is populated on only 4 rows.
 - **Ports:** 3,694 oil & gas handling ports.
 
 **Why NETL:** the strongest single global open dataset for upstream/midstream infrastructure that isn't behind a paywall or gated form. US Government source, public domain, queryable via ArcGIS REST FeatureServer. Comprehensive across 14+ asset types beyond what we currently ingest.

@@ -12,7 +12,7 @@ Layer by layer: where the data come from, how current and complete they are, wha
 | Oil pipelines | GEM GOIT | 2025-04-09 | 1,185 | 64 % dated | kb/d |
 | Gas pipelines | GEM GGIT | 2026-02-20 | 2,772 | 74 % dated | bcm/y |
 | Refineries | NETL GOGI + OpenStreetMap | 2026-05-17 / 2026-05-15 | 1,163 | static | kb/d |
-| Storage | NETL GOGI | 2026-05-17 | 26,102 | static | (barrels, 4 rows) |
+| Storage | NETL GOGI | 2026-05-17 | 7,733 | static | (barrels, 4 rows) |
 | Ports | NETL GOGI | 2026-05-17 | 3,694 | static | — |
 | LNG terminals | LNG-T3 + GEM GGIT | 2026-04-01 / 2026-02-20 | 312 | 98 % dated | Mtpa |
 | LNG voyages | LNG-T3 | 2026-04-01 | 17,592 | 2020–2024 only | m³ of LNG |
@@ -63,8 +63,8 @@ Layer by layer: where the data come from, how current and complete they are, wha
 
 ### Storage hubs
 
-- **Source:** NETL GOGI, 26,102 sites; drawn from zoom 4.
-- **Bias:** **90 % of rows (23,501) are in the United States**, and 6,025 carry the NETL status "LEAKING UNDERGROUND STORAGE TANK - ARRA" — i.e. a US environmental-programme inventory, not strategic or commercial storage hubs. Read this layer as "where NETL has records", not as a global storage map.
+- **Source:** NETL GOGI, 7,733 sites (of 26,102; EPA cleanup sites, SPCC spill plans, a state master list and transfer points dropped, 2026-09-11); drawn from zoom 4.
+- **Bias:** two-thirds of the remaining rows (5,132) are in the United States: EPA Facility Response Plan sites (≥ 1 million gallons, incl. the Strategic Petroleum Reserve) and EIA petroleum terminals. Read this layer as "bulk storage where NETL has records", not as an even global storage map.
 - **Gaps:** capacity on 4 rows; no dates; status blank on most rows.
 
 ### Ports
@@ -102,7 +102,7 @@ Layer by layer: where the data come from, how current and complete they are, wha
 1. **Reserves are frozen at 2020.** Any post-2020 change on the reserves map is a display artefact.
 2. **Undated features appear in every year.** In 1995, 60 % of the pipelines drawn have no start year. Early-year maps show too much; retired facilities are mostly absent, so they also show the wrong things.
 3. **Capacity is thin outside pipelines and LNG.** Refineries 30 %, ports 23 rows, storage 4 rows, extraction sites none. Rankings "by capacity" silently leave out everything without a number.
-4. **Point density reflects source effort, not the energy system.** Storage is 90 % US records; extraction sites are 54 % US.
+4. **Point density reflects source effort, not the energy system.** Storage is two-thirds US records (after dropping EPA non-storage records); extraction sites are 54 % US.
 5. **LNG-T3 is a 22–41 % sample, and an uneven one.** A missing arc or a "no voyages" terminal is a coverage gap, not a zero.
 6. **BACI quantities were repaired.** Some BACI quantities are wrong by one to three orders of magnitude while the values are right (e.g. Philippines ← Saudi Arabia crude, 2023: 80.9 Mt reported at 26 USD/t). Any row whose unit value is more than 5× away from the median for its HS code and year is re-estimated as `value_usd ÷ median`; BACI's figure is kept in `qty_reported` and the row is flagged `qty_imputed`. 9,655 of 53,727 rows are affected (6,722 crude, 2,933 LNG; mostly small shipments). Values are never changed. If your own work uses BACI directly, you will see different quantities for those rows. See [Methodology → Trade data](../methodology.md#trade-data-baci).
 7. **BACI suppresses Iran.** Iranian crude exports are near zero in 2023–2024 and far below mid-2010s levels from 2019. Exposure of Iran's buyers is understated.

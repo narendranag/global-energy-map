@@ -12,7 +12,7 @@ This is the **current-state** methodology of Global Energy Map: for every map la
 | Oil pipelines | GEM GOIT | 2025-04-09 | 1,185 | Partly — 64 % dated | kb/d |
 | Gas pipelines | GEM GGIT | 2026-02-20 | 2,772 | Partly — 74 % dated | bcm/y |
 | Refineries | NETL GOGI (primary) + OpenStreetMap | 2026-05 | 1,163 (1,075 + 88) | No | kb/d (30 % known) |
-| Storage hubs | NETL GOGI | 2026-05-17 | 26,102 | No | — |
+| Storage hubs | NETL GOGI (EPA regulatory records filtered out) | 2026-05-17 | 7,733 | No | — |
 | Ports | NETL GOGI | 2026-05-17 | 3,694 | No | — |
 | LNG terminals | LNG-T3 (primary) + GEM GGIT | 2026-04-01 / 2026-02-20 | 312 (305 + 7) | Yes — 98 % dated | Mtpa |
 | LNG voyages | LNG-T3 | 2026-04-01 | 17,592 voyages, 2020–2024 | Yes, 2020–2024 only | m³ of LNG |
@@ -79,7 +79,14 @@ This is the **current-state** methodology of Global Energy Map: for every map la
 ### Storage hubs
 
 - **Source:** NETL GOGI storage feature service, snapshot 2026-05-17. Public domain.
-- **Coverage:** 26,102 oil and gas storage sites. Drawn from zoom 4 upward to keep the world view legible.
+- **Coverage:** 7,733 oil and gas storage sites, drawn from zoom 4 upward to keep the world view legible. NETL's layer has 26,102 rows, but 23,501 are in the US and most of those are EPA regulatory records rather than storage facilities. The build drops four kinds of them:
+  - leaking-underground-tank cleanup sites (6,025: petrol stations, garages);
+  - SPCC spill-prevention plans (11,513: any site holding more than 1,320 US gallons of oil, including schools and farms);
+  - an EPA state master list (721: shops);
+  - rail, truck, air and port transfer points (110).
+
+  It keeps EPA Facility Response Plan sites (3,669 sites with at least 1 million gallons of oil storage, including the Strategic Petroleum Reserve caverns), the EIA petroleum-product terminals (1,460) and all 2,601 non-US rows.
+- **Bias:** two-thirds of the remaining rows (5,132) are still in the US, because the US inputs are far more complete than anywhere else. Read the layer as "bulk storage where NETL has records", not as an even global inventory.
 - **Gaps:** capacity is present on only 4 rows, so the layer shows *where* storage is, not how much; no vintage; status is mostly blank.
 - **Scenarios:** not used.
 
@@ -151,7 +158,8 @@ This is a **static first-order exposure measure**: what fraction of last year's 
 - **Source:** CEPII BACI, HS92 release V202601, annual bilateral trade 1995–2024, reconciled from UN Comtrade mirror statistics. Quantities in **metric tonnes**. HS 2709 (crude petroleum) for oil scenarios; HS 271111 (liquefied natural gas) for Hormuz-LNG — pipeline gas (HS 271121) never transits a chokepoint, so HS 2711 would overstate Hormuz.
 - **Cleaning:** BACI pseudo-country aggregates are removed and duplicate country-pair rows summed.
 - **Quantity repair:** Some BACI **quantities** are wrong by one to three orders of magnitude while the values are fine (e.g. Philippines ← Saudi Arabia crude 2023: 80.9 Mt at 26 USD/t against a ~650 USD/t median; Taiwan ← Saudi Arabia 2014: 14 kt for USD 10.5 bn). Because the scenarios work in tonnes, `build_trade_flow.py` re-estimates any row whose unit value lies outside 5× of the (HS code, year) median as `value_usd / median`, keeping BACI's figure in `qty_reported` and flagging `qty_imputed` (9,655 of 53,727 rows, mostly tiny shipments; net −258 Mt crude and −520 Mt LNG across 1995–2024). Values are never changed.
-- **Iran suppression:** BACI reports almost no Iranian crude exports in 2023–2024 (one near-zero pair). Exposure of importers that historically bought Iranian crude is **understated** for those years; the scenario panel says so.
+- **Iran suppression:** BACI's Iranian crude falls from 89 Mt (2018) to 28 Mt (2019), about 4 Mt in 2020–21 and near zero in 2023–24 (2022's 31 Mt is mostly one partner). Sanctioned cargoes are reported under other origins; Malaysia→China crude, for instance, grows from 7 Mt (2019) to 41.5 Mt (2024). Exposure of Iran's buyers (China above all) is **understated** from 2019, and the scenario panel says so for those years.
+- **Russia → Belarus:** BACI records Russian crude into Belarus through 2021 (16 Mt) and **none from 2022**, although Belarus's refineries still run on Russian crude. The Druzhba scenario therefore loses its largest single buyer from 2022, and the scenario panel says so.
 - **Volumes:** panels show crude in kb/d using 7.33 barrels per tonne (EI's mean conversion) and LNG in Mt.
 - **Licence:** CEPII publishes BACI under the Etalab Open Licence 2.0 (reuse and redistribution with attribution). Our processed bilateral table is downloadable from `/data` under the same licence; the full dataset is free from CEPII. Cite Gaulier & Zignago (2010), CEPII Working Paper 2010-23.
 
@@ -184,9 +192,9 @@ In every year, only terminals **in service** that year take a share: a terminal 
 
 ### Scenario notes
 
-- **Close Strait of Hormuz (oil).** Chokepoint; one share per Gulf exporter, applied to all its buyers outside the Gulf (intra-Gulf pairs are 0, e.g. Saudi crude to Bahrain's Sitra refinery through the AB pipeline). Imports *into* the Gulf from outside also cross the strait but are out of scope: the scenario measures the Gulf's exports. Saudi Arabia (0.88) and the UAE (0.65) have bypass pipelines (East-West to Yanbu; Habshan-Fujairah); Iraq is 0.90 to reflect the northern Kirkuk-Ceyhan route (shut 2023–24, so recent Iraqi exposure is slightly understated); Iran, Kuwait, Qatar and Bahrain are 1.0. Iran's exports are suppressed in BACI for 2023–24 (above).
+- **Close Strait of Hormuz (oil).** Chokepoint; one share per Gulf exporter, applied to all its buyers outside the Gulf (intra-Gulf pairs are 0, e.g. Saudi crude to Bahrain's Sitra refinery through the AB pipeline). Imports *into* the Gulf from outside also cross the strait but are out of scope: the scenario measures the Gulf's exports. Saudi Arabia (0.88) and the UAE (0.65) have bypass pipelines (East-West to Yanbu; Habshan-Fujairah); Iraq is 0.90 to reflect the northern Kirkuk-Ceyhan route (shut 2023–24, so recent Iraqi exposure is slightly understated); Iran, Kuwait, Qatar and Bahrain are 1.0. Iran's exports are largely missing from BACI from 2019 (above).
 - **Close Strait of Hormuz (LNG).** Its own two shares (`hormuz_lng`), applied to HS 271111: Qatar 1.0 and the UAE 1.0 — both export plants (Ras Laffan, Das Island) load inside the Gulf and the UAE's Fujairah bypass carries crude only. Terminal attribution as above. Buyers inside the Gulf get share 0 (Qatari cargoes into Kuwait's Al Zour or Dubai's Jebel Ali never cross the strait); Kuwait's LNG from outside the Gulf, which does cross it inbound, is not counted.
-- **Cut Druzhba pipeline.** Per-importer shares of Russian crude: Belarus, Slovakia, Hungary and Czechia 1.0 (landlocked or southern-branch-fed); Poland and Germany 0.47 (the ≈500 kb/d northern branch allocated pro-rata across their 2021 Russian imports; the rest came by tanker). Germany and Poland largely ended Russian pipeline crude in early 2023, but the share is static, so post-2022 results scale whatever Russian volumes BACI still records.
+- **Cut Druzhba pipeline.** Per-importer shares of Russian crude: Belarus, Slovakia, Hungary and Czechia 1.0 (landlocked or southern-branch-fed); Poland and Germany 0.47 (the ≈500 kb/d northern branch allocated pro-rata across their 2021 Russian imports; the rest came by tanker). Germany and Poland largely ended Russian pipeline crude in early 2023, but the share is static, so post-2022 results scale whatever Russian volumes BACI still records. From 2022 BACI has no Russia→Belarus rows (above), so Belarus is missing from those years.
 - **Cut Baku-Tbilisi-Ceyhan.** Azerbaijan 0.83 (EIA: about 83 % of Azerbaijan's oil exports use BTC), applied to all its buyers.
 - **Cut Caspian Pipeline Consortium.** Kazakhstan 0.80 (EIA); Russia 0.035 — Russian-field CPC volumes against total Russian crude exports, an **analyst estimate** without a single source.
 
@@ -195,7 +203,7 @@ In every year, only terminals **in service** that year take a share: a terminal 
 - Infrastructure layers are snapshots with partial or no dates; the historical map is an approximation that shows too much in early years.
 - Capacity is missing for most storage, ports, extraction sites and 70 % of refineries.
 - Scenario exposure is annual, static and first-order (see above); route shares do not vary by year.
-- BACI suppresses some flows (notably Iran 2023–24) and lags by about a year.
+- BACI suppresses some flows (Iran from 2019; Russia→Belarus from 2022) and lags by about a year.
 - LNG-T3 is a partial AIS sample (22–41 % of trade).
 - Country polygons are 1:110m; small states appear in tables but not as fills.
 

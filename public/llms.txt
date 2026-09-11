@@ -37,7 +37,7 @@ The page renders client-side, so fetching the HTML gives no data. Build view lin
 ## Caveats to carry with any number
 
 - Proved reserves are frozen at 2020; the Energy Institute stopped updating them.
-- BACI trade starts in 1995. It suppresses Iran's crude exports in 2023–24. Implausible BACI quantities are re-estimated from values (flag: `qty_imputed`).
+- BACI trade starts in 1995. It records little Iranian crude from 2019 (near zero 2023–24) and no Russia→Belarus crude from 2022. Implausible BACI quantities are re-estimated from values (flag: `qty_imputed`).
 - LNG-T3 voyages cover about 22–41% of global LNG trade. It is used only to split BACI country totals across terminals.
 - Scenario route shares are static across years. Results are exposure accounting, not a market model: no prices, rerouting, stocks or substitution.
 

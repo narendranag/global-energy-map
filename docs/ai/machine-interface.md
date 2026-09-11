@@ -123,7 +123,7 @@ This is exposure accounting, not a market model: no price response, rerouting, s
 - **Respect `downloadable`.** Don't redistribute view-only files.
 - **Carry the caveats with the numbers:**
   - reserves frozen at 2020;
-  - BACI suppresses Iran's exports in 2023–24;
+  - BACI records little Iranian crude from 2019 (near zero 2023–24) and no Russia→Belarus crude from 2022;
   - LNG-T3 covers 22–41 % of global LNG trade;
   - route shares are static across years.
 

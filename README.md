@@ -35,7 +35,7 @@ What it deliberately doesn't do: price responses, rerouting, strategic stocks, o
 | LNG voyages, 2020–2024 | 17,592 | LNG-T3 (CC BY 4.0) |
 | Petroleum basins · storage hubs · ports | 1,046 · 7,733 · 3,694 | NETL GOGI (public domain) |
 | Bilateral crude (HS 2709) and LNG (HS 271111) trade, 1995–2024 | 53,727 country-pair-years | CEPII BACI (Etalab Open Licence 2.0) |
-| Scenario route shares | 18, each with a citation | EIA / IEA and operator reports |
+| Scenario route shares | 18, each with a citation (plus 54 intra-Gulf pairs set to 0) | EIA / IEA and operator reports |
 
 Known limits that matter:
 - reserves stop at 2020;

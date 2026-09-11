@@ -17,7 +17,7 @@ Layer by layer: where the data come from, how current and complete they are, wha
 | LNG terminals | LNG-T3 + GEM GGIT | 2026-04-01 / 2026-02-20 | 312 | 98 % dated | Mtpa |
 | LNG voyages | LNG-T3 | 2026-04-01 | 17,592 | 2020–2024 only | m³ of LNG |
 | Scenario trade | CEPII BACI HS92, V202601 | 2026-01 | 53,727 pair-years | 1995–2024 | tonnes (+ USD) |
-| Route shares | EIA / IEA / Argus (Kpler) / GEM | 2026-09-10 | 18 | static | fraction |
+| Route shares | EIA / IEA / Argus (Kpler) / GEM | 2026-09-11 | 72 (18 shares + 54 intra-Gulf share-0 pairs) | static | fraction |
 | Country polygons | Natural Earth 1:110m | 2024-10-01 | 177 | static | — |
 
 "Dated" means the row carries a start or commissioning year; undated rows are drawn in **every** year.
@@ -94,7 +94,7 @@ Layer by layer: where the data come from, how current and complete they are, wha
 
 ### Route shares and country polygons
 
-- **Route shares:** 18 hand-set rows with per-row citations; see [Scenario method](scenario-method.md#route-shares).
+- **Route shares:** 72 rows — 18 hand-set shares with per-row citations, plus 54 intra-Gulf share-0 pairs (42 crude, 12 LNG) that keep cargoes which never leave the Gulf out of the Hormuz scenarios; see [Scenario method](scenario-method.md#route-shares).
 - **Countries:** Natural Earth 1:110m, 177 polygons. Small islands and city-states (Singapore, Bahrain, Hong Kong, …) have no polygon at this scale: they appear in scenario tables and the *Check a country* box but not as map fills.
 
 ## Things that will mislead you

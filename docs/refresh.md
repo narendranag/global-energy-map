@@ -62,6 +62,7 @@ For every source: (1) check the publisher's page for a new release and read its 
 ### NETL GOGI (ad hoc)
 - NETL serves live layers with no versions. Re-ingest when you want newer data, then set `NETL.release` and `NETL.as_of` to the retrieval date (the ingest stamps `_fetched_at` in each raw GeoJSON). Expect small count changes in basins, storage, ports and refineries.
 - Refinery dedup (`build_refineries`) is sensitive to NETL's duplicate listings; check `test_no_two_netl_refineries_within_1km_same_country`.
+- Storage is filtered to bulk-storage records (`build_storage.is_bulk_storage` drops EPA cleanup sites, SPCC plans, a state master list and transfer points). A NETL re-ingest can add new source categories; watch the transform's kept/dropped counts before accepting a large row-count move.
 
 ### OpenStreetMap refineries (quarterly)
 - `uv run python -m scripts.ingest.osm_refineries --force`, then set `OSM.release`/`as_of` to the retrieval date. The OSM supplement count (88 today) will move; `assets_open.parquet` excludes it automatically.
@@ -86,6 +87,16 @@ Record every data change here, newest first: date, source and release, files aff
 - Rows: <entry> 1,234 → 1,300 (+66) ...
 - Notes: ...
 ```
+
+### 2026-09-11 — storage filtered to bulk storage (no upstream refresh)
+- Files: `assets.parquet`, `assets_open.parquet`, `catalog.json`.
+- Rows: `netl_storage` 26,102 → 7,733 (−18,369); `assets_open.parquet` 36,191 → 17,822.
+- Notes: dropped EPA leaking-underground-storage-tank cleanup sites (6,025), SPCC spill-prevention plans (11,513), an EPA state master list (721) and rail/truck/air/port transfer points (110). Kept EPA Facility Response Plan sites (3,669, including the SPR), EIA petroleum terminals (1,460) and all 2,601 non-US rows. The US share of the layer falls from 90 % to 66 % (5,132 US rows).
+
+### 2026-09-11 — Hormuz intra-Gulf share-0 pairs (no upstream refresh)
+- Files: `disruption_route.parquet`, `catalog.json`.
+- Rows: 18 → 72 (+54: 42 crude and 12 LNG exporter → other-Gulf-coast-country pairs at share 0, `GULF_COASTAL` in `build_disruption_routing.py`).
+- Notes: cargoes that stay inside the Gulf never cross the strait, so they are no longer counted as exposed. Al Zour (Kuwait) LNG 73.4 % → 0 %, Bahrain crude 88 % → 0 %, Jebel Ali 93.4 % → 39.4 % (2023). World crude at risk in 2024 moves only slightly, 27.91 % → 27.86 %, and Kuwait's exporter contribution from 993 to 971 kb/d. Flows *into* the Gulf from outside remain out of scope.
 
 ### 2026-09-10 — Phase 10 (no upstream refresh)
 - New file `assets_open.parquet` (36,191 rows): `assets.parquet` minus its 88 OpenStreetMap rows, offered for download on `/data`.

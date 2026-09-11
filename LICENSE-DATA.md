@@ -71,7 +71,7 @@ The per-file licence, row count, size and sha256 are also listed on the live [Da
 
 ### Scenario route shares — our derived table
 
-- **What it is:** `disruption_route.parquet` holds 18 hand-set shares ("what fraction of exporter X's crude/LNG uses route Y"), each with the document it comes from (`source_title`, `source_url`, `source_year`, `source_note`). Sources are EIA analysis briefs (US Government, public domain — [EIA reuse policy](https://www.eia.gov/about/copyrights_reuse.php)), IEA reports (IEA text and figures are generally CC BY 4.0 — [IEA terms](https://www.iea.org/terms)), GEM.wiki (CC BY 4.0) and one Argus Media article citing Kpler data (a single figure quoted with citation). One share is marked as an unsourced analyst estimate.
+- **What it is:** `disruption_route.parquet` holds 18 hand-set shares ("what fraction of exporter X's crude/LNG uses route Y"), each with the document it comes from (`source_title`, `source_url`, `source_year`, `source_note`), plus 54 structural share-0 pairs for intra-Gulf trade (42 crude, 12 LNG) — 72 rows in all. Sources are EIA analysis briefs (US Government, public domain — [EIA reuse policy](https://www.eia.gov/about/copyrights_reuse.php)), IEA reports (IEA text and figures are generally CC BY 4.0 — [IEA terms](https://www.iea.org/terms)), GEM.wiki (CC BY 4.0) and one Argus Media article citing Kpler data (a single figure quoted with citation). One share is marked as an unsourced analyst estimate.
 - **Licence:** the table is our analysis; reuse it freely with a citation of this project and of the source on each row. The underlying reports keep their own terms.
 - **Scenario CSV exports** from the map's Share menu are derived analysis (BACI imports × these shares); each file header cites every input.
 

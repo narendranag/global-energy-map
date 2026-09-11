@@ -102,10 +102,11 @@ In Scenarios mode (or whenever a scenario is set) a panel opens on the right. Fr
 
 See [Citing and reuse](citing-and-reuse.md) for what to do with these.
 
-## Methodology and Data pages
+## The other site pages
 
 - **[/methodology](https://energymap.marain.space/methodology)** renders [`docs/methodology.md`](../methodology.md): per layer and per scenario, source, as-of, coverage, units, gaps; the route-share table; licences; how to cite.
 - **[/data](https://energymap.marain.space/data)** lists every shipped file with source, licence, as-of date, rows, size and sha256, and a download button where the licence permits.
+- **[/terms](https://energymap.marain.space/terms)** and **[/privacy](https://energymap.marain.space/privacy)** — terms of use (including the no-warranty and not-for-operational-decisions statement, governed by Singapore law) and the privacy notice. They are linked from the footer on every page, along with the provenance line.
 
 ## Shareable URLs
 

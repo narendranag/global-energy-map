@@ -116,5 +116,5 @@ About 18 MB crosses the wire before `data-ready`: basemap 6.4, wasm 7.1, pipelin
 
 ## Deploy notes
 
-- `public/duckdb/` is about 77 MB uncompressed (EH 36 MB + MVP 41 MB wasm). It is generated on Vercel by `prebuild` and never committed. Browsers download only the EH or MVP file, about 7 MB brotli.
+- `public/duckdb/` is about 77 MB uncompressed (EH 36 MB + MVP 41 MB wasm). It is still generated on Vercel by `prebuild` and never committed, but since 2026-09-11 no page requests it: it is staged for the planned query console. (Until then, a browser downloaded one of the two files, about 7 MB brotli.)
 - After deploying, check the caching: `curl -sI 'https://<host>/data/assets.parquet?v=<sha8>'` should show `immutable`, and the same URL without `?v=` should show `max-age=0, must-revalidate`.

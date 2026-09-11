@@ -4,7 +4,7 @@
 
 This guide is for academics, energy-policy analysts and IR/economics scholars who want to use the map as an instrument rather than a picture: to see how the world's oil and gas system is wired, how it changed between 1990 and 2024, and which importers, refineries and LNG terminals depend on a given chokepoint or pipeline. It explains what the numbers mean, where they come from, and where they stop being informative.
 
-The map is free, needs no account, and runs entirely in your browser: the data files are read directly from the site (DuckDB-WASM over Parquet), and no request goes to any data provider while you use it.
+The map is free, needs no account, and runs entirely in your browser: the Parquet data files are fetched from the site and decoded in the page (no database server, no SQL sent anywhere), and no request goes to any data provider while you use it.
 
 ## What the map can answer
 
@@ -42,6 +42,7 @@ The map is free, needs no account, and runs entirely in your browser: the data f
 - [Data licences](../../LICENSE-DATA.md) — licence, attribution line and restrictions for every source.
 - [Refresh runbook](../refresh.md) — how and when each source is updated, and the data changelog.
 - [Data page](https://energymap.marain.space/data) — every shipped file with licence, as-of date, rows, size, sha256 and (where permitted) a download link.
+- [Terms of use](https://energymap.marain.space/terms) and [Privacy](https://energymap.marain.space/privacy) — linked from the footer of every page.
 
 ## Reporting problems
 

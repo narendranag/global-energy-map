@@ -181,7 +181,7 @@ LNG-T3 covers **22–41% of GIIGNL's global LNG trade, 2020–2024** — every y
 **Coverage:**
 - 13× more refineries than the prior OSM-only source.
 - Strong coverage of major refining hubs that OSM under-tagged. After the within-source dedup, USA (141), China (100), Russia (65), Argentina (57) and Canada (44) lead the count.
-- Capacity coverage rises from 0% (OSM-only) to ~15% (NETL's populated subset). Records without parseable capacity fall back to uniform-within-country attribution in the scenario engine.
+- Capacity coverage rises from 0% (OSM-only) to 33% of the deduplicated NETL rows (350 of 1,075; 15% of the 2,272 raw rows). Records without parseable capacity fall back to uniform-within-country attribution in the scenario engine.
 
 **Coverage gaps:**
 - Field names truncated to ~10 chars (legacy shapefile import); fields use metadata-database conventions (`md_country`, `md_source`, `facility_n`).
@@ -228,7 +228,7 @@ Each row: year, exporter ISO3, importer ISO3, quantity (tonnes).
 
 **Coverage gaps:**
 - **Some BACI quantities are implausible.** Some BACI **quantities** are wrong by one to three orders of magnitude while the values are fine (e.g. Philippines ← Saudi Arabia crude 2023: 80.9 Mt at 26 USD/t against a ~650 USD/t median; Taiwan ← Saudi Arabia 2014: 14 kt for USD 10.5 bn). Because the scenarios work in tonnes, `build_trade_flow.py` re-estimates any row whose unit value lies outside 5× of the (HS code, year) median as `value_usd / median`, keeping BACI's figure in `qty_reported` and flagging `qty_imputed` (9,655 of 53,727 rows, mostly tiny shipments; net −258 Mt crude and −520 Mt LNG across 1995–2024). Values are never changed.
-- **BACI suppresses low-value and sensitive flows.** Iran (IRN) crude exports in 2023–2024 show only one bilateral pair with near-zero value, materially understating Iran's historical bilateral dependencies in South and East Asia.
+- **BACI suppresses low-value and sensitive flows.** Iranian (IRN) crude drops sharply from 2019 and in 2023–2024 shows only one bilateral pair with near-zero value, materially understating Iran's historical bilateral dependencies in South and East Asia.
 - Annual granularity only — no monthly or quarterly detail.
 - Lags by ~1 year from current date.
 
@@ -242,7 +242,7 @@ Each row: year, exporter ISO3, importer ISO3, quantity (tonnes).
 - **Where it lands:** `disruption_route.parquet` (each row carries `source_title`, `source_url`, `source_year`)
 - **Layers/scenarios using it:** all five scenarios (Hormuz crude, Hormuz LNG via `hormuz_lng` rows, Druzhba, BTC, CPC)
 
-**What we ingest:** static routing-share tables that encode how each exporter's crude or LNG flows through each chokepoint or pipeline. Example: Saudi Arabia's crude is 88% Hormuz-dependent, 12% bypasses via East-West pipeline. Druzhba routing shares: DEU and POL 47% of Russian crude (IEA northern-branch volume allocated pro-rata), BLR/SVK/HUN/CZE 100%. Each row in `disruption_route.parquet` carries its citation and derivation (`source_title`, `source_url`, `source_year`, `source_note`); six shares were revised to source-derived values on 2026-09-10.
+**What we ingest:** static routing-share tables that encode how each exporter's crude or LNG flows through each chokepoint or pipeline. Example: Saudi Arabia's crude is 88% Hormuz-dependent, 12% bypasses via East-West pipeline. Druzhba routing shares: DEU and POL 47% of Russian crude (IEA northern-branch volume allocated pro-rata), BLR/SVK/HUN/CZE 100%. Each row in `disruption_route.parquet` carries its citation and derivation (`source_title`, `source_url`, `source_year`, `source_note`); six shares were revised to source-derived values on 2026-09-10. Since 2026-09-11 the file also carries 54 structural share-0 pairs (42 crude, 12 LNG) — one for each Hormuz exporter × other Gulf-coast country — so intra-Gulf cargoes, which never cross the strait, are not counted as exposed (`GULF_COASTAL` in `scripts/transform/build_disruption_routing.py`). `disruption_route.parquet` therefore has 72 rows. Flows *into* the Gulf from outside do cross the strait and are deliberately out of scope.
 
 **Coverage gaps:**
 - **Routing shares are fixed across all years** — they don't track maintenance windows, sanctions regimes, or renegotiations of joint-venture operating agreements.
@@ -283,9 +283,9 @@ Each row: year, exporter ISO3, importer ISO3, quantity (tonnes).
 
 ## Candidate sources (Phase 7+)
 
-### Phase 8 — consolidation (formerly "Phase 7")
+### Phase 8 — consolidation (formerly "Phase 7") — _shipped_
 
-Phase 7 became a correctness pass (EI year parsing, BACI aggregates, reproducible assets, generated catalog). Engineering cleanup still precedes new data sources: a shared asset query cache so the five layer hooks stop scanning `assets.parquet` separately; an app state store that syncs to the URL; explicit ready signals for e2e; a vintage filter on scenario inputs; Legend driven by `LayerState`; a daily-throughput tooltip; and dropping the unused `pipelines.parquet` from the runtime bundle.
+Phase 7 became a correctness pass (EI year parsing, BACI aggregates, reproducible assets, generated catalog), and Phase 8 then delivered the engineering cleanup that preceded new data sources: one cached asset load, an app state store that syncs to the URL, explicit ready signals for e2e, a Legend driven by `LayerState`, and dropping the unused `pipelines.parquet`. Still open from that list: a daily-throughput tooltip. The vintage filter on scenario inputs landed partly on 2026-09-11 as the in-service rule for LNG import terminals; refineries still carry no dates.
 
 Surfaced via Tavily/Exa research. Listed roughly in order of analytical value × tractability.
 
@@ -303,7 +303,7 @@ Surfaced via Tavily/Exa research. Listed roughly in order of analytical value ×
 - **URL:** https://www.eia.gov/petroleum/refinerycapacity/
 - **License:** Public (US government)
 - **What it offers:** US refinery capacities annually, per-facility, authoritative. Distillation capacity, downgrading capacity, ownership, location, status.
-- **Why it matters:** NETL Refineries has capacity populated for only 16% of records and the strings are messy. EIA Refinery Capacity Report is the canonical US source — combining it with NETL (global coverage) and OSM (curated names) gives a three-source merge that's much stronger than any single source.
+- **Why it matters:** NETL Refineries has capacity populated for only a third of the deduplicated records (350 of 1,075) and the strings are messy. EIA Refinery Capacity Report is the canonical US source — combining it with NETL (global coverage) and OSM (curated names) gives a three-source merge that's much stronger than any single source.
 
 ### Canada CER Pipeline Throughput
 
@@ -405,4 +405,4 @@ Key findings from the 2026-05-19 sweep:
 
 - Don't hit data-provider APIs from the browser. All ingestion is build-time only.
 - Don't commit raw downloads to git — `data/raw/` is gitignored. Processed Parquet files in `public/data/` are committed.
-- Don't add a runtime config layer that reads paths from `catalog.json`. The catalog is metadata; runtime SQL hardcodes `read_parquet('/data/<file>.parquet')` by design.
+- Don't add a runtime config layer that reads paths from `catalog.json`. The catalog is metadata; the runtime loaders in `src/lib/data/` hardcode `/data/<file>.parquet` by design (they take only the sha256 from the catalog, to version the URL).

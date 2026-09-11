@@ -12,6 +12,7 @@ import type {
 import { computeRefineryImpacts } from "./refinery";
 import { computeLngImportImpacts } from "./lng";
 import { computeLngImportImpactsFromVoyages } from "./lng-t3";
+import { lngTerminalsInService } from "./lng-in-service";
 
 export * from "./types";
 
@@ -88,18 +89,19 @@ export function computeScenarioImpact(input: ScenarioInput): ScenarioResult {
   // we have voyage data and the active year falls in the LNG-T3 range.
   const lngVoyages =
     input.year >= 2020 && input.year <= 2024 ? (input.lngVoyages ?? []) : [];
+  const lngImports = lngTerminalsInService(input.lngImports ?? [], input.year, lngVoyages);
 
   const byLngImport =
     lngVoyages.length > 0
       ? computeLngImportImpactsFromVoyages({
-          lngImports: input.lngImports ?? [],
+          lngImports,
           voyages: lngVoyages,
           flowsByImporter,
           lookupShare,
         })
-      : input.lngImports && input.lngImports.length > 0
+      : lngImports.length > 0
       ? computeLngImportImpacts({
-          lngImports: input.lngImports,
+          lngImports,
           flowsByImporter,
           lookupShare,
         })

@@ -146,4 +146,30 @@ describe("scenario CSV", () => {
     expect(csv).toContain('"Plock, ""Orlen"""');
     expect(shareCitationLine(unsourced)).toBe("RUS -> all importers: 0.035 — Analyst estimate (unsourced)");
   });
+
+  it("Hormuz on the gas axis cites the LNG shares, with identical pair rows on one line", () => {
+    const row = (id: string, exporter: string, importer: string | null, share: number): ShareCitation => ({
+      disruption_id: id,
+      kind: "chokepoint",
+      exporter_iso3: exporter,
+      importer_iso3: importer,
+      share,
+      source_title: "IEA",
+      source_url: "https://iea.example",
+      source_year: 2026,
+      source_note: importer === null ? null : "inside the Gulf",
+    });
+    const shares = [
+      row("hormuz", "ARE", null, 0.65),
+      row("hormuz_lng", "ARE", null, 1),
+      row("hormuz_lng", "ARE", "KWT", 0),
+      row("hormuz_lng", "QAT", "KWT", 0),
+    ];
+    const gas: ScenarioResult = { ...RESULT, scenarioId: "hormuz", commodity: "gas" };
+    const csv = scenarioCsv(gas, { viewUrl: "https://x/", exported: "2026-09-11", catalog: CATALOG, shares });
+    expect(csv).toContain("Route shares (disruption_route.parquet, 3 rows; static across years):");
+    expect(csv).toContain("#   ARE -> all importers: 1 — IEA (2026) https://iea.example");
+    expect(csv).toContain("#   2 pairs (ARE -> KWT, QAT -> KWT): 0 — IEA (2026) https://iea.example");
+    expect(csv).not.toContain("0.65"); // the crude share does not apply to LNG
+  });
 });

@@ -117,4 +117,17 @@ describe("routeRowsForDisplay", () => {
     expect(routeRowsForDisplay(routes, "cpc")[1]?.unsourced).toBe(true);
     expect(routeRowsForDisplay(routes, "btc")[0]).toMatchObject({ unsourced: true, url: "", year: null });
   });
+
+  it("lists identical share-0 pair rows (intra-Gulf) as one entry after the real shares", () => {
+    const cite = { source_title: "IEA", source_url: "https://iea.org", source_year: 2026, source_note: "inside" };
+    const hormuz = [
+      { disruption_id: "hormuz" as const, kind: "chokepoint" as const, exporter_iso3: "QAT", importer_iso3: "KWT", share: 0, ...cite },
+      { disruption_id: "hormuz" as const, kind: "chokepoint" as const, exporter_iso3: "QAT", importer_iso3: null, share: 1, ...cite },
+      { disruption_id: "hormuz" as const, kind: "chokepoint" as const, exporter_iso3: "QAT", importer_iso3: "BHR", share: 0, ...cite },
+    ];
+    const rows = routeRowsForDisplay(hormuz, "hormuz");
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({ exporter: "QAT", importer: null, share: 1, pairs: null });
+    expect(rows[1]).toMatchObject({ share: 0, pairs: ["QAT→KWT", "QAT→BHR"], note: "inside" });
+  });
 });

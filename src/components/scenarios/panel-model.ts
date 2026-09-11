@@ -10,6 +10,7 @@ import type {
   ScenarioId,
 } from "@/lib/scenarios/types";
 import { BARRELS_PER_TONNE_CRUDE } from "@/lib/scenarios/registry";
+import { groupIdenticalPairShares, pairLabel } from "@/lib/scenarios/share-groups";
 import { isUnsourced, type RouteShareRow } from "@/lib/data/scenario-inputs";
 
 export type ImporterSort = "share" | "volume";
@@ -120,26 +121,32 @@ export interface RouteDisplayRow {
   readonly year: number | null;
   readonly note: string;
   readonly unsourced: boolean;
+  /** Set when identical pair rows are listed as one entry: ["IRN→IRQ", …]. */
+  readonly pairs: readonly string[] | null;
 }
 
 type CitedRoute = DisruptionRouteRow & Partial<Omit<RouteShareRow, keyof DisruptionRouteRow>>;
 
 /**
  * The route shares the active scenario uses, with their citations, highest
- * share first. Rows without a citation title count as unsourced too.
+ * share first. Rows without a citation title count as unsourced too. Pair
+ * rows with the same share and citation (the share-0 intra-Gulf Hormuz
+ * pairs) collapse into one entry.
  */
 export function routeRowsForDisplay(
   routes: readonly CitedRoute[],
   scenarioId: ScenarioId,
 ): RouteDisplayRow[] {
-  return routes
-    .filter((r) => r.disruption_id === scenarioId)
-    .map((r) => {
+  return groupIdenticalPairShares(routes.filter((r) => r.disruption_id === scenarioId))
+    .map(({ rows }) => {
+      const r = rows[0];
       const title = r.source_title ?? "";
+      const grouped = rows.length > 1;
       return {
-        key: `${r.exporter_iso3}→${r.importer_iso3 ?? "*"}`,
+        key: grouped ? `group:${pairLabel(r)}` : pairLabel(r),
         exporter: r.exporter_iso3,
         importer: r.importer_iso3,
+        pairs: grouped ? rows.map(pairLabel) : null,
         share: r.share,
         title,
         url: r.source_url ?? "",

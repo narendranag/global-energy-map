@@ -53,14 +53,14 @@ By volume the order is Germany, Poland, Slovakia, Hungary, Czechia. The largest 
 
 Thailand (44.8 %), Poland (44.2 %), Serbia (41.7 %) and Greece (39.2 %) follow on share. On the refinery list, Japanese plants dominate capacity at risk (ExxonMobil Kawasaki 434 of 592 kb/d), with Reliance Jamnagar and ExxonMobil Singapore also near the top.
 
-**How to read it.** The two orderings answer different questions: *share* is dependence (Japan relies on the Gulf for most of its crude), *volume* is scale (China imports the most Gulf crude but also buys heavily elsewhere). Saudi Arabia (88 % through Hormuz) contributes 5,464 kb/d of the at-risk total, Iraq (90 %) 3,136, the UAE (65 %) 2,390, Kuwait 993 and Qatar 674.
+**How to read it.** The two orderings answer different questions: *share* is dependence (Japan relies on the Gulf for most of its crude), *volume* is scale (China imports the most Gulf crude but also buys heavily elsewhere). Saudi Arabia (88 % through Hormuz) contributes 5,464 kb/d of the at-risk total, Iraq (90 %) 3,136, the UAE (65 %) 2,390, Kuwait 971 and Qatar 674.
 
 **Caveats that apply.**
 
 - **Iran is invisible.** BACI records Iranian crude exports of roughly 0 in 2023 and 2024 (one near-zero pair each year), and far less than in the mid-2010s from 2019 onward (e.g. 81 kb/d in 2020, 629 kb/d in 2022). Buyers of Iranian crude — above all China — are therefore **understated**. Crude reported under another origin is attributed to that origin, whatever its real source.
 - **Iraq's share is the long-run 0.90**, which allows for the northern Kirkuk–Ceyhan route; that line was shut in 2023–24, so Iraqi exposure in those years is slightly understated.
 - **Saudi and UAE bypasses are fixed at their 2025 use** (Yanbu, Fujairah). The model does not ask whether the East–West or Habshan–Fujairah pipelines could carry more in a closure.
-- **Intra-Gulf buyers count as exposed.** A Hormuz share applies to all of an exporter's buyers, including other Gulf states whose cargoes never pass the strait.
+- **Intra-Gulf trade is not exposed, and inbound trade is not counted.** Cargoes between Gulf states never pass the strait, so those pairs have share 0 (since 2026-09-11; before that, Kuwait's crude to Qatar counted, which is why Kuwait's contribution fell from 993 to 971 kb/d). Imports *into* the Gulf from outside do cross the strait but are out of scope.
 - **Quantities were repaired.** Before the repair, BACI's reported quantity for UAE → Thailand crude in 2024 was about 6.5× the value-consistent figure; Thailand no longer ranks second by volume. See [Data and coverage](data-and-coverage.md#things-that-will-mislead-you).
 
 ---
@@ -87,15 +87,15 @@ With `commodity=gas` the Hormuz scenario uses its LNG shares (Qatar 100 %, UAE 1
 
 Japan, the second-largest LNG importer, is at 5.7 % (3.8 of 66.0 Mt).
 
-**Terminals.** Of the 239 LNG import terminals, 105 are *measured* (they received qualifying LNG-T3 voyages in 2023), 117 are *no voyages* (their country is covered but they are not), and 17 are *capacity proxy*. 48 terminals are ranked, 45 of them measured. The top rows by capacity at risk are Incheon (South Korea, 44.8 %, 24.4 of 54.5 Mtpa), Al Zour (Kuwait, 73.4 %), Pyeongtaek and Tongyoung (South Korea) and Shandong (China).
+**Terminals.** Of the 239 LNG import terminals, 189 were in service in 2023; the other 50 were commissioned later or are still under construction and take no share. Of the 189, 105 are *measured* (they received qualifying LNG-T3 voyages in 2023), 78 are *no voyages* (their country is covered but they are not), and 6 are *capacity proxy*. 46 terminals are ranked, 44 of them measured. The top rows by capacity at risk are Incheon (South Korea, 44.8 %, 24.4 of 54.5 Mtpa), Pyeongtaek and Tongyoung (South Korea), Shandong (China) and Sodegaura (Japan).
 
 **How to read it.** A country's percentage comes from its **BACI** suppliers; a *measured* terminal's percentage comes from the **supplier mix of the voyages** LNG-T3 observed arriving there. The two can disagree: Sodegaura (Japan) shows 17.7 % although Japan as a whole is at 5.7 %. Treat the terminal split as indicative of *where within a country* the exposure sits, not as a second estimate of the country total.
 
 **Caveats that apply.**
 
 - **LNG-T3 is partial.** In 2023 it covers 41 % of GIIGNL's reported world LNG trade (22–41 % across 2020–2024). It is used only for within-country shares, never for volumes — but a terminal can be marked *no voyages* simply because its cargoes were not captured.
-- **Kuwait shows two answers.** BACI records Kuwait's 2023 LNG imports from the US, Nigeria and others but none from Qatar, so Kuwait as a country is at 0 % — while LNG-T3 observed 37 Qatari cargoes into Al Zour, which therefore ranks high. Those cargoes load and discharge inside the Gulf and would not cross Hormuz at all; the exporter-wide share cannot see that (the same applies to Jebel Ali in the UAE).
-- **Terminal set is today's.** The attribution uses every import terminal in the data, including ones under construction or commissioned after the scenario year.
+- **Kuwait is at 0 % both ways.** BACI records Kuwait's 2023 LNG imports from the US, Nigeria and others but none from Qatar, so Kuwait as a country is at 0 %. LNG-T3 observed 37 Qatari cargoes into Al Zour, but those load and discharge inside the Gulf, so the Qatar→Kuwait pair has share 0 and Al Zour is at 0 % too (it showed 73.4 % before 2026-09-11). Jebel Ali in the UAE keeps only its non-Gulf supply.
+- **Terminals must be in service.** A terminal takes a share only if it received cargoes that year, or was commissioned by then and is not under construction.
 
 ---
 

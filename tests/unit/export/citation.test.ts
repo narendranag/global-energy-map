@@ -95,14 +95,20 @@ describe("site citation (from CITATION.cff)", () => {
 });
 
 describe("scenario share citations", () => {
-  it("carries all 18 disruption_route rows with a source title", () => {
-    expect(SCENARIO_SHARES).toHaveLength(18);
+  it("carries all 72 disruption_route rows with a source title", () => {
+    // 18 hand-set shares + 54 share-0 intra-Gulf Hormuz pairs (42 crude, 12 LNG).
+    expect(SCENARIO_SHARES).toHaveLength(72);
     for (const r of SCENARIO_SHARES) {
       expect(r.source_title.length).toBeGreaterThan(0);
-      expect(r.share).toBeGreaterThan(0);
+      expect(r.share).toBeGreaterThanOrEqual(0);
       expect(r.share).toBeLessThanOrEqual(1);
+      if (r.share === 0) expect(r.disruption_id).toMatch(/^hormuz/);
     }
     expect(sharesFor("druzhba").map((r) => r.importer_iso3)).toEqual(["BLR", "POL", "DEU", "SVK", "HUN", "CZE"]);
+    expect(sharesFor("hormuz_lng").filter((r) => r.importer_iso3 === null).map((r) => r.exporter_iso3)).toEqual([
+      "QAT",
+      "ARE",
+    ]);
   });
 });
 

@@ -10,9 +10,11 @@ test.describe("/methodology", () => {
     await expect(page.getByRole("heading", { level: 2, name: "Disruption scenarios" })).toBeVisible();
     await expect(page.getByRole("navigation", { name: "Contents" }).first()).toBeAttached();
 
-    // Route shares, generated from disruption_route.parquet: the LNG rows too.
+    // Route shares, generated from disruption_route.parquet: the LNG rows too
+    // (two exporter shares + one grouped row of share-0 intra-Gulf pairs).
     const shares = page.getByTestId("scenario-shares");
-    await expect(shares.getByRole("cell", { name: "Strait of Hormuz (LNG)" })).toHaveCount(2);
+    await expect(shares.getByRole("cell", { name: "Strait of Hormuz (LNG)" })).toHaveCount(3);
+    await expect(shares.getByRole("cell", { name: "42 pairs" })).toHaveCount(1);
 
     // Licence-required attribution lines, generated from catalog.json.
     const attributions = page.getByTestId("attributions");

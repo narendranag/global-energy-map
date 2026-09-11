@@ -5,6 +5,7 @@ import type {
   ScenarioId,
   TradeFlowRow,
 } from "@/lib/scenarios/types";
+import { routeKeyFor } from "@/lib/scenarios/registry";
 import { cachedLoader } from "./cache";
 import { loadVoyages, type VoyageRow } from "./voyages";
 
@@ -46,13 +47,7 @@ export function isUnsourced(r: Pick<RouteShareRow, "source_title">): boolean {
   return r.source_title === UNSOURCED_TITLE;
 }
 
-/**
- * Which `disruption_route` rows a scenario reads. Hormuz on the gas axis uses
- * its own LNG shares (`hormuz_lng`): the UAE's crude bypass carries no LNG.
- */
-export function routeKeyFor(scenarioId: ScenarioId, commodity: Commodity): string {
-  return scenarioId === "hormuz" && commodity === "gas" ? "hormuz_lng" : scenarioId;
-}
+export { routeKeyFor };
 
 export const loadRoutes = cachedLoader(
   async (scenarioId: ScenarioId, commodity: Commodity): Promise<readonly RouteShareRow[]> => {

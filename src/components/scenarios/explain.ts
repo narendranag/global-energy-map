@@ -57,6 +57,8 @@ export type ExposureExplanation =
       readonly year: number;
       readonly totalQty: number;
       readonly routeExporters: readonly SupplierQty[];
+      /** Every such supplier has an explicit share-0 pair row (e.g. intra-Gulf trade). */
+      readonly zeroPairs: boolean;
     }
   /** It imports, but none of it from exporters on the route. */
   | {
@@ -139,7 +141,8 @@ export function explainZeroExposure(
   const routeExporterSet = new Set(routes.map((r) => r.exporter_iso3));
   const routeExporters = suppliers.filter((s) => routeExporterSet.has(s.iso3) && s.qty > 0);
   if (routeExporters.length > 0) {
-    return { kind: "not-on-route", iso3, year, totalQty, routeExporters };
+    const zeroPairs = routeExporters.every((s) => pair.get(`${s.iso3}→${iso3}`) === 0);
+    return { kind: "not-on-route", iso3, year, totalQty, routeExporters, zeroPairs };
   }
   return { kind: "no-route-suppliers", iso3, year, totalQty, topSuppliers: suppliers.slice(0, 3) };
 }
@@ -196,7 +199,9 @@ export function describeExposure(e: ExposureExplanation, ctx: DescribeContext): 
     case "not-on-route":
       return (
         `0%: ${name} imports from ${list(e.routeExporters.map((s) => `${ctx.nameOf(s.iso3)} (${ctx.formatVolume(s.qty)})`))}, ` +
-        `but the scenario routes none of that trade through ${ctx.routeName} — the route share is set only for the importers it serves.`
+        (e.zeroPairs
+          ? `but that trade never reaches ${ctx.routeName}: the scenario sets a 0% route share for these pairs (cargoes that stay inside the Gulf).`
+          : `but the scenario routes none of that trade through ${ctx.routeName} — the route share is set only for the importers it serves.`)
       );
     case "no-route-suppliers":
       return (

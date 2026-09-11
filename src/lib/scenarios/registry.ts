@@ -77,7 +77,7 @@ export function howComputed(def: ScenarioDef, commodity: Commodity, year: number
   const noun = commodity === "gas" ? "LNG (HS 271111)" : "crude (HS 2709)";
   const shareRule =
     def.kind === "chokepoint"
-      ? `Each exporter has one share: the fraction of its exports that transits ${def.routeName}. It applies to every importer.`
+      ? `Each exporter has one share: the fraction of its exports that transits ${def.routeName}. It applies to every importer except buyers inside the Gulf, whose cargoes never cross the strait (share 0 for those pairs). Imports into the Gulf from outside are not counted.`
       : `Shares are set per exporter → importer pair (or per exporter where the pipeline serves all its buyers).`;
   const steps = [
     `Take ${year.toString()} bilateral ${noun} imports by volume (tonnes) from BACI (CEPII).`,
@@ -95,10 +95,19 @@ export function howComputed(def: ScenarioDef, commodity: Commodity, year: number
       inT3
         ? `Terminals (${LNG_T3_FIRST_YEAR.toString()}–${LNG_T3_LAST_YEAR.toString()}): LNG-T3 voyage data (a partial AIS sample) gives each terminal's share of its country's arrivals and its supplier mix; the BACI country total is split by those shares. Terminals in countries with no voyage coverage fall back to a split by capacity ("capacity proxy").`
         : `Terminals: the BACI country total is split across the country's import terminals by capacity ("capacity proxy"); per-terminal voyage data only covers ${LNG_T3_FIRST_YEAR.toString()}–${LNG_T3_LAST_YEAR.toString()}.`,
+      `Terminals not yet in service in ${year.toString()} get no share: those still under construction, or commissioned later, unless they took cargoes that year.`,
       "Volumes shown in Mt (million tonnes per year).",
     );
   }
   return steps;
+}
+
+/**
+ * Which `disruption_route` rows a scenario reads. Hormuz on the gas axis uses
+ * its own LNG shares (`hormuz_lng`): the UAE's crude bypass carries no LNG.
+ */
+export function routeKeyFor(scenarioId: ScenarioId, commodity: Commodity): string {
+  return scenarioId === "hormuz" && commodity === "gas" ? "hormuz_lng" : scenarioId;
 }
 
 export function getScenario(id: ScenarioId): ScenarioDef {

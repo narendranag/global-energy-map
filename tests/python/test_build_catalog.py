@@ -98,4 +98,4 @@ def test_citations_sidecar_is_current():
     """Re-run `uv run python -m scripts.transform.build_catalog` if this fails."""
     on_disk = json.loads(bc.CITATIONS_OUT.read_text())
     assert on_disk == bc.build_citations()
-    assert len(on_disk["scenario_shares"]) == 18
+    assert len(on_disk["scenario_shares"]) == 72  # 18 hand-set + 54 intra-Gulf share-0 pairs

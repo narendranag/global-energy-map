@@ -110,7 +110,7 @@ Runtime URLs inside the app carry `?v=<first 8 hex of sha256>` for cache-busting
 The engine is a small pure function (`src/lib/scenarios/engine.ts`). For scenario *s*, year *y* and commodity *c*:
 
 1. Take BACI flows for *y* and product *c* (HS 2709 for oil, HS 271111 for gas).
-2. For each flow exporter → importer, look up the route share: the per-pair row if one exists, otherwise the exporter-wide row (`importer_iso3` null), otherwise 0. For Hormuz on the gas axis, use the `hormuz_lng` rows.
+2. For each flow exporter → importer, look up the route share: the per-pair row if one exists (including the share-0 rows for trade between Gulf states, which never crosses Hormuz), otherwise the exporter-wide row (`importer_iso3` null), otherwise 0. For Hormuz on the gas axis, use the `hormuz_lng` rows.
 3. For each importer, `share_at_risk = Σ(qty × share) / Σ qty`.
 4. The app shades and ranks only importers with at least 0.1 % of world imports in that year.
 

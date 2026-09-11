@@ -1,5 +1,6 @@
 import type { Catalog } from "@/lib/data-catalog/types";
-import { getScenario } from "@/lib/scenarios/registry";
+import { getScenario, routeKeyFor } from "@/lib/scenarios/registry";
+import { groupIdenticalPairShares } from "@/lib/scenarios/share-groups";
 import type { ScenarioResult } from "@/lib/scenarios/types";
 import { LNG_T3_FIRST_YEAR, LNG_T3_LAST_YEAR } from "@/lib/data/voyages";
 import { toCsv, type CsvValue } from "./csv";
@@ -49,11 +50,14 @@ function topSources(list: readonly { iso3: string; qty: number }[]): string {
   return list.map((s) => `${s.iso3}:${String(round(s.qty, 1))}`).join(";");
 }
 
-export function shareCitationLine(r: ShareCitation): string {
-  const to = r.importer_iso3 ?? "all importers";
+export function shareCitationLine(r: ShareCitation, pairs: readonly ShareCitation[] = [r]): string {
+  const route =
+    pairs.length > 1
+      ? `${String(pairs.length)} pairs (${pairs.map((p) => `${p.exporter_iso3} -> ${p.importer_iso3 ?? "*"}`).join(", ")})`
+      : `${r.exporter_iso3} -> ${r.importer_iso3 ?? "all importers"}`;
   const src = r.source_title === UNSOURCED_TITLE ? UNSOURCED_TITLE : `${r.source_title} (${String(r.source_year)})`;
   const url = r.source_url ? ` ${r.source_url}` : "";
-  return `${r.exporter_iso3} -> ${to}: ${String(r.share)} — ${src}${url}`;
+  return `${route}: ${String(r.share)} — ${src}${url}`;
 }
 
 export function scenarioRows(
@@ -136,7 +140,7 @@ export function scenarioHeader(result: ScenarioResult, ctx: ScenarioExportContex
   const baci = ctx.catalog.entries.find((e) => e.id === "baci_2709");
   const lngT3 = ctx.catalog.entries.find((e) => e.id === "lng_t3_voyages");
   const usesVoyages = gas && result.year >= LNG_T3_FIRST_YEAR && result.year <= LNG_T3_LAST_YEAR;
-  const shares = sharesFor(result.scenarioId, ctx.shares);
+  const shares = sharesFor(routeKeyFor(result.scenarioId, result.commodity), ctx.shares);
   const lines = [
     `Global Energy Map — scenario table: ${def.label}, ${gas ? "LNG" : "crude oil"}, ${String(result.year)}`,
     "DERIVED ANALYSIS, not source data. Importer rows: BACI bilateral imports from each exporter x that exporter's route share;",
@@ -150,7 +154,7 @@ export function scenarioHeader(result: ScenarioResult, ctx: ScenarioExportContex
     lines.push(`Terminal shares: ${lngT3.attribution ?? lngT3.source_name}, as of ${lngT3.as_of}. ${lngT3.source_url}`);
   }
   lines.push(`Route shares (disruption_route.parquet, ${String(shares.length)} rows; static across years):`);
-  for (const s of shares) lines.push(`  ${shareCitationLine(s)}`);
+  for (const { rows } of groupIdenticalPairShares(shares)) lines.push(`  ${shareCitationLine(rows[0], rows)}`);
   lines.push(`View: ${ctx.viewUrl}`, `Exported: ${ctx.exported}`, `Cite this site: ${apaCitation(undefined, { viewUrl: ctx.viewUrl, accessed: ctx.exported })}`);
   return lines;
 }

@@ -33,6 +33,10 @@ export interface LngImportRow {
   readonly capacity: number;
   /** Terminal name — matched exactly against LngVoyageRow.to_terminal. */
   readonly name: string;
+  /** First year in service; null/absent = unknown (always counted). */
+  readonly commissioned_year?: number | null;
+  /** Source status, e.g. "operating" | "in-construction". */
+  readonly status?: string | null;
 }
 
 /** Phase 6: LNG-T3 voyage row used for per-terminal disaggregation. */

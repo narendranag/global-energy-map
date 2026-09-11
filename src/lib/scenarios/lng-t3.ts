@@ -1,5 +1,6 @@
 import type { LngImportImpact, LngImportRow, LngVoyageRow } from "./types";
 import { computeLngImportImpacts } from "./lng";
+import { LNG_T3_MIN_CONFIDENCE, isQualifyingVoyage } from "./lng-in-service";
 
 interface SrcQty {
   readonly iso3: string;
@@ -57,11 +58,9 @@ export function computeLngImportImpactsFromVoyages({
   voyages,
   flowsByImporter,
   lookupShare,
-  minConfidence = 3,
+  minConfidence = LNG_T3_MIN_CONFIDENCE,
 }: LngImportFromVoyagesInput): LngImportImpact[] {
-  const relevant = voyages.filter(
-    (v) => v.voyage_type === "export" && v.confidence_score >= minConfidence,
-  );
+  const relevant = voyages.filter((v) => isQualifyingVoyage(v, minConfidence));
 
   // Bucket by (importing country, terminal name) — not bare terminal name.
   // A terminal name is only unique within its own country; two countries

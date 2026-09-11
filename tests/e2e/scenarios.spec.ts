@@ -144,9 +144,11 @@ test.describe("Scenarios", () => {
       await expect(row).toHaveCount(1);
       await expect(row).toContainText("100%");
     }
-    // The LNG table: exactly those two rows (not the seven crude rows, where
-    // the UAE's share is 65% because of the crude-only Fujairah bypass).
-    await expect(routes.locator(":scope > ul > li")).toHaveCount(2);
+    // The LNG table: those two rows plus one grouped entry for the 12 share-0
+    // intra-Gulf pairs (not the crude rows, where the UAE's share is 65%
+    // because of the crude-only Fujairah bypass).
+    await expect(routes.locator(":scope > ul > li")).toHaveCount(3);
+    await expect(routes.locator("li").filter({ hasText: "12 exporter → importer pairs" })).toContainText("0%");
 
     await expect(page.getByTestId("ranked-importers").locator("li").first()).toBeVisible({
       timeout: RESULT_TIMEOUT,

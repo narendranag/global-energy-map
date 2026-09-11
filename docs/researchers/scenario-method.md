@@ -23,7 +23,7 @@ The measure is about **importers**. Exporters on the route (Saudi Arabia for Hor
 
 ## Route shares
 
-Every scenario is driven by a small hand-set table, `disruption_route.parquet` (18 rows), in which each share is tied to a document. The panel's **Route shares used** list shows the rows for the active scenario with their citations; **How this share follows from the source** gives the arithmetic.
+Every scenario is driven by a small hand-set table, `disruption_route.parquet` (72 rows: 18 hand-set shares, each tied to a document, and 54 intra-Gulf share-0 pairs). The panel's **Route shares used** list shows the rows for the active scenario with their citations; **How this share follows from the source** gives the arithmetic.
 
 | Scenario | Exporter → importer | Share | Source (year) |
 |---|---|---|---|
@@ -100,7 +100,7 @@ These are choices, not oversights: each would need data (monthly flows, spare ca
 
 1. **Read the shares.** Open *Route shares used*: which exporters are in the scenario, at what share, from which document and year? A result can only be as good as the least certain share contributing to it.
 2. **Ask why.** Type the country into *Check a country*. It lists the suppliers carrying the exposure and their volumes, or says why the answer is zero (no BACI imports, not on the route, or an exporter).
-3. **Look at the trade rows.** Download `trade_flow.parquet` from [/data](https://energymap.marain.space/data). Check the importer's suppliers for the year; check `qty_imputed` (quantities re-estimated from value because BACI's quantity was implausible; the original is in `qty_reported`) and the implied unit value `value_usd / qty`. Missing reporters (Iran from 2023; Russia → Belarus from 2022) show up as absent rows.
+3. **Look at the trade rows.** Download `trade_flow.parquet` from [/data](https://energymap.marain.space/data). Check the importer's suppliers for the year; check `qty_imputed` (quantities re-estimated from value because BACI's quantity was implausible; the original is in `qty_reported`) and the implied unit value `value_usd / qty`. Missing reporters (Iran from 2019, near-total from 2023; Russia → Belarus from 2022) show up as absent or near-zero rows.
 4. **Move the year.** A jump from one year to the next should be explainable by trade (a new supplier, sanctions, a reporting gap). A jump that coincides with a known route change is *not* captured, because shares are static.
 5. **Compare to a published figure carefully.** The Hormuz crude scenario puts 27.9 % of 2024 world crude imports (as recorded in BACI) at risk. Published statements about Hormuz usually refer to total oil (crude and products) or to seaborne trade, so the denominators differ; the comparison checks the order of magnitude, not the digit.
 6. **Recompute it.** Download the **scenario table** (Share / cite → Download → Scenario table): every importer's `total_qty`, `at_risk_qty` and `share_at_risk` in tonnes, with the inputs cited in the header. Or reproduce the importer figures directly with DuckDB (Python `duckdb` package or the CLI) from the two downloadable files:

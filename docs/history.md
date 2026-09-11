@@ -5,7 +5,7 @@
 ---
 
 
-> This page is a chronological record of what shipped in each phase and the simplifications behind each layer. For a flat researcher-oriented inventory of current data sources, see `docs/data-sources.md`. For current totals (refinery count, layer counts, etc.) the live `/about` page renders from `public/data/catalog.json` at build time.
+> This page is a chronological record of what shipped in each phase and the simplifications behind each layer. For a flat researcher-oriented inventory of current data sources, see `docs/data-sources.md`. For current totals (refinery count, layer counts, etc.) the live [`/methodology`](https://energymap.marain.space/methodology) and [`/data`](https://energymap.marain.space/data) pages render from `public/data/catalog.json` at build time. (`/about` was renamed `/methodology` in Phase 9 and now redirects.)
 
 ## Scope & Approach
 
@@ -285,3 +285,14 @@ An **"LNG voyages (2020–2024)"** toggle sits under the Gas layer group, **defa
 - **Confidence-score threshold slider.** Fixed at >= 3; making it user-tunable is a Phase 7+ candidate.
 - **MarineCadastre US-coastal oil tankers + EMODnet EU route density.** Separate datasets from LNG-T3, deferred to a separate phase.
 - **A runtime consumer for `lng_trade_daily.parquet` / `lng_terminal_daily.parquet`.** Both are built and catalogued alongside `lng_voyage.parquet` for reproducibility of the GIIGNL reconciliation above, but no layer or scenario reads them at runtime today.
+
+---
+
+## Phases 7–10 and after (2026-09-10 → 2026-09-11)
+
+This narrative stops at Phase 6. The later work is recorded elsewhere, so nothing is restated here:
+
+- **Phases 7–10** — correctness, consolidation, product redesign, launch hardening. Plans in [`docs/superpowers/plans/`](superpowers/plans/), the review that set the roadmap in [`docs/superpowers/specs/2026-09-10-refactor-redesign-review.md`](superpowers/specs/2026-09-10-refactor-redesign-review.md), and a case study of how they were executed in [`docs/ai/how-it-was-built.md`](ai/how-it-was-built.md). PRs #16, #17, #19, #20; launch in #22.
+- **Post-launch, 2026-09-11** — intra-Gulf Hormuz pairs set to 0 and LNG attribution limited to terminals in service that year (#23); every loader moved off DuckDB-WASM to hyparquet, cutting cold load from ≈4.9 s to ≈1.2 s (#24, see [`docs/performance.md`](performance.md)); the storage layer filtered from 26,102 to 7,733 rows and year-aware BACI gap notes added (#25); terms of use and privacy policy published (#27, #28, sources in [`docs/legal/`](legal/)); stale LNG-T3 and NETL citations corrected (#29).
+
+Current-state facts always live in [`docs/methodology.md`](methodology.md) and [`docs/data-sources.md`](data-sources.md), never here.

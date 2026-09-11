@@ -41,7 +41,7 @@ A public web app that lets serious analysts interrogate global energy dependenci
 ```
 global-energy-map/
 ├── src/
-│   ├── app/                       # Next.js App Router: page.tsx (map), methodology/, data/ (/about → /methodology redirect in next.config.ts)
+│   ├── app/                       # Next.js App Router: page.tsx (map), methodology/, data/, terms/, privacy/ (/about → /methodology redirect in next.config.ts)
 │   ├── components/
 │   │   ├── map/                   # MapShell: MapLibre map + deck.gl via MapboxOverlay (interleaved, beneath basemap labels)
 │   │   ├── layers/                # pure builders `buildXLayer(rows, opts)` + `formatXTooltip` per layer; useMapLayers memoises them; LayerPanel, generated Legend
@@ -68,12 +68,15 @@ global-energy-map/
 ├── tests/
 │   ├── unit/                      # Vitest (TS) — scenarios, url-state, vintage filter, data-catalog
 │   ├── python/                    # pytest — helpers, transform fixtures, data-integrity checks over public/data
-│   └── e2e/                       # Playwright feature specs (map, layers, time, scenarios, url, about) + helpers.ts
+│   └── e2e/                       # 14 Playwright specs (map, layers, time, scenarios, modes, url, share, data, methodology, legal, network, errors, phone, a11y) + helpers.ts
 ├── docs/
 │   ├── data-sources.md            # researcher-facing source inventory
 │   ├── methodology.md             # current-state methodology, rendered at /methodology
 │   ├── legal/                     # terms.md + privacy.md, rendered at /terms and /privacy (git history = change log)
-│   ├── history.md                 # per-phase narrative (Phases 1–8), verbatim
+│   ├── history.md                 # per-phase narrative (Phases 1–6, verbatim); 7–10 + post-launch as pointers
+│   ├── performance.md             # load-path measurements (the hyparquet switch)
+│   ├── ai/                        # agent-facing docs: case study, playbook, machine interface
+│   ├── researchers/               # researcher-facing tour, worked examples, coverage, FAQ
 │   └── superpowers/
 │       ├── specs/                 # design specs (per phase + master)
 │       └── plans/                 # implementation plans (per phase)
@@ -99,7 +102,7 @@ Designed so adding a new commodity is a row, not a migration.
 | `pipelines` | pipeline_id, name, status, commodity (crude, ngl, crude+ngl, gas), capacity_kbpd, capacity_unit, start_country_iso3, end_country_iso3, operator, start_year, geometry (LineString / MultiLineString) | GEM oil + gas infrastructure trackers |
 | `country_year_series` | iso3, year (1990–2024), metric (production_crude_kbpd, proved_reserves_oil_bbn_bbl, proved_reserves_gas_tcm), value, unit | EI Statistical Review |
 | `trade_flow` | year, hs_code (2709 crude, 271111 LNG), exporter_iso3, importer_iso3, qty | BACI (CEPII) |
-| `disruption_route` | scenario_id, origin_iso3, destination_iso3, route_share, affected_infrastructure, source_title, source_url, source_year | EIA / IEA scenario analysis (per-row citations) |
+| `disruption_route` | disruption_id, kind, exporter_iso3, importer_iso3 (null = exporter-wide), share, source, source_title, source_url, source_year, source_note | EIA / IEA scenario analysis (per-row citations) |
 | `lng_voyage`, `lng_trade_daily`, `lng_terminal_daily` | start/end dates, IMO, from/to terminal + country/iso3, amount_cbm, confidence_score | Phase 6 — LNG-T3 |
 
 All artifacts indexed in `public/data/catalog.json` (path, license, source URL, as-of, rows, bytes, sha256) — **generated** by `build_catalog.py`, never hand-edited; the methodology page renders straight off it. Full-resolution `pipelines`/`basins` GeoParquet is written to `data/derived/` (gitignored); only the simplified GeoJSON sidecars ship.

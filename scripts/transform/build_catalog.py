@@ -296,7 +296,7 @@ REGISTRY: list[dict[str, Any]] = [
         "source_name": "EIA / IEA / Argus Media (Kpler) / GEM — see source_* columns",
         "source_url": "https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz",
         "license": "Hand-set shares derived from public reports; per-row citations",
-        "as_of": "2026-09-10",
+        "as_of": "2026-09-11",
         "layers": [
             "scenario:hormuz",
             "scenario:hormuz-lng",

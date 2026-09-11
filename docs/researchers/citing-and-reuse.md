@@ -60,12 +60,12 @@ The rule (from [`LICENSE-DATA.md`](../../LICENSE-DATA.md)): a file is offered on
 
 | File | Contents | Licence | Downloadable |
 |---|---|---|---|
-| `assets_open.parquet` | 36,191 asset rows: extraction sites, refineries (NETL only), storage, ports, LNG terminals, with a `source` column | CC BY 4.0 (GEM, LNG-T3) + public domain (NETL); attribution required | Yes |
+| `assets_open.parquet` | 17,822 asset rows: extraction sites, refineries (NETL only), storage, ports, LNG terminals, with a `source` column | CC BY 4.0 (GEM, LNG-T3) + public domain (NETL); attribution required | Yes |
 | `pipelines.geojson` | oil and gas pipelines, simplified | CC BY 4.0 | Yes |
 | `basins.geojson` | basin polygons, simplified | public domain (credit NETL) | Yes |
 | `lng_voyage.parquet`, `lng_trade_daily.parquet`, `lng_terminal_daily.parquet` | LNG-T3 voyages and daily tables, 2020–2024 | CC BY 4.0 | Yes |
 | `trade_flow.parquet` | BACI HS 2709 + 271111 extract, 1995–2024, with the quantity repair | Etalab Open Licence 2.0 | Yes |
-| `disruption_route.parquet` | the 18 route shares with citations | project table; cite project and sources | Yes |
+| `disruption_route.parquet` | the route-share table: 18 hand-set shares with citations, plus 54 intra-Gulf share-0 pairs (72 rows) | project table; cite project and sources | Yes |
 | `countries.geojson` | Natural Earth 1:110m | public domain | Yes |
 | `assets.parquet` | the map's asset table, incl. 88 OSM refineries | mixed, includes ODbL | **No** — use `assets_open.parquet` |
 | `country_year_series.parquet` | EI reserves and production | EI terms | **No** — get it from the Energy Institute |

@@ -37,7 +37,7 @@ https://energymap.marain.space/?mode=flows&commodity=gas&year=2023&layers=gas_pi
 
 The page is rendered client-side, so a crawler fetching the HTML will not see scenario numbers. To get numbers, read the data (section 3) and reproduce the method (section 4). Don't scrape the rendered page.
 
-Other pages: `/methodology` (current-state method, coverage, citations table) and `/data` (every file with licence, rows, size, sha256 and download links).
+Other pages: `/methodology` (current-state method, coverage, citations table), `/data` (every file with licence, rows, size, sha256 and download links), `/terms` and `/privacy`.
 
 ## 2. The catalog
 
@@ -63,8 +63,8 @@ Downloadable (openly licensed) files, with row counts as of this build:
 | File | Rows | Licence | Contents |
 |---|---|---|---|
 | `trade_flow.parquet` | 53,727 | Etalab Open Licence 2.0 (CEPII BACI) | `year, importer_iso3, exporter_iso3, hs_code, value_usd, qty (tonnes), qty_unit, source, qty_reported, qty_imputed`; HS 2709 + 271111, 1995–2024. `qty` is BACI's quantity except where its implied unit value was implausible (> 5× off the year's median); those rows carry `qty_imputed = true` with BACI's figure in `qty_reported` |
-| `disruption_route.parquet` | 18 | project-derived, per-row citations | `disruption_id, kind, exporter_iso3, importer_iso3 (null = all), share, source_title, source_url, source_year, source_note`; `hormuz_lng` rows are used on the gas axis |
-| `assets_open.parquet` | 36,191 | CC BY 4.0 (GEM, LNG-T3) + public domain (NETL) | `asset_id, kind, name, country_iso3, lon, lat, capacity, capacity_unit, operator, status, commissioned_year, …`; kinds: `extraction_site, refinery, lng_export, lng_import, storage, port` |
+| `disruption_route.parquet` | 72 | project-derived, per-row citations | `disruption_id, kind, exporter_iso3, importer_iso3 (null = all), share, source, source_title, source_url, source_year, source_note`; 18 cited shares plus 54 intra-Gulf pairs pinned to share 0 (Hormuz); `hormuz_lng` rows are used on the gas axis |
+| `assets_open.parquet` | 17,822 | CC BY 4.0 (GEM, LNG-T3) + public domain (NETL) | `asset_id, kind, name, country_iso3, lon, lat, capacity, capacity_unit, operator, status, commissioned_year, …`; kinds: `extraction_site, refinery, lng_export, lng_import, storage, port` |
 | `lng_voyage.parquet` | 17,592 | CC BY 4.0 (LNG-T3) | AIS-derived voyages 2020–2024: dates, IMO, from/to terminal and country, `amount_cbm`, `confidence_score` |
 | `lng_trade_daily.parquet`, `lng_terminal_daily.parquet` | 16,691 / 16,115 | CC BY 4.0 (LNG-T3) | daily aggregates |
 | `pipelines.geojson` | 3,957 features | CC BY 4.0 (GEM) | oil, NGL and gas pipelines, simplified to about 500 m |
@@ -113,6 +113,8 @@ The engine is a small pure function (`src/lib/scenarios/engine.ts`). For scenari
 2. For each flow exporter → importer, look up the route share: the per-pair row if one exists (including the share-0 rows for trade between Gulf states, which never crosses Hormuz), otherwise the exporter-wide row (`importer_iso3` null), otherwise 0. For Hormuz on the gas axis, use the `hormuz_lng` rows.
 3. For each importer, `share_at_risk = Σ(qty × share) / Σ qty`.
 4. The app shades and ranks only importers with at least 0.1 % of world imports in that year.
+
+Inbound flows *into* the Gulf are out of scope: only exports are routed. When the app attributes exposure to LNG terminals, it counts only terminals in service in that year (`src/lib/scenarios/lng-in-service.ts`): a terminal counts if it received a qualifying LNG-T3 voyage that year, or if it is not "in-construction" and its `commissioned_year` is unknown or ≤ the year.
 
 This is exposure accounting, not a market model: no price response, rerouting, stocks or substitution. See [the researcher scenario method](../researchers/scenario-method.md) and `/methodology`.
 

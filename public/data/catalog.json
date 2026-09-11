@@ -1,6 +1,6 @@
 {
   "version": 6,
-  "generated_at": "2026-09-10T00:00:00+00:00",
+  "generated_at": "2026-09-11T00:00:00+00:00",
   "entries": [
     {
       "id": "ei_country_year",
@@ -282,7 +282,7 @@
       "source_name": "EIA / IEA / Argus Media (Kpler) / GEM — see source_* columns",
       "source_url": "https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz",
       "license": "Hand-set shares derived from public reports; per-row citations",
-      "as_of": "2026-09-10",
+      "as_of": "2026-09-11",
       "layers": [
         "scenario:hormuz",
         "scenario:hormuz-lng",

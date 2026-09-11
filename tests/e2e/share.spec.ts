@@ -85,8 +85,10 @@ test.describe("Share / cite", () => {
     const header = lines.filter((l) => l.startsWith("#")).join("\n");
     expect(header).toContain("DERIVED ANALYSIS");
     expect(header).toContain("Gaulier, G., & Zignago, S. (2010)");
-    expect(header).toContain("Route shares (disruption_route.parquet, 7 rows");
+    // 7 exporter shares + 42 share-0 intra-Gulf pairs, the pairs on one line.
+    expect(header).toContain("Route shares (disruption_route.parquet, 49 rows");
     expect(header).toMatch(/ARE -> all importers: 0\.65 — /);
+    expect(header).toMatch(/# {3}42 pairs \(IRN -> IRQ, .*\): 0 — /);
     expect(header).toMatch(/View: http:\/\/localhost:3000\/\?[^\n]*scenario=hormuz/);
     expect(header).toContain("Cite this site:");
 

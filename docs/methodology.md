@@ -54,7 +54,7 @@ This is the **current-state** methodology of Global Energy Map: for every map la
 - **Coverage:** 1,185 crude, NGL and crude+NGL lines that are operating (1,137) or in construction (48). Shelved, cancelled and retired lines, and features without geometry, are dropped at ingest.
 - **Units:** capacity in thousand barrels per day, known for 933 of 1,185.
 - **Time:** `start_year` known for 760 of 1,185 (64 %); undated lines appear in every year. There is no retirement year, so a line decommissioned in the past is not in the data at all rather than disappearing at the right year.
-- **Geometry:** simplified at 0.005° (≈500 m) to keep the browser file under 15 MB; the shape is schematic at street scale.
+- **Geometry:** each pipeline's contiguous line fragments are merged, then simplified at 0.005° (≈500 m); the browser file is about 8 MB and the shape is schematic at street scale.
 - **Scenarios:** not used directly — the pipeline scenarios are defined by route shares (below), not by these geometries.
 
 ### Gas pipelines

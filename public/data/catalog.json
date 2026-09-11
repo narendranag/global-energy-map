@@ -206,8 +206,8 @@
       "redistributable": true,
       "downloadable": true,
       "rows": 1185,
-      "bytes": 14264820,
-      "sha256": "83d66ebd3320e37ca0edb414733ce8e9e8580649104640e4146d5457ed6cc035"
+      "bytes": 7891654,
+      "sha256": "009dca69ef047a70a803be050932bfcf0b778f1f209132a88a187518391cc484"
     },
     {
       "id": "gem_gas_pipelines",
@@ -226,8 +226,8 @@
       "redistributable": true,
       "downloadable": true,
       "rows": 2772,
-      "bytes": 14264820,
-      "sha256": "83d66ebd3320e37ca0edb414733ce8e9e8580649104640e4146d5457ed6cc035"
+      "bytes": 7891654,
+      "sha256": "009dca69ef047a70a803be050932bfcf0b778f1f209132a88a187518391cc484"
     },
     {
       "id": "netl_basins",

@@ -228,3 +228,25 @@ def test_assets_open_catalog_entry():
     assets_rows = sum(e["rows"] for e in ENTRIES if e["path"] == "/data/assets.parquet")
     osm_rows = next(e["rows"] for e in ENTRIES if e["id"] == "osm_refineries")
     assert entry["rows"] == assets_rows - osm_rows
+
+
+# ── pipelines.geojson ───────────────────────────────────────────────────────
+
+
+def _line_parts(geom: dict) -> list:
+    return [geom["coordinates"]] if geom["type"] == "LineString" else geom["coordinates"]
+
+
+def test_pipelines_sidecar_fragments_are_merged():
+    """Render budget: deck.gl draws every line part as its own path, and under
+    software WebGL the unmerged GGIT sidecar (173,570 parts / 455,780 vertices;
+    Tennessee Gas Pipeline alone 62,967 parts) took ~15 s per frame on CI.
+    build_pipelines.py merges contiguous fragments before simplifying."""
+    fc = json.loads((DATA / "pipelines.geojson").read_text())
+    parts = [_line_parts(f["geometry"]) for f in fc["features"]]
+    n_parts = sum(len(p) for p in parts)
+    n_vertices = sum(len(line) for p in parts for line in p)
+    by_name = {f["properties"]["name"]: len(p) for f, p in zip(fc["features"], parts, strict=True)}
+    assert n_parts < 70_000, n_parts
+    assert n_vertices < 260_000, n_vertices
+    assert by_name["Tennessee Gas Pipeline"] < 2_000

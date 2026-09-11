@@ -34,7 +34,7 @@ A public web app that lets serious analysts interrogate global energy dependenci
 **Hosting**
 - Vercel for the app, auto-deploys on push to `main`; Vercel Web Analytics (cookieless) via `<Analytics />` in `layout.tsx` — must be enabled in the Vercel project
 - `.github/workflows/smoke.yml` runs after each successful deployment against the public alias (per-deployment `*.vercel.app` URLs sit behind Vercel login; previews need `VERCEL_AUTOMATION_BYPASS_SECRET`)
-- Vercel Blob (or Cloudflare R2 if size demands) for any data exceeding ~25 MB single-file / ~100 MB total. Not in use yet — Phase 5 cleared the largest sidecar (pipelines.geojson) to 14 MB via geometry simplification.
+- Vercel Blob (or Cloudflare R2 if size demands) for any data exceeding ~25 MB single-file / ~100 MB total. Not in use yet — the largest sidecar (pipelines.geojson) is ~8 MB after merging line fragments and simplifying (Phase 5, Phase 10).
 
 ## Repo layout
 

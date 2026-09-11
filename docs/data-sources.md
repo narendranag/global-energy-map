@@ -275,7 +275,7 @@ Each row: year, exporter ISO3, importer ISO3, quantity (tonnes).
 ### Vercel Blob migration for pipelines.geojson
 
 - **Why considered:** Raw `pipelines.geojson` is 73 MB, well over GitHub's 50 MB soft limit and CLAUDE.md's 25 MB single-file ceiling.
-- **Why rejected:** Geometry simplification at `tolerance=0.005` (~500 m) cuts the sidecar to 13 MB — a 5.2× reduction with no visible degradation at world or continent zoom. Blob migration is deferred until a future file genuinely exceeds the ceiling.
+- **Why rejected:** Geometry simplification at `tolerance=0.005` (~500 m) cut the sidecar to 13 MB — a 5.2× reduction with no visible degradation at world or continent zoom. Merging each feature's contiguous line fragments before simplifying (Phase 10) takes it to ~8 MB. Blob migration is deferred until a future file genuinely exceeds the ceiling.
 
 ---
 

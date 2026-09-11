@@ -2,7 +2,7 @@
 
 > An interactive OSINT visualization of the world's hydrocarbon energy system — reserves, extraction, transport, refining, distribution — for academics, energy-policy researchers, and IR/economics scholars who think in systems.
 >
-> Status: Phases 1–7 shipped (live at https://global-energy-map-one.vercel.app). See `docs/superpowers/specs/2026-05-15-global-energy-map-design.md` for the full design and `docs/superpowers/plans/` for per-phase plans.
+> Status: Phases 1–9 shipped; Phase 10 (launch hardening) in review (live at https://global-energy-map-one.vercel.app). See `docs/superpowers/specs/2026-05-15-global-energy-map-design.md` for the full design and `docs/superpowers/plans/` for per-phase plans.
 
 ## One-liner
 
@@ -22,9 +22,9 @@ A public web app that lets serious analysts interrogate global energy dependenci
 - Natural Earth admin-0 polygons (public domain) for the reserves choropleth
 
 **In-browser data layer**
-- `@duckdb/duckdb-wasm` runs SQL over Parquet/GeoParquet served from the CDN
-- GeoParquet for geometries; plain Parquet for time-series
-- Direct HTTP range reads — no backend for the analytics path
+- `@duckdb/duckdb-wasm` runs SQL over Parquet served from our own origin. The wasm/worker bundles and the signed `parquet` extension are **self-hosted** under `/duckdb/` (copied/downloaded at `predev`/`prebuild` by `scripts/copy-duckdb.mjs`, sha256-pinned) — no runtime request to jsDelivr or extensions.duckdb.org
+- One shared DuckDB instance (the boot promise is cached); each parquet is registered once (small files as buffers)
+- No backend for the analytics path; the only third-party runtime host is the OpenFreeMap basemap
 
 **Build-time data layer**
 - Python (uv-managed) under `scripts/ingest/` and `scripts/transform/`
@@ -32,8 +32,9 @@ A public web app that lets serious analysts interrogate global energy dependenci
 - Outputs versioned Parquet/GeoParquet under `public/data/`
 
 **Hosting**
-- Vercel for the app, auto-deploys on push to `main`
-- Vercel Blob (or Cloudflare R2 if size demands) for any data exceeding ~25 MB single-file / ~100 MB total. Not in use yet — Phase 5 cleared the largest sidecar (pipelines.geojson) to 14 MB via geometry simplification.
+- Vercel for the app, auto-deploys on push to `main`; Vercel Web Analytics (cookieless) via `<Analytics />` in `layout.tsx` — must be enabled in the Vercel project
+- `.github/workflows/smoke.yml` runs after each successful deployment against the public alias (per-deployment `*.vercel.app` URLs sit behind Vercel login; previews need `VERCEL_AUTOMATION_BYPASS_SECRET`)
+- Vercel Blob (or Cloudflare R2 if size demands) for any data exceeding ~25 MB single-file / ~100 MB total. Not in use yet — the largest sidecar (pipelines.geojson) is ~8 MB after merging line fragments and simplifying (Phase 5, Phase 10).
 
 ## Repo layout
 
@@ -131,11 +132,12 @@ API keys live in `~/.config/secrets.env` (e.g., `TAVILY_API_KEY`, `EXA_API_KEY`)
 # App
 pnpm install
 pnpm dev                       # localhost:3000
-pnpm build && pnpm start
+pnpm build && pnpm start        # prebuild copies DuckDB bundles + downloads the pinned parquet extension into public/duckdb/
 pnpm lint
 pnpm typecheck                 # tsc --noEmit
 pnpm test                      # Vitest unit
 pnpm test:e2e                  # Playwright
+scripts/smoke/run.sh <url>     # post-deploy smoke against a deployed URL (pages, catalog sizes+sha256, Range read, one browser check)
 
 # Data pipeline (build-time)
 uv sync                                              # install Python deps
@@ -173,6 +175,11 @@ CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typec
 - **Idempotent transforms.** Every `build_*.py` drops prior rows of its kind from the target Parquet before appending — re-running is safe.
 - **Source provenance on rows.** Multi-source tables (e.g., refineries) carry a `source` column so downstream consumers can filter or label by origin.
 - **Vintage-aware layer behavior.** Pipelines (`start_year`, 71%) and extraction sites (`commissioned_year`, 22%) respect the active year slider. Null vintage = always visible; refineries/LNG/storage/ports have no vintage data and remain time-independent.
+- **Versioned data URLs + immutable caching.** Runtime data URLs go through `dataUrl()` (`src/lib/data/urls.ts`), which appends `?v=<first 8 of sha256>` from the bundled catalog; `next.config.ts` serves `?v=` requests `max-age=31536000, immutable` and unversioned ones `max-age=0`. Never change a file in `public/data/` without regenerating the catalog (`build_all` does) — a stale hash would pin browsers to old bytes for a year.
+- **DuckDB core version is pinned twice** (`DUCKDB_CORE_VERSION` in `src/lib/duckdb/bundles.ts` and `scripts/copy-duckdb.mjs`, with the extension sha256s). Upgrading `@duckdb/duckdb-wasm` means bumping both and the hashes; on a mismatch the app warns and falls back to DuckDB's default extension repository.
+- **Errors surface.** Render errors, uncaught errors/rejections and failed data loads (`useAsync` → `reportError`) show the error panel (reload / report-an-issue) instead of a blank or forever-loading map.
+- **Data licensing lives in `LICENSE-DATA.md`.** Downloadable = every source of the file is CC BY 4.0, public domain, Etalab Open Licence 2.0 (BACI) or project-derived. `assets_open.parquet` is the downloadable asset table (no ODbL OSM rows); EI reserves stay view-only.
+- **Refreshing data:** follow `docs/refresh.md`; all source URLs/releases/dates are pinned in `scripts/common/sources.py`.
 - **e2e is CPU-bound.** Every Playwright spec boots DuckDB-WASM and deck.gl under headless software WebGL. `playwright.config.ts` runs `workers: 1` unconditionally; scenario-panel expects need ~120 s inside 180 s test budgets to pass on ubuntu-latest (a Mac passes at 60 s). CI runs e2e against `pnpm build && pnpm start` under `CI=1`; the push trigger is limited to `main` so a PR branch runs once.
 - **Parallel implementer agents do not commit or stage.** Give each a disjoint file set, have them report changed files, then commit each set with an explicit `git add <files>`. Never `git add -A` on a shared tree. An agent's `git rm` stages a deletion that the next commit sweeps up — agents delete with plain `rm`.
 - **e2e waits on `main[data-ready="true"]`** (data loaded for the current inputs), clicks through the hydration-safe helpers in `tests/e2e/helpers.ts`, and proves rendering with screenshot pixel probes at projected lon/lat points — never fixed sleeps.
@@ -206,6 +213,7 @@ CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typec
 - **Phase 5** — _shipped 2026-05-17_ (NETL refineries augmentation + vintage-aware pipeline/extraction filtering + pipelines.geojson simplification). Live: https://global-energy-map-one.vercel.app
 - **Phase 6** — _shipped 2026-09-09_ (LNG-T3 terminals + voyages + BACI-anchored Hormuz-LNG attribution + CI + MIT/CITATION). Live: https://global-energy-map-one.vercel.app
 - **Phase 7 — Correctness** — _shipped 2026-09-10_ (PR #16: EI year parsing, basemap render + OpenFreeMap, 1990–2024 time axis, honest scenario overlay, generated catalog, cited scenario shares, data-integrity tests). Plan: `docs/superpowers/plans/2026-09-10-global-energy-map-phase-7.md`. Roadmap from the refactor/redesign review (`docs/superpowers/specs/2026-09-10-refactor-redesign-review.md`): Phase 7 Correctness → Phase 8 Consolidation → Phase 9 Product redesign → Phase 10 Launch hardening.
-- **Phase 8 — Consolidation** — _in review_ on branch `phase-8-consolidation` (plan: `docs/superpowers/plans/2026-09-10-global-energy-map-phase-8.md`): one cached asset load + pure layer builders, symbology module + generated Legend, per-layer tooltips, app store + `replaceState` URL sync with map view, MapboxOverlay interleaved, `build_all.py` with byte-identical rebuilds, NETL refinery dedup (2,360 → 1,163), NGL pipelines drawn, feature e2e with pixel probes, dependency sweep. Deferred per review: daily-throughput tooltip, vintage filter on scenario inputs.
-- **Phase 9 — Product redesign** — _in review_ on branch `phase-9-product` (plan: `docs/superpowers/plans/2026-09-10-global-energy-map-phase-9.md`): three-mode IA + sane defaults, visual pass, time controls, Methodology/Data pages, export + cite + copy link, scenario panel v2, phone banner, accessibility.
-- **Going public** — decided: after Phase 9, with `LICENSE-DATA.md`, map-footer attribution, downloads limited to CC BY / public-domain subsets. Light-only UI; phones get a "best on desktop" banner; keep DuckDB-WASM (export + query console in scope).
+- **Phase 8 — Consolidation** — _shipped 2026-09-10_ (PR #17) (plan: `docs/superpowers/plans/2026-09-10-global-energy-map-phase-8.md`): one cached asset load + pure layer builders, symbology module + generated Legend, per-layer tooltips, app store + `replaceState` URL sync with map view, MapboxOverlay interleaved, `build_all.py` with byte-identical rebuilds, NETL refinery dedup (2,360 → 1,163), NGL pipelines drawn, feature e2e with pixel probes, dependency sweep. Deferred per review: daily-throughput tooltip, vintage filter on scenario inputs.
+- **Phase 9 — Product redesign** — _shipped 2026-09-10_ (PR #19) (plan: `docs/superpowers/plans/2026-09-10-global-energy-map-phase-9.md`): three-mode IA + sane defaults, visual pass, time controls, Methodology/Data pages, export + cite + copy link, scenario panel v2, phone banner, accessibility.
+- **Phase 10 — Public-launch hardening** — _in review_ on branch `phase-10-launch` (plan: `docs/superpowers/plans/2026-09-10-global-energy-map-phase-10.md`): perf + caching + self-hosted DuckDB, LICENSE-DATA.md + open asset extract, refresh runbook, analytics + error boundary + post-deploy smoke.
+- **Going public** — decided: after Phase 9, with `LICENSE-DATA.md` (done), map-footer attribution (done), downloads limited to openly licensed files (CC BY / public domain / Etalab). Remaining launch steps for the maintainer: enable Vercel Web Analytics; optional custom domain; announce. Light-only UI; phones get a "best on desktop" banner; keep DuckDB-WASM (export + query console in scope).

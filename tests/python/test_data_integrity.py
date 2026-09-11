@@ -190,3 +190,63 @@ def test_netl_refinery_names_unique_where_the_source_allows(assets):
     # generic Myanmar operator name must not (it had located variants).
     mmr = netl.loc[netl["country_iso3"] == "MMR", "name"]
     assert mmr.is_unique, mmr.tolist()
+
+
+# ── assets_open (downloadable open subset of assets.parquet) ────────────────
+
+
+def test_assets_open_has_no_osm_rows():
+    from scripts.transform.build_refineries import OSM_SOURCE
+
+    open_ = pd.read_parquet(DATA / "assets_open.parquet", columns=["source"])
+    assert not (open_["source"] == OSM_SOURCE).any()
+    assert not open_["source"].str.contains("OpenStreetMap", case=False).any()
+
+
+def test_assets_open_is_assets_minus_osm(assets):
+    from scripts.transform.build_refineries import OSM_SOURCE
+
+    open_ = pd.read_parquet(DATA / "assets_open.parquet")
+    expected = assets[assets["source"] != OSM_SOURCE].reset_index(drop=True)
+    n_osm = int((assets["source"] == OSM_SOURCE).sum())
+    assert n_osm > 0
+    assert len(open_) == len(assets) - n_osm
+    pd.testing.assert_frame_equal(open_, expected)
+
+
+def test_assets_open_sources_are_open_licensed():
+    open_ = pd.read_parquet(DATA / "assets_open.parquet", columns=["source"])
+    allowed = ("Global Energy Monitor", "Zhou et al. 2026, LNG-T3", "NETL", "National Energy")
+    bad = sorted(s for s in set(open_["source"]) if not s.startswith(allowed))
+    assert not bad, f"assets_open.parquet has rows from unexpected sources: {bad}"
+
+
+def test_assets_open_catalog_entry():
+    entry = next(e for e in ENTRIES if e["id"] == "assets_open")
+    assert entry["downloadable"] is True and entry["redistributable"] is True
+    assert entry["runtime"] is False and entry["layers"] == []
+    assets_rows = sum(e["rows"] for e in ENTRIES if e["path"] == "/data/assets.parquet")
+    osm_rows = next(e["rows"] for e in ENTRIES if e["id"] == "osm_refineries")
+    assert entry["rows"] == assets_rows - osm_rows
+
+
+# ── pipelines.geojson ───────────────────────────────────────────────────────
+
+
+def _line_parts(geom: dict) -> list:
+    return [geom["coordinates"]] if geom["type"] == "LineString" else geom["coordinates"]
+
+
+def test_pipelines_sidecar_fragments_are_merged():
+    """Render budget: deck.gl draws every line part as its own path, and under
+    software WebGL the unmerged GGIT sidecar (173,570 parts / 455,780 vertices;
+    Tennessee Gas Pipeline alone 62,967 parts) took ~15 s per frame on CI.
+    build_pipelines.py merges contiguous fragments before simplifying."""
+    fc = json.loads((DATA / "pipelines.geojson").read_text())
+    parts = [_line_parts(f["geometry"]) for f in fc["features"]]
+    n_parts = sum(len(p) for p in parts)
+    n_vertices = sum(len(line) for p in parts for line in p)
+    by_name = {f["properties"]["name"]: len(p) for f, p in zip(fc["features"], parts, strict=True)}
+    assert n_parts < 70_000, n_parts
+    assert n_vertices < 260_000, n_vertices
+    assert by_name["Tennessee Gas Pipeline"] < 2_000

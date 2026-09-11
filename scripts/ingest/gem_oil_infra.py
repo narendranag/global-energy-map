@@ -22,20 +22,18 @@ Usage:
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from scripts.common.download import cli
+from scripts.common.sources import GEM_GOIT
 
-RAW_DIR = Path("data/raw/gem_oil_infra")
-LANDING = "https://globalenergymonitor.org/projects/global-oil-infrastructure-tracker/"
+RAW_DIR = GEM_GOIT.raw_dir
+LANDING = GEM_GOIT.landing_url
 
 # Publicly-accessible GeoJSON on GEM's DigitalOcean CDN (no form/token required).
 # The xlsx is gated behind Supabase; no Wayback snapshot of it exists (CDX confirmed).
 # If the CDN URL fails, the newest Wayback capture of the same URL is used.
-GEOJSON_URL = (
-    "https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/GOIT/2025-03/goit_2025-04-09.geojson"
-)
-DEST_FILENAME = "goit_2025-04-09.geojson"
+# Pinned in scripts/common/sources.py.
+GEOJSON_URL = GEM_GOIT.download_url
+DEST_FILENAME = GEM_GOIT.dest_filename
 
 HELP = (
     "Could not resolve a download URL for the GOIT GeoJSON.\n"

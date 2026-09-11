@@ -6,7 +6,9 @@ This document complements `docs/methodology.md` (the current-state methodology r
 
 For runtime metadata (paths, formats, licenses, as-of dates, rows, sha256, and whether a file may be downloaded) the canonical source is `public/data/catalog.json`, rendered at `/data`. This document explains *what's in those files* and *what the data lets you say* — context the catalog can't carry.
 
-**Download policy (Phase 9 decision).** Downloads are limited to CC BY 4.0 and public-domain sources plus the project's own route-share table. Each catalog entry carries `redistributable` (its licence permits redistribution under that policy) and a computed `downloadable` (every source sharing the file is redistributable). Energy Institute (redistribution of the dataset restricted) and BACI (academic/research-use terms) are view-only; `assets.parquet` is not offered as-is because it mixes 88 ODbL OpenStreetMap refinery rows with CC BY and public-domain rows — its GEM, NETL and LNG-T3 subsets can be exported per layer from the map's Share / cite menu.
+**Download policy (Phase 9 decision, Phase 10 open extract).** Downloads are limited to CC BY 4.0 and public-domain sources plus the project's own route-share table. Each catalog entry carries `redistributable` (its licence permits redistribution under that policy) and a computed `downloadable` (every source sharing the file is redistributable). Energy Institute (permission needed for extensive reproduction) and BACI (project policy — see below) are view-only; `assets.parquet` is not offered as-is because it mixes 88 ODbL OpenStreetMap refinery rows with CC BY and public-domain rows. **`assets_open.parquet`** — the same table minus the OSM rows, written by `scripts/transform/build_assets_open.py` — is the downloadable asset table; single layers can also be exported from the map's Share / cite menu.
+
+**Licences in plain language:** [`LICENSE-DATA.md`](../LICENSE-DATA.md) (per source: licence, what we redistribute and where, attribution line, restrictions; not legal advice). **Pins and refresh:** every source's URL, release and as-of date is pinned in `scripts/common/sources.py`; cadence and the refresh procedure are in [`docs/refresh.md`](refresh.md).
 
 ---
 
@@ -27,7 +29,7 @@ Categories:
 ### Energy Institute Statistical Review of World Energy
 
 - **URL:** https://www.energyinst.org/statistical-review/resources-and-data-downloads
-- **License:** Free; see Energy Institute terms
+- **License:** free to quote with attribution; the EI asks for permission before extensive reproduction of its tables, and S&P Global-sourced data may not be redistributed ([About page](https://www.energyinst.org/statistical-review/about)). Shown in the app, not offered for download.
 - **As-of:** 2025-06-26 (2025 edition)
 - **Where it lands:** `country_year_series.parquet`
 - **Layers/scenarios using it:** reserves choropleth, gas reserves overlay, country-level production tooltips
@@ -110,7 +112,7 @@ Categories:
 
 - **URL:** https://doi.org/10.5281/zenodo.19571058
 - **License:** **CC BY 4.0** (attribution required: "Data: Zhou et al. 2026, LNG-T3, CC BY 4.0 (Zenodo 10.5281/zenodo.19571058)")
-- **As-of:** 2026-04-01 (Zenodo deposit, version `v1-2026-04-01`)
+- **As-of:** 2026-04-01 (Zenodo record 19571058, our label `v1-2026-04-01`; Zenodo lists it as the second version under concept DOI 10.5281/zenodo.17273526 — the local CSVs match the record's md5 checksums, pinned in `scripts/common/sources.py`)
 - **Where it lands:** `assets.parquet` rows where `source LIKE 'Zhou%LNG-T3%'` (LNG terminals, primary source as of Phase 6); `lng_voyage.parquet`, `lng_trade_daily.parquet`, `lng_terminal_daily.parquet`
 - **Layers/scenarios using it:** LNG terminals layer (primary); LNG voyages opt-in layer; Hormuz-LNG scenario (per-terminal disaggregation for years 2020–2024)
 
@@ -145,7 +147,7 @@ LNG-T3 covers **22–41% of GIIGNL's global LNG trade, 2020–2024** — every y
 ### NETL Global Oil & Gas Infrastructure (GOGI)
 
 - **URL:** https://arcgis.netl.doe.gov/portal/home/item.html?id=1e1c13b43dfb4af68040598c6f4baf44
-- **License:** US Government work, public domain (17 USC §105)
+- **License:** US Government work, public domain (17 USC §105). NETL's EDX listing of the GOGI collection names a Creative Commons Attribution licence, and GOGI compiles hundreds of third-party open datasets, so we credit NETL on every NETL row ("Data: NETL Global Oil & Gas Infrastructure (GOGI), US DOE"). Cite Sabbatino et al., doi:10.18141/1502839.
 - **As-of:** 2026-05-17
 - **Where it lands:** `basins.geojson` sidecar (basins; full-resolution GeoParquet in `data/derived/`); `assets.parquet` rows where `kind ∈ {storage, port}`
 - **Layers/scenarios using it:** basin polygons layer; storage hubs point layer; ports point layer
@@ -192,7 +194,7 @@ LNG-T3 covers **22–41% of GIIGNL's global LNG trade, 2020–2024** — every y
 - **URL:** https://www.openstreetmap.org/
 - **License:** ODbL (Open Database License) — derivative works permitted with attribution and share-alike
 - **As-of:** 2026-05-15 (Overpass snapshot)
-- **Where it lands:** `assets.parquet` rows where `kind = 'refinery'` and `source = 'OpenStreetMap (Overpass)'`
+- **Where it lands:** `assets.parquet` rows where `kind = 'refinery'` and `source = 'OpenStreetMap (Overpass)'` — the only rows excluded from the downloadable `assets_open.parquet`
 - **Layers/scenarios using it:** refineries point layer; refinery feedstock attribution math
 
 **What we ingest:** Refinery features via Overpass API query for `industrial=oil_refinery`, `industrial=oil`, and `man_made=works + product=oil` (with multilingual name keyword filtering for the looser tags). Raw set: 168 refineries. After Phase 5's 2 km same-country dedup against NETL, **88 OSM-only refineries** remain in production as supplements; the other 80 collapse into matching NETL records.
@@ -208,7 +210,7 @@ LNG-T3 covers **22–41% of GIIGNL's global LNG trade, 2020–2024** — every y
 ### BACI bilateral trade (CEPII)
 
 - **URL:** https://www.cepii.fr/CEPII/en/bdd_modele/bdd_modele_item.asp?id=37
-- **License:** Free for academic/research use; see CEPII terms
+- **License:** Etalab Open Licence 2.0 (checked 2026-09-10 — reuse and redistribution with attribution; earlier project docs said "academic/research use"). Cite Gaulier & Zignago (2010), CEPII Working Paper 2010-23. By project policy `trade_flow.parquet` stays view-only; revisiting that is a user decision.
 - **As-of:** 2026-01 release (HS92 1995–2024 series)
 - **Where it lands:** `trade_flow.parquet`
 - **Layers/scenarios using it:** all scenarios — crude routing (HS 2709) and LNG routing (HS 271111)
@@ -273,7 +275,7 @@ Each row: year, exporter ISO3, importer ISO3, quantity (tonnes).
 ### Vercel Blob migration for pipelines.geojson
 
 - **Why considered:** Raw `pipelines.geojson` is 73 MB, well over GitHub's 50 MB soft limit and CLAUDE.md's 25 MB single-file ceiling.
-- **Why rejected:** Geometry simplification at `tolerance=0.005` (~500 m) cuts the sidecar to 13 MB — a 5.2× reduction with no visible degradation at world or continent zoom. Blob migration is deferred until a future file genuinely exceeds the ceiling.
+- **Why rejected:** Geometry simplification at `tolerance=0.005` (~500 m) cut the sidecar to 13 MB — a 5.2× reduction with no visible degradation at world or continent zoom. Merging each feature's contiguous line fragments before simplifying (Phase 10) takes it to ~8 MB. Blob migration is deferred until a future file genuinely exceeds the ceiling.
 
 ---
 
@@ -383,7 +385,7 @@ Key findings from the 2026-05-19 sweep:
 
 ## How to add a new source
 
-1. **Ingest script** at `scripts/ingest/<source>.py` downloads to `data/raw/<source>/` (gitignored). Idempotent: re-running uses cached files unless `--force`.
+1. **Pin + ingest script.** Add a `SourcePin` (URL, release, as-of, licence, terms URL, cadence) to `scripts/common/sources.py`; the ingest at `scripts/ingest/<source>.py` reads it and downloads to `data/raw/<source>/` (gitignored). Idempotent: re-running uses cached files unless `--force`. Add the source to `docs/refresh.md` and `LICENSE-DATA.md`.
 2. **Transform script** at `scripts/transform/build_<output>.py` joins, harmonizes, and emits Parquet (or GeoParquet) to `public/data/`.
 3. **Catalog entry** — add a row to the registry in `scripts/transform/build_catalog.py` (`source_url`, `license`, `as_of`, `layers`, `redistributable` + `download_note`, optional `attribution`), then run it to regenerate `public/data/catalog.json` (rows/bytes/sha256/downloadable are computed). Never hand-edit the JSON. `/data`, `/methodology` and the Share menu read it at build time.
 4. **Integrity test** — `tests/python/test_data_integrity.py` fails if a file in `public/data/` is not catalogued or its hash drifted.

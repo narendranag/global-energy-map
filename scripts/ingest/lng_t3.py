@@ -20,10 +20,13 @@ from pathlib import Path
 
 import httpx
 
-ZENODO_RECORD_ID = "19571058"
-ARCHIVE_URL = f"https://zenodo.org/api/records/{ZENODO_RECORD_ID}/files-archive"
-VERSION = "v1-2026-04-01"  # matches Zenodo publication_date
-RAW_DIR = Path("data/raw/lng_t3") / VERSION
+from scripts.common.sources import LNG_T3
+
+# Pinned in scripts/common/sources.py.
+ZENODO_RECORD_ID = LNG_T3.extra["record_id"]
+ARCHIVE_URL = LNG_T3.download_url
+VERSION = LNG_T3.release  # matches Zenodo publication_date
+RAW_DIR: Path = LNG_T3.raw_dir
 
 EXPECTED_FILES = [
     "LNG_terminal.csv",

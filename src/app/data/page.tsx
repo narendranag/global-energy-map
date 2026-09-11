@@ -4,6 +4,12 @@ import { CitationBlock } from "@/components/share/CitationBlock";
 import { CopyButton } from "@/components/share/CopyButton";
 import { BUNDLED_CATALOG, isDownloadable } from "@/lib/data-catalog/bundled";
 import type { CatalogEntry } from "@/lib/data-catalog/types";
+import { dataUrl } from "@/lib/data/urls";
+import { attributionsFor } from "@/lib/export/citation";
+
+const LICENSE_DATA_URL = "https://github.com/narendranag/global-energy-map/blob/main/LICENSE-DATA.md";
+/** The downloadable, openly licensed subset of assets.parquet (no OSM rows). */
+const OPEN_ASSETS_ID = "assets_open";
 
 export const metadata: Metadata = {
   title: "Data",
@@ -29,6 +35,19 @@ function fileName(p: string): string {
 
 const LINK = "text-sky-800 underline underline-offset-2 hover:text-sky-950";
 
+/**
+ * Attribution lines for entries that carry none of their own: the open asset
+ * extract inherits those of the redistributable assets.parquet sources it holds.
+ */
+const attributionLines = new Map<string, string[]>([
+  [
+    OPEN_ASSETS_ID,
+    attributionsFor(
+      BUNDLED_CATALOG.entries.filter((t) => t.path === "/data/assets.parquet" && t.redistributable === true),
+    ),
+  ],
+]);
+
 function EntryRow({ e, tenants }: { e: CatalogEntry; tenants: readonly CatalogEntry[] }) {
   const others = tenants.filter((t) => t.id !== e.id);
   const downloadable = isDownloadable(e);
@@ -46,7 +65,11 @@ function EntryRow({ e, tenants }: { e: CatalogEntry; tenants: readonly CatalogEn
             ))}
           </div>
         ) : (
-          <div className="mt-1 text-2xs text-ink-subtle">Not read by the app — reproducibility artefact</div>
+          <div className="mt-1 text-2xs text-ink-subtle">
+            {e.id === OPEN_ASSETS_ID
+              ? "Download-only copy of the map's asset table"
+              : "Not read by the app — reproducibility artefact"}
+          </div>
         )}
       </td>
       <td className="border-t border-panel-border py-3 pr-4">
@@ -54,7 +77,11 @@ function EntryRow({ e, tenants }: { e: CatalogEntry; tenants: readonly CatalogEn
           {e.source_name}
         </a>
         <div className="mt-1 text-ink-muted">{e.license}</div>
-        {e.attribution && <div className="mt-1 text-xs text-ink-subtle">{e.attribution}</div>}
+        {(e.attribution ? [e.attribution] : (attributionLines.get(e.id) ?? [])).map((a) => (
+          <div key={a} className="mt-1 text-xs text-ink-subtle">
+            {a}
+          </div>
+        ))}
       </td>
       <td className="border-t border-panel-border py-3 pr-4 whitespace-nowrap font-mono text-xs">{e.as_of}</td>
       <td className="border-t border-panel-border py-3 pr-4 text-right font-mono text-xs tabular-nums">
@@ -83,7 +110,7 @@ function EntryRow({ e, tenants }: { e: CatalogEntry; tenants: readonly CatalogEn
       <td className="border-t border-panel-border py-3 pr-1">
         {downloadable ? (
           <a
-            href={e.path}
+            href={dataUrl(e.path)}
             download={fileName(e.path)}
             className="inline-block whitespace-nowrap rounded border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-ink hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-700"
             data-testid={`download-${e.id}`}
@@ -106,6 +133,8 @@ export default function DataPage() {
   for (const e of entries) byPath.set(e.path, [...(byPath.get(e.path) ?? []), e]);
   const files = [...byPath.keys()];
   const downloadableFiles = files.filter((p) => (byPath.get(p) ?? []).every(isDownloadable));
+  const openAssets = entries.find((e) => e.id === OPEN_ASSETS_ID);
+  const osmRows = entries.find((e) => e.id === "osm_refineries")?.rows;
 
   return (
     <div className="w-full bg-white text-ink">
@@ -117,6 +146,9 @@ export default function DataPage() {
           <Link href="/methodology" className="text-sky-800 underline-offset-2 hover:text-sky-950 hover:underline">
             Methodology
           </Link>
+          <a href={LICENSE_DATA_URL} className="text-sky-800 underline-offset-2 hover:text-sky-950 hover:underline">
+            Data licences (LICENSE-DATA.md)
+          </a>
         </nav>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight text-ink">Data</h1>
         <div className="mt-4 max-w-3xl space-y-3 text-base leading-relaxed text-ink-muted">
@@ -128,14 +160,30 @@ export default function DataPage() {
           </p>
           <p>
             <strong className="text-ink">Downloads are limited to CC BY 4.0 and public-domain sources</strong>{" "}and
-            the project&apos;s own route-share table — {downloadableFiles.length} of {files.length} files. Energy
-            Institute reserves and CEPII BACI trade data are shown in the app but not redistributed.{" "}
-            <code className="font-mono text-[0.85em]">assets.parquet</code>{" "}is not offered as-is because it
-            mixes 88 OpenStreetMap (ODbL, share-alike) refinery rows with CC BY and public-domain rows; the
-            extraction, storage, port and LNG-terminal rows can be exported from the map&apos;s{" "}
-            <strong className="text-ink">Share / cite</strong>{" "}menu instead, with their source and licence in the
-            file header.
+            the project&apos;s own route-share table — {downloadableFiles.length} of {files.length}{" "}files. Energy
+            Institute reserves and CEPII BACI trade data are shown in the app but not redistributed. Each
+            source&apos;s licence, what we redistribute and what you may do with it are summarised in{" "}
+            <a href={LICENSE_DATA_URL} className={LINK}>
+              LICENSE-DATA.md
+            </a>{" "}
+            (plain language, not legal advice).
           </p>
+          {openAssets && (
+            <p data-testid="open-assets-note">
+              <strong className="text-ink">The asset table:</strong>{" "}the map reads{" "}
+              <code className="font-mono text-[0.85em]">assets.parquet</code>, which is view-only because it mixes
+              {osmRows !== undefined ? ` ${osmRows.toLocaleString("en-US")}` : ""} OpenStreetMap (ODbL, share-alike)
+              refinery rows with CC BY and public-domain rows. Download{" "}
+              <a href={openAssets.path} download="assets_open.parquet" className={LINK}>
+                <code className="font-mono text-[0.85em]">assets_open.parquet</code>
+              </a>{" "}
+              instead: every other row ({openAssets.rows?.toLocaleString("en-US") ?? "—"}{" "}extraction sites, refineries,
+              storage sites, ports and LNG terminals from GEM, LNG-T3 and NETL), same columns, with each row&apos;s{" "}
+              <code className="font-mono text-[0.85em]">source</code>. Single layers can also be exported from the
+              map&apos;s <strong className="text-ink">Share / cite</strong>{" "}menu, with their source and licence in
+              the file header.
+            </p>
+          )}
           <p>
             Keep the attribution line with any CC BY 4.0 data you reuse (see{" "}
             <Link href="/methodology#required-attributions" className={LINK}>

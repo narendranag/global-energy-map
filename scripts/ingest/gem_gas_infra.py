@@ -30,20 +30,18 @@ Usage:
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from scripts.common.download import cli
+from scripts.common.sources import GEM_GGIT
 
-RAW_DIR = Path("data/raw/gem_gas_infra")
-LANDING = "https://globalenergymonitor.org/projects/global-gas-infrastructure-tracker/"
+RAW_DIR = GEM_GGIT.raw_dir
+LANDING = GEM_GGIT.landing_url
 
 # Publicly-accessible GeoJSON on GEM's DigitalOcean CDN (no form/token required).
 # The xlsx is gated behind Supabase; no Wayback snapshot of it exists (CDX confirmed).
 # URL discovered from: https://globalenergymonitor.github.io/maps/trackers/ggit/config.js
-GEOJSON_URL = (
-    "https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggit/2026-03/ggit_map_2026-02-20.geojson"
-)
-DEST_FILENAME = "ggit_map_2026-02-20.geojson"
+# Pinned in scripts/common/sources.py.
+GEOJSON_URL = GEM_GGIT.download_url
+DEST_FILENAME = GEM_GGIT.dest_filename
 
 HELP = (
     "Could not resolve a download URL for the GGIT GeoJSON.\n"

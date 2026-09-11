@@ -12,8 +12,8 @@ Hand-written fields per entry (REGISTRY):
     id, label, path, format, source_name, source_url, license, as_of, layers,
     attribution (optional), runtime (default True — False for artefacts shipped
     for reproducibility that no layer or scenario reads),
-    redistributable (licence policy: True only for CC BY 4.0, public-domain and
-    project-derived rows — the Phase 9 decision limits downloads to these),
+    redistributable (licence policy: True only for CC BY 4.0, public-domain,
+    Etalab Open Licence 2.0 (BACI, Phase 10) and project-derived rows),
     download_note (one-line reason, for entries that are not redistributable)
 
 Computed fields per entry:
@@ -53,6 +53,8 @@ from typing import Any
 import pandas as pd
 import pyarrow.parquet as pq
 
+from scripts.common import sources as pins
+
 PUBLIC = Path("public")
 OUT = PUBLIC / "data" / "catalog.json"
 CATALOG_VERSION = 6
@@ -61,12 +63,18 @@ GEM_ATTRIBUTION = "Data: Global Energy Monitor, CC BY 4.0"
 LNG_T3_ATTRIBUTION = "Data: Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0"
 NETL_SOURCE_NAME = "National Energy Technology Laboratory (US DOE)"
 NETL_LICENSE = "US Government work, public domain (17 USC §105)"
-NETL_GOGI_URL = (
-    "https://arcgis.netl.doe.gov/portal/home/item.html?id=1e1c13b43dfb4af68040598c6f4baf44"
-)
-NETL_SNAPSHOT = "2026-05-17"
-LNG_T3_URL = "https://doi.org/10.5281/zenodo.19571058"
-LNG_T3_SOURCE = "Zhou et al. 2026, LNG-T3 (Zenodo)"
+# NETL's EDX listing of GOGI names a Creative Commons Attribution licence, so
+# credit NETL wherever its rows are shown (see LICENSE-DATA.md).
+NETL_ATTRIBUTION = "Data: NETL Global Oil & Gas Infrastructure (GOGI), US DOE"
+NETL_GOGI_URL = pins.NETL.landing_url
+NETL_SNAPSHOT = pins.NETL.as_of
+LNG_T3_URL = pins.LNG_T3.landing_url
+LNG_T3_SOURCE = pins.LNG_T3.name
+LICENSE_DATA_URL = "https://github.com/narendranag/global-energy-map/blob/main/LICENSE-DATA.md"
+
+# Files that are view-only as-is but have a downloadable open subset
+# (written by scripts.transform.build_assets_open): mixed path → open file name.
+OPEN_EXTRACTS: dict[str, str] = {"/data/assets.parquet": "assets_open.parquet"}
 
 REGISTRY: list[dict[str, Any]] = [
     {
@@ -75,16 +83,17 @@ REGISTRY: list[dict[str, Any]] = [
         "path": "/data/country_year_series.parquet",
         "format": "parquet",
         "source_name": "Energy Institute Statistical Review of World Energy",
-        "source_url": "https://www.energyinst.org/statistical-review/resources-and-data-downloads",
-        "license": "Free; see Energy Institute terms",
-        "as_of": "2025-06-26",
+        "source_url": pins.EI.landing_url,
+        "license": "Free to quote with attribution; extensive reproduction needs EI permission",
+        "as_of": pins.EI.as_of,
         "layers": ["reserves", "reserves:gas", "production"],
         "redistributable": False,
         "download_note": (
-            "Energy Institute terms restrict redistribution of the dataset itself; "
-            "shown in the app, not offered for download."
+            "The Energy Institute asks for permission before extensive reproduction "
+            "of its tables, so the series is shown in the app, not offered for "
+            "download; get it from the Energy Institute."
         ),
-        "attribution": "Data: Energy Institute Statistical Review of World Energy 2025",
+        "attribution": f"Data: {pins.EI.name} {pins.EI.release}",
     },
     {
         "id": "gem_extraction",
@@ -93,9 +102,9 @@ REGISTRY: list[dict[str, Any]] = [
         "subset": {"kind": ["extraction_site"]},
         "format": "parquet",
         "source_name": "Global Energy Monitor",
-        "source_url": "https://globalenergymonitor.org/projects/global-oil-gas-extraction-tracker/",
+        "source_url": pins.GEM_GOGET.landing_url,
         "license": "CC BY 4.0",
-        "as_of": "2023-07-01",
+        "as_of": pins.GEM_GOGET.as_of,
         "layers": ["extraction"],
         "redistributable": True,
         "attribution": GEM_ATTRIBUTION,
@@ -115,6 +124,7 @@ REGISTRY: list[dict[str, Any]] = [
         "as_of": NETL_SNAPSHOT,
         "layers": ["refineries"],
         "redistributable": True,
+        "attribution": NETL_ATTRIBUTION,
     },
     {
         "id": "osm_refineries",
@@ -123,13 +133,15 @@ REGISTRY: list[dict[str, Any]] = [
         "subset": {"kind": ["refinery"], "source": ["OpenStreetMap (Overpass)"]},
         "format": "parquet",
         "source_name": "OpenStreetMap",
-        "source_url": "https://www.openstreetmap.org/",
+        "source_url": pins.OSM.landing_url,
         "license": "ODbL (Open Database License)",
-        "as_of": "2026-05-15",
+        "as_of": pins.OSM.as_of,
         "layers": ["refineries"],
         "redistributable": False,
         "download_note": (
-            "ODbL (share-alike) rows; downloads are limited to CC BY 4.0 and public-domain sources."
+            "ODbL (share-alike) rows; downloads are limited to CC BY 4.0 and public-domain "
+            "sources, so these rows are left out of assets_open.parquet (the NETL refinery "
+            "rows are in it)."
         ),
         "attribution": "© OpenStreetMap contributors, ODbL",
     },
@@ -145,6 +157,7 @@ REGISTRY: list[dict[str, Any]] = [
         "as_of": NETL_SNAPSHOT,
         "layers": ["storage"],
         "redistributable": True,
+        "attribution": NETL_ATTRIBUTION,
     },
     {
         "id": "netl_ports",
@@ -158,6 +171,7 @@ REGISTRY: list[dict[str, Any]] = [
         "as_of": NETL_SNAPSHOT,
         "layers": ["ports"],
         "redistributable": True,
+        "attribution": NETL_ATTRIBUTION,
     },
     {
         "id": "lng_t3_terminals",
@@ -171,7 +185,7 @@ REGISTRY: list[dict[str, Any]] = [
         "source_name": LNG_T3_SOURCE,
         "source_url": LNG_T3_URL,
         "license": "CC BY 4.0",
-        "as_of": "2026-04-01",
+        "as_of": pins.LNG_T3.as_of,
         "layers": ["lng_terminals"],
         "redistributable": True,
         "attribution": LNG_T3_ATTRIBUTION,
@@ -186,12 +200,28 @@ REGISTRY: list[dict[str, Any]] = [
         },
         "format": "parquet",
         "source_name": "Global Energy Monitor",
-        "source_url": "https://globalenergymonitor.org/projects/global-gas-infrastructure-tracker/",
+        "source_url": pins.GEM_GGIT.landing_url,
         "license": "CC BY 4.0",
-        "as_of": "2026-02-20",
+        "as_of": pins.GEM_GGIT.as_of,
         "layers": ["lng_terminals"],
         "redistributable": True,
         "attribution": GEM_ATTRIBUTION,
+    },
+    {
+        # Written by scripts.transform.build_assets_open: assets.parquet minus
+        # the OpenStreetMap (ODbL) rows, so the CC BY / public-domain asset
+        # rows can be downloaded in one file. Not read by the map.
+        "id": "assets_open",
+        "label": "Asset table, open subset (every assets.parquet row except OpenStreetMap)",
+        "path": "/data/assets_open.parquet",
+        "format": "parquet",
+        "source_name": "Global Energy Monitor, LNG-T3 and NETL — see the source column",
+        "source_url": LICENSE_DATA_URL,
+        "license": "CC BY 4.0 (GEM, LNG-T3) + public domain (NETL); attribution required",
+        "as_of": max(pins.GEM_GOGET.as_of, pins.GEM_GGIT.as_of, pins.LNG_T3.as_of, NETL_SNAPSHOT),
+        "layers": [],
+        "redistributable": True,
+        "runtime": False,
     },
     {
         "id": "gem_oil_pipelines",
@@ -200,9 +230,9 @@ REGISTRY: list[dict[str, Any]] = [
         "subset": {"commodity": ["crude", "ngl", "crude+ngl"]},
         "format": "json",
         "source_name": "Global Energy Monitor",
-        "source_url": "https://globalenergymonitor.org/projects/global-oil-infrastructure-tracker/",
+        "source_url": pins.GEM_GOIT.landing_url,
         "license": "CC BY 4.0",
-        "as_of": "2025-04-09",
+        "as_of": pins.GEM_GOIT.as_of,
         "layers": ["pipelines"],
         "redistributable": True,
         "attribution": GEM_ATTRIBUTION,
@@ -214,9 +244,9 @@ REGISTRY: list[dict[str, Any]] = [
         "subset": {"commodity": ["gas"]},
         "format": "json",
         "source_name": "Global Energy Monitor",
-        "source_url": "https://globalenergymonitor.org/projects/global-gas-infrastructure-tracker/",
+        "source_url": pins.GEM_GGIT.landing_url,
         "license": "CC BY 4.0",
-        "as_of": "2026-02-20",
+        "as_of": pins.GEM_GGIT.as_of,
         "layers": ["gas_pipelines"],
         "redistributable": True,
         "attribution": GEM_ATTRIBUTION,
@@ -232,6 +262,7 @@ REGISTRY: list[dict[str, Any]] = [
         "as_of": NETL_SNAPSHOT,
         "layers": ["basins"],
         "redistributable": True,
+        "attribution": NETL_ATTRIBUTION,
     },
     {
         "id": "baci_2709",
@@ -239,9 +270,9 @@ REGISTRY: list[dict[str, Any]] = [
         "path": "/data/trade_flow.parquet",
         "format": "parquet",
         "source_name": "BACI (CEPII)",
-        "source_url": "https://www.cepii.fr/CEPII/en/bdd_modele/bdd_modele_item.asp?id=37",
-        "license": "Free for academic/research use; see CEPII terms",
-        "as_of": "2026-01-01",
+        "source_url": pins.BACI.landing_url,
+        "license": "Etalab Open Licence 2.0; cite Gaulier & Zignago (2010)",
+        "as_of": pins.BACI.as_of,
         "layers": [
             "trade",
             "scenario:hormuz",
@@ -250,12 +281,12 @@ REGISTRY: list[dict[str, Any]] = [
             "scenario:btc",
             "scenario:cpc",
         ],
-        "redistributable": False,
-        "download_note": (
-            "CEPII licenses BACI for academic/research use; the bilateral table "
-            "stays behind the app and is not offered for bulk download."
+        # Etalab Open Licence 2.0 permits redistribution with attribution;
+        # made downloadable 2026-09-10 (user decision, Phase 10).
+        "redistributable": True,
+        "attribution": (
+            f"Data: CEPII BACI (release {pins.BACI.release}); cite Gaulier & Zignago (2010)"
         ),
-        "attribution": "Data: CEPII BACI (release V202601)",
     },
     {
         "id": "disruption_route",
@@ -281,9 +312,9 @@ REGISTRY: list[dict[str, Any]] = [
         "path": "/data/countries.geojson",
         "format": "json",
         "source_name": "Natural Earth",
-        "source_url": "https://www.naturalearthdata.com/downloads/110m-cultural-vectors/110m-admin-0-countries/",
+        "source_url": pins.NATURAL_EARTH.landing_url,
         "license": "Public domain",
-        "as_of": "2024-10-01",
+        "as_of": pins.NATURAL_EARTH.as_of,
         "layers": ["basemap", "reserves"],
         "redistributable": True,
     },
@@ -295,7 +326,7 @@ REGISTRY: list[dict[str, Any]] = [
         "source_name": LNG_T3_SOURCE,
         "source_url": LNG_T3_URL,
         "license": "CC BY 4.0",
-        "as_of": "2026-04-01",
+        "as_of": pins.LNG_T3.as_of,
         "layers": ["lng_voyages", "scenario:hormuz-lng"],
         "redistributable": True,
         "attribution": LNG_T3_ATTRIBUTION,
@@ -308,7 +339,7 @@ REGISTRY: list[dict[str, Any]] = [
         "source_name": LNG_T3_SOURCE,
         "source_url": LNG_T3_URL,
         "license": "CC BY 4.0",
-        "as_of": "2026-04-01",
+        "as_of": pins.LNG_T3.as_of,
         "layers": [],
         "redistributable": True,
         "attribution": LNG_T3_ATTRIBUTION,
@@ -322,7 +353,7 @@ REGISTRY: list[dict[str, Any]] = [
         "source_name": LNG_T3_SOURCE,
         "source_url": LNG_T3_URL,
         "license": "CC BY 4.0",
-        "as_of": "2026-04-01",
+        "as_of": pins.LNG_T3.as_of,
         "layers": [],
         "redistributable": True,
         "attribution": LNG_T3_ATTRIBUTION,
@@ -386,14 +417,20 @@ def _count_rows(path: Path, subset: dict[str, list[str]] | None) -> int:
     raise ValueError(f"don't know how to count rows in {path}")
 
 
-def _download_flags(registry: list[dict[str, Any]]) -> dict[str, tuple[bool, str | None]]:
+def _download_flags(
+    registry: list[dict[str, Any]],
+    open_extracts: dict[str, str] | None = None,
+) -> dict[str, tuple[bool, str | None]]:
     """``id → (downloadable, download_note)``.
 
     A file is offered as-is only when EVERY entry sharing its ``path`` is
     redistributable; one ODbL / restricted subset makes the whole file
     view-only. The note is the entry's own reason, or — for a redistributable
-    subset of a mixed file — which co-tenant blocks the download.
+    subset of a mixed file — which co-tenant blocks the download and, when
+    *open_extracts* maps the file to a downloadable open subset, where the
+    rows can be downloaded instead.
     """
+    open_extracts = OPEN_EXTRACTS if open_extracts is None else open_extracts
     by_path: dict[str, list[dict[str, Any]]] = {}
     for spec in registry:
         by_path.setdefault(spec["path"], []).append(spec)
@@ -419,6 +456,11 @@ def _download_flags(registry: list[dict[str, Any]]) -> dict[str, tuple[bool, str
                 if same_layer
                 else "Export this layer's rows from the map's Share / cite menu instead."
             )
+            open_file = open_extracts.get(spec["path"])
+            if open_file:
+                advice = f"These rows are in {open_file}, which is downloadable." + (
+                    f" {advice}" if same_layer else ""
+                )
             flags[spec["id"]] = (
                 False,
                 f"{file} also contains {names}, so the file is not offered as-is. {advice}",

@@ -59,11 +59,12 @@ import pandas as pd
 from scripts.common.iso3 import GEM_NAME_TO_ISO3 as NAME_TO_ISO3
 from scripts.common.parquet import ASSETS_PATH, append_kind
 from scripts.common.paths import latest
+from scripts.common.sources import GEM_GOGET
 
-RAW_DIR = Path("data/raw/gem_extraction")
+RAW_DIR = GEM_GOGET.raw_dir
 OUT_PATH = ASSETS_PATH
 SOURCE = "Global Energy Monitor – Global Oil and Gas Extraction Tracker"
-SOURCE_VERSION = "July 2023"
+SOURCE_VERSION = GEM_GOGET.release  # pinned in scripts/common/sources.py
 EXTRACTION_KIND = "extraction_site"
 # Capacity stays NULL, but the unit is declared so capacity_unit is consistent
 # per kind (matches the Phase 3-5 shipped file; see review R4).

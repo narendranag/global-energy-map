@@ -17,13 +17,15 @@ import sys
 import pandas as pd
 
 from scripts.common.iso3 import netl_country_iso3
+from scripts.common.sources import NETL
 from scripts.common.values import to_float
 
 SOURCE = "NETL Global Oil and Gas Infrastructure (GOGI)"
 # NETL serves GOGI from an unversioned live ArcGIS FeatureServer; the snapshot
 # in data/raw/netl/ was retrieved on this date. A constant (not date.today())
-# keeps rebuilds byte-stable. Update it when the raw snapshot is re-ingested.
-SOURCE_VERSION = "2026-05-17"
+# keeps rebuilds byte-stable. Bump the NETL pin in scripts/common/sources.py
+# when the raw snapshot is re-ingested.
+SOURCE_VERSION = NETL.release
 
 
 def _blank_to_none(s: pd.Series, blanks: tuple[str, ...] = ("",)) -> pd.Series:

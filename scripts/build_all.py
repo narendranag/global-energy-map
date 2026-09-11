@@ -4,8 +4,13 @@ Runs the transforms in dependency order (each step imports its module and
 calls ``main()``; steps are timed and the build stops at the first failure):
 
     build_country_year → build_trade_flow → build_assets → build_refineries
-    → build_storage → build_ports → build_lng_terminals → build_lng_voyages
-    → build_pipelines → build_basins → build_disruption_routing → build_catalog
+    → build_storage → build_ports → build_lng_terminals → build_assets_open
+    → build_lng_voyages → build_pipelines → build_basins
+    → build_disruption_routing → build_catalog
+
+(build_assets_open writes the downloadable open subset of assets.parquet, so
+it runs after the last assets.parquet writer.) Source URLs and release pins
+live in scripts/common/sources.py; the refresh runbook is docs/refresh.md.
 
 Ingests (network, unpinned sources) are NOT run unless ``--ingest`` is given;
 the transforms read the raw snapshots already in data/raw/.
@@ -37,6 +42,7 @@ TRANSFORMS: list[str] = [
     "build_storage",
     "build_ports",
     "build_lng_terminals",
+    "build_assets_open",
     "build_lng_voyages",
     "build_pipelines",
     "build_basins",

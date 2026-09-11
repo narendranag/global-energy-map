@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { reportError } from "@/components/errors/report";
 
 export interface AsyncState<T> {
   /** Latest resolved value — possibly for a previous `args` while a new load runs. */
@@ -32,7 +33,8 @@ export function useAsync<A extends readonly (string | number)[], T>(
         if (!ctrl.cancelled) setState({ key, data });
       },
       (err: unknown) => {
-        console.error(`load failed (${key}):`, err);
+        // Surface it: a silent failure left the map on "Loading" forever.
+        if (!ctrl.cancelled) reportError(err, `load failed (${key})`);
       },
     );
     return () => {

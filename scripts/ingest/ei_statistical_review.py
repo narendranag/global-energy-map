@@ -10,17 +10,14 @@ Usage:
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from scripts.common.download import cli
+from scripts.common.sources import EI
 
-RAW_DIR = Path("data/raw/ei_statistical_review")
+RAW_DIR = EI.raw_dir
 
-# Live EI download URL (may be blocked by Cloudflare)
-EI_LIVE_URL = (
-    "https://www.energyinst.org/__data/assets/excel_doc/0008/1656215/EI-Stats-Review-ALL-data.xlsx"
-)
-DEST_FILENAME = "EI-Stats-Review-ALL-data.xlsx"
+# Live EI download URL (may be blocked by Cloudflare) — pinned in scripts/common/sources.py
+EI_LIVE_URL = EI.download_url
+DEST_FILENAME = EI.dest_filename
 
 HELP = (
     "No Wayback Machine snapshot found for EI xlsx. "

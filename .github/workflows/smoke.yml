@@ -1,0 +1,107 @@
+name: Smoke
+
+# Post-deploy smoke test (Phase 10, O3). Vercel reports each deployment to
+# GitHub; on a successful Production or Preview deployment this checks the
+# live site end to end. Needs no secrets.
+#
+# - Production: tests the public production alias (vars.SMOKE_PRODUCTION_URL,
+#   default below). Vercel's per-deployment *.vercel.app URLs sit behind
+#   Deployment Protection, the alias does not.
+# - Preview: tests the deployment URL. Previews are protected by default, so
+#   the run is reported as skipped (a warning, not a failure) unless the
+#   optional secret VERCEL_AUTOMATION_BYPASS_SECRET is set (Vercel → Settings
+#   → Deployment Protection → Protection Bypass for Automation).
+#
+# Run it by hand against any URL: Actions → Smoke → Run workflow, or locally
+# `scripts/smoke/run.sh <url>`.
+
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Deployment URL to smoke-test"
+        required: true
+        default: "https://global-energy-map-one.vercel.app"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: smoke-${{ github.event.deployment_status.environment_url || inputs.url }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment_status.state == 'success' &&
+       (github.event.deployment.environment == 'Production' ||
+        github.event.deployment.environment == 'Preview'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+    steps:
+      - name: Resolve target URL
+        id: target
+        env:
+          EVENT: ${{ github.event_name }}
+          ENVIRONMENT: ${{ github.event.deployment.environment }}
+          DEPLOY_URL: ${{ github.event.deployment_status.environment_url || github.event.deployment_status.target_url }}
+          INPUT_URL: ${{ inputs.url }}
+          PROD_URL: ${{ vars.SMOKE_PRODUCTION_URL || 'https://global-energy-map-one.vercel.app' }}
+        run: |
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            url="$INPUT_URL"; flags=""
+          elif [ "$ENVIRONMENT" = "Production" ]; then
+            url="$PROD_URL"; flags=""
+          else
+            url="$DEPLOY_URL"; flags="--allow-protected"
+          fi
+          if [ -z "$url" ]; then echo "::error::no deployment URL in the event payload"; exit 1; fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "flags=$flags" >> "$GITHUB_OUTPUT"
+          echo "Smoke target: $url ($ENVIRONMENT)"
+
+      - uses: actions/checkout@v4
+        with:
+          # The deployed commit, so the smoke spec matches the app under test.
+          ref: ${{ github.event.deployment.sha || github.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: HTTP checks (pages, catalog sizes + sha256, parquet Range)
+        id: http
+        env:
+          URL: ${{ steps.target.outputs.url }}
+          FLAGS: ${{ steps.target.outputs.flags }}
+        # $FLAGS is deliberately unquoted: empty or a single flag.
+        run: node scripts/smoke/smoke.mjs "$URL" $FLAGS
+
+      - uses: pnpm/action-setup@v4
+        if: steps.http.outputs.skipped != 'true'
+        with:
+          version: 10
+
+      - name: Install Playwright
+        if: steps.http.outputs.skipped != 'true'
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+
+      - name: Browser check (data-ready + basemap tile)
+        if: steps.http.outputs.skipped != 'true'
+        env:
+          SMOKE_URL: ${{ steps.target.outputs.url }}
+          CI: "1"
+        run: pnpm exec playwright test -c scripts/smoke/playwright.config.ts
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: smoke-report
+          path: test-results/smoke/
+          retention-days: 7

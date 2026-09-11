@@ -43,10 +43,11 @@ import httpx
 import pandas as pd
 
 from scripts.common.download import HEADERS
+from scripts.common.sources import BACI
 
-RAW_DIR = Path("data/raw/baci")
-BACI_URL = "https://www.cepii.fr/DATA_DOWNLOAD/baci/data/BACI_HS92_V202601.zip"
-BACI_RELEASE = "V202601"
+RAW_DIR = BACI.raw_dir
+BACI_URL = BACI.download_url  # pinned in scripts/common/sources.py
+BACI_RELEASE = BACI.release
 
 
 @dataclass(frozen=True)

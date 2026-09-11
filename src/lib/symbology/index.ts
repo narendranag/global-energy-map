@@ -222,8 +222,6 @@ const PIPELINE_ALPHA_OTHER = 190;
 /** White mixed into an in-construction line: same hue, lighter. */
 const PIPELINE_CONSTRUCTION_TINT = 0.3;
 export const PIPELINE_LINE_MIN_PX = 1.25;
-/** Invisible hover band so thin lines are pickable at low zoom (D5). */
-export const PIPELINE_HIT_WIDTH_PX = 8;
 
 /**
  * Hue = commodity; operating lines are the full colour, anything else (GEM's

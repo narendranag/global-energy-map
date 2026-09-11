@@ -33,6 +33,10 @@ def test_module_imports_without_side_effects(name: str):
 def test_build_all_steps():
     assert build_all.select_steps() == build_all.TRANSFORMS
     assert build_all.TRANSFORMS[-1] == "build_catalog"
+    # The open asset extract follows every assets.parquet writer.
+    t = build_all.TRANSFORMS
+    writers = ["build_assets", "build_refineries", "build_storage", "build_ports"]
+    assert all(t.index(w) < t.index("build_assets_open") for w in [*writers, "build_lng_terminals"])
     assert build_all.select_steps(start="build_refineries")[0] == "build_refineries"
     assert build_all.select_steps(only=["build_catalog", "build_assets"]) == [
         "build_assets",

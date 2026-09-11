@@ -1,3 +1,5 @@
+import { dataUrl } from "./urls";
+
 /**
  * Memoise an async loader by its arguments. The in-flight *promise* is cached
  * (not the resolved value), so callers asking in the same tick share one
@@ -21,9 +23,14 @@ export function cachedLoader<A extends readonly (string | number)[], T>(
   };
 }
 
-/** Fetch and parse a same-origin JSON file (GeoJSON sidecars). */
+/**
+ * Fetch and parse a same-origin JSON file (GeoJSON sidecars) through its
+ * versioned, immutable-cacheable URL (see urls.ts). Low fetch priority: the
+ * multi-MB sidecars render on their own, while the DuckDB wasm they compete
+ * with for bandwidth gates every parquet-backed layer (P3).
+ */
 export async function fetchJson<T>(path: string): Promise<T> {
-  const res = await fetch(path);
+  const res = await fetch(dataUrl(path), { priority: "low" });
   if (!res.ok) throw new Error(`${path} fetch failed: ${String(res.status)}`);
   return (await res.json()) as T;
 }

@@ -29,15 +29,16 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from scripts.common.iso3 import lookup_iso3
+from scripts.common.sources import LNG_T3
 from scripts.transform._lng_voyage_helpers import make_unique_ids
 
-RAW_DIR = Path("data/raw/lng_t3/v1-2026-04-01")
+RAW_DIR = LNG_T3.raw_dir
 OUT_VOYAGE = Path("public/data/lng_voyage.parquet")
 OUT_TRADE = Path("public/data/lng_trade_daily.parquet")
 OUT_TERMINAL = Path("public/data/lng_terminal_daily.parquet")
 
 SOURCE = "Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058)"
-SOURCE_VERSION = "v1-2026-04-01"
+SOURCE_VERSION = LNG_T3.release  # pinned in scripts/common/sources.py
 
 
 def _known_terminal_names() -> set[str]:

@@ -30,11 +30,12 @@ import pandas as pd
 
 from scripts.common.iso3 import EI_NAME_TO_ISO3 as NAME_TO_ISO3
 from scripts.common.paths import latest
+from scripts.common.sources import EI
 
-RAW_DIR = Path("data/raw/ei_statistical_review")
+RAW_DIR = EI.raw_dir
 OUT_PATH = Path("public/data/country_year_series.parquet")
 YEAR_MIN = 1990
-SOURCE = "Energy Institute Statistical Review of World Energy 2025"
+SOURCE = f"{EI.name} {EI.release}"  # "… World Energy 2025"; pinned in scripts/common/sources.py
 KEY_COLS = ["iso3", "metric", "year"]
 
 

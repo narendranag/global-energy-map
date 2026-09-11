@@ -14,8 +14,8 @@ Source: https://prod.arcgis.netl.doe.gov/server/rest/services/Hosted/<Layer>/Fea
 License: US Government work, public domain (17 USC §105)
 
 NETL serves live, unversioned layers: re-ingesting changes data/raw/netl/*, so
-bump SOURCE_VERSION in scripts/transform/_netl_points.py / build_basins.py and
-NETL_SNAPSHOT in build_catalog.py to the retrieval date when you do.
+bump the NETL pin (release + as_of) in scripts/common/sources.py to the
+retrieval date when you do — the transforms and the catalog read it from there.
 
 Usage:
     uv run python -m scripts.ingest.netl_gogi [layer ...]     # default: all four
@@ -29,8 +29,9 @@ import sys
 from pathlib import Path
 
 from scripts.common.netl import fetch_netl_layer
+from scripts.common.sources import NETL
 
-RAW_DIR = Path("data/raw/netl")
+RAW_DIR = NETL.raw_dir
 
 # layer key → (FeatureServer name, progress note)
 LAYERS: dict[str, tuple[str, str]] = {

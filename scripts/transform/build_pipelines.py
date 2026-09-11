@@ -48,16 +48,18 @@ from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
+import shapely
 from shapely.geometry.collection import GeometryCollection
 
 from scripts.common.iso3 import gem_endpoints_iso3
 from scripts.common.paths import latest
+from scripts.common.sources import GEM_GGIT, GEM_GOIT
 
 OUT = Path("data/derived/pipelines.parquet")
 OUT_GEOJSON = Path("public/data/pipelines.geojson")
 
-OIL_RAW_DIR = Path("data/raw/gem_oil_infra")
-GAS_RAW_DIR = Path("data/raw/gem_gas_infra")
+OIL_RAW_DIR = GEM_GOIT.raw_dir
+GAS_RAW_DIR = GEM_GGIT.raw_dir
 
 OIL_SOURCE = "Global Energy Monitor — Global Oil Infrastructure Tracker"
 GAS_SOURCE = "Global Energy Monitor — Global Gas Infrastructure Tracker"
@@ -259,6 +261,18 @@ def _load_gas_pipelines() -> gpd.GeoDataFrame:
 # ---------------------------------------------------------------------------
 
 
+def merge_line_parts(geoms: gpd.GeoSeries) -> gpd.GeoSeries:
+    """Join each feature's contiguous line fragments into as few lines as its topology allows.
+
+    `union_all` nodes the parts (dropping exact duplicates); `line_merge` then
+    chains every run of degree-2 junctions into one LineString. Branching
+    networks stay MultiLineStrings. Snapping near-miss endpoints was tried and
+    adds junctions, so it is not done.
+    """
+    merged = [shapely.line_merge(shapely.union_all(shapely.get_parts(g))) for g in geoms.values]
+    return gpd.GeoSeries(merged, index=geoms.index, crs=geoms.crs)
+
+
 def main() -> None:
     oil = _load_oil_pipelines()
     print(f"oil rows: {len(oil)}", file=sys.stderr)
@@ -284,9 +298,13 @@ def main() -> None:
     )
 
     # GeoJSON sidecar — columns needed for map layer + tooltip.
-    # Geometry is simplified to keep the sidecar under the 25 MB single-file
-    # ceiling (raw ~73 MB → ~13 MB at tolerance 0.005, which corresponds to
-    # roughly 500 m and is well below typical pixel resolution at country zoom).
+    # Geometry is merged, then simplified at tolerance 0.005 (roughly 500 m,
+    # well below typical pixel resolution at country zoom). GGIT ships some
+    # networks as tens of thousands of 2-point fragments (Tennessee Gas
+    # Pipeline: 62,967 parts); simplification cannot shorten a 2-point part,
+    # and deck.gl draws every part as its own path, so merging contiguous
+    # fragments first takes the sidecar from ~456k to ~235k vertices
+    # (~14 MB → ~8 MB) and roughly halves the gas layer's frame time.
     # Full-resolution geometry is preserved in data/derived/pipelines.parquet.
     SIMPLIFY_TOLERANCE_DEG = 0.005
     geojson_cols = [
@@ -303,7 +321,7 @@ def main() -> None:
         "geometry",
     ]
     sidecar = combined[geojson_cols].copy()
-    sidecar["geometry"] = sidecar.geometry.simplify(
+    sidecar["geometry"] = merge_line_parts(sidecar.geometry).simplify(
         tolerance=SIMPLIFY_TOLERANCE_DEG, preserve_topology=True
     )
     sidecar.to_file(OUT_GEOJSON, driver="GeoJSON")

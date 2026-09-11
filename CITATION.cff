@@ -39,10 +39,11 @@ references:
     url: "https://globalenergymonitor.org/projects/global-gas-infrastructure-tracker/"
     license: "CC-BY-4.0"
   - type: dataset
-    title: "NETL Global Oil and Gas Infrastructure (GOGI)"
+    title: "Global Oil & Gas Features Database (NETL GOGI)"
     authors:
       - name: "National Energy Technology Laboratory (US Department of Energy)"
-    url: "https://arcgis.netl.doe.gov/portal/home/item.html?id=1e1c13b43dfb4af68040598c6f4baf44"
+    doi: "10.18141/1427300"
+    url: "https://edx.netl.doe.gov/dataset/global-oil-gas-features-database"
     license: "Public Domain (17 USC 105)"
   - type: dataset
     title: "Statistical Review of World Energy"
@@ -70,7 +71,8 @@ references:
     title: "Global Marine LNG Terminals, Tankers & Trade (LNG-T3): A High-Resolution AIS-Based Dataset of LNG Trade Dynamics (2020-2024)"
     authors:
       - family-names: Zhou
-        given-names: C.
+        given-names: Chuanlong
+        orcid: "https://orcid.org/0000-0001-8848-8247"
     year: 2026
     doi: "10.5281/zenodo.19571058"
     url: "https://doi.org/10.5281/zenodo.19571058"

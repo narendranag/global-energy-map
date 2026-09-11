@@ -1,6 +1,6 @@
 """Ingest LNG-T3 dataset from Zenodo.
 
-Source: Zhou et al. 2026, "Global Marine LNG Terminals, Tankers & Trade
+Source: Zhou, C. (2026), "Global Marine LNG Terminals, Tankers & Trade
 (LNG-T3): A High-Resolution AIS-Based Dataset of LNG Trade Dynamics
 (2020-2024)", DOI 10.5281/zenodo.19571058, CC BY 4.0.
 

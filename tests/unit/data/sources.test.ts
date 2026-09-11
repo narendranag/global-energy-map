@@ -22,7 +22,7 @@ const FIXTURE: Catalog = {
   entries: [
     entry("netl_refineries", "National Energy Technology Laboratory (US DOE)", ["refineries"], "2026-05-17"),
     entry("osm_refineries", "OpenStreetMap", ["refineries"], "2026-05-15"),
-    entry("lng_t3", "Zhou et al. 2026, LNG-T3 (Zenodo)", ["lng_terminals"]),
+    entry("lng_t3", "Zhou, C. 2026, LNG-T3 (Zenodo)", ["lng_terminals"]),
     entry("gem_lng", "Global Energy Monitor", ["lng_terminals"]),
   ],
 };
@@ -35,7 +35,7 @@ describe("sourceEntry", () => {
         ?.id,
     ).toBe("netl_refineries");
     expect(
-      sourceEntry("lng_terminals", "Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058)", FIXTURE)?.id,
+      sourceEntry("lng_terminals", "Zhou, C. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058)", FIXTURE)?.id,
     ).toBe("lng_t3");
     expect(
       sourceEntry("lng_terminals", "Global Energy Monitor — Global Gas Infrastructure Tracker", FIXTURE)?.id,

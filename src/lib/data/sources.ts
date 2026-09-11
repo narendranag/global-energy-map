@@ -13,7 +13,7 @@ export function catalogEntriesFor(layerTag: string, catalog: Catalog = CATALOG):
   return catalog.entries.filter((e) => e.layers.includes(layerTag));
 }
 
-/** "Zhou et al. 2026, LNG-T3 (Zenodo)" → "Zhou et al. 2026, LNG-T3". */
+/** "Zhou, C. 2026, LNG-T3 (Zenodo)" → "Zhou, C. 2026, LNG-T3". */
 function sourceStem(sourceName: string): string {
   return (sourceName.split("(")[0] ?? sourceName).trim();
 }

@@ -37,7 +37,7 @@ OUT_VOYAGE = Path("public/data/lng_voyage.parquet")
 OUT_TRADE = Path("public/data/lng_trade_daily.parquet")
 OUT_TERMINAL = Path("public/data/lng_terminal_daily.parquet")
 
-SOURCE = "Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058)"
+SOURCE = "Zhou, C. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058)"
 SOURCE_VERSION = LNG_T3.release  # pinned in scripts/common/sources.py
 
 

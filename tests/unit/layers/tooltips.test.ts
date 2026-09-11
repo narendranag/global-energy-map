@@ -96,14 +96,14 @@ describe("layer tooltips", () => {
         lngTerminal("Futtsu", "lng_import", {
           capacity: 19.96,
           commissioned_year: 1985,
-          source: "Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058)",
+          source: "Zhou, C. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058)",
         }),
         CTX,
       ) ?? "";
     expect(t).toContain("LNG import terminal: Futtsu");
     expect(t).toContain("Capacity: 20.0 mtpa");
     expect(t).toContain("Start year: 1985");
-    expect(t).toMatch(/^Source: Zhou et al\. 2026, LNG-T3/m);
+    expect(t).toMatch(/^Source: Zhou, C\. 2026, LNG-T3/m);
   });
 
   it("LNG voyage: cargo, dates, confidence, source", () => {

@@ -31,7 +31,7 @@ What it deliberately doesn't do: price responses, rerouting, strategic stocks, o
 | Oil and gas extraction sites | 5,008 | Global Energy Monitor (CC BY 4.0) |
 | Oil, NGL and gas pipelines | 3,957 (build year known for 64 % oil, 74 % gas) | Global Energy Monitor (CC BY 4.0) |
 | Refineries | 1,163 (capacity known for 350) | NETL GOGI (public domain) + OpenStreetMap (ODbL) |
-| LNG terminals | 312 | LNG-T3, Zhou et al. 2026 (CC BY 4.0) + GEM |
+| LNG terminals | 312 | LNG-T3, Zhou, C. 2026 (CC BY 4.0) + GEM |
 | LNG voyages, 2020–2024 | 17,592 | LNG-T3 (CC BY 4.0) |
 | Petroleum basins · storage hubs · ports | 1,046 · 7,733 · 3,694 | NETL GOGI (public domain) |
 | Bilateral crude (HS 2709) and LNG (HS 271111) trade, 1995–2024 | 53,727 country-pair-years | CEPII BACI (Etalab Open Licence 2.0) |

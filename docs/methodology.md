@@ -99,7 +99,7 @@ This is the **current-state** methodology of Global Energy Map: for every map la
 
 ### LNG terminals
 
-- **Sources:** LNG-T3 (Zhou et al. 2026, Zenodo, CC BY 4.0) as primary; GEM GGIT (CC BY 4.0) as supplement.
+- **Sources:** LNG-T3 (Zhou, C. 2026, Zenodo, CC BY 4.0) as primary; GEM GGIT (CC BY 4.0) as supplement.
 - **Build:** LNG-T3's 545 terminals are filtered to operating and in-construction (330); 25 names that carry both an operating and an expansion record are collapsed to the operating record, leaving **305**. GEM's per-train records are collapsed to one per terminal; a GEM terminal is dropped if an LNG-T3 terminal in the same country has the same name, or lies within **25 km** (terminal campuses are large). **7** GEM terminals survive. Result: **312 terminals** (73 export, 239 import).
 - **Units:** nameplate capacity in million tonnes per annum, known for 310 of 312; LNG-T3 terminals also carry total processed volume (bcm), unit count and UN/LOCODE.
 - **Time:** `commissioned_year` known for **305 of 312 (97.8 %)** — the best-dated layer on the map.

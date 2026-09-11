@@ -43,8 +43,8 @@
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
       "rows": 5008,
-      "bytes": 639481,
-      "sha256": "39301647cf9919c10745b96afe45272b391417e1ff68f19ce264578d84bf3429"
+      "bytes": 639474,
+      "sha256": "6ac899d477c52c86eb88cbbd4b9edcb5b1708b6514f812788a7d764d36db5af0"
     },
     {
       "id": "netl_refineries",
@@ -64,8 +64,8 @@
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable. The refineries layer includes those rows too, so it is view-only.",
       "rows": 1075,
-      "bytes": 639481,
-      "sha256": "39301647cf9919c10745b96afe45272b391417e1ff68f19ce264578d84bf3429"
+      "bytes": 639474,
+      "sha256": "6ac899d477c52c86eb88cbbd4b9edcb5b1708b6514f812788a7d764d36db5af0"
     },
     {
       "id": "osm_refineries",
@@ -85,8 +85,8 @@
       "downloadable": false,
       "download_note": "ODbL (share-alike) rows; downloads are limited to CC BY 4.0 and public-domain sources, so these rows are left out of assets_open.parquet (the NETL refinery rows are in it).",
       "rows": 88,
-      "bytes": 639481,
-      "sha256": "39301647cf9919c10745b96afe45272b391417e1ff68f19ce264578d84bf3429"
+      "bytes": 639474,
+      "sha256": "6ac899d477c52c86eb88cbbd4b9edcb5b1708b6514f812788a7d764d36db5af0"
     },
     {
       "id": "netl_storage",
@@ -106,8 +106,8 @@
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
       "rows": 7733,
-      "bytes": 639481,
-      "sha256": "39301647cf9919c10745b96afe45272b391417e1ff68f19ce264578d84bf3429"
+      "bytes": 639474,
+      "sha256": "6ac899d477c52c86eb88cbbd4b9edcb5b1708b6514f812788a7d764d36db5af0"
     },
     {
       "id": "netl_ports",
@@ -127,29 +127,29 @@
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
       "rows": 3694,
-      "bytes": 639481,
-      "sha256": "39301647cf9919c10745b96afe45272b391417e1ff68f19ce264578d84bf3429"
+      "bytes": 639474,
+      "sha256": "6ac899d477c52c86eb88cbbd4b9edcb5b1708b6514f812788a7d764d36db5af0"
     },
     {
       "id": "lng_t3_terminals",
       "label": "LNG terminals (LNG-T3, primary)",
       "path": "/data/assets.parquet",
       "format": "parquet",
-      "source_name": "Zhou et al. 2026, LNG-T3 (Zenodo)",
+      "source_name": "Zhou, C. 2026, LNG-T3 (Zenodo)",
       "source_url": "https://doi.org/10.5281/zenodo.19571058",
       "license": "CC BY 4.0",
       "as_of": "2026-04-01",
       "layers": [
         "lng_terminals"
       ],
-      "attribution": "Data: Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0",
+      "attribution": "Data: Zhou, C. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0",
       "runtime": true,
       "redistributable": true,
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
       "rows": 305,
-      "bytes": 639481,
-      "sha256": "39301647cf9919c10745b96afe45272b391417e1ff68f19ce264578d84bf3429"
+      "bytes": 639474,
+      "sha256": "6ac899d477c52c86eb88cbbd4b9edcb5b1708b6514f812788a7d764d36db5af0"
     },
     {
       "id": "gem_lng_terminals",
@@ -169,8 +169,8 @@
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
       "rows": 7,
-      "bytes": 639481,
-      "sha256": "39301647cf9919c10745b96afe45272b391417e1ff68f19ce264578d84bf3429"
+      "bytes": 639474,
+      "sha256": "6ac899d477c52c86eb88cbbd4b9edcb5b1708b6514f812788a7d764d36db5af0"
     },
     {
       "id": "assets_open",
@@ -186,8 +186,8 @@
       "redistributable": true,
       "downloadable": true,
       "rows": 17822,
-      "bytes": 634185,
-      "sha256": "da31ec8f08678e205945a1f3996c5f33564ed63963a6b901f70469163545a2f1"
+      "bytes": 634178,
+      "sha256": "e9b64eb4b9a17cdb646ceca954f82479f4bc3197b7759e4dcc7cf9ac137cf353"
     },
     {
       "id": "gem_oil_pipelines",
@@ -322,7 +322,7 @@
       "label": "LNG carrier voyages (LNG-T3)",
       "path": "/data/lng_voyage.parquet",
       "format": "parquet",
-      "source_name": "Zhou et al. 2026, LNG-T3 (Zenodo)",
+      "source_name": "Zhou, C. 2026, LNG-T3 (Zenodo)",
       "source_url": "https://doi.org/10.5281/zenodo.19571058",
       "license": "CC BY 4.0",
       "as_of": "2026-04-01",
@@ -330,49 +330,49 @@
         "lng_voyages",
         "scenario:hormuz-lng"
       ],
-      "attribution": "Data: Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0",
+      "attribution": "Data: Zhou, C. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0",
       "runtime": true,
       "redistributable": true,
       "downloadable": true,
       "rows": 17592,
-      "bytes": 274690,
-      "sha256": "2ff61860d913bf655b24184f53ef21ce0afb3999e5d476a7211edd3bd50655c3"
+      "bytes": 274675,
+      "sha256": "74aeae7e6adbaf8a5674fc14d694641e8dcef4a1a1be00c306fc485b32cde965"
     },
     {
       "id": "lng_t3_trade_daily",
       "label": "LNG trade-daily arrivals/departures (LNG-T3) — reproducibility artefact",
       "path": "/data/lng_trade_daily.parquet",
       "format": "parquet",
-      "source_name": "Zhou et al. 2026, LNG-T3 (Zenodo)",
+      "source_name": "Zhou, C. 2026, LNG-T3 (Zenodo)",
       "source_url": "https://doi.org/10.5281/zenodo.19571058",
       "license": "CC BY 4.0",
       "as_of": "2026-04-01",
       "layers": [],
-      "attribution": "Data: Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0",
+      "attribution": "Data: Zhou, C. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0",
       "runtime": false,
       "redistributable": true,
       "downloadable": true,
       "rows": 16691,
-      "bytes": 112453,
-      "sha256": "709683c7802a63a9ae60e8989c59e6335c9fc762f9fc17f8423c8c6f5067704b"
+      "bytes": 112438,
+      "sha256": "dd754bc618738432d383ad827f587999ed7cb3db4782e287ca9b3307cd6e59dc"
     },
     {
       "id": "lng_t3_terminal_daily",
       "label": "LNG terminal-daily throughput (LNG-T3) — reproducibility artefact",
       "path": "/data/lng_terminal_daily.parquet",
       "format": "parquet",
-      "source_name": "Zhou et al. 2026, LNG-T3 (Zenodo)",
+      "source_name": "Zhou, C. 2026, LNG-T3 (Zenodo)",
       "source_url": "https://doi.org/10.5281/zenodo.19571058",
       "license": "CC BY 4.0",
       "as_of": "2026-04-01",
       "layers": [],
-      "attribution": "Data: Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0",
+      "attribution": "Data: Zhou, C. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0",
       "runtime": false,
       "redistributable": true,
       "downloadable": true,
       "rows": 16115,
-      "bytes": 47838,
-      "sha256": "cb9aa5871ad1541a328a126b0c04e61da80f93515543582492eae36c0ba56cb2"
+      "bytes": 47823,
+      "sha256": "3f112f8a9668518a6cf1e7e7eda56d01d2364f3255223b53bb36e201b5a9688e"
     }
   ]
 }

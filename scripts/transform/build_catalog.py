@@ -60,7 +60,7 @@ OUT = PUBLIC / "data" / "catalog.json"
 CATALOG_VERSION = 6
 
 GEM_ATTRIBUTION = "Data: Global Energy Monitor, CC BY 4.0"
-LNG_T3_ATTRIBUTION = "Data: Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0"
+LNG_T3_ATTRIBUTION = "Data: Zhou, C. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0"
 NETL_SOURCE_NAME = "National Energy Technology Laboratory (US DOE)"
 NETL_LICENSE = "US Government work, public domain (17 USC §105)"
 # NETL's EDX listing of GOGI names a Creative Commons Attribution licence, so
@@ -179,7 +179,7 @@ REGISTRY: list[dict[str, Any]] = [
         "path": "/data/assets.parquet",
         "subset": {
             "kind": ["lng_export", "lng_import"],
-            "source": ["Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058)"],
+            "source": ["Zhou, C. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058)"],
         },
         "format": "parquet",
         "source_name": LNG_T3_SOURCE,

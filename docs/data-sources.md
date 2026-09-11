@@ -108,10 +108,11 @@ Categories:
 
 ---
 
-### LNG-T3 — Zhou et al. 2026 (Global Marine LNG Terminals, Tankers & Trade)
+### LNG-T3 — Zhou, C. 2026 (Global Marine LNG Terminals, Tankers & Trade)
 
 - **URL:** https://doi.org/10.5281/zenodo.19571058
-- **License:** **CC BY 4.0** (attribution required: "Data: Zhou et al. 2026, LNG-T3, CC BY 4.0 (Zenodo 10.5281/zenodo.19571058)")
+- **License:** **CC BY 4.0** (attribution required: "Data: Zhou, C. 2026, LNG-T3, CC BY 4.0 (Zenodo 10.5281/zenodo.19571058)")
+- **Dataset vs. paper (don't merge the two):** the Zenodo dataset we ingest has a **single creator**, Chuanlong Zhou (LSCE, ORCID 0000-0001-8848-8247), so CC BY attribution reads *Zhou, C. 2026*. The companion paper has six authors — Zhou, C., Ciais, P., Mittakola, R. T., Zhu, B., Su, Y., & Xu, Y. (2026), *Scientific Data*, [doi:10.1038/s41597-026-07454-2](https://doi.org/10.1038/s41597-026-07454-2) — and is correctly cited as *Zhou et al. 2026*.
 - **As-of:** 2026-04-01 (Zenodo record 19571058, our label `v1-2026-04-01`; Zenodo lists it as the second version under concept DOI 10.5281/zenodo.17273526 — the local CSVs match the record's md5 checksums, pinned in `scripts/common/sources.py`)
 - **Where it lands:** `assets.parquet` rows where `source LIKE 'Zhou%LNG-T3%'` (LNG terminals, primary source as of Phase 6); `lng_voyage.parquet`, `lng_trade_daily.parquet`, `lng_terminal_daily.parquet`
 - **Layers/scenarios using it:** LNG terminals layer (primary); LNG voyages opt-in layer; Hormuz-LNG scenario (per-terminal disaggregation for years 2020–2024)
@@ -147,7 +148,7 @@ LNG-T3 covers **22–41% of GIIGNL's global LNG trade, 2020–2024** — every y
 ### NETL Global Oil & Gas Infrastructure (GOGI)
 
 - **URL:** https://arcgis.netl.doe.gov/portal/home/item.html?id=1e1c13b43dfb4af68040598c6f4baf44
-- **License:** US Government work, public domain (17 USC §105). NETL's EDX listing of the GOGI collection names a Creative Commons Attribution licence, and GOGI compiles hundreds of third-party open datasets, so we credit NETL on every NETL row ("Data: NETL Global Oil & Gas Infrastructure (GOGI), US DOE"). Cite Sabbatino et al., doi:10.18141/1502839.
+- **License:** US Government work, public domain (17 USC §105). NETL's EDX listing of the GOGI collection names a Creative Commons Attribution licence, and GOGI compiles hundreds of third-party open datasets, so we credit NETL on every NETL row ("Data: NETL Global Oil & Gas Infrastructure (GOGI), US DOE"). Cite Sabbatino et al., *Global Oil & Gas Features Database*, doi:10.18141/1427300 (EDX's own recommended citation; 10.18141/1502839 is the separate EDX Spatial Web Map).
 - **As-of:** 2026-05-17
 - **Where it lands:** `basins.geojson` sidecar (basins; full-resolution GeoParquet in `data/derived/`); `assets.parquet` rows where `kind ∈ {storage, port}`
 - **Layers/scenarios using it:** basin polygons layer; storage hubs point layer; ports point layer
@@ -374,7 +375,7 @@ Surfaced via Tavily/Exa research. Listed roughly in order of analytical value ×
 
 Key findings from the 2026-05-19 sweep:
 
-- **LNG carriers — shipped in Phase 6.** LNG-T3 (Zhou et al. 2026) — see the "In production" section above for the full schema, counts, and the GIIGNL partial-coverage finding (22–41%, so it supplements rather than replaces BACI). The 861-vessel fleet inventory was *not* surfaced as a map layer in Phase 6; an animated vessel-position layer remains a Phase 7+ candidate.
+- **LNG carriers — shipped in Phase 6.** LNG-T3 (Zhou, C. 2026) — see the "In production" section above for the full schema, counts, and the GIIGNL partial-coverage finding (22–41%, so it supplements rather than replaces BACI). The 861-vessel fleet inventory was *not* surfaced as a map layer in Phase 6; an animated vessel-position layer remains a Phase 7+ candidate.
 - **US-coastal oil tankers — solved openly.** MarineCadastre.gov (NOAA / US Coast Guard NAIS) publishes 2009–2024 raw AIS positions for US coastal/EEZ waters as CSV/GeoPackage. ShipType codes 80–89 for tankers. Public domain.
 - **EU-coastal tanker route density — open.** EMODnet Human Activities derived from EMSA SafeSeaNet (likely CC BY); GeoTIFF / WMS aggregates.
 - **Global open AIS with caveats.** Global Fishing Watch (1 position/vessel/hour, non-commercial license) and AISStream.io (real-time WebSocket, no SLA / beta / no clear commercial terms) — usable but constrained.

@@ -17,6 +17,8 @@ test.describe("Legal and provenance", () => {
     await page.goto("/terms");
     await expect(page.getByRole("heading", { level: 1, name: "Terms of use" })).toBeVisible();
     await expect(page.getByRole("heading", { level: 2, name: "Not advice" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "Governing law" })).toBeVisible();
+    await expect(page.locator("main")).toContainText("laws of Singapore");
     await expect(page.locator("main")).toContainText("Effective 11 September 2026");
     await expectProvenance(page.getByTestId("site-footer"));
   });

@@ -46,6 +46,10 @@ To the fullest extent the law allows, Narendra Nag and Marain are not liable for
 
 The site is maintained on a best-effort basis. Features, datasets and scenarios may change or be withdrawn, and the site may be unavailable at times. These terms may be updated. The effective date above will change when they are, and past versions are in the project's [public history](https://github.com/narendranag/global-energy-map/commits/main/docs/legal/terms.md). Continued use after a change means you accept the updated terms.
 
+## Governing law
+
+These terms, and any dispute arising out of or in connection with them or the site, are governed by the **laws of Singapore**, and the courts of Singapore have exclusive jurisdiction. This does not take away any mandatory consumer protection that the law of the country where you live gives you.
+
 ## Privacy
 
 How the site handles data about visitors is described in the [Privacy](/privacy) policy.

@@ -51,7 +51,7 @@ Layer by layer: where the data come from, how current and complete they are, wha
 - **Coverage:** oil 1,185 lines (998 crude, 156 NGL, 31 crude+NGL; 1,137 operating, 48 under construction); gas 2,772 (2,554 operating, 218 under construction). Shelved, cancelled, retired and geometry-less features are dropped at ingest.
 - **Units:** oil capacity in kb/d (933 of 1,185 rows); gas capacity in bcm/y (the column is called `capacity_kbpd` for historical reasons; `capacity_unit` says `bcm/y`).
 - **Time:** start year for 760 oil lines (64 %) and 2,058 gas lines (74 %). No retirement year.
-- **Geometry:** simplified at 0.005° (about 500 m) so the file stays near 14 MB. Schematic at street scale; the map stops at zoom 8.
+- **Geometry:** each pipeline's contiguous line fragments are merged, then simplified at 0.005° (about 500 m); the file is about 8 MB. Schematic at street scale; the map stops at zoom 8.
 
 ### Refineries
 

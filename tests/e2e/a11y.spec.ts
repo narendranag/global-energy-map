@@ -49,6 +49,14 @@ test.describe("axe: zero serious/critical violations", () => {
     expect(await seriousViolations(page)).toEqual([]);
   });
 
+  for (const [path, name] of [["/terms", "Terms of use"], ["/privacy", "Privacy"]] as const) {
+    test(path, async ({ page }) => {
+      await page.goto(path);
+      await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+    });
+  }
+
   test.describe("with the intro card", () => {
     test.use({ showIntro: true });
     test("/ (first visit)", async ({ page }) => {

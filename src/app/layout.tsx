@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { AppErrorBoundary } from "@/components/errors/AppErrorBoundary";
 import { GlobalErrorListener } from "@/components/errors/GlobalErrorListener";
+import { AUTHOR_NAME, AUTHOR_URL, PRACTICE_NAME } from "@/components/ui/provenance";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -25,6 +26,9 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://energymap.marain.space"),
   title: { default: SITE_NAME, template: `%s · ${SITE_NAME}` },
   description: SITE_DESCRIPTION,
+  authors: [{ name: AUTHOR_NAME, url: AUTHOR_URL }],
+  creator: AUTHOR_NAME,
+  publisher: PRACTICE_NAME,
   openGraph: {
     type: "website",
     siteName: SITE_NAME,

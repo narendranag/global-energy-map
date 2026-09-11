@@ -28,6 +28,8 @@ function lngImportRows(assets: AssetsByKind): LngImportRow[] {
     country_iso3: t.country_iso3,
     capacity: t.capacity ?? 0,
     name: t.name,
+    commissioned_year: t.commissioned_year,
+    status: t.status,
   }));
 }
 

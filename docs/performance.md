@@ -1,8 +1,27 @@
 # Performance and caching
 
-Phase 10 (Track P, items 10.1 and 10.2). This page records what the map loads, how we measured it, what changed, and what still dominates load time.
+Phase 10 (Track P, items 10.1 and 10.2), then lever 2 (2026-09-11). This page records what the map loads, how we measured it, what changed, and what still dominates load time.
 
-## How the app loads now
+## Since 2026-09-11: parquet is read without DuckDB
+
+Every runtime loader — assets, reserves, LNG voyages, trade flows, route shares — was a scan plus a filter over a file of 10 KB – 1.3 MB. They now read the same parquet files with [hyparquet](https://github.com/hyparam/hyparquet) (pure JS, plus `fzstd` for our zstd pages) in `src/lib/data/parquet.ts`: each file is fetched once through its versioned URL and decoded once per column set, and the loaders filter the cached rows in memory. The rows keep the `query()` contract (BIGINT → number, DATE → `"YYYY-MM-DD"`), and `tests/unit/data/parquet.test.ts` pins the loaders against DuckDB-computed counts and sums over the shipped files.
+
+DuckDB-WASM is no longer fetched on any page. `src/lib/duckdb/` and the self-hosted bundle (`copy-duckdb.mjs`, `public/duckdb/`) stay in the repo for the planned query console; nothing imports them at runtime today, and `tests/e2e/network.spec.ts` asserts a cold scenario load makes no `/duckdb/` request.
+
+| Same method as below (40 Mb/s, 30 ms, median of 5, Apple Silicon Mac, Chrome headless) | DuckDB (scenario-correctness branch) | hyparquet | Target |
+|---|---|---|---|
+| Cold `/` | 4.85 s (4.79–4.89) | **1.20 s** (1.19–1.32) | < 3 s ✓ |
+| Cold `/?mode=scenarios&scenario=hormuz&commodity=gas&year=2023` | 5.00 s (4.88–5.41) | **1.40 s** (1.37–1.41) | < 5 s ✓ |
+| Cold `/?mode=flows` | 4.91 s | **1.28 s** | — |
+| Warm `/` / scenario | 1.49 / 1.61 s | 0.37 / 0.48 s | — |
+| Bytes before `data-ready`, cold `/` | 18.3 MB | 4.1 MB | — |
+| `/duckdb/*` requests | 3 | 0 | 0 |
+
+Both builds were measured back to back on one machine; screenshots at `data-ready` are identical. Decoding runs on the main thread: in Node, all five files decode in under 0.3 s together.
+
+The sections below describe the Phase 10 state (DuckDB on the load path) and are kept for the record; where they say "the app loads", read "the app loaded until 2026-09-11".
+
+## How the app loaded (Phase 10)
 
 1. The page's JS evaluates `src/lib/data/assets.ts`, which calls `prewarmDuckDB()`. That starts the DuckDB worker and the ~7 MB (brotli) wasm download immediately, before hydration and before the first query (P3).
 2. `getDuckDB()` caches the in-flight promise, so every loader shares one worker and one instantiation. Before this change, the first-load loaders each booted their own (P1).
@@ -90,9 +109,9 @@ About 18 MB crosses the wire before `data-ready`: basemap 6.4, wasm 7.1, pipelin
 ## Next levers, in order of payoff
 
 1. ~~**Self-host the parquet extension.**~~ **Done** (maintainer-approved): `copy-duckdb.mjs` downloads the signed `parquet` extension for core v1.5.1 at build, verifies sha256, and the bootstrap sets `custom_extension_repository` to `/duckdb/extensions` (≈ −0.8 s cold).
-2. **Take DuckDB off the first-paint path.** The default view needs only a reserves lookup (40 KB) and asset points. Precomputed Arrow/JSON for the default layers would render in about 2 s cold and leave DuckDB for scenarios and export (review §4.3).
+2. ~~**Take DuckDB off the first-paint path.**~~ **Done** (2026-09-11, maintainer-approved) — further than planned: every loader, not just the default layers, reads parquet with hyparquet (see the top of this page). Cold `/` 4.85 → 1.20 s.
 3. **Pipelines as PMTiles** (tippecanoe → MVT). Replaces 3 MB of GeoJSON, blurred by simplification, with range-read tiles of full detail.
-4. **`<link rel="preload" as="fetch" crossorigin>` for `duckdb-eh.wasm?v=…`** in `layout.tsx`: a head start of about 250 ms (the worker currently requests the wasm at ~650 ms). The worker's fetch reuses the HTTP-cache entry.
+4. ~~Preload `duckdb-eh.wasm`~~ — moot now that the wasm is not loaded. The equivalent for today would be preloading `assets.parquet?v=…`.
 5. **Basemap bytes.** 6.4 MB of z2 vector tiles and glyphs from OpenFreeMap share the pipe with everything else. They come from a third party and are immutable-cached by the provider, so there is little to gain here beyond style choices.
 
 ## Deploy notes

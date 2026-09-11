@@ -22,8 +22,8 @@ A public web app that lets serious analysts interrogate global energy dependenci
 - Natural Earth admin-0 polygons (public domain) for the reserves choropleth
 
 **In-browser data layer**
-- `@duckdb/duckdb-wasm` runs SQL over Parquet served from our own origin. The wasm/worker bundles and the signed `parquet` extension are **self-hosted** under `/duckdb/` (copied/downloaded at `predev`/`prebuild` by `scripts/copy-duckdb.mjs`, sha256-pinned) — no runtime request to jsDelivr or extensions.duckdb.org
-- One shared DuckDB instance (the boot promise is cached); each parquet is registered once (small files as buffers)
+- Loaders read Parquet served from our own origin with `hyparquet` (+ `fzstd` for zstd pages) via `src/lib/data/parquet.ts`: one fetch per file (versioned URL), decoded once per column set, filtered in memory. Rows match the old `query()` contract (BIGINT → number, DATE → ISO string). Took cold load from ~4.9 s to ~1.2 s (2026-09-11, `docs/performance.md`)
+- `@duckdb/duckdb-wasm` is kept, self-hosted under `/duckdb/` (copied/downloaded at `predev`/`prebuild` by `scripts/copy-duckdb.mjs`, sha256-pinned), for the planned query console — but **nothing imports `src/lib/duckdb/` at runtime today**; `tests/e2e/network.spec.ts` asserts no `/duckdb/` request on a cold load. Don't reintroduce it on the load path
 - No backend for the analytics path; the only third-party runtime host is the OpenFreeMap basemap
 
 **Build-time data layer**
@@ -49,8 +49,8 @@ global-energy-map/
 │   │   ├── scenarios/             # ScenarioPanel, overlay, useScenario hook
 │   │   └── ui/
 │   └── lib/
-│       ├── duckdb/                # WASM bootstrap, query() (BIGINT → number at the boundary)
-│       ├── data/                  # cached loaders: assets (one scan, grouped by kind), voyages, reserves, scenario inputs, catalog sources
+│       ├── duckdb/                # WASM bootstrap, query() — kept for the planned query console, unused at runtime
+│       ├── data/                  # cached loaders over parquet.ts (hyparquet): assets (one read, grouped by kind), voyages, reserves, scenario inputs, catalog sources
 │       ├── symbology/             # every colour, ramp, radius rule and glyph — layers and Legend both import from here
 │       ├── state/                 # external app store (AppState + map view) with debounced history.replaceState
 │       ├── data-catalog/          # typed access to catalog.json
@@ -162,9 +162,9 @@ CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typec
 - **TDD where it pays:** scenario engine, data transforms, query helpers — write failing test first. UI components covered by Playwright e2e smoke tests, not unit-tested by default.
 - **Pure functions for scenarios:** `src/lib/scenarios/` exports pure functions that take in baseline data + scenario params and return derived layer styling. No side effects, no map handles. Easy to unit-test.
 - **Catalog manifest is the source of truth for `/methodology`, `/data`, tooltips and Share/cite** (license, source URL, as-of, rows, sha256, `redistributable` / `downloadable`). `build_catalog.py` also writes `src/lib/export/citations.generated.json` (scenario-share citations + CITATION.cff) — regenerate, never hand-edit.
-- **Runtime data paths are hardcoded by design.** Loaders in `src/lib/data/` call `read_parquet('/data/<file>.parquet')` directly in DuckDB SQL (or `fetch` a GeoJSON sidecar). Do not try to thread catalog `path` fields through the runtime — the catalog is metadata, not a config table. When you add a new layer, add a `public/data/catalog.json` entry AND hardcode the path in the SQL.
-- **Geometry ships as simplified GeoJSON sidecars** (`pipelines.geojson`, `basins.geojson`, `countries.geojson`); the DuckDB-WASM `spatial` extension is not reliable in the pinned dev build. Full-resolution GeoParquet stays build-time only in `data/derived/`.
-- **One data path.** Layers never query on their own: `src/lib/data/` loaders are module-cached promises (cache the promise, not the result), `useAssets()` scans `assets.parquet` once and groups by `kind`, and layer files are pure `buildXLayer(rows, opts)` functions memoised in `useMapLayers`. Year/vintage filtering happens in memory. Layer ids are stable (tooltips and e2e key on them).
+- **Runtime data paths are hardcoded by design.** Loaders in `src/lib/data/` call `readParquet('/data/<file>.parquet', columns)` directly (or `fetch` a GeoJSON sidecar). Do not try to thread catalog `path` fields through the runtime — the catalog is metadata, not a config table. When you add a new layer, add a `public/data/catalog.json` entry AND hardcode the path in the loader.
+- **Geometry ships as simplified GeoJSON sidecars** (`pipelines.geojson`, `basins.geojson`, `countries.geojson`); the DuckDB-WASM `spatial` extension was not reliable in the pinned dev build, and the runtime no longer loads DuckDB at all. Full-resolution GeoParquet stays build-time only in `data/derived/`.
+- **One data path.** Layers never query on their own: `src/lib/data/` loaders are module-cached promises (cache the promise, not the result), `useAssets()` reads `assets.parquet` once and groups by `kind`, and layer files are pure `buildXLayer(rows, opts)` functions memoised in `useMapLayers`. Year/vintage filtering happens in memory. Layer ids are stable (tooltips and e2e key on them).
 - **Symbology lives in `src/lib/symbology/`.** No inline RGBA in layer files; the Legend renders from the same constants plus `LayerState`, so they cannot drift.
 - **Tooltips are per layer.** Each layer exports `formatXTooltip`; `page.tsx` dispatches by layer id. Every tooltip ends with source + as-of from the statically imported catalog.
 - **State and URL.** `src/lib/state/store.ts` owns `AppState` + map view; `useUrlState` wraps it. The URL is written with a debounced `history.replaceState` — never `router.replace` (that turned every slider tick into a Next navigation).
@@ -181,7 +181,7 @@ CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typec
 - **Errors surface.** Render errors, uncaught errors/rejections and failed data loads (`useAsync` → `reportError`) show the error panel (reload / report-an-issue) instead of a blank or forever-loading map.
 - **Data licensing lives in `LICENSE-DATA.md`.** Downloadable = every source of the file is CC BY 4.0, public domain, Etalab Open Licence 2.0 (BACI) or project-derived. `assets_open.parquet` is the downloadable asset table (no ODbL OSM rows); EI reserves stay view-only.
 - **Refreshing data:** follow `docs/refresh.md`; all source URLs/releases/dates are pinned in `scripts/common/sources.py`.
-- **e2e is CPU-bound.** Every Playwright spec boots DuckDB-WASM and deck.gl under headless software WebGL. `playwright.config.ts` runs `workers: 1` unconditionally; scenario-panel expects need ~120 s inside 180 s test budgets to pass on ubuntu-latest (a Mac passes at 60 s). CI runs e2e against `pnpm build && pnpm start` under `CI=1`; the push trigger is limited to `main` so a PR branch runs once.
+- **e2e is CPU-bound.** Every Playwright spec decodes parquet and runs deck.gl under headless software WebGL. `playwright.config.ts` runs `workers: 1` unconditionally; scenario-panel expects need ~120 s inside 180 s test budgets to pass on ubuntu-latest (a Mac passes at 60 s). CI runs e2e against `pnpm build && pnpm start` under `CI=1`; the push trigger is limited to `main` so a PR branch runs once.
 - **Parallel implementer agents do not commit or stage.** Give each a disjoint file set, have them report changed files, then commit each set with an explicit `git add <files>`. Never `git add -A` on a shared tree. An agent's `git rm` stages a deletion that the next commit sweeps up — agents delete with plain `rm`.
 - **e2e waits on `main[data-ready="true"]`** (data loaded for the current inputs), clicks through the hydration-safe helpers in `tests/e2e/helpers.ts`, and proves rendering with screenshot pixel probes at projected lon/lat points — never fixed sleeps.
 - **Modes are presets, not filters.** `mode` (infrastructure | flows | scenarios) fills in only what the URL leaves out; explicit `layers`/`year`/`commodity`/`scenario` params always win, so old shared links render unchanged. Presets live in `src/lib/modes/`.

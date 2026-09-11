@@ -1,7 +1,7 @@
-import { query } from "@/lib/duckdb/query";
 import type { LngVoyageRow } from "@/lib/scenarios/types";
 import type { LngTerminalAsset } from "./assets";
 import { cachedLoader } from "./cache";
+import { readParquet } from "./parquet";
 
 /** LNG-T3 voyage coverage; outside it there are no voyage rows. */
 export const LNG_T3_FIRST_YEAR = 2020;
@@ -33,23 +33,29 @@ export interface PositionedVoyage extends VoyageRow {
  * layer and the Hormuz-LNG scenario so both count the same voyages; outside
  * the LNG-T3 range it resolves to [] without querying.
  */
+const VOYAGE_COLUMNS = [
+  "voyage_id", "start_date", "end_date", "imo", "voyage_type", "from_terminal", "to_terminal",
+  "from_country", "to_country", "from_country_iso3", "to_country_iso3", "amount_cbm",
+  "confidence_score",
+] as const;
+
+type VoyageFileRow = Omit<VoyageRow, "amount_cbm"> & { readonly amount_cbm: number | null };
+
+/** "YYYY-MM-DD" → YYYY. */
+const yearOf = (isoDate: string): number => Number(isoDate.slice(0, 4));
+
 export const loadVoyages = cachedLoader(async (year: number): Promise<readonly VoyageRow[]> => {
   if (!voyagesInRange(year)) return [];
-  const res = await query<VoyageRow & Record<string, unknown>>(
-    `SELECT voyage_id,
-            CAST(start_date AS VARCHAR) AS start_date,
-            CAST(end_date AS VARCHAR) AS end_date,
-            imo, voyage_type, from_terminal, to_terminal,
-            from_country, to_country, from_country_iso3, to_country_iso3,
-            COALESCE(amount_cbm, 0) AS amount_cbm, confidence_score
-     FROM read_parquet('/data/lng_voyage.parquet')
-     WHERE voyage_type = 'export'
-       AND confidence_score >= ?
-       AND year(start_date) <= ?
-       AND year(end_date) >= ?`,
-    [MIN_VOYAGE_CONFIDENCE, year, year],
-  );
-  return res.rows;
+  const rows = await readParquet<VoyageFileRow>("/data/lng_voyage.parquet", VOYAGE_COLUMNS);
+  return rows
+    .filter(
+      (v) =>
+        v.voyage_type === "export" &&
+        v.confidence_score >= MIN_VOYAGE_CONFIDENCE &&
+        yearOf(v.start_date) <= year &&
+        yearOf(v.end_date) >= year,
+    )
+    .map((v) => ({ ...v, amount_cbm: v.amount_cbm ?? 0 }));
 });
 
 /**

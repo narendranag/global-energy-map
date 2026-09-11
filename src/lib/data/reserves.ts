@@ -1,6 +1,6 @@
-import { query } from "@/lib/duckdb/query";
 import type { Commodity } from "@/lib/scenarios/types";
 import { cachedLoader } from "./cache";
+import { readParquet } from "./parquet";
 
 export interface ReservesData {
   readonly commodity: Commodity;
@@ -32,13 +32,26 @@ export function toReservesData(
   return { commodity, dataYear, values, max };
 }
 
+interface SeriesRow {
+  readonly iso3: string;
+  readonly year: number;
+  readonly metric: string;
+  readonly value: number | null;
+}
+
 export const loadReserves = cachedLoader(
   async (commodity: Commodity, dataYear: number): Promise<ReservesData> => {
-    const res = await query<{ iso3: string; value: number | null }>(
-      `SELECT iso3, value FROM read_parquet('/data/country_year_series.parquet')
-       WHERE metric = ? AND year = ?`,
-      [RESERVES_METRIC[commodity], dataYear],
+    const rows = await readParquet<SeriesRow>("/data/country_year_series.parquet", [
+      "iso3",
+      "year",
+      "metric",
+      "value",
+    ]);
+    const metric = RESERVES_METRIC[commodity];
+    return toReservesData(
+      commodity,
+      dataYear,
+      rows.filter((r) => r.metric === metric && r.year === dataYear),
     );
-    return toReservesData(commodity, dataYear, res.rows);
   },
 );

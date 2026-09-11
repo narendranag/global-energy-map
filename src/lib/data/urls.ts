@@ -44,7 +44,7 @@ export function dataBytes(path: string, catalog?: Catalog): number | null {
 
 /**
  * `/data/assets.parquet` → `/data/assets.parquet?v=c1710228`. Every runtime
- * fetch of a data file (DuckDB registration, GeoJSON sidecars) goes through
+ * fetch of a data file (parquet reads, GeoJSON sidecars) goes through
  * this; a unit test enforces it.
  */
 export function dataUrl(path: string, catalog?: Catalog): string {

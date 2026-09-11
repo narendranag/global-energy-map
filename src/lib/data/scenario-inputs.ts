@@ -1,4 +1,3 @@
-import { query } from "@/lib/duckdb/query";
 import type {
   Commodity,
   DisruptionRouteRow,
@@ -7,6 +6,7 @@ import type {
 } from "@/lib/scenarios/types";
 import { routeKeyFor } from "@/lib/scenarios/registry";
 import { cachedLoader } from "./cache";
+import { readParquet } from "./parquet";
 import { loadVoyages, type VoyageRow } from "./voyages";
 
 const HS_BY_COMMODITY: Record<Commodity, string> = {
@@ -14,15 +14,28 @@ const HS_BY_COMMODITY: Record<Commodity, string> = {
   gas: "271111",
 };
 
+interface TradeFileRow extends TradeFlowRow {
+  readonly hs_code: string;
+}
+
 export const loadTradeFlows = cachedLoader(
   async (year: number, commodity: Commodity): Promise<readonly TradeFlowRow[]> => {
-    const res = await query<TradeFlowRow & Record<string, unknown>>(
-      `SELECT year, importer_iso3, exporter_iso3, COALESCE(qty, 0) AS qty
-       FROM read_parquet('/data/trade_flow.parquet')
-       WHERE year = ? AND hs_code = ?`,
-      [year, HS_BY_COMMODITY[commodity]],
-    );
-    return res.rows;
+    const rows = await readParquet<TradeFileRow>("/data/trade_flow.parquet", [
+      "year",
+      "hs_code",
+      "importer_iso3",
+      "exporter_iso3",
+      "qty",
+    ]);
+    const hs = HS_BY_COMMODITY[commodity];
+    return rows
+      .filter((r) => r.year === year && r.hs_code === hs)
+      .map((r) => ({
+        year: r.year,
+        importer_iso3: r.importer_iso3,
+        exporter_iso3: r.exporter_iso3,
+        qty: (r.qty as number | null) ?? 0,
+      }));
   },
 );
 
@@ -49,20 +62,32 @@ export function isUnsourced(r: Pick<RouteShareRow, "source_title">): boolean {
 
 export { routeKeyFor };
 
+const ROUTE_COLUMNS = [
+  "disruption_id", "kind", "exporter_iso3", "importer_iso3", "share",
+  "source_title", "source_url", "source_year", "source_note",
+] as const;
+
+type RouteFileRow = Omit<RouteShareRow, "disruption_id" | "source_title" | "source_url" | "source_note"> & {
+  readonly disruption_id: string;
+  readonly source_title: string | null;
+  readonly source_url: string | null;
+  readonly source_note: string | null;
+};
+
 export const loadRoutes = cachedLoader(
   async (scenarioId: ScenarioId, commodity: Commodity): Promise<readonly RouteShareRow[]> => {
-    const res = await query<RouteShareRow & Record<string, unknown>>(
-      `SELECT disruption_id, kind, exporter_iso3, importer_iso3, share,
-              COALESCE(source_title, '') AS source_title,
-              COALESCE(source_url, '') AS source_url,
-              source_year,
-              COALESCE(source_note, '') AS source_note
-       FROM read_parquet('/data/disruption_route.parquet')
-       WHERE disruption_id = ?`,
-      [routeKeyFor(scenarioId, commodity)],
-    );
+    const rows = await readParquet<RouteFileRow>("/data/disruption_route.parquet", ROUTE_COLUMNS);
+    const key = routeKeyFor(scenarioId, commodity);
     // The engine and panel match rows on the active scenario id.
-    return res.rows.map((r) => ({ ...r, disruption_id: scenarioId }));
+    return rows
+      .filter((r) => r.disruption_id === key)
+      .map((r) => ({
+        ...r,
+        disruption_id: scenarioId,
+        source_title: r.source_title ?? "",
+        source_url: r.source_url ?? "",
+        source_note: r.source_note ?? "",
+      }));
   },
 );
 

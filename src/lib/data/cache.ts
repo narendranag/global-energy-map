@@ -26,8 +26,8 @@ export function cachedLoader<A extends readonly (string | number)[], T>(
 /**
  * Fetch and parse a same-origin JSON file (GeoJSON sidecars) through its
  * versioned, immutable-cacheable URL (see urls.ts). Low fetch priority: the
- * multi-MB sidecars render on their own, while the DuckDB wasm they compete
- * with for bandwidth gates every parquet-backed layer (P3).
+ * multi-MB sidecars render on their own, while the parquet files they compete
+ * with for bandwidth gate every point layer and the scenario (P3).
  */
 export async function fetchJson<T>(path: string): Promise<T> {
   const res = await fetch(dataUrl(path), { priority: "low" });

@@ -1,19 +1,13 @@
-import { prewarmDuckDB } from "@/lib/duckdb/bootstrap";
-import { query } from "@/lib/duckdb/query";
 import { cachedLoader } from "./cache";
+import { readParquet } from "./parquet";
 import { useAsync } from "./useAsync";
 
 /**
- * One read of `assets.parquet` for every point layer and the scenario engine
+ * One read of `assets.parquet` (hyparquet, see parquet.ts) for every point layer and the scenario engine
  * (R14): all kinds, only the columns something renders or computes with,
  * grouped by kind in memory. Year / vintage filtering happens on these rows,
  * never by re-querying.
  */
-
-// P3: the map page imports this module, so start the DuckDB worker + wasm
-// download as soon as the page's JS evaluates — before hydration and the
-// first query — overlapping the GeoJSON sidecar fetches. No-op on the server.
-prewarmDuckDB();
 
 export type AssetKind =
   | "extraction_site"
@@ -107,20 +101,23 @@ export function groupAssets(rows: readonly Asset[]): AssetsByKind {
   return { extraction, refinery, lngExport, lngImport, storage, port };
 }
 
+const ASSET_COLUMNS = [
+  "asset_id", "kind", "name", "country_iso3", "lon", "lat", "capacity", "capacity_unit",
+  "operator", "status", "commissioned_year", "source",
+  "unit_count", "total_processed_bcm", "un_locode",
+] as const;
+
+type AssetColumns = Record<(typeof ASSET_COLUMNS)[number], unknown>;
+
 export const loadAssets = cachedLoader(async (): Promise<AssetsByKind> => {
-  const res = await query<Asset & Record<string, unknown>>(
-    `SELECT asset_id, kind, name, country_iso3, lon, lat, capacity, capacity_unit,
-            operator, status, commissioned_year, source,
-            unit_count, total_processed_bcm, un_locode
-     FROM read_parquet('/data/assets.parquet')
-     WHERE lon IS NOT NULL AND lat IS NOT NULL`,
-  );
-  return groupAssets(res.rows);
+  const rows = await readParquet<AssetColumns>("/data/assets.parquet", ASSET_COLUMNS);
+  // Rows without a position cannot be drawn or attributed.
+  return groupAssets(rows.filter((r) => r.lon !== null && r.lat !== null) as unknown as readonly Asset[]);
 });
 
 /**
  * Shared asset rows, or null until loaded. `enabled = false` defers the
- * DuckDB boot + scan until some asset layer (or a scenario) needs it.
+ * download + decode until some asset layer (or a scenario) needs it.
  */
 export function useAssets(enabled = true): AssetsByKind | null {
   return useAsync(loadAssets, enabled ? [] : null).data;

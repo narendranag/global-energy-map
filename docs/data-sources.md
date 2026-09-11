@@ -6,7 +6,7 @@ This document complements `docs/methodology.md` (the current-state methodology r
 
 For runtime metadata (paths, formats, licenses, as-of dates, rows, sha256, and whether a file may be downloaded) the canonical source is `public/data/catalog.json`, rendered at `/data`. This document explains *what's in those files* and *what the data lets you say* — context the catalog can't carry.
 
-**Download policy (Phase 9 decision, Phase 10 open extract).** Downloads are limited to CC BY 4.0 and public-domain sources plus the project's own route-share table. Each catalog entry carries `redistributable` (its licence permits redistribution under that policy) and a computed `downloadable` (every source sharing the file is redistributable). Energy Institute (permission needed for extensive reproduction) and BACI (project policy — see below) are view-only; `assets.parquet` is not offered as-is because it mixes 88 ODbL OpenStreetMap refinery rows with CC BY and public-domain rows. **`assets_open.parquet`** — the same table minus the OSM rows, written by `scripts/transform/build_assets_open.py` — is the downloadable asset table; single layers can also be exported from the map's Share / cite menu.
+**Download policy (Phase 9 decision, Phase 10 open extract).** Downloads are limited to CC BY 4.0 and public-domain sources plus the project's own route-share table. Each catalog entry carries `redistributable` (its licence permits redistribution under that policy) and a computed `downloadable` (every source sharing the file is redistributable). Energy Institute (permission needed for extensive reproduction) is view-only; BACI is downloadable under the Etalab Open Licence 2.0 (Phase 10); `assets.parquet` is not offered as-is because it mixes 88 ODbL OpenStreetMap refinery rows with CC BY and public-domain rows. **`assets_open.parquet`** — the same table minus the OSM rows, written by `scripts/transform/build_assets_open.py` — is the downloadable asset table; single layers can also be exported from the map's Share / cite menu.
 
 **Licences in plain language:** [`LICENSE-DATA.md`](../LICENSE-DATA.md) (per source: licence, what we redistribute and where, attribution line, restrictions; not legal advice). **Pins and refresh:** every source's URL, release and as-of date is pinned in `scripts/common/sources.py`; cadence and the refresh procedure are in [`docs/refresh.md`](refresh.md).
 
@@ -175,11 +175,11 @@ LNG-T3 covers **22–41% of GIIGNL's global LNG trade, 2020–2024** — every y
 - **Where it lands:** `assets.parquet` rows where `kind = 'refinery'` and `source = 'National Energy Technology Laboratory (US DOE) — GOGI Refineries'`
 - **Layers/scenarios using it:** refineries point layer; refinery feedstock attribution math
 
-**What we ingest:** All 2,272 refinery point features. NETL lists many plants more than once (English name, numbered "333 - …" and French "Raffinerie de …" variants within ~100 m); since Phase 8 these are merged within source (same country, ≤ 1 km, never merging two rows whose known capacities differ by > 5 %), leaving 1,075 NETL rows. A few probable duplicates with conflicting capacities (e.g. Pemex Tula/Salamanca/Madero/Cadereyta, Irving) remain as two rows. Per-refinery: location, country (via `NETL_NAME_TO_ISO3`), facility name (75% populated), operator (80% populated), capacity (15% populated — parsed from string field via `scripts/transform/_refinery_capacity.py`), status (14% populated; nulls default to `"operating"` since the source layer's purpose is current infrastructure).
+**What we ingest:** All 2,272 refinery point features. NETL lists many plants more than once (English name, numbered "333 - …" and French "Raffinerie de …" variants within ~100 m); since Phase 8 these are merged within source (same country, ≤ 1 km, never merging two rows whose known capacities differ by > 5 %), leaving 1,075 NETL rows. A few probable duplicates with conflicting capacities (e.g. Pemex Tula/Salamanca/Madero/Cadereyta, Irving) remain as two rows. Per-refinery: location, country (via `NETL_NAME_TO_ISO3`), facility name (75% populated), operator (80% populated), capacity (33% of the 1,075 deduplicated rows; parsed from a string field via `scripts/transform/_refinery_capacity.py`), status (14% populated; nulls default to `"operating"` since the source layer's purpose is current infrastructure).
 
 **Coverage:**
 - 13× more refineries than the prior OSM-only source.
-- Strong coverage of major refining hubs that OSM under-tagged: China (192), USA (166), Russia (119), Canada (117), Japan (105) lead the count.
+- Strong coverage of major refining hubs that OSM under-tagged. After the within-source dedup, USA (141), China (100), Russia (65), Argentina (57) and Canada (44) lead the count.
 - Capacity coverage rises from 0% (OSM-only) to ~15% (NETL's populated subset). Records without parseable capacity fall back to uniform-within-country attribution in the scenario engine.
 
 **Coverage gaps:**
@@ -210,7 +210,7 @@ LNG-T3 covers **22–41% of GIIGNL's global LNG trade, 2020–2024** — every y
 ### BACI bilateral trade (CEPII)
 
 - **URL:** https://www.cepii.fr/CEPII/en/bdd_modele/bdd_modele_item.asp?id=37
-- **License:** Etalab Open Licence 2.0 (checked 2026-09-10 — reuse and redistribution with attribution; earlier project docs said "academic/research use"). Cite Gaulier & Zignago (2010), CEPII Working Paper 2010-23. By project policy `trade_flow.parquet` stays view-only; revisiting that is a user decision.
+- **License:** Etalab Open Licence 2.0 (checked 2026-09-10 — reuse and redistribution with attribution; earlier project docs said "academic/research use"). Cite Gaulier & Zignago (2010), CEPII Working Paper 2010-23. `trade_flow.parquet` is downloadable from `/data` under the same licence (maintainer decision, 2026-09-10).
 - **As-of:** 2026-01 release (HS92 1995–2024 series)
 - **Where it lands:** `trade_flow.parquet`
 - **Layers/scenarios using it:** all scenarios — crude routing (HS 2709) and LNG routing (HS 271111)
@@ -226,6 +226,7 @@ Each row: year, exporter ISO3, importer ISO3, quantity (tonnes).
 **Why HS 271111 not HS 2711 for LNG:** Aggregating to HS 2711 mixes liquefied (HS 271111) and pipeline (HS 271121) gas. The Strait of Hormuz only constrains waterborne gas; pipeline gas doesn't transit chokepoints. Aggregating overstates Hormuz's reach.
 
 **Coverage gaps:**
+- **Some BACI quantities are implausible.** Some BACI **quantities** are wrong by one to three orders of magnitude while the values are fine (e.g. Philippines ← Saudi Arabia crude 2023: 80.9 Mt at 26 USD/t against a ~650 USD/t median; Taiwan ← Saudi Arabia 2014: 14 kt for USD 10.5 bn). Because the scenarios work in tonnes, `build_trade_flow.py` re-estimates any row whose unit value lies outside 5× of the (HS code, year) median as `value_usd / median`, keeping BACI's figure in `qty_reported` and flagging `qty_imputed` (9,655 of 53,727 rows, mostly tiny shipments; net −258 Mt crude and −520 Mt LNG across 1995–2024). Values are never changed.
 - **BACI suppresses low-value and sensitive flows.** Iran (IRN) crude exports in 2023–2024 show only one bilateral pair with near-zero value, materially understating Iran's historical bilateral dependencies in South and East Asia.
 - Annual granularity only — no monthly or quarterly detail.
 - Lags by ~1 year from current date.
@@ -238,7 +239,7 @@ Each row: year, exporter ISO3, importer ISO3, quantity (tonnes).
 - **License:** Public domain (US government)
 - **As-of:** 2026-05-15 (consolidated EIA + IEA references)
 - **Where it lands:** `disruption_route.parquet` (each row carries `source_title`, `source_url`, `source_year`)
-- **Layers/scenarios using it:** all four scenarios (Hormuz, Druzhba, BTC, CPC)
+- **Layers/scenarios using it:** all five scenarios (Hormuz crude, Hormuz LNG via `hormuz_lng` rows, Druzhba, BTC, CPC)
 
 **What we ingest:** static routing-share tables that encode how each exporter's crude or LNG flows through each chokepoint or pipeline. Example: Saudi Arabia's crude is 88% Hormuz-dependent, 12% bypasses via East-West pipeline. Druzhba routing shares: DEU and POL 47% of Russian crude (IEA northern-branch volume allocated pro-rata), BLR/SVK/HUN/CZE 100%. Each row in `disruption_route.parquet` carries its citation and derivation (`source_title`, `source_url`, `source_year`, `source_note`); six shares were revised to source-derived values on 2026-09-10.
 

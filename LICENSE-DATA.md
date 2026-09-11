@@ -4,7 +4,7 @@ The **code** in this repository is MIT-licensed (see [`LICENSE`](LICENSE)). The 
 
 > **Not legal advice.** This is a plain-language summary written for researchers, checked against each publisher's terms page on 2026-09-10. The publisher's own terms always win — follow the links and read them before you reuse anything, especially commercially.
 
-The per-file licence, row count, size and sha256 are also listed on the live [Data page](https://global-energy-map-one.vercel.app/data) and in [`public/data/catalog.json`](public/data/catalog.json).
+The per-file licence, row count, size and sha256 are also listed on the live [Data page](https://energymap.marain.space/data) and in [`public/data/catalog.json`](public/data/catalog.json).
 
 ## Summary
 

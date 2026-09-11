@@ -22,7 +22,7 @@ const SITE_DESCRIPTION =
   "An interactive open-source map of the world's oil and gas system — reserves, extraction, pipelines, refining, LNG and trade — with chokepoint disruption scenarios.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://global-energy-map-one.vercel.app"),
+  metadataBase: new URL("https://energymap.marain.space"),
   title: { default: SITE_NAME, template: `%s · ${SITE_NAME}` },
   description: SITE_DESCRIPTION,
   openGraph: {

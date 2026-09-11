@@ -90,6 +90,8 @@ TRADE_FLOW_SCHEMA = pa.schema(
         ("qty", pa.float64()),
         ("qty_unit", _S),
         ("source", _S),
+        ("qty_reported", pa.float64()),
+        ("qty_imputed", pa.bool_()),
     ]
 )
 

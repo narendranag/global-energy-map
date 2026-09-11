@@ -72,3 +72,33 @@ def test_s19_other_asia_nes_is_remapped_to_taiwan_and_summed():
     assert sau_twn["qty"].iloc[0] == 5.5
     assert sau_twn["value_usd"].iloc[0] == 55.0
     assert len(out) == 2
+
+
+def test_repair_quantities_reestimates_implausible_unit_values():
+    import pandas as pd
+
+    from scripts.transform.build_trade_flow import repair_quantities
+
+    # Median unit value for (2709, 2023) is 600 USD/t. PHL<-SAU has qty inflated
+    # ~20x (30 USD/t); TWN<-SAU has qty deflated ~1000x; the rest are plausible.
+    df = pd.DataFrame(
+        {
+            "year": [2023] * 5,
+            "importer_iso3": ["PHL", "TWN", "JPN", "KOR", "CHN"],
+            "exporter_iso3": ["SAU"] * 5,
+            "hs_code": ["2709"] * 5,
+            "value_usd": [2.1e9, 6.0e9, 6.0e9, 5.4e9, 6.6e9],
+            "qty": [70e6, 1e4, 10e6, 9e6, 11e6],
+            "qty_unit": ["tonnes"] * 5,
+            "source": ["BACI (CEPII)"] * 5,
+        }
+    )
+    out, report = repair_quantities(df, band=5.0)
+    by = out.set_index("importer_iso3")
+    assert by.loc["PHL", "qty_imputed"] and by.loc["TWN", "qty_imputed"]
+    assert not by.loc[["JPN", "KOR", "CHN"], "qty_imputed"].any()
+    assert by.loc["PHL", "qty"] == 2.1e9 / 600  # value / median unit value
+    assert by.loc["PHL", "qty_reported"] == 70e6  # original kept for audit
+    assert by.loc["JPN", "qty"] == 10e6 and pd.isna(by.loc["JPN", "qty_reported"])
+    assert out["value_usd"].equals(df["value_usd"])  # values untouched
+    assert set(report["importer_iso3"]) == {"PHL", "TWN"}

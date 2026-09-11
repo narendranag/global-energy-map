@@ -150,13 +150,14 @@ This is a **static first-order exposure measure**: what fraction of last year's 
 
 - **Source:** CEPII BACI, HS92 release V202601, annual bilateral trade 1995–2024, reconciled from UN Comtrade mirror statistics. Quantities in **metric tonnes**. HS 2709 (crude petroleum) for oil scenarios; HS 271111 (liquefied natural gas) for Hormuz-LNG — pipeline gas (HS 271121) never transits a chokepoint, so HS 2711 would overstate Hormuz.
 - **Cleaning:** BACI pseudo-country aggregates are removed and duplicate country-pair rows summed.
+- **Quantity repair:** Some BACI **quantities** are wrong by one to three orders of magnitude while the values are fine (e.g. Philippines ← Saudi Arabia crude 2023: 80.9 Mt at 26 USD/t against a ~650 USD/t median; Taiwan ← Saudi Arabia 2014: 14 kt for USD 10.5 bn). Because the scenarios work in tonnes, `build_trade_flow.py` re-estimates any row whose unit value lies outside 5× of the (HS code, year) median as `value_usd / median`, keeping BACI's figure in `qty_reported` and flagging `qty_imputed` (9,655 of 53,727 rows, mostly tiny shipments; net −258 Mt crude and −520 Mt LNG across 1995–2024). Values are never changed.
 - **Iran suppression:** BACI reports almost no Iranian crude exports in 2023–2024 (one near-zero pair). Exposure of importers that historically bought Iranian crude is **understated** for those years; the scenario panel says so.
 - **Volumes:** panels show crude in kb/d using 7.33 barrels per tonne (EI's mean conversion) and LNG in Mt.
 - **Licence:** CEPII publishes BACI under the Etalab Open Licence 2.0 (reuse and redistribution with attribution). Our processed bilateral table is downloadable from `/data` under the same licence; the full dataset is free from CEPII. Cite Gaulier & Zignago (2010), CEPII Working Paper 2010-23.
 
 ### Route shares
 
-Sixteen hand-set shares drive every scenario. Each is tied to a document and year in `disruption_route.parquet` (`source_title`, `source_url`, `source_year`, `source_note`), and shares are **static across years** — they do not follow maintenance outages, sanctions or contract changes. Six shares were revised to source-derived values on 2026-09-10; one (Russian crude via CPC) has no single supporting document and is flagged as an analyst estimate. The table below is generated from the parquet file at build time.
+Eighteen hand-set shares drive every scenario (sixteen crude, two LNG-specific for Hormuz). Each is tied to a document and year in `disruption_route.parquet` (`source_title`, `source_url`, `source_year`, `source_note`), and shares are **static across years** — they do not follow maintenance outages, sanctions or contract changes. Six shares were revised to source-derived values on 2026-09-10; one (Russian crude via CPC) has no single supporting document and is flagged as an analyst estimate. The table below is generated from the parquet file at build time.
 
 <!-- generated:scenario-shares -->
 
@@ -182,7 +183,7 @@ Because LNG-T3 covers only 22–41 % of world LNG trade, it is used only for *sh
 ### Scenario notes
 
 - **Close Strait of Hormuz (oil).** Chokepoint; one share per Gulf exporter, applied to all its buyers. Saudi Arabia (0.88) and the UAE (0.65) have bypass pipelines (East-West to Yanbu; Habshan-Fujairah); Iraq is 0.90 to reflect the northern Kirkuk-Ceyhan route (shut 2023–24, so recent Iraqi exposure is slightly understated); Iran, Kuwait, Qatar and Bahrain are 1.0. Iran's exports are suppressed in BACI for 2023–24 (above).
-- **Close Strait of Hormuz (LNG).** Same shares, applied to HS 271111. Qatar and the UAE have no LNG bypass. Terminal attribution as above.
+- **Close Strait of Hormuz (LNG).** Its own two shares (`hormuz_lng`), applied to HS 271111: Qatar 1.0 and the UAE 1.0 — both export plants (Ras Laffan, Das Island) load inside the Gulf and the UAE's Fujairah bypass carries crude only. Terminal attribution as above. Known limitation: exporter-wide shares also apply to buyers inside the Gulf (e.g. Qatari cargoes into Kuwait's Al Zour), whose cargoes never cross the strait.
 - **Cut Druzhba pipeline.** Per-importer shares of Russian crude: Belarus, Slovakia, Hungary and Czechia 1.0 (landlocked or southern-branch-fed); Poland and Germany 0.47 (the ≈500 kb/d northern branch allocated pro-rata across their 2021 Russian imports; the rest came by tanker). Germany and Poland largely ended Russian pipeline crude in early 2023, but the share is static, so post-2022 results scale whatever Russian volumes BACI still records.
 - **Cut Baku-Tbilisi-Ceyhan.** Azerbaijan 0.83 (EIA: about 83 % of Azerbaijan's oil exports use BTC), applied to all its buyers.
 - **Cut Caspian Pipeline Consortium.** Kazakhstan 0.80 (EIA); Russia 0.035 — Russian-field CPC volumes against total Russian crude exports, an **analyst estimate** without a single source.

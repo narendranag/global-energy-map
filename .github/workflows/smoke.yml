@@ -22,7 +22,7 @@ on:
       url:
         description: "Deployment URL to smoke-test"
         required: true
-        default: "https://global-energy-map-one.vercel.app"
+        default: "https://energymap.marain.space"
 
 permissions:
   contents: read
@@ -50,7 +50,7 @@ jobs:
           ENVIRONMENT: ${{ github.event.deployment.environment }}
           DEPLOY_URL: ${{ github.event.deployment_status.environment_url || github.event.deployment_status.target_url }}
           INPUT_URL: ${{ inputs.url }}
-          PROD_URL: ${{ vars.SMOKE_PRODUCTION_URL || 'https://global-energy-map-one.vercel.app' }}
+          PROD_URL: ${{ vars.SMOKE_PRODUCTION_URL || 'https://energymap.marain.space' }}
         run: |
           if [ "$EVENT" = "workflow_dispatch" ]; then
             url="$INPUT_URL"; flags=""

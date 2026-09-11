@@ -1,0 +1,46 @@
+# Global Energy Map
+
+> Interactive map of the world's oil and gas system: reserves, extraction, pipelines, refineries, LNG terminals and voyages, storage and ports, 1990–2024. It runs disruption scenarios (Strait of Hormuz for crude and LNG, Druzhba, Baku–Tbilisi–Ceyhan, CPC) that show which importers, refineries and LNG terminals are exposed. It is built for energy-policy and IR/economics researchers. Every number traces to a cited public source.
+
+The page renders client-side, so fetching the HTML gives no data. Build view links from URL parameters, and read the data files directly. Respect each file's licence: only files with `downloadable: true` in the catalog may be redistributed.
+
+## Views (URL parameters)
+
+- Base: https://energymap.marain.space/
+- Parameters:
+  - `mode`: infrastructure | flows | scenarios
+  - `year`: 1990–2024
+  - `commodity`: oil | gas
+  - `scenario`: hormuz | druzhba | btc | cpc
+  - `layers`: comma list of reserves, basins, extraction, pipelines, refineries, storage, ports, gas_pipelines, lng_terminals, lng_voyages
+  - `lon`, `lat`, `z` (zoom 0–8)
+- Example: https://energymap.marain.space/?mode=scenarios&scenario=druzhba&commodity=oil&year=2022
+
+## Data (Parquet/GeoJSON over HTTPS, range requests supported)
+
+- [Catalog](https://energymap.marain.space/data/catalog.json): every file with source, licence, as-of, attribution, rows, bytes, sha256, downloadable
+- [Bilateral crude + LNG trade, CEPII BACI, Etalab 2.0](https://energymap.marain.space/data/trade_flow.parquet)
+- [Scenario route shares with per-row citations](https://energymap.marain.space/data/disruption_route.parquet)
+- [Assets, open subset: GEM/LNG-T3 CC BY 4.0 + NETL public domain](https://energymap.marain.space/data/assets_open.parquet)
+- [LNG voyages 2020–2024, LNG-T3, CC BY 4.0](https://energymap.marain.space/data/lng_voyage.parquet)
+- [Pipelines, GEM, CC BY 4.0](https://energymap.marain.space/data/pipelines.geojson)
+- View-only (do not redistribute): country_year_series.parquet (Energy Institute reserves/production), assets.parquet (contains ODbL rows)
+
+## Documentation
+
+- [Methodology](https://energymap.marain.space/methodology): current-state method, coverage, caveats, scenario-share citations
+- [Data page](https://energymap.marain.space/data): files, licences, checksums, downloads
+- [Machine interface guide](https://github.com/narendranag/global-energy-map/blob/main/docs/ai/machine-interface.md): URL grammar, schemas, DuckDB/pandas recipes, how to reproduce a scenario number
+- [Researcher docs](https://github.com/narendranag/global-energy-map/tree/main/docs/researchers)
+- [Data licences](https://github.com/narendranag/global-energy-map/blob/main/LICENSE-DATA.md)
+
+## Caveats to carry with any number
+
+- Proved reserves are frozen at 2020; the Energy Institute stopped updating them.
+- BACI trade starts in 1995. It suppresses Iran's crude exports in 2023–24. Implausible BACI quantities are re-estimated from values (flag: `qty_imputed`).
+- LNG-T3 voyages cover about 22–41% of global LNG trade. It is used only to split BACI country totals across terminals.
+- Scenario route shares are static across years. Results are exposure accounting, not a market model: no prices, rerouting, stocks or substitution.
+
+## Cite
+
+Nag, N. (2026). Global Energy Map (Version 1.0.0) [Computer software]. https://energymap.marain.space. Also cite the sources behind any number, using each catalog entry's `attribution`.

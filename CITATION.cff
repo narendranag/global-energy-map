@@ -10,6 +10,7 @@ date-released: 2026-09-09
 authors:
   - family-names: Nag
     given-names: Narendra
+    website: "https://narendranag.com"
 repository-code: "https://github.com/narendranag/global-energy-map"
 url: "https://energymap.marain.space"
 license: MIT

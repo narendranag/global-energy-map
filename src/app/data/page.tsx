@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SiteFooter } from "@/components/ui/SiteFooter";
 import { CitationBlock } from "@/components/share/CitationBlock";
 import { CopyButton } from "@/components/share/CopyButton";
 import { BUNDLED_CATALOG, isDownloadable } from "@/lib/data-catalog/bundled";
@@ -221,6 +222,7 @@ export default function DataPage() {
           </h2>
           <CitationBlock />
         </section>
+        <SiteFooter />
       </main>
     </div>
   );

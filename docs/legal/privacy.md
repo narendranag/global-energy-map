@@ -46,7 +46,7 @@ The map and its pages link to data publishers, documentation and GitHub. Those s
 
 ## Your choices and rights
 
-Because the site holds no accounts or profiles, there is normally nothing we can look up about you. Depending on where you live, you may have rights to access, correct or delete personal data, or to object to its processing. To ask about any of this, or about Vercel's analytics or logs as they relate to this site, email [privacy.officer@marain.space](mailto:privacy.officer@marain.space). We process the limited data above because we have a legitimate interest in running, securing and improving a free public research tool.
+Because the site holds no accounts or profiles, there is normally nothing we can look up about you. Depending on where you live, you may have rights to access, correct or delete personal data, or to object to its processing. To ask about any of this, or about Vercel's analytics or logs as they relate to this site, email [privacy.officer@marain.space](mailto:privacy.officer@marain.space). We process the limited data above because we have a legitimate interest in running, securing and improving a free public research tool. The site is operated from Singapore, and we handle personal data in line with Singapore's Personal Data Protection Act 2012; privacy.officer@marain.space is the contact for data protection matters.
 
 The site is intended for researchers and the general public, and is not directed at children.
 

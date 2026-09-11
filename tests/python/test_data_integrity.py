@@ -142,6 +142,16 @@ def test_assets_kind_non_null_and_expected(assets):
     assert set(assets["kind"]) == EXPECTED_KINDS
 
 
+def test_storage_has_no_epa_cleanup_or_spill_plan_records(assets):
+    # build_storage drops EPA records that are not bulk storage (2026-09-11):
+    # leaking-tank cleanup sites (their status says so) and SPCC / state-list
+    # sites. The US count sits near FRP + EIA terminals (3,669 + 1,460).
+    storage = assets[assets["kind"] == "storage"]
+    assert not storage["status"].fillna("").str.contains("LEAKING UNDERGROUND").any()
+    us = int((storage["country_iso3"] == "USA").sum())
+    assert 5_000 <= us <= 5_300, us
+
+
 def test_assets_asset_id_unique(assets):
     assert assets["asset_id"].is_unique
 

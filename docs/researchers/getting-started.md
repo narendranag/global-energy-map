@@ -79,7 +79,7 @@ Hover any country, pipeline, terminal, refinery or voyage for a tooltip. Every t
 
 In Scenarios mode (or whenever a scenario is set) a panel opens on the right. From top to bottom:
 
-1. **Scenario picker and description.** For Hormuz (oil) an amber note warns that BACI suppresses Iranian exports from 2023, so recent exposure of Iran's historical buyers is understated.
+1. **Scenario picker and description.** For Hormuz (oil, 2019 onwards) an amber note warns that BACI records little Iranian crude, so exposure of Iran's buyers is understated; for Druzhba (2022 onwards) it warns that Belarus is missing from BACI.
 2. **Metric definition.** "% at risk = share of each importer's *year* crude imports (BACI, by volume) routed through *route*", with the 0–100 % colour ramp. **How this is computed** expands to the steps the engine follows for the current scenario, commodity and year.
 3. **Top importers at risk.** The six highest, then **Show all**. The **Share / Volume** toggle re-orders the list by percentage or by volume at risk. Volumes are in kb/d for crude (annual average, 7.33 barrels per tonne) and Mt per year for LNG. Ranking rules:
    - importers with zero exposure are omitted;

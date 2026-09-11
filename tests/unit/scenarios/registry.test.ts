@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { SCENARIOS, getScenario, howComputed, scenarioDescription } from "@/lib/scenarios/registry";
+import { SCENARIOS, getScenario, howComputed, scenarioDescription, sourceGapNote } from "@/lib/scenarios/registry";
 
 describe("scenario registry", () => {
   it("every scenario names the route used in the metric definition", () => {
@@ -51,6 +51,17 @@ describe("scenario registry (Phase 9)", () => {
     // Intra-Gulf pairs and terminals not yet in service are stated rules.
     expect(oil).toMatch(/inside the Gulf/);
     expect(gasOld).toMatch(/not yet in service/);
+  });
+
+  it("source-gap notes apply only on the oil axis from the year the BACI gap starts", () => {
+    const hormuz = getScenario("hormuz");
+    expect(sourceGapNote(hormuz, "oil", 2018)).toBeNull();
+    expect(sourceGapNote(hormuz, "oil", 2019)).toMatch(/Iranian crude/);
+    expect(sourceGapNote(hormuz, "gas", 2023)).toBeNull();
+    const druzhba = getScenario("druzhba");
+    expect(sourceGapNote(druzhba, "oil", 2021)).toBeNull();
+    expect(sourceGapNote(druzhba, "oil", 2022)).toMatch(/Belarus/);
+    expect(sourceGapNote(getScenario("btc"), "oil", 2024)).toBeNull();
   });
 
   it("pipeline scenarios explain per-pair shares", () => {

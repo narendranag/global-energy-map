@@ -78,6 +78,7 @@ def _netl_points() -> gpd.GeoDataFrame:
             "operator": ["Aramco", " ", "Z", None],
             "capacity": ["1,500", "", "NA", "200"],
             "status": ["NA", "operating", " ", "active"],
+            "type": ["Saudi Arabia.kml/Saudi Arabia/Facilities/Terminals", " ", " ", "FRP"],
         },
         geometry=[Point(50.1, 26.6), Point(37.6, 55.7), Point(0, 0), Point(-66.9, 10.5)],
         crs="EPSG:4326",
@@ -94,6 +95,37 @@ def test_build_storage_maps_netl_shape():
     assert pd.isna(out.loc[1, "operator"])  # blank operator → null
     assert out.loc[1, "name"] == ""  # missing facility name stays a (non-null) string
     assert (out["source_version"] == build_storage.SOURCE_VERSION).all()
+
+
+def test_build_storage_drops_epa_records_that_are_not_bulk_storage():
+    # NETL's US storage layer is mostly EPA regulatory records: leaking-tank
+    # cleanup sites, SPCC spill plans (any site over 1,320 gal), a state master
+    # list and rail/truck/air transfer points. Only FRP (bulk, >= 1M gal) and
+    # the EIA terminals are storage in the energy-system sense.
+    names = [
+        "LUST site",
+        "SPCC garage",
+        "State list store",
+        "Grain elevator",
+        "SPR Big Hill",
+        "EIA terminal",
+        "Fujairah",
+    ]
+    gdf = gpd.GeoDataFrame(
+        {
+            "fid": list(range(1, 8)),
+            "facility_n": names,
+            "md_country": ["United States of America"] * 6 + ["United Arab Emirates"],
+            "operator": [" "] * 7,
+            "capacity": [" "] * 7,
+            "status": ["LEAKING UNDERGROUND STORAGE TANK - ARRA", " ", " ", " ", " ", " ", " "],
+            "type": [" ", "SPCC", "STATE MASTER", "RAIL", "FRP", " ", "World.kml/World/terminals"],
+        },
+        geometry=[Point(-95, 30)] * 6 + [Point(56.3, 25.1)],
+        crs="EPSG:4326",
+    )
+    out = _as_assets(build_storage.build(gdf))
+    assert out["name"].tolist() == ["SPR Big Hill", "EIA terminal", "Fujairah"]
 
 
 def test_build_ports_has_no_capacity_unit():

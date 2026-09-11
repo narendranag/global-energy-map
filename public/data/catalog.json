@@ -43,8 +43,8 @@
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
       "rows": 5008,
-      "bytes": 1253789,
-      "sha256": "c1710228d241a5b986b80252f53bc671491e1f893ea5b452e3a5b7eb228a2eff"
+      "bytes": 639481,
+      "sha256": "39301647cf9919c10745b96afe45272b391417e1ff68f19ce264578d84bf3429"
     },
     {
       "id": "netl_refineries",
@@ -64,8 +64,8 @@
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable. The refineries layer includes those rows too, so it is view-only.",
       "rows": 1075,
-      "bytes": 1253789,
-      "sha256": "c1710228d241a5b986b80252f53bc671491e1f893ea5b452e3a5b7eb228a2eff"
+      "bytes": 639481,
+      "sha256": "39301647cf9919c10745b96afe45272b391417e1ff68f19ce264578d84bf3429"
     },
     {
       "id": "osm_refineries",
@@ -85,8 +85,8 @@
       "downloadable": false,
       "download_note": "ODbL (share-alike) rows; downloads are limited to CC BY 4.0 and public-domain sources, so these rows are left out of assets_open.parquet (the NETL refinery rows are in it).",
       "rows": 88,
-      "bytes": 1253789,
-      "sha256": "c1710228d241a5b986b80252f53bc671491e1f893ea5b452e3a5b7eb228a2eff"
+      "bytes": 639481,
+      "sha256": "39301647cf9919c10745b96afe45272b391417e1ff68f19ce264578d84bf3429"
     },
     {
       "id": "netl_storage",
@@ -105,9 +105,9 @@
       "redistributable": true,
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
-      "rows": 26102,
-      "bytes": 1253789,
-      "sha256": "c1710228d241a5b986b80252f53bc671491e1f893ea5b452e3a5b7eb228a2eff"
+      "rows": 7733,
+      "bytes": 639481,
+      "sha256": "39301647cf9919c10745b96afe45272b391417e1ff68f19ce264578d84bf3429"
     },
     {
       "id": "netl_ports",
@@ -127,8 +127,8 @@
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
       "rows": 3694,
-      "bytes": 1253789,
-      "sha256": "c1710228d241a5b986b80252f53bc671491e1f893ea5b452e3a5b7eb228a2eff"
+      "bytes": 639481,
+      "sha256": "39301647cf9919c10745b96afe45272b391417e1ff68f19ce264578d84bf3429"
     },
     {
       "id": "lng_t3_terminals",
@@ -148,8 +148,8 @@
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
       "rows": 305,
-      "bytes": 1253789,
-      "sha256": "c1710228d241a5b986b80252f53bc671491e1f893ea5b452e3a5b7eb228a2eff"
+      "bytes": 639481,
+      "sha256": "39301647cf9919c10745b96afe45272b391417e1ff68f19ce264578d84bf3429"
     },
     {
       "id": "gem_lng_terminals",
@@ -169,8 +169,8 @@
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
       "rows": 7,
-      "bytes": 1253789,
-      "sha256": "c1710228d241a5b986b80252f53bc671491e1f893ea5b452e3a5b7eb228a2eff"
+      "bytes": 639481,
+      "sha256": "39301647cf9919c10745b96afe45272b391417e1ff68f19ce264578d84bf3429"
     },
     {
       "id": "assets_open",
@@ -185,9 +185,9 @@
       "runtime": false,
       "redistributable": true,
       "downloadable": true,
-      "rows": 36191,
-      "bytes": 1248278,
-      "sha256": "3906a830bde7acb64342b90b23632bbaf738c29342c8885797c60d36b4db85ba"
+      "rows": 17822,
+      "bytes": 634185,
+      "sha256": "da31ec8f08678e205945a1f3996c5f33564ed63963a6b901f70469163545a2f1"
     },
     {
       "id": "gem_oil_pipelines",

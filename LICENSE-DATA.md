@@ -42,7 +42,7 @@ The per-file licence, row count, size and sha256 are also listed on the live [Da
 ### NETL Global Oil & Gas Infrastructure (GOGI) — US Government work
 
 - **Terms:** GOGI is published by the US Department of Energy's National Energy Technology Laboratory. Works of US federal employees are not subject to US copyright ([17 USC §105](https://www.law.cornell.edu/uscode/text/17/105)). NETL's own data portal lists the GOGI collection under a **Creative Commons Attribution** licence ([EDX dataset page](https://edx.netl.doe.gov/dataset/global-oil-gas-infrastructure-features-database-edx-spatial-webmap)), and GOGI compiles several hundred third-party open datasets whose own terms may carry through. We therefore treat it as **attribution required**.
-- **What we redistribute:** 1,046 basin polygons (`basins.geojson`, simplified), 26,102 storage sites, 3,694 ports and 1,075 refineries (rows of `assets.parquet` / `assets_open.parquet`), from a 2026-05-17 snapshot of NETL's ArcGIS layers.
+- **What we redistribute:** 1,046 basin polygons (`basins.geojson`, simplified), 7,733 storage sites, 3,694 ports and 1,075 refineries (rows of `assets.parquet` / `assets_open.parquet`), from a 2026-05-17 snapshot of NETL's ArcGIS layers.
 - **Changes we made:** duplicate refinery listings merged within 1 km, capacities parsed from text, country names mapped to ISO3, basin geometry simplified.
 - **Please cite:** Sabbatino, M. et al., *Global Oil & Gas Infrastructure Features Database*, NETL EDX, [doi:10.18141/1502839](https://doi.org/10.18141/1502839).
 

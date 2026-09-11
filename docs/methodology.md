@@ -17,7 +17,7 @@ This is the **current-state** methodology of Global Energy Map: for every map la
 | LNG terminals | LNG-T3 (primary) + GEM GGIT | 2026-04-01 / 2026-02-20 | 312 (305 + 7) | Yes — 98 % dated | Mtpa |
 | LNG voyages | LNG-T3 | 2026-04-01 | 17,592 voyages, 2020–2024 | Yes, 2020–2024 only | m³ of LNG |
 | Scenario trade | CEPII BACI, HS 2709 + 271111 | V202601 | 53,727 country-pair-years, 1995–2024 | Yes | tonnes |
-| Scenario route shares | EIA / IEA / Argus (Kpler) / GEM, per row | 2026-09-10 | 16 shares | No — static | fraction |
+| Scenario route shares | EIA / IEA / Argus (Kpler) / GEM, per row | 2026-09-11 | 18 shares + 54 intra-Gulf share-0 pairs | No — static | fraction |
 
 "Dated" means the feature carries a start or commissioning year. Undated features are shown in every year, so for layers that are only partly dated the map *over*-states what existed in early years.
 

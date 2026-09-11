@@ -32,6 +32,7 @@ Every scenario is driven by a small hand-set table, `disruption_route.parquet` (
 | | UAE → all | 0.65 | IEA, *Strait of Hormuz* (2026) |
 | | Iran, Kuwait, Qatar, Bahrain → all | 1.00 | IEA, *Strait of Hormuz* (2026) |
 | Hormuz (LNG) | Qatar, UAE → all | 1.00 | IEA, *Strait of Hormuz* (2026) |
+| Hormuz (both) | each Gulf exporter → each other Gulf-coast country (42 crude, 12 LNG pairs) | 0 | Structural: the cargo never leaves the Gulf |
 | Druzhba | Russia → Belarus | 1.00 | GEM.wiki, *Druzhba Oil Pipeline* (2026) |
 | | Russia → Slovakia, Hungary, Czechia | 1.00 | IEA, *Russian supplies to global energy markets* (2022) |
 | | Russia → Poland, Germany | 0.47 | IEA, *Russian supplies to global energy markets* (2022) |
@@ -41,7 +42,7 @@ Every scenario is driven by a small hand-set table, `disruption_route.parquet` (
 
 Two kinds of share:
 
-- **Chokepoint shares (Hormuz)** are set once per exporter and apply to every buyer — a Gulf producer's bypass capacity does not depend on who the cargo is for.
+- **Chokepoint shares (Hormuz)** are set once per exporter and apply to every buyer outside the Gulf — a Gulf producer's bypass capacity does not depend on who the cargo is for. Buyers inside the Gulf (Iran, Iraq, Kuwait, Qatar, Saudi Arabia, the UAE, Bahrain) get a share-0 pair row, because their cargoes never cross the strait.
 - **Pipeline shares** are set per importer where the pipeline serves named countries (Druzhba), or per exporter where it carries a fixed fraction of all exports (BTC, CPC). A pair-specific share wins over an exporter-wide one; exporters with no share contribute nothing.
 
 **How strong is each row?** Read the derivation notes before relying on a scenario:
@@ -81,7 +82,7 @@ The **country total always comes from BACI.** How it is split across that countr
 
 LNG-T3 covers 22–41 % of world LNG trade (per GIIGNL, 2020–2024), so it is used only for shares within a country, never for volumes. Because the terminal percentage comes from the voyage mix and the country percentage from BACI, the two can differ; see [Worked example 3](worked-examples.md#3-how-exposed-are-lng-importers-to-hormuz-2023).
 
-**Asset set.** Refinery and terminal attribution uses every refinery and import terminal in the data, whatever the scenario year — including terminals under construction today or commissioned after that year. The map layers hide not-yet-built terminals; the attribution does not.
+**Asset set.** Refinery attribution uses every refinery in the data, whatever the scenario year (refineries carry no dates). LNG terminal attribution uses only terminals **in service** in the scenario year: a terminal counts if it received a qualifying voyage that year, or if it is not under construction and was commissioned by then. Observed cargoes win over the listed year (Kuwait's Al Zour took cargoes in 2021 but lists 2022). A country whose imports predate every terminal in the data (Kuwait before 2022, when its Mina al-Ahmadi FSRU, missing from the source, handled imports) keeps its country-level exposure but has no terminal to attribute it to.
 
 ## What the model deliberately does not do
 
@@ -91,7 +92,7 @@ LNG-T3 covers 22–41 % of world LNG trade (per GIIGNL, 2020–2024), so it is u
 - **No substitution.** Importers do not switch suppliers, and exporters do not redirect cargoes.
 - **No product trade.** Refined products, NGLs and pipeline gas are outside the scenarios; so is re-export of refined crude.
 - **No exporter losses.** Lost revenue or shut-in production for route exporters is not computed.
-- **No geography inside a route.** An exporter-wide share applies to every buyer, including intra-Gulf buyers whose cargoes never pass Hormuz.
+- **Little geography inside a route.** An exporter-wide share applies to every buyer except where a pair row overrides it (Druzhba's per-importer shares; share 0 for intra-Gulf Hormuz trade). Imports into the Gulf from outside, which do cross Hormuz, are not counted.
 
 These are choices, not oversights: each would need data (monthly flows, spare capacity, stocks) or behavioural assumptions that cannot be sourced openly and cited row by row.
 

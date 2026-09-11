@@ -111,6 +111,6 @@ Layer by layer: where the data come from, how current and complete they are, wha
 10. **Route shares are static and some routes are younger than the data.** A share applies unchanged to 1995–2024 (see [Scenario method](scenario-method.md#why-route-shares-are-static)).
 11. **NETL duplicates are merged, not eliminated.** 2,272 raw NETL refinery rows became 1,075; a few duplicates with conflicting capacities remain.
 12. **Geometry is simplified.** Pipelines at about 500 m and basins at about 1 km; country polygons at 1:110m. Do not measure lengths or areas from the map.
-13. **The asset table is a present-day snapshot.** Refinery and terminal attribution in a 2005 scenario uses today's refineries and terminals.
+13. **The asset table is a present-day snapshot.** Refinery attribution in a 2005 scenario uses today's refineries; LNG terminal attribution drops terminals not yet in service that year, but retired terminals are not in the data at all.
 
 For how each source is refreshed and what changed when, see the [refresh runbook and data changelog](../refresh.md).

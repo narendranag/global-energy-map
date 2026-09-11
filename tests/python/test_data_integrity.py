@@ -226,7 +226,7 @@ def test_assets_open_is_assets_minus_osm(assets):
 
 def test_assets_open_sources_are_open_licensed():
     open_ = pd.read_parquet(DATA / "assets_open.parquet", columns=["source"])
-    allowed = ("Global Energy Monitor", "Zhou et al. 2026, LNG-T3", "NETL", "National Energy")
+    allowed = ("Global Energy Monitor", "Zhou, C. 2026, LNG-T3", "NETL", "National Energy")
     bad = sorted(s for s in set(open_["source"]) if not s.startswith(allowed))
     assert not bad, f"assets_open.parquet has rows from unexpected sources: {bad}"
 

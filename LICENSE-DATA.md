@@ -11,7 +11,7 @@ The per-file licence, row count, size and sha256 are also listed on the live [Da
 | Source | Licence | Files we ship | Downloadable from /data? | Attribution to keep |
 |---|---|---|---|---|
 | Global Energy Monitor (GOGET, GOIT, GGIT) | CC BY 4.0 | `assets.parquet`, `assets_open.parquet`, `pipelines.geojson` | Yes (`assets_open.parquet`, `pipelines.geojson`) | Data: Global Energy Monitor, CC BY 4.0 |
-| LNG-T3 (Zhou et al. 2026, Zenodo) | CC BY 4.0 | `assets.parquet`, `assets_open.parquet`, `lng_voyage.parquet`, `lng_trade_daily.parquet`, `lng_terminal_daily.parquet` | Yes | Data: Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0 |
+| LNG-T3 (Zhou, C. 2026, Zenodo) | CC BY 4.0 | `assets.parquet`, `assets_open.parquet`, `lng_voyage.parquet`, `lng_trade_daily.parquet`, `lng_terminal_daily.parquet` | Yes | Data: Zhou, C. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0 |
 | NETL Global Oil & Gas Infrastructure (US DOE) | US Government work (public domain); NETL's data portal lists it as Creative Commons Attribution | `assets.parquet`, `assets_open.parquet`, `basins.geojson` | Yes (`assets_open.parquet`, `basins.geojson`) | Data: NETL Global Oil & Gas Infrastructure (GOGI), US DOE |
 | Natural Earth | Public domain | `countries.geojson` | Yes | None required ("Made with Natural Earth" appreciated) |
 | OpenStreetMap (88 refinery rows) | ODbL 1.0 (share-alike) | `assets.parquet` only | No | © OpenStreetMap contributors, ODbL |
@@ -32,19 +32,19 @@ The per-file licence, row count, size and sha256 are also listed on the live [Da
 - **You may:** copy, redistribute and adapt the data for any purpose, including commercially.
 - **You must:** keep the attribution line, link to the licence, indicate changes, and not imply GEM endorses your use.
 
-### LNG-T3 (Zhou et al. 2026) — CC BY 4.0
+### LNG-T3 (Zhou, C. 2026) — CC BY 4.0
 
 - **Terms:** [Zenodo record 10.5281/zenodo.19571058](https://doi.org/10.5281/zenodo.19571058) (licence shown on the record: CC BY 4.0).
 - **What we redistribute:** 305 LNG terminals (rows of `assets.parquet` / `assets_open.parquet`), 17,592 AIS-derived voyages (`lng_voyage.parquet`), and the daily trade and terminal-throughput tables (`lng_trade_daily.parquet`, `lng_terminal_daily.parquet`), 2020–2024.
 - **Changes we made:** terminals filtered to operating/construction and duplicate names collapsed; country names mapped to ISO3; unique voyage ids added.
-- **You must:** credit Zhou et al. 2026 with the DOI, link the licence, indicate changes. Please also cite the paper/dataset in academic work.
+- **You must:** credit Zhou, C. 2026 with the DOI, link the licence, indicate changes. Please also cite the paper/dataset in academic work.
 
 ### NETL Global Oil & Gas Infrastructure (GOGI) — US Government work
 
 - **Terms:** GOGI is published by the US Department of Energy's National Energy Technology Laboratory. Works of US federal employees are not subject to US copyright ([17 USC §105](https://www.law.cornell.edu/uscode/text/17/105)). NETL's own data portal lists the GOGI collection under a **Creative Commons Attribution** licence ([EDX dataset page](https://edx.netl.doe.gov/dataset/global-oil-gas-infrastructure-features-database-edx-spatial-webmap)), and GOGI compiles several hundred third-party open datasets whose own terms may carry through. We therefore treat it as **attribution required**.
 - **What we redistribute:** 1,046 basin polygons (`basins.geojson`, simplified), 7,733 storage sites, 3,694 ports and 1,075 refineries (rows of `assets.parquet` / `assets_open.parquet`), from a 2026-05-17 snapshot of NETL's ArcGIS layers.
 - **Changes we made:** duplicate refinery listings merged within 1 km, capacities parsed from text, country names mapped to ISO3, basin geometry simplified.
-- **Please cite:** Sabbatino, M. et al., *Global Oil & Gas Infrastructure Features Database*, NETL EDX, [doi:10.18141/1502839](https://doi.org/10.18141/1502839).
+- **Please cite:** Sabbatino, M., Romeo, L., Baker, V., Bauer, J., Barkhurst, A., Bean, A., DiGiulio, J., Jones, K., Jones, T.J., Justman, D., Miller III, R., Rose, K., and Tong, A., *Global Oil & Gas Features Database*, NETL EDX, 2017-12-12, [doi:10.18141/1427300](https://doi.org/10.18141/1427300).
 
 ### Natural Earth — public domain
 

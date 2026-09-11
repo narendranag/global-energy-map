@@ -60,7 +60,7 @@ GEM_RAW_DIR = GEM_GGIT.raw_dir
 ASSETS = ASSETS_PATH
 KINDS = ("lng_export", "lng_import")
 
-LNG_T3_SOURCE = "Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058)"
+LNG_T3_SOURCE = "Zhou, C. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058)"
 LNG_T3_SOURCE_VERSION = LNG_T3.release  # pinned in scripts/common/sources.py
 GEM_SOURCE = "Global Energy Monitor — Global Gas Infrastructure Tracker"
 

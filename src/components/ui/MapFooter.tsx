@@ -30,7 +30,7 @@ export function MapFooter() {
           marain.space
         </a>
       </p>
-      Data: Global Energy Monitor (CC BY 4.0) · LNG-T3, Zhou et al. 2026 (CC BY 4.0) · NETL (US DOE) · Energy
+      Data: Global Energy Monitor (CC BY 4.0) · LNG-T3, C. Zhou 2026 (CC BY 4.0) · NETL (US DOE) · Energy
       Institute Statistical Review · CEPII BACI · © OpenStreetMap contributors (ODbL) · Basemap: OpenFreeMap ©
       OpenMapTiles. Licences:{" "}
       <a href={LICENSE_DATA_URL} className={LINK}>

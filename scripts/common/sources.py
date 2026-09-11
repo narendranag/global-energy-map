@@ -139,11 +139,11 @@ GEM_GGIT = SourcePin(
     dest_filename="ggit_map_2026-02-20.geojson",
 )
 
-# ── LNG-T3 (Zhou et al. 2026, Zenodo) ───────────────────────────────────────
+# ── LNG-T3 (Zhou, C. 2026, Zenodo) ───────────────────────────────────────
 LNG_T3_RECORD_ID = "19571058"
 LNG_T3 = SourcePin(
     key="lng_t3",
-    name="Zhou et al. 2026, LNG-T3 (Zenodo)",
+    name="Zhou, C. 2026, LNG-T3 (Zenodo)",
     # Our label for Zenodo record 19571058 (published 2026-04-01). Zenodo
     # shows it as the second version under concept DOI 10.5281/zenodo.17273526;
     # the label is stamped into source_version, so it stays as-is until the

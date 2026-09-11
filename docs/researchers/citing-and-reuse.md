@@ -44,8 +44,8 @@ Cite the original publishers as well as the map; several licences require it. Th
 | Source | Attribution line | Also cite |
 |---|---|---|
 | Global Energy Monitor (extraction sites, pipelines, 7 LNG terminals) | Data: Global Energy Monitor, CC BY 4.0 | the tracker and release (GOGET July 2023; GOIT 2025-04-09; GGIT 2026-02-20) |
-| LNG-T3 (LNG terminals, voyages, daily tables) | Data: Zhou et al. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0 | the dataset DOI |
-| NETL GOGI (basins, storage, ports, refineries) | Data: NETL Global Oil & Gas Infrastructure (GOGI), US DOE | Sabbatino et al., doi:10.18141/1502839 |
+| LNG-T3 (LNG terminals, voyages, daily tables) | Data: Zhou, C. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0 | the dataset DOI |
+| NETL GOGI (basins, storage, ports, refineries) | Data: NETL Global Oil & Gas Infrastructure (GOGI), US DOE | Sabbatino et al., doi:10.18141/1427300 |
 | Energy Institute (reserves, production) | Data: Energy Institute Statistical Review of World Energy 2025 | — |
 | CEPII BACI (scenario trade) | Data: CEPII BACI (release V202601); cite Gaulier & Zignago (2010) | Gaulier, G. & Zignago, S. (2010), *BACI: International Trade Database at the Product-Level. The 1994–2007 Version*, CEPII Working Paper 2010-23 |
 | OpenStreetMap (88 refineries) | © OpenStreetMap contributors, ODbL | — |

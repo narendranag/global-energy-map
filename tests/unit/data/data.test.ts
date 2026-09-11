@@ -112,8 +112,8 @@ describe("voyages", () => {
   it("terminalCoordinates prefers LNG-T3 coordinates for a duplicated name", () => {
     const coords = terminalCoordinates([
       term("Gate", 1, "Global Energy Monitor — GGIT"),
-      term("Gate", 2, "Zhou et al. 2026, LNG-T3 (Zenodo)"),
-      term("Gate", 3, "Zhou et al. 2026, LNG-T3 (Zenodo)"),
+      term("Gate", 2, "Zhou, C. 2026, LNG-T3 (Zenodo)"),
+      term("Gate", 3, "Zhou, C. 2026, LNG-T3 (Zenodo)"),
       term("Other", 9, null),
     ]);
     expect(coords.get("Gate")).toEqual([2, 2]);

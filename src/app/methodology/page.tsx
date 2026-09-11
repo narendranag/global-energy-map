@@ -7,6 +7,7 @@ import { CitationBlock } from "@/components/share/CitationBlock";
 import { BUNDLED_CATALOG } from "@/lib/data-catalog/bundled";
 import { attributionsFor, BASEMAP_ATTRIBUTION, SCENARIO_SHARES, UNSOURCED_TITLE } from "@/lib/export/citation";
 import { getScenario } from "@/lib/scenarios/registry";
+import { groupIdenticalPairShares, pairLabel } from "@/lib/scenarios/share-groups";
 import type { ScenarioId } from "@/lib/scenarios/types";
 import { renderDoc, type TocItem } from "./markdown";
 
@@ -41,6 +42,12 @@ function pct(share: number): string {
   return `${(share * 100).toFixed(share < 0.1 ? 1 : 0)} %`;
 }
 
+/** Share rows per scenario, identical pair rows (intra-Gulf, share 0) as one row. */
+function shareGroups() {
+  const ids = [...new Set(SCENARIO_SHARES.map((r) => r.disruption_id))];
+  return ids.flatMap((id) => groupIdenticalPairShares(SCENARIO_SHARES.filter((r) => r.disruption_id === id)));
+}
+
 function ScenarioSharesTable() {
   return (
     <div className="mt-4 overflow-x-auto" data-testid="scenario-shares">
@@ -55,7 +62,9 @@ function ScenarioSharesTable() {
           </tr>
         </thead>
         <tbody className="text-ink-muted">
-          {SCENARIO_SHARES.map((r) => {
+          {shareGroups().map(({ rows }) => {
+            const r = rows[0];
+            const pairs = rows.length > 1 ? rows.map(pairLabel) : null;
             const unsourced = r.source_title === UNSOURCED_TITLE;
             return (
               <tr key={`${r.disruption_id}-${r.exporter_iso3}-${r.importer_iso3 ?? "all"}`} className="align-top">
@@ -66,7 +75,7 @@ function ScenarioSharesTable() {
                   {r.disruption_id === "hormuz" ? " (crude)" : ""}
                 </td>
                 <td className="border-t border-panel-border py-2 pr-4 whitespace-nowrap font-mono text-xs text-ink">
-                  {r.exporter_iso3} → {r.importer_iso3 ?? "all"}
+                  {pairs ? `${pairs.length.toString()} pairs` : `${r.exporter_iso3} → ${r.importer_iso3 ?? "all"}`}
                 </td>
                 <td className="border-t border-panel-border py-2 pr-4 text-right whitespace-nowrap font-mono tabular-nums text-ink">
                   {pct(r.share)}
@@ -83,6 +92,7 @@ function ScenarioSharesTable() {
                   )}{" "}
                   <span className="text-ink-subtle">({r.source_year})</span>
                   {r.source_note && <p className="mt-1 text-xs leading-snug text-ink-subtle">{r.source_note}</p>}
+                  {pairs && <p className="mt-1 font-mono text-xs leading-snug text-ink-subtle">{pairs.join(", ")}</p>}
                 </td>
               </tr>
             );

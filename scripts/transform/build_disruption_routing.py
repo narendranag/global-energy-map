@@ -7,7 +7,9 @@ Share semantics:
 - chokepoint: fraction of exporter's seaborne crude that transits the chokepoint
 - pipeline: fraction of exporter→importer trade flow that moves on this pipeline
 
-importer_iso3 = None means the share applies to all importers of that exporter.
+importer_iso3 = None means the share applies to all importers of that exporter;
+a pair row (importer_iso3 set) overrides it for that importer, including
+share 0 for Hormuz trade that stays inside the Gulf.
 
 Citations (review R6, Phase 7 A6): every hand-set share carries the document
 that supports it (``source_title``/``source_url``/``source_year``) and a
@@ -316,8 +318,48 @@ HORMUZ_LNG = [
 ]
 
 
+# ── Hormuz, intra-Gulf pairs ────────────────────────────────────────────────
+# The exporter-wide shares above apply to every buyer, including buyers
+# inside the Gulf, whose cargoes never cross the strait (Qatari LNG into
+# Kuwait's Al Zour, Saudi crude to Bahrain's Sitra refinery via the AB
+# pipeline). A share-0 pair row overrides the wildcard for those pairs
+# (user-approved 2026-09-11). Inbound flows into the Gulf from outside also
+# cross the strait but are out of scope: the scenario measures Gulf exports.
+GULF_COASTAL = ("IRN", "IRQ", "KWT", "QAT", "SAU", "ARE", "BHR")
+
+_INTRA_GULF_NOTE = (
+    "Structural: both the exporter and the importer have terminals inside the Persian "
+    "Gulf, so the cargo never crosses the Strait of Hormuz. The exporter-wide share "
+    "applies only to buyers outside the Gulf. Saudi Arabia and the UAE also have "
+    "ports outside the strait (Red Sea, Fujairah), but a cargo from a Gulf "
+    "neighbour lands at their Gulf-coast terminals. Imports into the Gulf from "
+    "outside are out of scope: the scenario measures Gulf exports."
+)
+
+
+def _intra_gulf(disruption_id: str, exporters: list[dict]) -> list[dict]:
+    return [
+        _row(
+            disruption_id,
+            "chokepoint",
+            e["exporter_iso3"],
+            importer,
+            0.0,
+            SRC_EIA,
+            IEA_HORMUZ,
+            _INTRA_GULF_NOTE,
+        )
+        for e in exporters
+        for importer in GULF_COASTAL
+        if importer != e["exporter_iso3"]
+    ]
+
+
+INTRA_GULF = _intra_gulf("hormuz", HORMUZ) + _intra_gulf("hormuz_lng", HORMUZ_LNG)
+
+
 def all_rows() -> list[dict]:
-    return HORMUZ + HORMUZ_LNG + DRUZHBA + BTC + CPC
+    return HORMUZ + HORMUZ_LNG + INTRA_GULF + DRUZHBA + BTC + CPC
 
 
 def main() -> None:

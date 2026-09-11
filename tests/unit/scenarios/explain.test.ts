@@ -67,6 +67,22 @@ describe("explainZeroExposure", () => {
     expect(e.routeExporters).toEqual([{ iso3: "RUS", qty: 300 }]);
   });
 
+  it("not-on-route with explicit share-0 pairs says so (trade that stays inside the Gulf)", () => {
+    const routes = [route("hormuz", "SAU", null, 0.88), route("hormuz", "SAU", "BHR", 0)];
+    const flows = [flow("SAU", "BHR", 900)];
+    const result = computeScenarioImpact({ scenarioId: "hormuz", commodity: "oil", year: 2021, tradeFlows: flows, routes });
+    const e = explainZeroExposure("BHR", result, { tradeFlows: flows, routes });
+    expect(e).toMatchObject({ kind: "not-on-route", zeroPairs: true });
+    const text = describeExposure(e, {
+      commodity: "oil",
+      routeName: "the Strait of Hormuz",
+      nameOf: (c) => c,
+      formatVolume: (t) => `${t.toString()} t`,
+    });
+    expect(text).toContain("sets a 0% route share for these pairs");
+    expect(run("druzhba", DRUZHBA)("FRA")).toMatchObject({ zeroPairs: false });
+  });
+
   it("no-route-suppliers: imports exist, none from the route's exporters", () => {
     const e = run("druzhba", DRUZHBA)("GBR");
     expect(e).toMatchObject({ kind: "no-route-suppliers", totalQty: 500 });

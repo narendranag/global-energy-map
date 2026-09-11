@@ -48,6 +48,9 @@ describe("scenario registry (Phase 9)", () => {
     expect(gasOld).toMatch(/only covers 2020–2024/);
     // e2e asserts "LNG-T3 voyages" appears exactly once (the footnote).
     expect(gasT3).not.toMatch(/LNG-T3 voyages/);
+    // Intra-Gulf pairs and terminals not yet in service are stated rules.
+    expect(oil).toMatch(/inside the Gulf/);
+    expect(gasOld).toMatch(/not yet in service/);
   });
 
   it("pipeline scenarios explain per-pair shares", () => {

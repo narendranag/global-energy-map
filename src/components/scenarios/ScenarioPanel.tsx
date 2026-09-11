@@ -90,7 +90,9 @@ function RouteShareItem({
     <li className="border-t border-slate-200 pt-1 first:border-t-0 first:pt-0">
       <div className="flex justify-between gap-2 text-xs">
         <span className="min-w-0 truncate">
-          {nameOf(row.exporter)} → {importer}
+          {row.pairs
+            ? `${row.pairs.length.toString()} exporter → importer pairs`
+            : `${nameOf(row.exporter)} → ${importer}`}
         </span>
         <span className="font-mono">{sharePct(row.share)}</span>
       </div>
@@ -124,6 +126,7 @@ function RouteShareItem({
                 How this share follows from the source
               </summary>
               <p className={`mt-0.5 ${NOTE}`}>{row.note}</p>
+              {row.pairs && <p className={`mt-0.5 font-mono ${NOTE}`}>{row.pairs.join(", ")}</p>}
             </details>
           )}
         </>

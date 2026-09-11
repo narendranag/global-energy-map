@@ -293,9 +293,9 @@
       "runtime": true,
       "redistributable": true,
       "downloadable": true,
-      "rows": 18,
-      "bytes": 10211,
-      "sha256": "e87668e1fa96e24137d056c2e28feda25aecc940a41744169caccf5daae07d24"
+      "rows": 72,
+      "bytes": 10561,
+      "sha256": "ce4cffd2135ada69013ec484781ee23e94afd1fda4ac8280d9aeb9b49705516d"
     },
     {
       "id": "natural_earth_countries",

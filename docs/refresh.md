@@ -118,6 +118,27 @@ Range-GETs every pinned file download and fails on a dead URL. Skipped by defaul
 - Refinery dedup (`build_refineries`) is sensitive to NETL's duplicate listings; check `test_no_two_netl_refineries_within_1km_same_country`.
 - Storage is filtered to bulk-storage records (`build_storage.is_bulk_storage` drops EPA cleanup sites, SPCC plans, a state master list and transfer points). A NETL re-ingest can add new source categories; watch the transform's kept/dropped counts before accepting a large row-count move.
 
+### NETL GOGI (ad hoc, live layers)
+
+NETL serves live unversioned layers, so "is there a new release?" has no answer from the landing page. Ask the server for feature counts instead, and only re-ingest if they moved — a full re-snapshot is ~81 MB and restamps `source_version` on every NETL row:
+
+```bash
+uv run python - <<'EOF'
+import json, urllib.request
+from scripts.ingest.netl_gogi import LAYERS, out_path
+from scripts.common.netl import NETL_BASE
+for key, (server, _) in LAYERS.items():
+    url = f"{NETL_BASE}/{server}/FeatureServer/0/query?where=1%3D1&returnCountOnly=true&f=json"
+    n = json.load(urllib.request.urlopen(url, timeout=90)).get("count")
+    local = len(json.load(open(out_path(key)))["features"])
+    print(f"{key:<12} upstream={n:<8} local={local:<8} {'CHANGED' if n != local else ''}")
+EOF
+```
+
+Counts matching is not proof the attributes are identical, but a change in them is the only cheap signal NETL gives. Checked 2026-09-17: basins 1046, ports 3702, refineries 2272, storage 26103 — all unchanged since the 2026-05-17 snapshot, so the pin was left alone.
+
+If you do re-ingest: the storage layer needs the EPA non-storage filter to still select correctly (it took storage 26,102 → 7,733), and the refinery within-source dedup counts will move.
+
 ### OpenStreetMap refineries (quarterly)
 - `uv run python -m scripts.ingest.osm_refineries --force`, then set `OSM.release`/`as_of` to the retrieval date. The OSM supplement count (88 today) will move; `assets_open.parquet` excludes it automatically.
 

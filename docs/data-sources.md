@@ -194,11 +194,11 @@ LNG-T3 covers **22–41% of GIIGNL's global LNG trade, 2020–2024** — every y
 
 - **URL:** https://www.openstreetmap.org/
 - **License:** ODbL (Open Database License) — derivative works permitted with attribution and share-alike
-- **As-of:** 2026-05-15 (Overpass snapshot)
+- **As-of:** 2026-09-17 (Overpass snapshot)
 - **Where it lands:** `assets.parquet` rows where `kind = 'refinery'` and `source = 'OpenStreetMap (Overpass)'` — the only rows excluded from the downloadable `assets_open.parquet`
 - **Layers/scenarios using it:** refineries point layer; refinery feedstock attribution math
 
-**What we ingest:** Refinery features via Overpass API query for `industrial=oil_refinery`, `industrial=oil`, and `man_made=works + product=oil` (with multilingual name keyword filtering for the looser tags). Raw set: 168 refineries. After Phase 5's 2 km same-country dedup against NETL, **88 OSM-only refineries** remain in production as supplements; the other 80 collapse into matching NETL records.
+**What we ingest:** Refinery features via Overpass API query for `industrial=oil_refinery`, `industrial=oil`, and `man_made=works + product=oil` (with multilingual name keyword filtering for the looser tags). Raw set: 183 refineries, of which 12 are dropped for having no country (offshore). After Phase 5's 2 km same-country dedup against NETL, **89 OSM-only refineries** remain in production as supplements; the other 82 collapse into matching NETL records.
 
 **Why we keep OSM as a supplement:** OSM's curated facility names are high-quality for major OECD refineries (e.g., "MiRO Mineralölraffinerie Oberrhein," "Fawley Oil Refinery") where NETL's `facility_n` is sometimes blank. The 2 km dedup keeps OSM only where it complements rather than duplicates.
 

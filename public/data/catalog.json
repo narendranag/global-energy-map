@@ -1,6 +1,6 @@
 {
   "version": 6,
-  "generated_at": "2026-09-11T00:00:00+00:00",
+  "generated_at": "2026-09-17T00:00:00+00:00",
   "entries": [
     {
       "id": "ei_country_year",
@@ -43,8 +43,8 @@
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
       "rows": 7055,
-      "bytes": 725898,
-      "sha256": "3bf379b7ed25d3b26c71f82df90f7ff4264258a639de985d0befd48ef9595121"
+      "bytes": 725851,
+      "sha256": "e91dfa1e288a685ddf79d1bd3d860f8edcf88bb3fa3bd2cabf91130eff70dfa2"
     },
     {
       "id": "netl_refineries",
@@ -64,8 +64,8 @@
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable. The refineries layer includes those rows too, so it is view-only.",
       "rows": 1075,
-      "bytes": 725898,
-      "sha256": "3bf379b7ed25d3b26c71f82df90f7ff4264258a639de985d0befd48ef9595121"
+      "bytes": 725851,
+      "sha256": "e91dfa1e288a685ddf79d1bd3d860f8edcf88bb3fa3bd2cabf91130eff70dfa2"
     },
     {
       "id": "osm_refineries",
@@ -75,7 +75,7 @@
       "source_name": "OpenStreetMap",
       "source_url": "https://www.openstreetmap.org/",
       "license": "ODbL (Open Database License)",
-      "as_of": "2026-05-15",
+      "as_of": "2026-09-17",
       "layers": [
         "refineries"
       ],
@@ -84,9 +84,9 @@
       "redistributable": false,
       "downloadable": false,
       "download_note": "ODbL (share-alike) rows; downloads are limited to CC BY 4.0 and public-domain sources, so these rows are left out of assets_open.parquet (the NETL refinery rows are in it).",
-      "rows": 88,
-      "bytes": 725898,
-      "sha256": "3bf379b7ed25d3b26c71f82df90f7ff4264258a639de985d0befd48ef9595121"
+      "rows": 89,
+      "bytes": 725851,
+      "sha256": "e91dfa1e288a685ddf79d1bd3d860f8edcf88bb3fa3bd2cabf91130eff70dfa2"
     },
     {
       "id": "netl_storage",
@@ -106,8 +106,8 @@
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
       "rows": 7733,
-      "bytes": 725898,
-      "sha256": "3bf379b7ed25d3b26c71f82df90f7ff4264258a639de985d0befd48ef9595121"
+      "bytes": 725851,
+      "sha256": "e91dfa1e288a685ddf79d1bd3d860f8edcf88bb3fa3bd2cabf91130eff70dfa2"
     },
     {
       "id": "netl_ports",
@@ -127,8 +127,8 @@
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
       "rows": 3694,
-      "bytes": 725898,
-      "sha256": "3bf379b7ed25d3b26c71f82df90f7ff4264258a639de985d0befd48ef9595121"
+      "bytes": 725851,
+      "sha256": "e91dfa1e288a685ddf79d1bd3d860f8edcf88bb3fa3bd2cabf91130eff70dfa2"
     },
     {
       "id": "lng_t3_terminals",
@@ -148,8 +148,8 @@
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
       "rows": 305,
-      "bytes": 725898,
-      "sha256": "3bf379b7ed25d3b26c71f82df90f7ff4264258a639de985d0befd48ef9595121"
+      "bytes": 725851,
+      "sha256": "e91dfa1e288a685ddf79d1bd3d860f8edcf88bb3fa3bd2cabf91130eff70dfa2"
     },
     {
       "id": "gem_lng_terminals",
@@ -169,8 +169,8 @@
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
       "rows": 9,
-      "bytes": 725898,
-      "sha256": "3bf379b7ed25d3b26c71f82df90f7ff4264258a639de985d0befd48ef9595121"
+      "bytes": 725851,
+      "sha256": "e91dfa1e288a685ddf79d1bd3d860f8edcf88bb3fa3bd2cabf91130eff70dfa2"
     },
     {
       "id": "assets_open",

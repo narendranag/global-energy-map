@@ -11,7 +11,7 @@ This is the **current-state** methodology of Global Energy Map: for every map la
 | Extraction sites | GEM GOGET | 2026-03 | 7,055 | Partly — 32 % dated | — (no capacity) |
 | Oil pipelines | GEM GOIT | 2025-04-09 | 1,185 | Partly — 64 % dated | kb/d |
 | Gas pipelines | GEM GGIT | 2026-02-20 | 2,772 | Partly — 74 % dated | bcm/y |
-| Refineries | NETL GOGI (primary) + OpenStreetMap | 2026-05 | 1,163 (1,075 + 88) | No | kb/d (30 % known) |
+| Refineries | NETL GOGI (primary) + OpenStreetMap | 2026-09 | 1,164 (1,075 + 89) | No | kb/d (30 % known) |
 | Storage hubs | NETL GOGI (EPA regulatory records filtered out) | 2026-05-17 | 7,733 | No | — |
 | Ports | NETL GOGI | 2026-05-17 | 3,694 | No | — |
 | LNG terminals | LNG-T3 (primary) + GEM GGIT | 2026-04-01 / 2026-02-20 | 312 (305 + 7) | Yes — 98 % dated | Mtpa |
@@ -67,7 +67,7 @@ This is the **current-state** methodology of Global Energy Map: for every map la
 
 ### Refineries
 
-- **Sources:** NETL GOGI Refineries (primary, public domain, snapshot 2026-05-17) plus OpenStreetMap (supplement, ODbL, Overpass snapshot 2026-05-15). Each row carries a `source` column.
+- **Sources:** NETL GOGI Refineries (primary, public domain, snapshot 2026-05-17) plus OpenStreetMap (supplement, ODbL, Overpass snapshot 2026-09-17). Each row carries a `source` column.
 - **Deduplication:**
   - *Within NETL* — NETL lists many plants more than once (an English name, a numbered "333 – …" variant, a French "Raffinerie de …" variant). Rows in the same country within **1 km** are merged, but never two rows whose known capacities differ by more than 5 %. 2,272 raw rows become **1,075**. A few probable duplicates with conflicting capacities (e.g. several Pemex plants) remain as two rows.
   - *OSM against NETL* — an OSM refinery is dropped when a NETL refinery in the **same country lies within 2 km**. The 2 km threshold is the knee of the nearest-neighbour distance distribution: matches under 2 km are the same facility; beyond it, genuinely distinct neighbours appear (e.g. Marcus Hook / Trainer). 168 OSM refineries become **88** supplements.

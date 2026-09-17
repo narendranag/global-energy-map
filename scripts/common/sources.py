@@ -211,6 +211,30 @@ LNG_T3 = SourcePin(
     },
 )
 
+# ── Gas Infrastructure Europe: AGSI (storage) + ALSI (LNG) ─────────────────
+# The only daily-resolution source in the project. Country level only — see
+# scripts/ingest/gie_daily.py for why terminal level is not joined.
+GIE = SourcePin(
+    key="gie",
+    name="Gas Infrastructure Europe — AGSI (storage) + ALSI (LNG)",
+    # A rolling daily feed, so the pin is the last gas day we ingested.
+    release="2026-09-17",
+    as_of="2026-09-17",
+    licence="Free with registration; attribute as 'GIE AGSI / ALSI'",
+    landing_url="https://www.gie.eu/agsi-and-alsi-transparency-platforms/",
+    terms_url="https://www.gie.eu/agsi-and-alsi-transparency-platforms/",
+    cadence="daily, published 19:30 CET",
+    raw_dir=Path("data/raw/gie"),
+    ingest="gie_daily",
+    download_url="https://agsi.gie.eu/api",
+    extra={
+        # Five full gas years keeps the series comparable with lng_voyage
+        # (2020–2024) while extending past where that source stops.
+        "series_start": "2020-01-01",
+        "api_key_env": "GIE_API_KEY",
+    },
+)
+
 # ── NETL Global Oil & Gas Infrastructure (GOGI) ─────────────────────────────
 NETL = SourcePin(
     key="netl",
@@ -274,6 +298,7 @@ ALL: tuple[SourcePin, ...] = (
     GEM_GOIT,
     GEM_GGIT,
     GEM_ROUTES,
+    GIE,
     LNG_T3,
     NETL,
     OSM,

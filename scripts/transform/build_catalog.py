@@ -78,6 +78,32 @@ OPEN_EXTRACTS: dict[str, str] = {"/data/assets.parquet": "assets_open.parquet"}
 
 REGISTRY: list[dict[str, Any]] = [
     {
+        "id": "gie_daily",
+        "label": "EU gas storage + LNG terminal daily series",
+        "path": "/data/gie_daily.parquet",
+        "format": "parquet",
+        "source_name": "Gas Infrastructure Europe — AGSI + ALSI",
+        "source_url": pins.GIE.landing_url,
+        "license": "Free with registration; attribution required",
+        "as_of": pins.GIE.as_of,
+        # Country-level, so it feeds neither the terminal-point layer nor any
+        # other shipped layer yet — these ids are placeholders for the layer
+        # this table will drive. Tagging it "lng_terminals" would have made
+        # that CC-BY layer non-exportable by association, which is wrong:
+        # no GIE row is in it.
+        "layers": ["gas_storage", "lng_send_out"],
+        # Not CC BY / public domain / Etalab, so view-only under the rule in
+        # LICENSE-DATA.md. GIE gives it away freely but on its own terms.
+        "redistributable": False,
+        "download_note": (
+            "Gas Infrastructure Europe publishes this free to anyone with a "
+            "registration key, under its own terms rather than an open licence, "
+            "so it is shown in the app and not offered for download; get it from "
+            "https://agsi.gie.eu/ with your own key."
+        ),
+        "attribution": "Data: GIE AGSI / ALSI",
+    },
+    {
         "id": "ei_country_year",
         "label": "Country-year reserves + production",
         "path": "/data/country_year_series.parquet",

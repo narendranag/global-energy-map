@@ -69,6 +69,17 @@ KIND_RANK: dict[str, int] = {
     "lng_import": 4,
 }
 
+GIE_DAILY_SCHEMA = pa.schema(
+    [
+        ("iso3", _S),
+        ("gas_day", pa.date32()),
+        ("metric", _S),
+        ("value", pa.float64()),
+        ("unit", _S),
+        ("source", _S),
+    ]
+)
+
 COUNTRY_YEAR_SCHEMA = pa.schema(
     [
         ("iso3", _S),
@@ -162,6 +173,7 @@ SCHEMAS: dict[str, pa.Schema] = {
     "assets.parquet": ASSETS_SCHEMA,
     "assets_open.parquet": ASSETS_SCHEMA,  # open subset (scripts.transform.build_assets_open)
     "country_year_series.parquet": COUNTRY_YEAR_SCHEMA,
+    "gie_daily.parquet": GIE_DAILY_SCHEMA,
     "trade_flow.parquet": TRADE_FLOW_SCHEMA,
     "disruption_route.parquet": DISRUPTION_ROUTE_SCHEMA,
     "lng_voyage.parquet": LNG_VOYAGE_SCHEMA,
@@ -184,6 +196,7 @@ REQUIRED: dict[str, tuple[str, ...]] = {
     "assets.parquet": _ASSETS_REQUIRED,
     "assets_open.parquet": _ASSETS_REQUIRED,
     "country_year_series.parquet": ("iso3", "year", "metric", "value", "unit", "source"),
+    "gie_daily.parquet": ("iso3", "gas_day", "metric", "value", "unit", "source"),
     "trade_flow.parquet": ("year", "importer_iso3", "exporter_iso3", "hs_code", "source"),
     "disruption_route.parquet": ("disruption_id", "kind", "exporter_iso3", "share", "source"),
     "lng_voyage.parquet": (

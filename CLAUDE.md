@@ -127,11 +127,12 @@ For a researcher-facing inventory (with coverage gaps, evaluated-and-rejected so
 | Chokepoints + pipeline disruption scenarios | EIA World Oil Transit Chokepoints + IEA pipeline reports | Public, free | 5 scenarios: Hormuz, Hormuz-LNG, Druzhba, BTC, CPC |
 | Country boundaries | Natural Earth admin-0 (1:110m) | Public domain | Phase 1 — basemap + reserves choropleth fills |
 | Basemap | OpenFreeMap Positron (vector, OpenMapTiles schema) | Free (no key); © OpenMapTiles, data © OpenStreetMap | Runtime tiles via `src/components/map/style.ts` |
+| EU gas storage + LNG send-out (daily) | Gas Infrastructure Europe AGSI + ALSI | Free with registration; attribute "GIE AGSI / ALSI" | **Daily**, 2020-01-01 → present — the only daily series here. 188,767 rows, 22 countries. Country level only (terminal names do not join safely — see `scripts/ingest/gie_daily.py`). View-only: free, but not an open licence. Needs `GIE_API_KEY` |
 | Coal (mines + plants) | _deferred (post-launch)_ | GEM CC BY 4.0 (when integrated) | Coal sector / cross-commodity scenarios are a post-launch candidate |
 | Tankers / AIS | _deferred (post-launch)_ | TankerMap free for live; paid for historical | Own brainstorm — AIS sourcing is the gating decision |
 | EIA STEO US shale basin time series | _deferred (post-launch)_ | Public (US gov), free API key | Only authoritative open per-basin time-series we've found (Anadarko/Bakken/Eagle Ford/Permian/etc.) |
 
-API keys live in `~/.config/secrets.env` (e.g., `TAVILY_API_KEY`, `EXA_API_KEY`). The EIA API key is registered separately; add to `~/.config/secrets.env` as `EIA_API_KEY` before any EIA work. BACI (the trade-flow source) does not require a key. Never commit secrets.
+API keys live in `~/.config/secrets.env` (e.g., `TAVILY_API_KEY`, `EXA_API_KEY`, `GIE_API_KEY`, the `R2_*` archive credentials). The EIA API key is registered separately; add to `~/.config/secrets.env` as `EIA_API_KEY` before any EIA work. BACI (the trade-flow source) does not require a key. Never commit secrets.
 
 ## Common commands
 

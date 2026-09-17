@@ -121,6 +121,22 @@ Range-GETs every pinned file download and fails on a dead URL. Skipped by defaul
 - Refinery dedup (`build_refineries`) is sensitive to NETL's duplicate listings; check `test_no_two_netl_refineries_within_1km_same_country`.
 - Storage is filtered to bulk-storage records (`build_storage.is_bulk_storage` drops EPA cleanup sites, SPCC plans, a state master list and transfer points). A NETL re-ingest can add new source categories; watch the transform's kept/dropped counts before accepting a large row-count move.
 
+### GIE AGSI + ALSI (daily)
+
+A rolling daily feed, so there is no "release" — the pin is the last gas day ingested, and a refresh is just re-running with a later `--to`.
+
+```bash
+set -a; . ~/.config/secrets.env; set +a          # GIE_API_KEY
+uv run python -m scripts.ingest.gie_daily --to $(date +%F) --force
+uv run python -m scripts.build_all --only build_gie_daily && uv run python -m scripts.build_all --from build_catalog
+```
+
+- Raw lands as one JSON per (dataset, country) under `data/raw/gie/{agsi,alsi}/`, so a mid-way failure resumes instead of restarting; `--force` is what re-fetches countries already on disk. ~48 calls, throttled with backoff.
+- **Country level only, on purpose.** ALSI also publishes per-facility series, but its 41 facility names join to our LNG terminal names for only ~71 % after normalisation, and the near-misses are the dangerous kind ("Rovigo LNG Terminal" vs "Adriatic LNG", "Isle of Grain" vs "Grain LNG"). Terminal-level needs a hand-checked name map. Country codes are unambiguous.
+- `"-"` means "does not apply here", not zero: every ALSI field is `"-"` for landlocked countries. The transform emits no row rather than a zero, because a zero would assert Austria sent out no LNG on a day it has no terminals at all.
+- **Storage fullness legitimately exceeds 100 %** — 2.8 % of rows, e.g. Belgium at 118 % through the 2022 gas crisis. It is `gasInStorage / workingGasVolume` and operators can hold more than nominal working volume. Verified against the components; do not clamp it, and do not build a colour ramp that assumes a 0–100 domain.
+- Licence is free-with-registration, not an open licence, so the file is **view-only** in the catalog.
+
 ### NETL GOGI (ad hoc, live layers)
 
 NETL serves live unversioned layers, so "is there a new release?" has no answer from the landing page. Ask the server for feature counts instead, and only re-ingest if they moved — a full re-snapshot is ~81 MB and restamps `source_version` on every NETL row:

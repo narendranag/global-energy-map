@@ -36,6 +36,7 @@ from collections.abc import Callable, Sequence
 
 TRANSFORMS: list[str] = [
     "build_country_year",
+    "build_gie_daily",
     "build_trade_flow",
     "build_assets",
     "build_refineries",

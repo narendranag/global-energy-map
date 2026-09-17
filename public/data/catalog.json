@@ -3,6 +3,28 @@
   "generated_at": "2026-09-17T00:00:00+00:00",
   "entries": [
     {
+      "id": "gie_daily",
+      "label": "EU gas storage + LNG terminal daily series",
+      "path": "/data/gie_daily.parquet",
+      "format": "parquet",
+      "source_name": "Gas Infrastructure Europe — AGSI + ALSI",
+      "source_url": "https://www.gie.eu/agsi-and-alsi-transparency-platforms/",
+      "license": "Free with registration; attribution required",
+      "as_of": "2026-09-17",
+      "layers": [
+        "gas_storage",
+        "lng_send_out"
+      ],
+      "attribution": "Data: GIE AGSI / ALSI",
+      "runtime": true,
+      "redistributable": false,
+      "downloadable": false,
+      "download_note": "Gas Infrastructure Europe publishes this free to anyone with a registration key, under its own terms rather than an open licence, so it is shown in the app and not offered for download; get it from https://agsi.gie.eu/ with your own key.",
+      "rows": 188767,
+      "bytes": 773231,
+      "sha256": "b51a4f0ad29efff18489f35234b104c48d1acffae25d446685197e69d1c1a0dc"
+    },
+    {
       "id": "ei_country_year",
       "label": "Country-year reserves + production",
       "path": "/data/country_year_series.parquet",

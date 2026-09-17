@@ -50,9 +50,29 @@ For every source: (1) check the publisher's page for a new release and read its 
 - After the build, check `test_trade_flow_codes_are_real_countries` (new BACI pseudo-codes go into `TRADE_ISO3_ALLOWLIST`) and extend the year slider range only if the app's year constants allow it.
 
 ### GEM trackers (per release)
-- GOIT / GGIT: GEM's public GeoJSON lives on its DigitalOcean CDN; find the new file name in the tracker map config (`https://globalenergymonitor.github.io/maps/trackers/<tracker>/config.js`) and set `download_url`, `dest_filename`, `release` and `as_of`.
-- GOGET: the xlsx is behind GEM's email form. Download it by hand into `data/raw/gem_extraction/` (or pin a Wayback capture as today) and set `release` to GEM's label (e.g. `"March 2025"`).
+
+**The DigitalOcean CDN is dead (confirmed 2026-09-17).** GEM reorganised the `publicgemdata` bucket around 2026-07-02. The old `GOIT/`, `ggit/` and `goget/` prefixes are gone; `Current_maps/{goit,ggit,goget}/` exist but contain only folder markers. A full paginated listing (40,788 keys) finds no tracker data file anywhere in the bucket. The tracker map configs still reference the old URLs, so **the configs are stale too** — do not trust them.
+
+GEM has also purged direct file downloads at the origin: `globalenergymonitor.org/wp-content/uploads/.../<tracker>.xlsx` answers **410 Gone**, not 404. Read that as deliberate — assume bulk access is now form-gated by design and plan for a manual step.
+
+Where the data actually is, in the order worth trying:
+
+1. **Wayback, for the xlsx trackers.** The Internet Archive has GEM's WordPress uploads even though the origin purged them. Query the CDX API for `globalenergymonitor.org/wp-content/uploads/*` and grep for the tracker name; fetch with the `id_` suffix (`https://web.archive.org/web/<timestamp>id_/<original-url>`) to get the raw bytes rather than the Wayback frame. This is how the `GEM_GOGET` pin already works.
+2. **The `GlobalEnergyMonitor/goit-ggit-pipeline-routes` GitHub repo**, for pipeline geometry: `data/individual-routes/{gas,liquid,hydrogen}-pipelines/<pipeline-id>.geojson`, full resolution, thousands of files, actively pushed. Pull it as one tarball (`gh api repos/GlobalEnergyMonitor/goit-ggit-pipeline-routes/tarball`), not file-by-file. Geometry only — no capacity/status/country attributes.
+3. **The GreenInfo tracker map's static export**, for pipeline attributes: `https://greeninfo-network.github.io/global-oil-infrastructure-tracker/static/data/data.csv` (HTTP 200, 767 KB, 1,018 rows = 979 oil + 39 NGL, `start_year` 66%). Carries attributes plus a simplified `route` vertex list, but **no ISO3 start/end columns** — our schema needs those derived. No GGIT equivalent has been found.
+4. GEM's email form, by hand, as the last resort.
+
+- GOGET: set `release` to GEM's own label (e.g. `"March 2026"`) and `download_url` to the Wayback `id_` URL, keeping `extra["original_url"]` as the CDX fallback target.
 - A GGIT release changes both gas pipelines and the 7 supplementary LNG terminals; watch `build_lng_terminals`' dedup counts.
+- **GEM renames workbook columns between releases.** The March 2026 GOGET workbook replaced the single `Main data` sheet with `Field-level main data` / `Project-level main data`, and within it `Unit name` → `Unit Name`, `Country` → `Country/Area`. Read the sheet names before assuming a transform still works.
+
+### Check the pins are alive before you start
+
+```bash
+RUN_NETWORK_TESTS=1 uv run python -m pytest tests/python/test_source_liveness.py -v
+```
+
+Range-GETs every pinned file download and fails on a dead URL. Skipped by default, because it is the only test here that uses the network. A `403`/`429` is reported as a skip, not a pass — EI sits behind Cloudflare and can only be checked by hand. Run this **before** a refresh: the GEM breakage above went unnoticed for ~2.5 months because `public/data/` is committed, so the deployed site stayed healthy while the ingest path was broken.
 
 ### LNG-T3 (per Zenodo version)
 - Check the concept DOI (`extra["concept_doi"]`) for a newer version. Pin its record id in `LNG_T3_RECORD_ID`, `release` (the label becomes the raw directory and every row's `source_version`), `as_of` (publication date) and the per-CSV `md5:` values from `https://zenodo.org/api/records/<id>`.

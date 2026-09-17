@@ -195,7 +195,25 @@ def _parse_wide_sheet(
 
 
 def _read_sheet(xlsx: Path, sheet_name: str) -> pd.DataFrame:
-    return pd.read_excel(xlsx, sheet_name=sheet_name, header=None)
+    """Read a sheet by name, tolerating EI's drifting trailing whitespace.
+
+    EI is inconsistent about trailing spaces in sheet names and changes them
+    between editions: the 2025 workbook had "Gas - Proved reserves history "
+    and the 2026 one dropped the space. Matching on the stripped name keeps a
+    refresh from failing on pure whitespace, while still raising loudly — with
+    the available names — if a sheet genuinely disappears or is renamed.
+    """
+    import openpyxl
+
+    wanted = sheet_name.strip()
+    names = openpyxl.load_workbook(xlsx, read_only=True).sheetnames
+    matches = [n for n in names if n.strip() == wanted]
+    if not matches:
+        raise ValueError(
+            f"sheet {sheet_name!r} not found in {xlsx.name}. "
+            f"EI renames sheets between editions; available: {names}"
+        )
+    return pd.read_excel(xlsx, sheet_name=matches[0], header=None)
 
 
 def build(xlsx: Path | None = None) -> pd.DataFrame:

@@ -10,20 +10,20 @@
       "source_name": "Energy Institute Statistical Review of World Energy",
       "source_url": "https://www.energyinst.org/statistical-review/resources-and-data-downloads",
       "license": "Free to quote with attribution; extensive reproduction needs EI permission",
-      "as_of": "2025-06-26",
+      "as_of": "2026-07-01",
       "layers": [
         "reserves",
         "reserves:gas",
         "production"
       ],
-      "attribution": "Data: Energy Institute Statistical Review of World Energy 2025",
+      "attribution": "Data: Energy Institute Statistical Review of World Energy 2026",
       "runtime": true,
       "redistributable": false,
       "downloadable": false,
       "download_note": "The Energy Institute asks for permission before extensive reproduction of its tables, so the series is shown in the app, not offered for download; get it from the Energy Institute.",
-      "rows": 4786,
-      "bytes": 40019,
-      "sha256": "1431a41668bc8fb68c43cc60498b22354cf9fa1e5ee858abc14dbbbfdaa85e4b"
+      "rows": 4836,
+      "bytes": 39595,
+      "sha256": "aa1a4df5076028ced2d74bb6ce466ba32bb19fe4d6669b52e5df97a8cb1469ae"
     },
     {
       "id": "gem_extraction",

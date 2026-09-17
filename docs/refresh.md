@@ -67,7 +67,10 @@ For every source: (1) check the publisher's page for a new release and read its 
 ### Energy Institute Statistical Review (annual, ~June)
 - Pin: set `release` to the new edition year, `as_of` to its publication date. The EI workbook URL changes every year — find the "all data" xlsx on the downloads page and set `download_url`. The site blocks scripted downloads (Cloudflare); if the ingest fails, download the workbook by hand into `data/raw/ei_statistical_review/`.
 - `build_country_year` reads sheet names and year columns; a new edition can rename sheets or add countries. Watch its output for unmapped country names (add them to `EI_NAME_TO_ISO3` in `scripts/common/iso3.py`).
-- Check whether reserves were updated this year (they stopped at 2020 in the 2025 edition). `test_reserves_end_2020_and_non_negative` and the "reserves frozen after 2020" badge must be updated if they were.
+- Check whether reserves were updated this year (still 2020 as of the 2026 edition — checked 2026-09-17). `test_reserves_end_2020_and_non_negative` and the "reserves frozen after 2020" badge must be updated if they ever are.
+- **Save the workbook as `EI-Stats-Review-ALL-data-<edition>.xlsx`.** Transforms take the lexicographically last match, so EI's own bare `EI-Stats-Review-ALL-data.xlsx` would outrank `...-2026.xlsx` and silently build the older edition.
+- **EI renames sheets between editions**, including trailing whitespace (`"Gas - Proved reserves history "` lost its trailing space in 2026). `_read_sheet` matches on the stripped name and lists the available sheets when one is genuinely missing.
+- `test_production_reaches_the_edition_year` derives the expected last year from the pin (`int(EI.release) - 1`), so a refresh does not need the test edited.
 
 ### CEPII BACI (annual, ~January–February)
 - Pin: set `release` (e.g. `V202701`), `as_of`, and `download_url` (`BACI_HS92_<release>.zip`).

@@ -43,19 +43,25 @@ class SourcePin:
 EI = SourcePin(
     key="ei",
     name="Energy Institute Statistical Review of World Energy",
-    release="2025",  # 74th edition
-    as_of="2025-06-26",
+    release="2026",  # 75th edition
+    as_of="2026-07-01",  # published July 2026; EI gives no exact date in the workbook
     licence="Free to use and quote with attribution; extensive reproduction needs EI permission",
     landing_url="https://www.energyinst.org/statistical-review/resources-and-data-downloads",
     terms_url="https://www.energyinst.org/statistical-review/about",
     cadence="annual, late June",
     raw_dir=Path("data/raw/ei_statistical_review"),
     ingest="ei_statistical_review",
+    # Manual download only. The 2026 downloads page serves the workbook from a
+    # JavaScript button rather than an <a href>, and Cloudflare 403s scripted
+    # requests either way, so there is no URL to pin. The value below is the
+    # 2025 asset path, kept as the shape of the link to look for; the ingest
+    # will fail on it by design and tell you to fetch by hand. Save the file as
+    # EI-Stats-Review-ALL-data-<edition>.xlsx so latest() picks the newest.
     download_url=(
         "https://www.energyinst.org/__data/assets/excel_doc/0008/1656215/"
         "EI-Stats-Review-ALL-data.xlsx"
     ),
-    dest_filename="EI-Stats-Review-ALL-data.xlsx",
+    dest_filename="EI-Stats-Review-ALL-data-2026.xlsx",
 )
 
 # ── CEPII BACI (HS92) ───────────────────────────────────────────────────────

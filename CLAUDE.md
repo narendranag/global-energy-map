@@ -102,7 +102,7 @@ Designed so adding a new commodity is a row, not a migration.
 | `basin` | basin_id, name, country_iso3, area_km2, region, geometry | NETL Global Oil and Gas Infrastructure |
 | `asset` | asset_id, kind (extraction_site, refinery, lng_export, lng_import, storage, port), name, iso3, lon, lat, capacity, capacity_unit, operator, status, commissioned_year, decommissioned_year, source, source_version | GEM trackers + NETL GOGI + OpenStreetMap |
 | `pipelines` | pipeline_id, name, status, commodity (crude, ngl, crude+ngl, gas), capacity_kbpd, capacity_unit, start_country_iso3, end_country_iso3, operator, start_year, geometry (LineString / MultiLineString) | GEM oil + gas infrastructure trackers |
-| `country_year_series` | iso3, year (1990–2024), metric (production_crude_kbpd, proved_reserves_oil_bbn_bbl, proved_reserves_gas_tcm), value, unit | EI Statistical Review |
+| `country_year_series` | iso3, year (1990–2025), metric (production_crude_kbpd, proved_reserves_oil_bbn_bbl, proved_reserves_gas_tcm), value, unit | EI Statistical Review |
 | `trade_flow` | year, hs_code (2709 crude, 271111 LNG), exporter_iso3, importer_iso3, qty | BACI (CEPII) |
 | `disruption_route` | disruption_id, kind, exporter_iso3, importer_iso3 (null = exporter-wide), share, source, source_title, source_url, source_year, source_note | EIA / IEA scenario analysis (per-row citations) |
 | `lng_voyage`, `lng_trade_daily`, `lng_terminal_daily` | start/end dates, IMO, from/to terminal + country/iso3, amount_cbm, confidence_score | Phase 6 — LNG-T3 |
@@ -115,7 +115,7 @@ For a researcher-facing inventory (with coverage gaps, evaluated-and-rejected so
 
 | Layer | Source | License | Notes |
 |---|---|---|---|
-| Reserves (country-year, oil + gas) | Energy Institute Statistical Review of World Energy | Free, terms on site | Phase 1/3 — reserves capped at 2020; production runs through 2024 |
+| Reserves (country-year, oil + gas) | Energy Institute Statistical Review of World Energy | Free, terms on site | Phase 1/3 — 2026 (75th) edition; reserves still capped at 2020 (EI has not refreshed them since); production runs through 2025. The year slider stays 1990–2024 — see `docs/superpowers/plans/2026-09-17-data-freshness-upgrade.md` |
 | Extraction sites | GEM Global Oil & Gas Extraction Tracker | **CC BY 4.0** | Phase 1 — 7,055 sites; March 2026 snapshot (via Wayback; GEM purged the origin copy); commissioned_year populated 32% |
 | Oil pipelines | GEM Global Oil Infrastructure Tracker (GOIT GeoJSON) | **CC BY 4.0** | Phase 2 — 2025-04-09 release; start_year populated 64% (oil) / 74% (gas) in the shipped sidecar |
 | Pipeline route geometry | GEM `goit-ggit-pipeline-routes` (GitHub) | **CC BY 4.0** | Geometry only, joined to the trackers on `pipeline_id`; 96% oil / 97% gas. The only GEM pipeline source still publicly maintained |

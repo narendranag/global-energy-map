@@ -88,8 +88,21 @@ def test_reserves_end_2020_and_non_negative(cys):
     assert (res["value"] >= 0).all()
 
 
-def test_production_reaches_2024(cys):
-    assert cys.loc[cys["metric"] == "production_crude_kbpd", "year"].max() == 2024
+def test_production_reaches_the_edition_year(cys):
+    """Production runs to the year before the EI edition (2026 edition → 2025).
+
+    Tied to the pin rather than a hard-coded year: EI publishes annually, so an
+    equality check against one year turns every refresh into a test failure and
+    teaches us to edit the number without looking. A parsing regression still
+    fails this, because it would drop the last column entirely.
+    """
+    from scripts.common.sources import EI
+
+    expected = int(EI.release) - 1
+    actual = cys.loc[cys["metric"] == "production_crude_kbpd", "year"].max()
+    assert actual == expected, (
+        f"production reaches {actual}, expected {expected} for the {EI.release} edition"
+    )
 
 
 def test_key_reserve_holders_present_for_2020(cys):

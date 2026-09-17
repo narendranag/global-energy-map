@@ -6,7 +6,7 @@ This is the **current-state** methodology of Global Energy Map: for every map la
 
 | Layer | Source | As of | Features | Follows the year slider | Units |
 |---|---|---|---|---|---|
-| Reserves (country) | Energy Institute Statistical Review | 2025 edition | 1990–2020, country-year | Yes, to 2020; 2020 value shown for 2021–2024 | oil: billion bbl · gas: Tcm |
+| Reserves (country) | Energy Institute Statistical Review | 2026 edition | 1990–2020, country-year | Yes, to 2020; 2020 value shown for 2021–2024 | oil: billion bbl · gas: Tcm |
 | Basins | NETL GOGI | 2026-05-17 snapshot | 1,046 polygons | No | area km² |
 | Extraction sites | GEM GOGET | 2026-03 | 7,055 | Partly — 32 % dated | — (no capacity) |
 | Oil pipelines | GEM GOIT | 2025-04-09 | 1,185 | Partly — 64 % dated | kb/d |

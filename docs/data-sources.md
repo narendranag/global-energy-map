@@ -30,7 +30,7 @@ Categories:
 
 - **URL:** https://www.energyinst.org/statistical-review/resources-and-data-downloads
 - **License:** free to quote with attribution; the EI asks for permission before extensive reproduction of its tables, and S&P Global-sourced data may not be redistributed ([About page](https://www.energyinst.org/statistical-review/about)). Shown in the app, not offered for download.
-- **As-of:** 2025-06-26 (2025 edition)
+- **As-of:** 2026-07-01 (2026 edition, 75th)
 - **Where it lands:** `country_year_series.parquet`
 - **Layers/scenarios using it:** reserves choropleth, gas reserves overlay, country-level production tooltips
 
@@ -42,7 +42,7 @@ Categories:
 **What it supports:** authoritative country-level reserves and production trends, the de facto canonical reference for international oil/gas comparisons. Used by IEA, OPEC ASB, and academic literature.
 
 **Coverage gaps:**
-- **Reserves freeze at 2020** — the EI 2025 edition refreshed production figures through 2024 but did not update reserves tables. Post-2020 years carry the 2020 reserves figure as-is. Apparent post-2020 reserves changes are display artifacts.
+- **Reserves freeze at 2020** — checked again on the 2026 (75th) edition: production now runs through 2025, but the reserves tables still end at "at end 2020". Post-2020 years carry the 2020 reserves figure as-is. Apparent post-2020 reserves changes are display artifacts.
 - Country aggregation only — no sub-national, no per-field, no per-basin breakdown.
 - No price or value data (we only pull volumes).
 

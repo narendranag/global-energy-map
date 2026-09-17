@@ -36,6 +36,30 @@ uv run python -m scripts.ingest.netl_gogi storage ports      # NETL: chosen laye
 
 Ingests skip files that already exist unless given `--force` (NETL and the `lng_t3` extract always re-fetch / re-extract). Most use a new file name per release, so a new release downloads alongside the old one and the transforms pick the newest by file name (`scripts/common/paths.py: latest`). Move superseded raw files out of `data/raw/<source>/` if you want to be certain which one is used.
 
+## Archived source snapshots (Cloudflare R2)
+
+Some build inputs can no longer be downloaded from their publisher: GEM emptied its public CDN and answers 410 at the origin, and the EI workbook is Cloudflare-gated. Those files are archived to the R2 bucket **`global-energy-map-raw`**, which for the GOIT/GGIT snapshots is the *only* copy besides this machine. `MANIFEST.md` in the bucket lists every key, its size and its sha256.
+
+This is build-time only — the app never reads the bucket, and nothing in `public/data/` depends on it.
+
+```bash
+set -a; . ~/.config/secrets.env; set +a
+export AWS_ACCESS_KEY_ID="$R2_ACCESS_KEY_ID" AWS_SECRET_ACCESS_KEY="$R2_SECRET_ACCESS_KEY" AWS_DEFAULT_REGION=auto
+
+# what is archived
+aws s3 ls s3://global-energy-map-raw/ --recursive --human-readable --endpoint-url "$R2_ENDPOINT"
+
+# restore everything into data/raw/ (keys mirror the data/raw/ layout)
+aws s3 sync s3://global-energy-map-raw/ data/raw/ --exclude MANIFEST.md --endpoint-url "$R2_ENDPOINT"
+
+# add a new file
+aws s3 cp data/raw/<dir>/<file> s3://global-energy-map-raw/<dir>/<file> --endpoint-url "$R2_ENDPOINT"
+```
+
+After restoring, `uv run python -m scripts.build_all` rebuilds `public/data/` from scratch. Verify against the manifest's sha256 if a build output looks unexpected.
+
+Deliberately **not** archived, because they are still publicly fetchable: BACI (CEPII), LNG-T3 (Zenodo, md5-pinned in the source pin), NETL (live ArcGIS), OSM (live Overpass), and GEM's `goit-ggit-pipeline-routes` repo (GitHub). Archiving those would be a stale copy to maintain, not insurance.
+
 ## Per-source procedure
 
 For every source: (1) check the publisher's page for a new release and read its release notes and licence (update `LICENSE-DATA.md` if the terms changed); (2) edit the pin; (3) run the ingest; (4) run `build_all`; (5) run the checks below; (6) write the changelog entry; (7) commit the pin, the rebuilt `public/data/`, `src/lib/export/citations.generated.json` and the docs together.

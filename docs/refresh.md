@@ -15,6 +15,7 @@ Every upstream URL, release label and as-of date is in **`scripts/common/sources
 | `GEM_GOGET` | GEM Oil & Gas Extraction Tracker | per tracker release (irregular) | `gem_extraction` | `data/raw/gem_extraction/` |
 | `GEM_GOIT` | GEM Oil Infrastructure Tracker | per tracker release | `gem_oil_infra` | `data/raw/gem_oil_infra/` |
 | `GEM_GGIT` | GEM Gas Infrastructure Tracker | per tracker release | `gem_gas_infra` | `data/raw/gem_gas_infra/` |
+| `GEM_ROUTES` | GEM GOIT/GGIT pipeline route geometry (GitHub) | continuous | `gem_pipeline_routes` | `data/raw/gem_pipeline_routes/` |
 | `LNG_T3` | LNG-T3 (Zenodo) | per Zenodo version | `lng_t3` | `data/raw/lng_t3/<release>/` |
 | `NETL` | NETL GOGI ArcGIS layers | ad hoc (live, unversioned) | `netl_gogi` | `data/raw/netl/` |
 | `OSM` | OpenStreetMap refineries (Overpass) | quarterly | `osm_refineries` | `data/raw/osm_refineries/` |
@@ -73,6 +74,15 @@ RUN_NETWORK_TESTS=1 uv run python -m pytest tests/python/test_source_liveness.py
 ```
 
 Range-GETs every pinned file download and fails on a dead URL. Skipped by default, because it is the only test here that uses the network. A `403`/`429` is reported as a skip, not a pass — EI sits behind Cloudflare and can only be checked by hand. Run this **before** a refresh: the GEM breakage above went unnoticed for ~2.5 months because `public/data/` is committed, so the deployed site stayed healthy while the ingest path was broken.
+
+### GEM pipeline route geometry (continuous)
+
+`GlobalEnergyMonitor/goit-ggit-pipeline-routes` on GitHub is, per its own README, "the source of truth for route geometry" for both pipeline trackers, and the only GEM pipeline source still publicly maintained. **Geometry only** — capacity, status, country, operator and start year still come from the tracker snapshots in `data/raw/gem_{oil,gas}_infra/`. `build_pipelines` joins them on `pipeline_id` (GEM's ProjectID, `P0001`).
+
+- The ingest pulls the whole repo as one tarball (~66 MB) and extracts `data/individual-routes/{gas,liquid}-pipelines/*.geojson`; hydrogen is out of scope. 6,495 files, of which 5,205 carry real geometry — GEM writes a file for *every* project, using `"geometry": null` where there is no route to draw, and those fall back to the snapshot geometry rather than blanking the pipeline.
+- It is a moving branch, so `release`/`as_of` are the retrieval date. Re-running the ingest with `--force` and bumping both is the whole refresh.
+- Current coverage: 96% of oil rows, 97% of gas.
+- **Coordinate precision matters here.** The route repo stores far more decimal places than the old CDN snapshots. Writing them verbatim cost 35% more bytes for ~5% more vertices, so the sidecar is written at `COORDINATE_PRECISION=6` (~0.11 m, still ~4,500x finer than the 500 m simplification). Dropping to 5 saves another ~500 KB if the budget needs it.
 
 ### LNG-T3 (per Zenodo version)
 - Check the concept DOI (`extra["concept_doi"]`) for a newer version. Pin its record id in `LNG_T3_RECORD_ID`, `release` (the label becomes the raw directory and every row's `source_version`), `as_of` (publication date) and the per-CSV `md5:` values from `https://zenodo.org/api/records/<id>`.

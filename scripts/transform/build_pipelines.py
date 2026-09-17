@@ -53,13 +53,14 @@ from shapely.geometry.collection import GeometryCollection
 
 from scripts.common.iso3 import gem_endpoints_iso3
 from scripts.common.paths import latest
-from scripts.common.sources import GEM_GGIT, GEM_GOIT
+from scripts.common.sources import GEM_GGIT, GEM_GOIT, GEM_ROUTES
 
 OUT = Path("data/derived/pipelines.parquet")
 OUT_GEOJSON = Path("public/data/pipelines.geojson")
 
 OIL_RAW_DIR = GEM_GOIT.raw_dir
 GAS_RAW_DIR = GEM_GGIT.raw_dir
+ROUTES_RAW_DIR = GEM_ROUTES.raw_dir
 
 OIL_SOURCE = "Global Energy Monitor — Global Oil Infrastructure Tracker"
 GAS_SOURCE = "Global Energy Monitor — Global Gas Infrastructure Tracker"
@@ -257,6 +258,62 @@ def _load_gas_pipelines() -> gpd.GeoDataFrame:
 
 
 # ---------------------------------------------------------------------------
+# Route geometry overlay
+# ---------------------------------------------------------------------------
+
+
+def load_route_geometries(routes_dir: Path | None = None) -> dict[str, object]:
+    """``{pipeline_id: geometry}`` from GEM's pipeline-routes repo.
+
+    GEM's tracker snapshots and its route repo have drifted apart: the CDN
+    that served the snapshots is gone (docs/refresh.md), while the route repo
+    is still maintained, so its geometry is current and full-resolution where
+    the snapshot's is neither.
+
+    The repo gives every project a file even when it has no route — a capacity
+    expansion with no new pipe, or one nobody has traced yet — writing
+    ``"geometry": null``. Those are skipped here so the caller falls back to
+    the snapshot geometry rather than blanking the pipeline.
+    """
+    routes_dir = routes_dir or ROUTES_RAW_DIR
+    out: dict[str, object] = {}
+    for path in sorted(routes_dir.rglob("*.geojson")):
+        pipeline_id = path.stem
+        # Compressor-station sidecars are points, not routes.
+        if pipeline_id.endswith("-compressor-stations"):
+            continue
+        try:
+            with open(path) as fh:
+                fc = json.load(fh)
+        except (OSError, json.JSONDecodeError):
+            print(f"[routes] unreadable, skipping: {path}", file=sys.stderr)
+            continue
+        geoms = [
+            shapely.geometry.shape(f["geometry"])
+            for f in fc.get("features", [])
+            if f.get("geometry")
+        ]
+        geoms = [g for g in geoms if not g.is_empty]
+        if not geoms:
+            continue
+        out[pipeline_id] = geoms[0] if len(geoms) == 1 else shapely.union_all(geoms)
+    return out
+
+
+def apply_route_geometries(g: gpd.GeoDataFrame, routes: dict[str, object], label: str) -> None:
+    """Swap in route-repo geometry where we have it, in place. Logs coverage."""
+    ids = g["pipeline_id"]
+    matched = ids.isin(routes.keys())
+    g.loc[matched, "geometry"] = [routes[i] for i in ids[matched]]
+    n, total = int(matched.sum()), len(g)
+    print(
+        f"[{label}] route geometry applied to {n}/{total} ({n / total:.1%}); "
+        f"{total - n} keep their tracker-snapshot geometry",
+        file=sys.stderr,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -279,6 +336,11 @@ def main() -> None:
 
     gas = _load_gas_pipelines()
     print(f"gas rows: {len(gas)}", file=sys.stderr)
+
+    routes = load_route_geometries()
+    print(f"[routes] loaded {len(routes)} route geometries", file=sys.stderr)
+    apply_route_geometries(oil, routes, "oil")
+    apply_route_geometries(gas, routes, "gas")
 
     combined = gpd.GeoDataFrame(
         pd.concat([oil, gas], ignore_index=True),
@@ -324,10 +386,18 @@ def main() -> None:
     sidecar["geometry"] = merge_line_parts(sidecar.geometry).simplify(
         tolerance=SIMPLIFY_TOLERANCE_DEG, preserve_topology=True
     )
-    sidecar.to_file(OUT_GEOJSON, driver="GeoJSON")
+    # GEM's route repo stores coordinates at far more decimal places than the
+    # CDN snapshots did. Writing them verbatim cost 35% more bytes (7.9 → 10.6
+    # MB) for ~5% more vertices — precision, not detail. Six places is ~0.11 m,
+    # still ~4,500x finer than the 500 m simplification above, so nothing
+    # visible is lost and the sidecar stays the size it was. (Five places, ~1.1
+    # m, is another 500 KB if the budget ever needs it.)
+    COORDINATE_PRECISION = 6
+    sidecar.to_file(OUT_GEOJSON, driver="GeoJSON", COORDINATE_PRECISION=COORDINATE_PRECISION)
     print(
         f"wrote {OUT_GEOJSON} ({OUT_GEOJSON.stat().st_size // 1024} KB; "
-        f"simplified at tolerance={SIMPLIFY_TOLERANCE_DEG})"
+        f"simplified at tolerance={SIMPLIFY_TOLERANCE_DEG}, "
+        f"coordinate precision={COORDINATE_PRECISION})"
     )
 
 

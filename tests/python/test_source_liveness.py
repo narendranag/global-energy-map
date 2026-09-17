@@ -28,7 +28,7 @@ pytestmark = pytest.mark.network
 # Pins whose download_url is a direct file fetch, so a HEAD/range GET is
 # meaningful. The others are service endpoints that answer only real queries:
 # NETL is an ArcGIS FeatureServer root and OSM is an Overpass POST endpoint.
-_FILE_DOWNLOAD_KEYS = {"ei", "baci", "gem_goget", "gem_goit", "gem_ggit", "lng_t3"}
+_FILE_DOWNLOAD_KEYS = {"ei", "baci", "gem_goget", "gem_goit", "gem_ggit", "gem_routes", "lng_t3"}
 
 _OK = {200, 206}
 # Cloudflare and friends answer bots with 403 rather than telling us the file
@@ -66,6 +66,15 @@ def _status(url: str) -> int:
 @pytest.mark.parametrize("pin", _pins(), ids=[p.key for p in _pins()])
 def test_pinned_download_url_resolves(pin: SourcePin) -> None:
     status = _status(pin.download_url)
+    if pin.extra.get("download_status") == "gone":
+        # Known-dead upstream, kept as a tombstone: we still build from the
+        # local snapshot. Assert it is *still* dead rather than passing it —
+        # if GEM republishes, this fails and tells us to re-pin.
+        assert status not in _OK, (
+            f"{pin.key} is marked download_status=gone but now returns HTTP {status}. "
+            f"Upstream is back: re-pin it and drop the marker."
+        )
+        pytest.skip(f"{pin.key}: upstream gone (HTTP {status}); building from the local snapshot")
     if status in _INCONCLUSIVE:
         pytest.skip(f"{pin.key}: HTTP {status} — bot-blocked, check by hand ({pin.landing_url})")
     assert status in _OK, (

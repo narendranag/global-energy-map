@@ -120,6 +120,12 @@ GEM_GOIT = SourcePin(
         "https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/GOIT/2025-03/goit_2025-04-09.geojson"
     ),
     dest_filename="goit_2025-04-09.geojson",
+    extra={
+        # GEM emptied this bucket around 2026-07-02; the URL above is a
+        # tombstone kept for provenance. The snapshot in raw_dir is the last
+        # public copy we know of — see docs/refresh.md before deleting it.
+        "download_status": "gone",
+    },
 )
 
 GEM_GGIT = SourcePin(
@@ -139,6 +145,33 @@ GEM_GGIT = SourcePin(
         "https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggit/2026-03/ggit_map_2026-02-20.geojson"
     ),
     dest_filename="ggit_map_2026-02-20.geojson",
+    extra={
+        # GEM emptied this bucket around 2026-07-02; the URL above is a
+        # tombstone kept for provenance. The snapshot in raw_dir is the last
+        # public copy we know of — see docs/refresh.md before deleting it.
+        "download_status": "gone",
+    },
+)
+
+# ── GEM pipeline route geometry (GitHub) ───────────────────────────────────
+# Geometry only. Attributes still come from GEM_GOIT / GEM_GGIT above; the two
+# are joined on pipeline_id (GEM's ProjectID, "P0001"). This repo is the only
+# GEM pipeline source still publicly maintained — see docs/refresh.md.
+GEM_ROUTES = SourcePin(
+    key="gem_routes",
+    name="Global Energy Monitor — GOIT/GGIT pipeline route geometries",
+    # A moving branch, so the pin is the retrieval date of data/raw/gem_pipeline_routes/.
+    release="2026-09-17",
+    as_of="2026-09-17",
+    licence="CC BY 4.0",
+    landing_url="https://github.com/GlobalEnergyMonitor/goit-ggit-pipeline-routes",
+    terms_url=GEM_TERMS,
+    cadence="continuous (pull requests from GEM researchers)",
+    raw_dir=Path("data/raw/gem_pipeline_routes"),
+    ingest="gem_pipeline_routes",
+    download_url=(
+        "https://codeload.github.com/GlobalEnergyMonitor/goit-ggit-pipeline-routes/tar.gz/refs/heads/main"
+    ),
 )
 
 # ── LNG-T3 (Zhou, C. 2026, Zenodo) ───────────────────────────────────────
@@ -234,6 +267,7 @@ ALL: tuple[SourcePin, ...] = (
     GEM_GOGET,
     GEM_GOIT,
     GEM_GGIT,
+    GEM_ROUTES,
     LNG_T3,
     NETL,
     OSM,

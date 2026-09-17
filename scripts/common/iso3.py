@@ -89,6 +89,20 @@ EI_NAME_TO_ISO3: dict[str, str] = {
 # Global Energy Monitor (extraction tracker, oil infrastructure tracker)
 GEM_NAME_TO_ISO3: dict[str, str] = {
     # Single-country entries
+    # Added for the GOGET March 2026 release, which covers countries the
+    # July 2023 file did not. "Republic of the Congo" is Congo-Brazzaville
+    # (COG), distinct from the DRC (COD) already mapped below.
+    "Bahrain": "BHR",
+    "Barbados": "BRB",
+    "Cameroon": "CMR",
+    "Gabon": "GAB",
+    "Madagascar": "MDG",
+    "Mongolia": "MNG",
+    "Palestine": "PSE",
+    "Republic of the Congo": "COG",
+    "Suriname": "SUR",
+    "Yemen": "YEM",
+    "Zimbabwe": "ZWE",
     "Algeria": "DZA",
     "Angola": "AGO",
     "Argentina": "ARG",

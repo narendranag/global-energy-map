@@ -33,7 +33,7 @@
       "source_name": "Global Energy Monitor",
       "source_url": "https://globalenergymonitor.org/projects/global-oil-gas-extraction-tracker/",
       "license": "CC BY 4.0",
-      "as_of": "2023-07-01",
+      "as_of": "2026-03-01",
       "layers": [
         "extraction"
       ],
@@ -42,9 +42,9 @@
       "redistributable": true,
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
-      "rows": 5008,
-      "bytes": 639474,
-      "sha256": "6ac899d477c52c86eb88cbbd4b9edcb5b1708b6514f812788a7d764d36db5af0"
+      "rows": 7055,
+      "bytes": 725898,
+      "sha256": "3bf379b7ed25d3b26c71f82df90f7ff4264258a639de985d0befd48ef9595121"
     },
     {
       "id": "netl_refineries",
@@ -64,8 +64,8 @@
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable. The refineries layer includes those rows too, so it is view-only.",
       "rows": 1075,
-      "bytes": 639474,
-      "sha256": "6ac899d477c52c86eb88cbbd4b9edcb5b1708b6514f812788a7d764d36db5af0"
+      "bytes": 725898,
+      "sha256": "3bf379b7ed25d3b26c71f82df90f7ff4264258a639de985d0befd48ef9595121"
     },
     {
       "id": "osm_refineries",
@@ -85,8 +85,8 @@
       "downloadable": false,
       "download_note": "ODbL (share-alike) rows; downloads are limited to CC BY 4.0 and public-domain sources, so these rows are left out of assets_open.parquet (the NETL refinery rows are in it).",
       "rows": 88,
-      "bytes": 639474,
-      "sha256": "6ac899d477c52c86eb88cbbd4b9edcb5b1708b6514f812788a7d764d36db5af0"
+      "bytes": 725898,
+      "sha256": "3bf379b7ed25d3b26c71f82df90f7ff4264258a639de985d0befd48ef9595121"
     },
     {
       "id": "netl_storage",
@@ -106,8 +106,8 @@
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
       "rows": 7733,
-      "bytes": 639474,
-      "sha256": "6ac899d477c52c86eb88cbbd4b9edcb5b1708b6514f812788a7d764d36db5af0"
+      "bytes": 725898,
+      "sha256": "3bf379b7ed25d3b26c71f82df90f7ff4264258a639de985d0befd48ef9595121"
     },
     {
       "id": "netl_ports",
@@ -127,8 +127,8 @@
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
       "rows": 3694,
-      "bytes": 639474,
-      "sha256": "6ac899d477c52c86eb88cbbd4b9edcb5b1708b6514f812788a7d764d36db5af0"
+      "bytes": 725898,
+      "sha256": "3bf379b7ed25d3b26c71f82df90f7ff4264258a639de985d0befd48ef9595121"
     },
     {
       "id": "lng_t3_terminals",
@@ -148,8 +148,8 @@
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
       "rows": 305,
-      "bytes": 639474,
-      "sha256": "6ac899d477c52c86eb88cbbd4b9edcb5b1708b6514f812788a7d764d36db5af0"
+      "bytes": 725898,
+      "sha256": "3bf379b7ed25d3b26c71f82df90f7ff4264258a639de985d0befd48ef9595121"
     },
     {
       "id": "gem_lng_terminals",
@@ -168,9 +168,9 @@
       "redistributable": true,
       "downloadable": false,
       "download_note": "assets.parquet also contains OpenStreetMap rows under ODbL (Open Database License), so the file is not offered as-is. These rows are in assets_open.parquet, which is downloadable.",
-      "rows": 7,
-      "bytes": 639474,
-      "sha256": "6ac899d477c52c86eb88cbbd4b9edcb5b1708b6514f812788a7d764d36db5af0"
+      "rows": 9,
+      "bytes": 725898,
+      "sha256": "3bf379b7ed25d3b26c71f82df90f7ff4264258a639de985d0befd48ef9595121"
     },
     {
       "id": "assets_open",
@@ -185,9 +185,9 @@
       "runtime": false,
       "redistributable": true,
       "downloadable": true,
-      "rows": 17822,
-      "bytes": 634178,
-      "sha256": "e9b64eb4b9a17cdb646ceca954f82479f4bc3197b7759e4dcc7cf9ac137cf353"
+      "rows": 19871,
+      "bytes": 720296,
+      "sha256": "1c1b1fa71d95c97364d4384758b8d9cbbd6421bfea3d710623cc4cd62d7dbbff"
     },
     {
       "id": "gem_oil_pipelines",
@@ -206,8 +206,8 @@
       "redistributable": true,
       "downloadable": true,
       "rows": 1185,
-      "bytes": 7891654,
-      "sha256": "009dca69ef047a70a803be050932bfcf0b778f1f209132a88a187518391cc484"
+      "bytes": 7891664,
+      "sha256": "fe5686bac2ad0663477b8264b829c2eac0a519edcb8a61fa7114ca261cf27c46"
     },
     {
       "id": "gem_gas_pipelines",
@@ -226,8 +226,8 @@
       "redistributable": true,
       "downloadable": true,
       "rows": 2772,
-      "bytes": 7891654,
-      "sha256": "009dca69ef047a70a803be050932bfcf0b778f1f209132a88a187518391cc484"
+      "bytes": 7891664,
+      "sha256": "fe5686bac2ad0663477b8264b829c2eac0a519edcb8a61fa7114ca261cf27c46"
     },
     {
       "id": "netl_basins",

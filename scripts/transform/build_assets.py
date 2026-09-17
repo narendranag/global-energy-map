@@ -6,7 +6,7 @@ assets.parquet is shared by five transforms, each of which owns one or more
 write), so re-running any one of them is safe and leaves the other kinds
 untouched. The full rebuild is ``uv run python -m scripts.build_all``.
 
-Source:  data/raw/gem_extraction/Global-Oil-and-Gas-Extraction-Tracker-July-2023.xlsx
+Source:  data/raw/gem_extraction/Global-Oil-and-Gas-Extraction-Tracker-March-2026.xlsx
          Sheet "Main data" (probed 2026-05-15):
            Unit ID, Unit name, Fuel type, Unit type, Country,
            Latitude, Longitude, Status, Operator, Production start year,
@@ -65,6 +65,11 @@ RAW_DIR = GEM_GOGET.raw_dir
 OUT_PATH = ASSETS_PATH
 SOURCE = "Global Energy Monitor – Global Oil and Gas Extraction Tracker"
 SOURCE_VERSION = GEM_GOGET.release  # pinned in scripts/common/sources.py
+
+# GEM renames sheets and columns between releases; keep the mapping here so a
+# refresh is a one-line edit rather than a hunt through the transform.
+SHEET = "Field-level main data"
+COLUMN_ALIASES = {"Unit Name": "Unit name", "Country/Area": "Country"}
 EXTRACTION_KIND = "extraction_site"
 # Capacity stays NULL, but the unit is declared so capacity_unit is consistent
 # per kind (matches the Phase 3-5 shipped file; see review R4).
@@ -82,11 +87,18 @@ def _coerce_year(val: object) -> int | None:
 
 
 def build(xlsx: Path | None = None) -> pd.DataFrame:
-    """Read GEM Main data sheet and return normalised assets DataFrame."""
+    """Read the GEM field-level sheet and return a normalised assets DataFrame.
+
+    GEM restructured the workbook for the March 2026 release: the single
+    "Main data" sheet became "Field-level main data" / "Project-level main
+    data", and two columns were renamed ("Unit name" → "Unit Name",
+    "Country" → "Country/Area"). We want one row per field, so we read the
+    field-level sheet; the project-level sheet has no "Unit ID" at all.
+    """
     if xlsx is None:
         xlsx = latest(RAW_DIR, "*.xlsx")
-    # Read the "Main data" sheet verbatim (all columns as-is)
-    df = pd.read_excel(xlsx, sheet_name="Main data")
+    df = pd.read_excel(xlsx, sheet_name=SHEET)
+    df = df.rename(columns=COLUMN_ALIASES)
 
     # --- Drop rows missing coordinates (383 of 5391) ---
     before = len(df)

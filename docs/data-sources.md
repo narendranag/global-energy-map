@@ -54,7 +54,7 @@ Categories:
 
 - **URL:** https://globalenergymonitor.org/projects/global-oil-gas-extraction-tracker/
 - **License:** CC BY 4.0 (attribution required: "Data: Global Energy Monitor, CC BY 4.0")
-- **As-of:** 2023-07-01 (July 2023 snapshot)
+- **As-of:** 2026-03-01 (March 2026 snapshot)
 - **Where it lands:** `assets.parquet` rows where `kind = 'extraction_site'`
 - **Layers/scenarios using it:** extraction-sites point layer (vintage-aware since Phase 5)
 
@@ -62,9 +62,9 @@ Categories:
 
 **Coverage gaps:**
 - **Capacity field is null across the entire snapshot.** GEM does publish capacity in a separate sheet with non-uniform units — left for a future ingest pass.
-- **Commissioned year populated only on 22%** (median 2002). The rest are undated. For time-aware filtering this means 78% of sites appear in all years.
+- **Commissioned year populated only on 32%** (median 2004). The rest are undated. For time-aware filtering this means 68% of sites appear in all years.
 - **Decommissioned year populated on 0%** — sites currently in GEM are presumed operating.
-- Snapshot is from July 2023; newer GEM releases require gated email-form access.
+- Snapshot is from March 2026. GEM has purged direct downloads from its own site (the origin answers 410 Gone) and emptied its public CDN, so this is sourced from the Internet Archive; newer releases need the gated email form or a fresh Wayback capture.
 
 **Update cadence:** GEM publishes irregular updates; we pin a specific release for reproducibility.
 

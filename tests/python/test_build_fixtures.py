@@ -35,8 +35,8 @@ def gem_xlsx(tmp_path: Path) -> Path:
     df = pd.DataFrame(
         {
             "Unit ID": ["OG0000001", "OG0000002", "OG0000003", "OG0000004"],
-            "Unit name": ["Ghawar", "Safaniya", "Nowhere", "Lost"],
-            "Country": ["Saudi Arabia", "Saudi Arabia", "Atlantis", "Saudi Arabia"],
+            "Unit Name": ["Ghawar", "Safaniya", "Nowhere", "Lost"],
+            "Country/Area": ["Saudi Arabia", "Saudi Arabia", "Atlantis", "Saudi Arabia"],
             "Latitude": [25.4, 28.0, 10.0, None],
             "Longitude": [49.6, 48.8, 10.0, 50.0],
             "Status": ["operating", None, "operating", "operating"],
@@ -45,7 +45,9 @@ def gem_xlsx(tmp_path: Path) -> Path:
         }
     )
     path = tmp_path / "goget.xlsx"
-    df.to_excel(path, sheet_name="Main data", index=False)
+    # Column and sheet names as GEM ships them since the March 2026 release;
+    # build_assets renames them via COLUMN_ALIASES.
+    df.to_excel(path, sheet_name="Field-level main data", index=False)
     return path
 
 

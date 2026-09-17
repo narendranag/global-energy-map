@@ -8,7 +8,7 @@ This is the **current-state** methodology of Global Energy Map: for every map la
 |---|---|---|---|---|---|
 | Reserves (country) | Energy Institute Statistical Review | 2025 edition | 1990–2020, country-year | Yes, to 2020; 2020 value shown for 2021–2024 | oil: billion bbl · gas: Tcm |
 | Basins | NETL GOGI | 2026-05-17 snapshot | 1,046 polygons | No | area km² |
-| Extraction sites | GEM GOGET | 2023-07 | 5,008 | Partly — 22 % dated | — (no capacity) |
+| Extraction sites | GEM GOGET | 2026-03 | 7,055 | Partly — 32 % dated | — (no capacity) |
 | Oil pipelines | GEM GOIT | 2025-04-09 | 1,185 | Partly — 64 % dated | kb/d |
 | Gas pipelines | GEM GGIT | 2026-02-20 | 2,772 | Partly — 74 % dated | bcm/y |
 | Refineries | NETL GOGI (primary) + OpenStreetMap | 2026-05 | 1,163 (1,075 + 88) | No | kb/d (30 % known) |
@@ -42,9 +42,9 @@ This is the **current-state** methodology of Global Energy Map: for every map la
 
 ### Extraction sites
 
-- **Source:** Global Energy Monitor, Global Oil & Gas Extraction Tracker (GOGET), July 2023 snapshot. CC BY 4.0.
-- **Coverage:** 5,008 oil and gas fields with location, status (4,795 operating, 123 in development, 77 discovered, 13 shut in), operator and country.
-- **Time:** `commissioned_year` is known for **1,087 of 5,008 (22 %)**; the other 78 % appear in every year.
+- **Source:** Global Energy Monitor, Global Oil & Gas Extraction Tracker (GOGET), March 2026 snapshot. CC BY 4.0.
+- **Coverage:** 7,055 oil and gas fields with location, status (6,055 operating, 407 discovered, 228 mothballed, 202 in development, 20 abandoned, 16 decommissioning, 9 cancelled), operator and country.
+- **Time:** `commissioned_year` is known for **2,279 of 7,055 (32 %)**; the other 68 % appear in every year.
 - **Gaps:** **no production or capacity** in this snapshot (GEM publishes production in separate sheets with non-uniform units; not ingested). Newer GEM releases are behind a sign-up form.
 - **Scenarios:** not used.
 

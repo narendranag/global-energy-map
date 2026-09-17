@@ -79,26 +79,28 @@ GEM_TERMS = "https://globalenergymonitor.org/creative-commons-public-license/"
 GEM_GOGET = SourcePin(
     key="gem_goget",
     name="Global Energy Monitor — Global Oil and Gas Extraction Tracker",
-    release="July 2023",
-    as_of="2023-07-01",
+    release="March 2026",
+    as_of="2026-03-01",
     licence="CC BY 4.0",
     landing_url="https://globalenergymonitor.org/projects/global-oil-gas-extraction-tracker/",
     terms_url=GEM_TERMS,
     cadence="per tracker release (irregular, roughly annual)",
     raw_dir=Path("data/raw/gem_extraction"),
     ingest="gem_extraction",
-    # The live download is behind GEM's email form; the pinned Wayback capture
-    # is the public copy. ``original_url`` is the CDX fallback target.
+    # GEM purged this file from its own site (the origin answers 410 Gone) and
+    # removed it from the public CDN, so Wayback is the only public copy. The
+    # ``id_`` suffix asks for the archived bytes rather than the Wayback frame.
+    # ``original_url`` is the CDX fallback target.
     download_url=(
-        "https://web.archive.org/web/20240321185306/"
-        "https://globalenergymonitor.org/wp-content/uploads/2023/08/"
-        "Global-Oil-and-Gas-Extraction-Tracker-July-2023.xlsx"
+        "https://web.archive.org/web/20260305063452id_/"
+        "https://globalenergymonitor.org/wp-content/uploads/2026/03/"
+        "Global-Oil-and-Gas-Extraction-Tracker-March-2026.xlsx"
     ),
-    dest_filename="Global-Oil-and-Gas-Extraction-Tracker-July-2023.xlsx",
+    dest_filename="Global-Oil-and-Gas-Extraction-Tracker-March-2026.xlsx",
     extra={
         "original_url": (
-            "https://globalenergymonitor.org/wp-content/uploads/2023/08/"
-            "Global-Oil-and-Gas-Extraction-Tracker-July-2023.xlsx"
+            "https://globalenergymonitor.org/wp-content/uploads/2026/03/"
+            "Global-Oil-and-Gas-Extraction-Tracker-March-2026.xlsx"
         ),
     },
 )

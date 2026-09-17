@@ -78,8 +78,8 @@ describe("parquet loaders (real files)", () => {
     for (const list of [a.extraction, a.refinery, a.lngExport, a.lngImport, a.storage, a.port]) {
       expect(list.length).toBeGreaterThan(0);
     }
-    expect(a.lngImport).toHaveLength(239);
-    expect(a.refinery).toHaveLength(1163);
+    expect(a.lngImport).toHaveLength(240);
+    expect(a.refinery).toHaveLength(1164);
     const dated = a.lngImport.find((t) => t.commissioned_year !== null);
     expect(typeof dated?.commissioned_year).toBe("number");
   });

@@ -181,7 +181,7 @@ export function entriesForTags(tags: readonly string[], catalog: Catalog): Catal
   return catalog.entries.filter((e) => e.layers.some((l) => want.has(l)));
 }
 
-/** "Global Energy Monitor — Oil & gas extraction sites (GEM), as of 2023-07-01. CC BY 4.0. <url>" */
+/** "Global Energy Monitor — Oil & gas extraction sites (GEM), as of 2026-03-01. CC BY 4.0. <url>" */
 export function sourceCitationLine(e: CatalogEntry): string {
   return `${e.source_name} — ${e.label}, as of ${e.as_of}. Licence: ${e.license}. ${e.source_url}`;
 }

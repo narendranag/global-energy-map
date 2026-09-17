@@ -75,8 +75,8 @@ describe("TIME_AWARE", () => {
       ports: "no",
       basins: "no",
     });
-    expect(TIME_AWARE_COVERAGE.extraction).toBe(22);
-    expect(TIME_AWARE_COVERAGE.lng_terminals).toBe(98);
+    expect(TIME_AWARE_COVERAGE.extraction).toBe(32);
+    expect(TIME_AWARE_COVERAGE.lng_terminals).toBe(97);
   });
 
   it("partial layers carry a coverage %, others do not", () => {
@@ -86,7 +86,7 @@ describe("TIME_AWARE", () => {
   });
 
   it("badge labels", () => {
-    expect(timeAwareLabel("extraction")).toBe("time: 22 %");
+    expect(timeAwareLabel("extraction")).toBe("time: 32 %");
     expect(timeAwareLabel("refineries")).toBe("static");
     expect(timeAwareLabel("lng_voyages")).toBe("time: 2020–24");
     expect(timeAwareLabel("reserves")).toBe("time: to 2020");

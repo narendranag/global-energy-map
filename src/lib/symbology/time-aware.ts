@@ -27,19 +27,19 @@ export const TIME_AWARE: Readonly<Record<LayerKey, TimeAwareLevel>> = {
 /**
  * Percent of rows that carry a vintage (start / commissioning year), or null
  * where the question does not apply (a year-keyed series, or no vintage at all).
- * Measured on public/data 2026-09-10: pipelines.geojson oil+NGL 760/1185,
- * gas 2058/2772; assets.parquet extraction 22 %, LNG terminals 305/312.
+ * Measured on public/data 2026-09-17: pipelines.geojson oil+NGL 760/1185,
+ * gas 2058/2772; assets.parquet extraction 2279/7055, LNG terminals 306/314.
  */
 export const TIME_AWARE_COVERAGE: Readonly<Record<LayerKey, number | null>> = {
   reserves: null,
   basins: null,
-  extraction: 22,
+  extraction: 32,
   pipelines: 64,
   refineries: null,
   storage: null,
   ports: null,
   gas_pipelines: 74,
-  lng_terminals: 98,
+  lng_terminals: 97,
   lng_voyages: null,
 };
 
@@ -47,13 +47,13 @@ export const TIME_AWARE_COVERAGE: Readonly<Record<LayerKey, number | null>> = {
 export const TIME_AWARE_NOTE: Readonly<Record<LayerKey, string>> = {
   reserves: "Yearly values 1990–2020 (EI Statistical Review); 2021–2024 show the 2020 value.",
   basins: "No dates in source — shown for every year.",
-  extraction: "Start year known for 22 % of sites; undated sites show in every year.",
+  extraction: "Start year known for 32 % of sites; undated sites show in every year.",
   pipelines: "Start year known for 64 % of oil pipelines; undated lines show in every year.",
   refineries: "No commissioning dates in source — shown for every year.",
   storage: "No dates in source — shown for every year.",
   ports: "No dates in source — shown for every year.",
   gas_pipelines: "Start year known for 74 % of gas pipelines; undated lines show in every year.",
-  lng_terminals: "Start year known for 98 % of terminals; undated terminals show in every year.",
+  lng_terminals: "Start year known for 97 % of terminals; undated terminals show in every year.",
   lng_voyages: "Voyages observed 2020–2024 only (LNG-T3); hidden outside that range.",
 };
 

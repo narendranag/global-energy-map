@@ -90,7 +90,7 @@ describe("layer tables", () => {
     const ctx = { viewUrl: "https://x/?year=2020", exported: "2026-09-10" };
     const csv = layerCsv(st, t, ctx);
     expect(csv).toMatch(/^# Global Energy Map — Extraction sites: features in service by 2020/);
-    expect(csv).toContain("# Source: Global Energy Monitor — Oil & gas extraction sites (GEM), as of 2023-07-01. Licence: CC BY 4.0.");
+    expect(csv).toContain("# Source: Global Energy Monitor — Oil & gas extraction sites (GEM), as of 2026-03-01. Licence: CC BY 4.0.");
     expect(csv).toContain("# Required attribution: Data: Global Energy Monitor, CC BY 4.0");
     expect(csv).toContain("asset_id,kind,name,country_iso3,lon,lat,");
     const gj = JSON.parse(layerGeoJson(st, t, ctx)) as { type: string; features: unknown[]; metadata: { sources: { license: string }[] } };

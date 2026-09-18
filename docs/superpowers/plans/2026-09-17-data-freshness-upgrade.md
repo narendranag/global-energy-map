@@ -86,11 +86,13 @@ Follow the per-source procedure in `docs/refresh.md` for each. These are indepen
 
 Each follows the established pattern exactly: one ingest under `scripts/ingest/`, one transform under `scripts/transform/`, a `SourcePin`, a `catalog.json` entry, a hardcoded path in a `src/lib/data/` loader, symbology in `src/lib/symbology/`, a `formatXTooltip`, and a Legend entry. No runtime provider calls.
 
-**B.1 — GIE AGSI/ALSI — DONE 2026-09-17** (`def9686`): 188,767 rows, 22 countries, daily, 2020-01-01 → present. Country level only; terminal-level deferred because ALSI facility names join to ours at only ~71 %. Data pipeline only — no map layer yet, since rendering a country-level daily series is a design decision. Original item:
+**B.1 — GIE AGSI/ALSI — DONE 2026-09-17** (`def9686`, layer in `4dcda2f`): 188,767 rows, 22 countries, daily, 2020-01-01 → present. Country level only; terminal-level deferred because ALSI facility names join to ours at only ~71 %. Ships as the "live" gas-storage choropleth (latest gas day, independent of the year slider). Original item:
 
 **B.1 — GIE AGSI/ALSI (highest value).** Daily EU gas storage fullness and LNG terminal send-out. This is the single biggest recency upgrade available for free: it turns the LNG layer from a static 2020–24 archive into something current for Europe. Register the key, add `GIE_API_KEY` to `~/.config/secrets.env`, build a `storage_daily` / `lng_terminal_daily` table keyed to existing terminal names where they join (name is already the runtime join key for LNG). Attribution string "GIE AGSI / ALSI" into the catalog and the footer.
 
-**B.2 — UN Comtrade monthly. BLOCKED on a decision (re-checked 2026-09-17).**
+**B.2 — UN Comtrade monthly — DONE 2026-09-17** (`8385c11`): 8,839 rows, crude + LNG imports, 2025-01 → 2026-05, keyed API (one call returns every reporter). Importer-declared, never merged with BACI; months under 50 reporters dropped as reporting lag. Data pipeline only — no map layer yet, since showing a monthly as-reported series beside the annual reconciled one is a presentation decision. The blocking note below is kept for the record; the key lifted the limits it describes.
+
+**B.2 — (superseded) BLOCKED on a decision (re-checked 2026-09-17).**
 
 Two findings change this item from "do it" to "decide first":
 
@@ -111,7 +113,7 @@ So the options are: register a free Comtrade API key for higher limits; restrict
 
 More than half the credibility problem is presentational. Whatever Tracks A and B achieve, the map should not let a visitor assume every layer is equally current.
 
-**C.1** Per-layer as-of surfaced in the Legend and LayerPanel, not only in tooltips — read from the bundled catalog, which already carries `as_of`.
+**C.1 — DONE (`4dcda2f`, Data vintage section in the LayerPanel, generated from the catalog).** Per-layer as-of surfaced in the Legend and LayerPanel, not only in tooltips — read from the bundled catalog, which already carries `as_of`.
 
 **C.2** A visible marker on layers more than N months old, using the same honesty principle as the existing "reserves frozen after 2020" badge.
 

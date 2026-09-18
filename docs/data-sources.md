@@ -286,7 +286,7 @@ Country-level daily storage fullness, gas in store, working volume, LNG send-out
 - **License:** UN Comtrade terms; re-dissemination limited, so view-only
 - **As-of:** retrieved 2026-09-17; months 2025-01 → 2026-05
 - **Where it lands:** `comtrade_monthly.parquet`
-- **Layers/scenarios using it:** none yet — ingested, not drawn
+- **Layers/scenarios using it:** Recent imports (Comtrade) — each country's latest 12 reported months, beside its BACI figure; never feeds the scenarios
 
 Importer-declared HS 2709 and HS 271111 imports by month. **Supplements BACI, never merged with it**: BACI is annual and reconciles both sides of every flow; this is one side, monthly, and reaches about 18 months further. Months with fewer than 50 reporters are dropped as reporting lag.
 

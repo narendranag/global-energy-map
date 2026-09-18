@@ -140,6 +140,7 @@ describe("legend", () => {
       "Oil",
       "Gas",
       "Shipping",
+      "Trade",
     ]);
     expect(legendSections(all, "LNG imports", 6).map((s) => s.title).at(-1)).toBe("Scenario");
     // Every layer key appears in exactly one group.

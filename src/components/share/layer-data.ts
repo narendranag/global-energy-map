@@ -60,6 +60,7 @@ export async function loadLayerTable(key: LayerKey, year: number): Promise<Expor
     case "reserves":
     case "refineries":
     case "gas_storage":
+    case "recent_imports": // UN Comtrade limits re-dissemination
       return null;
   }
 }

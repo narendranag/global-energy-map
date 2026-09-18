@@ -90,7 +90,7 @@ Each follows the established pattern exactly: one ingest under `scripts/ingest/`
 
 **B.1 — GIE AGSI/ALSI (highest value).** Daily EU gas storage fullness and LNG terminal send-out. This is the single biggest recency upgrade available for free: it turns the LNG layer from a static 2020–24 archive into something current for Europe. Register the key, add `GIE_API_KEY` to `~/.config/secrets.env`, build a `storage_daily` / `lng_terminal_daily` table keyed to existing terminal names where they join (name is already the runtime join key for LNG). Attribution string "GIE AGSI / ALSI" into the catalog and the footer.
 
-**B.2 — UN Comtrade monthly — DONE 2026-09-17** (`8385c11`): 8,839 rows, crude + LNG imports, 2025-01 → 2026-05, keyed API (one call returns every reporter). Importer-declared, never merged with BACI; months under 50 reporters dropped as reporting lag. Data pipeline only — no map layer yet, since showing a monthly as-reported series beside the annual reconciled one is a presentation decision. The blocking note below is kept for the record; the key lifted the limits it describes.
+**B.2 — UN Comtrade monthly — DONE 2026-09-17** (`8385c11`): 8,839 rows, crude + LNG imports, 2025-01 → 2026-05, keyed API (one call returns every reporter). Importer-declared, never merged with BACI; months under 50 reporters dropped as reporting lag. Shipped 2026-09-18 as the "Recent imports (Comtrade)" layer (user-chosen design): each country over its own latest 12 reported months, slider-independent, BACI shown beside it and never merged; incomplete windows and >2× BACI divergence flagged; China and Taiwan do not report monthly and show as no data. The blocking note below is kept for the record; the key lifted the limits it describes.
 
 **B.2 — (superseded) BLOCKED on a decision (re-checked 2026-09-17).**
 
@@ -105,7 +105,7 @@ So the options are: register a free Comtrade API key for higher limits; restrict
 
 **B.2 — UN Comtrade monthly.** Supplements, does not replace, BACI: BACI stays the harmonised annual backbone; Comtrade adds recent months so the trade layer is not two years stale. Must throttle (§1.4) and cache raw responses under `data/raw/comtrade/`. Decide and document how the two series are shown together without implying they are the same measurement — a `sourceGapNote`-style treatment, as already used for BACI year gaps.
 
-**B.3 — EIA.** Register the key (`EIA_API_KEY`). Two candidates: US weekly/monthly production series, and the previously deferred STEO shale-basin time series — the only authoritative open per-basin series found so far, which would give the basins layer real data instead of geometry alone.
+**B.3 — EIA — DONE 2026-09-18** (`cb4f61f`): US shale regions layer — STEO annual crude + marketed gas for Permian, Bakken, Eagle Ford, Haynesville, Appalachia, 2009–2025, history only (`history_through_year` pin). Drawn as EIA's own county-defined regions (DPR county list × Census 1:20m), because NETL's 88 US basin polygons have no names to join to. US weekly/monthly national production not ingested. Original: **B.3 — EIA.** Register the key (`EIA_API_KEY`). Two candidates: US weekly/monthly production series, and the previously deferred STEO shale-basin time series — the only authoritative open per-basin series found so far, which would give the basins layer real data instead of geometry alone.
 
 **Sequencing:** B.1 first (biggest gain, cleanest licence), then B.2, then B.3. Each is independently shippable; stop after any one if the value is not there.
 

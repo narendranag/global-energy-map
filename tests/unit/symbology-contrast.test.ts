@@ -26,6 +26,7 @@ import {
   pipelineColor,
   reservesRampColor,
   shaleRampColor,
+  recentImportsRampColor,
   type Rgb,
   type Rgba,
 } from "@/lib/symbology";
@@ -131,6 +132,17 @@ describe("US shale regions (EIA) as ground", () => {
     const c = contrast(MARKS.gasPipeline, gasTop);
     note({ pair: "gasPipeline / shale gas top", contrast: r2(c) });
     expect(c).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe("recent imports (Comtrade) as ground", () => {
+  it("pipelines keep contrast on the darkest import fills", () => {
+    const oilTop = over(recentImportsRampColor(1, "oil"), LAND);
+    const gasTop = over(recentImportsRampColor(1, "gas"), LAND);
+    for (const m of ["refineryOutline", "extractionOutline", "oilPipeline"] as const) {
+      expect(contrast(MARKS[m], oilTop)).toBeGreaterThanOrEqual(2.5);
+    }
+    expect(contrast(MARKS.gasPipeline, gasTop)).toBeGreaterThanOrEqual(2);
   });
 });
 

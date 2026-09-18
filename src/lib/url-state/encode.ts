@@ -30,6 +30,7 @@ const LAYER_KEYS: readonly (keyof LayerState)[] = [
   // a key anywhere but the end would re-map every previously shared link.
   "gas_storage",
   "shale_regions",
+  "recent_imports",
 ];
 
 export function encodeAppState(state: AppState): string {

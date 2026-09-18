@@ -24,6 +24,7 @@ const ALL_ON: LayerState = {
   lng_voyages: true,
   gas_storage: false,
   shale_regions: false,
+  recent_imports: false,
 };
 
 const ALL_OFF: LayerState = {
@@ -39,6 +40,7 @@ const ALL_OFF: LayerState = {
   lng_voyages: false,
   gas_storage: false,
   shale_regions: false,
+  recent_imports: false,
 };
 
 const DEFAULTS: AppState = {

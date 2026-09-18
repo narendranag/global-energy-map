@@ -15,7 +15,7 @@ The per-file licence, row count, size and sha256 are also listed on the live [Da
 | NETL Global Oil & Gas Infrastructure (US DOE) | US Government work (public domain); NETL's data portal lists it as Creative Commons Attribution | `assets.parquet`, `assets_open.parquet`, `basins.geojson` | Yes (`assets_open.parquet`, `basins.geojson`) | Data: NETL Global Oil & Gas Infrastructure (GOGI), US DOE |
 | US Energy Information Administration (STEO; DPR region counties) + US Census Bureau (county shapes) | US Government works, public domain | `shale_region_year.parquet`, `shale_regions.geojson` | Yes | Data: US Energy Information Administration (STEO); county shapes: US Census Bureau |
 | Gas Infrastructure Europe (AGSI + ALSI) | Free with registration; GIE's own terms, not an open licence | `gie_daily.parquet` | No (shown in the app only) | Data: GIE AGSI / ALSI |
-| UN Comtrade | UN Comtrade terms; re-dissemination limited | `comtrade_monthly.parquet` | No (not shown on the map yet) | Data: UN Comtrade |
+| UN Comtrade | UN Comtrade terms; re-dissemination limited | `comtrade_monthly.parquet` | No (shown in the app only) | Data: UN Comtrade |
 | Natural Earth | Public domain | `countries.geojson` | Yes | None required ("Made with Natural Earth" appreciated) |
 | OpenStreetMap (88 refinery rows) | ODbL 1.0 (share-alike) | `assets.parquet` only | No | © OpenStreetMap contributors, ODbL |
 | Energy Institute Statistical Review | EI terms: quote with attribution, permission for extensive reproduction | `country_year_series.parquet` | No (shown in the app only) | Data: Energy Institute Statistical Review of World Energy 2026 |

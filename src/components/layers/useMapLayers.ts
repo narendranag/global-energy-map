@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import type { Layer } from "@deck.gl/core";
 import type { AssetsByKind } from "@/lib/data/assets";
 import { loadGasStorage } from "@/lib/data/gas-storage";
+import { loadRecentImports } from "@/lib/data/recent-imports";
 import { loadReserves } from "@/lib/data/reserves";
 import { SHALE_METRIC, loadShaleRegionData, loadShaleRegionShapes } from "@/lib/data/shale-regions";
 import { useAsync } from "@/lib/data/useAsync";
@@ -34,6 +35,7 @@ import { buildRefineriesLayer } from "./RefineriesLayer";
 import { buildGasStorageLayer, gasStorageFeatures } from "./GasStorageChoropleth";
 import { buildReservesLayer, reservesFeatures } from "./ReservesChoropleth";
 import { buildShaleRegionsLayer, shaleRegionFeatures } from "./ShaleRegionsLayer";
+import { buildRecentImportsLayer, recentImportsFeatures } from "./RecentImportsChoropleth";
 import { buildStorageLayer } from "./StorageLayer";
 import type { TooltipContext } from "./tooltip";
 
@@ -82,8 +84,12 @@ export function useMapLayers({ layers, year, commodity, scenario, assets }: MapL
   const portsVisible = !isZoomGated("ports", zoom);
 
   // --- data -----------------------------------------------------------------
-  // Both choropleths need country polygons, so either layer pulls them.
-  const countries = useAsync(loadCountries, layers.reserves || layers.gas_storage ? [] : null);
+  // Every country choropleth needs the polygons, so any of them pulls them.
+  const countries = useAsync(
+    loadCountries,
+    layers.reserves || layers.gas_storage || layers.recent_imports ? [] : null,
+  );
+  const recentImports = useAsync(loadRecentImports, layers.recent_imports ? [commodity] : null);
   const gasStorage = useAsync(loadGasStorage, layers.gas_storage ? [] : null);
   const reserves = useAsync(loadReserves, layers.reserves ? [commodity, reservesDataYear(year)] : null);
   const basins = useAsync(loadBasins, layers.basins ? [] : null);
@@ -121,6 +127,18 @@ export function useMapLayers({ layers, year, commodity, scenario, assets }: MapL
   const gasStorageLayer = useMemo(
     () => (layers.gas_storage && gasStorageFc ? buildGasStorageLayer(gasStorageFc) : null),
     [layers.gas_storage, gasStorageFc],
+  );
+  // No year in the deps: the latest reported months, whatever the slider says.
+  const recentImportsFc = useMemo(
+    () =>
+      countries.data && recentImports.data ? recentImportsFeatures(countries.data, recentImports.data) : null,
+    [countries.data, recentImports.data],
+  );
+  const recentImportsMax = recentImports.data?.max ?? 0;
+  const recentImportsLayer = useMemo(
+    () =>
+      layers.recent_imports && recentImportsFc ? buildRecentImportsLayer(recentImportsFc, recentImportsMax) : null,
+    [layers.recent_imports, recentImportsFc, recentImportsMax],
   );
   const basinsLayer = useMemo(
     () => (layers.basins && basins.data ? buildBasinsLayer(basins.data) : null),
@@ -198,7 +216,7 @@ export function useMapLayers({ layers, year, commodity, scenario, assets }: MapL
     [showVoyages, positionedVoyages, voyageImpacts],
   );
 
-  // Z-order (bottom to top): basins, shale regions, gas storage, reserves, extraction, oil
+  // Z-order (bottom to top): basins, shale regions, recent imports, gas storage, reserves, extraction, oil
   // pipes, gas pipes, LNG voyage arcs, refineries, storage, ports, LNG
   // terminals. Gas storage sits under reserves so that with both on, the
   // reserves ramp — the one the year slider drives — stays legible on top.
@@ -207,6 +225,7 @@ export function useMapLayers({ layers, year, commodity, scenario, assets }: MapL
       [
         basinsLayer,
         shaleLayer,
+        recentImportsLayer,
         gasStorageLayer,
         reservesLayer,
         extractionLayer,
@@ -221,6 +240,7 @@ export function useMapLayers({ layers, year, commodity, scenario, assets }: MapL
     [
       basinsLayer,
       shaleLayer,
+      recentImportsLayer,
       gasStorageLayer,
       reservesLayer,
       extractionLayer,
@@ -240,6 +260,7 @@ export function useMapLayers({ layers, year, commodity, scenario, assets }: MapL
     layers.shale_regions && (!shaleShapes.ready || !shaleData.ready),
     layers.reserves && (!countries.ready || !reserves.ready),
     layers.gas_storage && (!countries.ready || !gasStorage.ready),
+    layers.recent_imports && (!countries.ready || !recentImports.ready),
     layers.extraction && assetsPending,
     layers.pipelines && !pipelines.ready,
     layers.gas_pipelines && !pipelines.ready,

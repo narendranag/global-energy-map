@@ -54,6 +54,7 @@ export function parseMode(raw: string | null): Mode | null {
 const NO_LAYERS: LayerState = {
   gas_storage: false,
   shale_regions: false,
+  recent_imports: false,
   reserves: false,
   basins: false,
   extraction: false,

@@ -118,7 +118,7 @@ test.describe("Layer panel", () => {
     const errors = collectConsoleErrors(page);
     await gotoReady(page, "/?layers=storage,ports");
     await expect(page.getByLabel("Storage hubs")).toBeChecked();
-    await expect(page.getByLabel("Ports")).toBeChecked();
+    await expect(page.getByLabel("Ports", { exact: true })).toBeChecked();
     expect(errors).toEqual([]);
   });
 
@@ -140,6 +140,14 @@ test.describe("Layer panel", () => {
     await gotoReady(page, "/?layers=shale_regions&year=2024&lon=-100&lat=34&z=4");
     await expect(page.getByLabel("US shale regions")).toBeChecked();
     expect(files.sort()).toEqual(["shale_region_year.parquet", "shale_regions.geojson"]);
+    expect(errors).toEqual([]);
+  });
+
+  test("recent imports: China reads as no data, not zero", async ({ page }) => {
+    const errors = collectConsoleErrors(page);
+    await gotoReady(page, "/?layers=recent_imports&commodity=oil&year=2024");
+    await expect(page.getByLabel("Recent imports (Comtrade)")).toBeChecked();
+    await expect(page.getByTestId("time-badge-recent_imports")).toHaveText("live");
     expect(errors).toEqual([]);
   });
 

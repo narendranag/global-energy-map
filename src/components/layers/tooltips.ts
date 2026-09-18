@@ -3,6 +3,7 @@ import { BASINS_LAYER_ID, formatBasinTooltip } from "./BasinPolygonsLayer";
 import { EXTRACTION_LAYER_ID, formatExtractionTooltip } from "./ExtractionPoints";
 import { GAS_STORAGE_LAYER_ID, formatGasStorageTooltip } from "./GasStorageChoropleth";
 import { SHALE_REGIONS_LAYER_ID, formatShaleRegionTooltip } from "./ShaleRegionsLayer";
+import { RECENT_IMPORTS_LAYER_ID, formatRecentImportsTooltip } from "./RecentImportsChoropleth";
 import { LNG_TERMINALS_LAYER_ID, formatLngTerminalTooltip } from "./LngTerminalsLayer";
 import { LNG_VOYAGES_LAYER_ID, formatLngVoyageTooltip } from "./LngVoyagesLayer";
 import { PIPELINE_LAYER_IDS, formatPipelineTooltip } from "./PipelinesLayer";
@@ -26,6 +27,7 @@ export const DECK_LAYER_IDS: Readonly<Record<LayerKey, string>> = {
   lng_voyages: LNG_VOYAGES_LAYER_ID,
   gas_storage: GAS_STORAGE_LAYER_ID,
   shale_regions: SHALE_REGIONS_LAYER_ID,
+  recent_imports: RECENT_IMPORTS_LAYER_ID,
 };
 
 // `never` parameter: each formatter takes its own row type; dispatch by layer
@@ -43,6 +45,7 @@ const FORMATTERS: Readonly<Record<LayerKey, TooltipFormatter<never>>> = {
   lng_voyages: formatLngVoyageTooltip,
   gas_storage: formatGasStorageTooltip,
   shale_regions: formatShaleRegionTooltip,
+  recent_imports: formatRecentImportsTooltip,
 };
 
 const BY_DECK_ID: ReadonlyMap<string, TooltipFormatter<never>> = new Map(

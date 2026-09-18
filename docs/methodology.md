@@ -18,6 +18,7 @@ This is the **current-state** methodology of Global Energy Map: for every map la
 | LNG terminals | LNG-T3 (primary) + GEM GGIT | 2026-04-01 / 2026-02-20 | 314 (305 + 9) | Yes — 97.5 % dated | Mtpa |
 | LNG voyages | LNG-T3 | 2026-04-01 | 17,592 voyages, 2020–2024 | Yes, 2020–2024 only | m³ of LNG |
 | Gas storage (EU) | GIE AGSI | daily, latest gas day | 20 countries | No — always the latest gas day | % full |
+| Recent imports | UN Comtrade (as reported) | monthly, to 2026-05 | each country's latest 12 months | No — always the latest months | Mt |
 | Scenario trade | CEPII BACI, HS 2709 + 271111 | V202601 | 53,727 country-pair-years, 1995–2024 | Yes | tonnes |
 | Scenario route shares | EIA / IEA / Argus (Kpler) / GEM, per row | 2026-09-11 | 18 shares + 54 intra-Gulf share-0 pairs | No — static | fraction |
 
@@ -149,6 +150,15 @@ Generated from the data catalog at build time, so it cannot drift from the files
 - **Scale:** the ramp tops out at 100 % and clamps above it. About 3 % of readings exceed 100 % (a site filled beyond its declared working volume); rescaling to the maximum would pale every ordinary country.
 - **Gaps:** country level only. ALSI facility names match our LNG terminal names for only about 71 % of terminals, so terminal-level send-out is not joined.
 - **Licence:** free with registration, attribution "GIE AGSI / ALSI"; not an open licence, so view-only (see [Licences](#licences)).
+
+### Recent imports (UN Comtrade)
+
+- **Source:** UN Comtrade monthly imports, HS 2709 (crude) and HS 271111 (LNG), January 2025 to the latest month with at least 50 reporters. File `comtrade_monthly.parquet`.
+- **What is drawn:** each country's imports over **its own latest 12 reported months**, in the commodity selected (crude in the oil view, LNG in the gas view). Countries file months apart — Korea, France and Singapore stopped at December 2025 while most reach May 2026 — so the tooltip names each country's window, and a shared window would have drawn a filing delay as a collapse in imports.
+- **As reported, not reconciled.** These are the importer's own declarations. BACI, which the scenarios use, reconciles both sides of every flow and is annual to 2024; the tooltip shows the country's BACI figure beside the Comtrade one, and the two are never added together or swapped.
+- **Gaps:** China and Taiwan — the largest and tenth-largest crude importers in BACI 2024 — file no monthly reports to Comtrade and draw as no data. A country with fewer than 12 reported months in its window gets a lighter "incomplete" fill and the tooltip gives the partial total. A complete total more than 2× off BACI is flagged in the tooltip; the largest such case by volume is Thailand's crude (117 Mt against BACI's 49 Mt for 2024).
+- **Time:** not affected by the year slider; it always shows the latest months.
+- **Licence:** UN Comtrade terms limit re-dissemination, so the layer is view-only and not downloadable.
 
 ### Country boundaries and basemap
 

@@ -73,6 +73,13 @@ export const PALETTE = {
   shaleGasLow: "#e4ebf6",
   shaleGasHigh: "#7f98cf",
 
+  // Recent imports (UN Comtrade) — country choropleth, one ramp per
+  // commodity in its family. Tops kept light for the pipes drawn over it.
+  importsOilLow: "#f4e6d6",
+  importsOilHigh: "#c98446",
+  importsGasLow: "#e3ebf4",
+  importsGasHigh: "#8ea4d4",
+
   // Scenario — red only.
   exposureLow: "#fcbba1",
   exposureHigh: "#99000d",
@@ -276,6 +283,43 @@ export function shaleRegionColor(value: number | null, max: number, commodity: "
 }
 
 // ---------------------------------------------------------------------------
+// Recent imports (UN Comtrade, as reported)
+// ---------------------------------------------------------------------------
+
+const IMPORTS_RAMP: Readonly<Record<"oil" | "gas", readonly [Rgb, Rgb]>> = {
+  oil: [hex(PALETTE.importsOilLow), hex(PALETTE.importsOilHigh)],
+  gas: [hex(PALETTE.importsGasLow), hex(PALETTE.importsGasHigh)],
+};
+const IMPORTS_ALPHA = 215;
+/** Fewer than 12 of 12 months reported: the lowest ramp step, faint, whatever the partial sum. */
+const IMPORTS_INCOMPLETE_ALPHA = 110;
+
+/** No monthly Comtrade reports (China, Taiwan …) — not the same as zero imports. */
+export const IMPORTS_NO_DATA_COLOR: Rgba = paletteRgba("noData", 90);
+
+export function recentImportsRampColor(t: number, commodity: "oil" | "gas", alpha = IMPORTS_ALPHA): Rgba {
+  const [lo, hi] = IMPORTS_RAMP[commodity];
+  const [r, g, b] = lerpRgb(lo, hi, Math.min(1, Math.max(0, t)));
+  return [Math.round(r), Math.round(g), Math.round(b), alpha];
+}
+
+/**
+ * Square-root ramp against the largest complete total. An incomplete window
+ * is not placed on the ramp at all — a partial sum would read as a small
+ * importer — and gets its own faint fill instead.
+ */
+export function recentImportsColor(
+  mt: number | null,
+  max: number,
+  commodity: "oil" | "gas",
+  complete: boolean,
+): Rgba {
+  if (mt === null || !Number.isFinite(mt)) return IMPORTS_NO_DATA_COLOR;
+  if (!complete) return recentImportsRampColor(0.15, commodity, IMPORTS_INCOMPLETE_ALPHA);
+  return recentImportsRampColor(max > 0 && mt > 0 ? Math.sqrt(mt / max) : 0, commodity);
+}
+
+// ---------------------------------------------------------------------------
 // Basins
 // ---------------------------------------------------------------------------
 
@@ -434,6 +478,8 @@ export type LayerKey = keyof LayerState;
 const RESERVES_LEGEND_STOPS: readonly Rgba[] = [0, 0.25, 0.5, 0.75, 1].map((t) => reservesRampColor(t));
 const SHALE_OIL_LEGEND_STOPS: readonly Rgba[] = [0, 0.25, 0.5, 0.75, 1].map((t) => shaleRampColor(t, "oil"));
 const SHALE_GAS_LEGEND_STOPS: readonly Rgba[] = [0, 0.25, 0.5, 0.75, 1].map((t) => shaleRampColor(t, "gas"));
+const IMPORTS_OIL_LEGEND_STOPS: readonly Rgba[] = [0, 0.25, 0.5, 0.75, 1].map((t) => recentImportsRampColor(t, "oil"));
+const IMPORTS_GAS_LEGEND_STOPS: readonly Rgba[] = [0, 0.25, 0.5, 0.75, 1].map((t) => recentImportsRampColor(t, "gas"));
 const GAS_STORAGE_LEGEND_STOPS: readonly Rgba[] = [0, 25, 50, 75, 100].map((p) => gasStorageColor(p));
 
 /**
@@ -454,6 +500,12 @@ export const LEGEND: Readonly<Record<LayerKey, readonly LegendItem[]>> = {
     { label: "US shale region crude output (oil view)", swatch: { kind: "gradient", stops: SHALE_OIL_LEGEND_STOPS } },
     { label: "US shale region gas output (gas view)", swatch: { kind: "gradient", stops: SHALE_GAS_LEGEND_STOPS } },
     { label: "No EIA data for the year", swatch: { kind: "fill", color: SHALE_NO_DATA_COLOR, outline: SHALE_OUTLINE } },
+  ],
+  recent_imports: [
+    { label: "Crude imports, latest 12 months (oil view)", swatch: { kind: "gradient", stops: IMPORTS_OIL_LEGEND_STOPS } },
+    { label: "LNG imports, latest 12 months (gas view)", swatch: { kind: "gradient", stops: IMPORTS_GAS_LEGEND_STOPS } },
+    { label: "Fewer than 12 months reported", swatch: { kind: "fill", color: recentImportsRampColor(0.15, "oil", 110) } },
+    { label: "No monthly reports to UN Comtrade", swatch: { kind: "fill", color: IMPORTS_NO_DATA_COLOR } },
   ],
   basins: [{ label: "Sedimentary basin", swatch: { kind: "fill", color: BASIN_FILL, outline: BASIN_LINE } }],
   extraction: [
@@ -499,6 +551,7 @@ export const LEGEND_GROUPS: readonly { readonly title: string; readonly keys: re
   { title: "Oil", keys: ["pipelines", "extraction", "refineries", "storage"] },
   { title: "Gas", keys: ["gas_pipelines", "lng_terminals", "lng_voyages", "gas_storage"] },
   { title: "Shipping", keys: ["ports"] },
+  { title: "Trade", keys: ["recent_imports"] },
 ];
 
 /**

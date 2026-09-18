@@ -32,6 +32,7 @@ export const LAYER_LABELS: Record<LayerKey, string> = {
   lng_voyages: "LNG voyages",
   gas_storage: "Gas storage (EU)",
   shale_regions: "US shale regions",
+  recent_imports: "Recent imports (Comtrade)",
 };
 
 /** Display order in the Share menu (matches the layer panel). */
@@ -48,10 +49,13 @@ export const LAYER_ORDER: readonly LayerKey[] = [
   "lng_terminals",
   "lng_voyages",
   "gas_storage",
+  "recent_imports",
 ];
 
 /** Catalog `layers` tags behind a map layer. */
 export function layerTags(key: LayerKey, commodity: Commodity): string[] {
+  // Comtrade + the BACI figure its tooltip quotes beside it.
+  if (key === "recent_imports") return ["trade_monthly", "trade"];
   if (key === "reserves") return commodity === "gas" ? ["reserves", "reserves:gas"] : ["reserves"];
   return [key];
 }

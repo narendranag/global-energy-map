@@ -79,6 +79,29 @@ BACI = SourcePin(
     download_url="https://www.cepii.fr/DATA_DOWNLOAD/baci/data/BACI_HS92_V202601.zip",
 )
 
+# ── UN Comtrade (monthly, as-reported) ─────────────────────────────────────
+# Supplements BACI rather than replacing it: BACI is the harmonised annual
+# backbone, Comtrade is as-reported and reaches ~18 months further forward.
+COMTRADE = SourcePin(
+    key="comtrade",
+    name="UN Comtrade (monthly, as reported)",
+    release="2026-09-17",  # retrieval date; the underlying months are in the data
+    as_of="2026-09-17",
+    licence="UN Comtrade terms; free tier, attribution required, re-dissemination limited",
+    landing_url="https://comtradeplus.un.org/",
+    terms_url="https://uncomtrade.org/docs/policy-on-use-and-re-dissemination/",
+    cadence="monthly, as reporters file (lags ~3-6 months and backfills)",
+    raw_dir=Path("data/raw/comtrade"),
+    ingest="comtrade_monthly",
+    download_url="https://comtradeapi.un.org/data/v1/get/C/M/HS",
+    extra={
+        # Starts where BACI's annual coverage ends, so the two do not overlap.
+        "series_start": "202501",
+        "series_end": "202608",
+        "api_key_env": "COMTRADE_API_KEY",
+    },
+)
+
 # ── Global Energy Monitor trackers ──────────────────────────────────────────
 GEM_TERMS = "https://globalenergymonitor.org/creative-commons-public-license/"
 
@@ -294,6 +317,7 @@ NATURAL_EARTH = SourcePin(
 ALL: tuple[SourcePin, ...] = (
     EI,
     BACI,
+    COMTRADE,
     GEM_GOGET,
     GEM_GOIT,
     GEM_GGIT,

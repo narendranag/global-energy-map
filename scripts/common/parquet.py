@@ -91,6 +91,22 @@ COUNTRY_YEAR_SCHEMA = pa.schema(
     ]
 )
 
+COMTRADE_MONTHLY_SCHEMA = pa.schema(
+    [
+        ("month", pa.date32()),
+        ("importer_iso3", _S),
+        ("exporter_iso3", _S),
+        ("hs_code", _S),
+        ("value_usd", pa.float64()),
+        ("qty", pa.float64()),
+        ("qty_unit", _S),
+        ("source", _S),
+        # Denormalised on purpose: a consumer reading one row can see how
+        # complete its month was, without needing a second table to find out.
+        ("reporters_in_month", pa.int64()),
+    ]
+)
+
 TRADE_FLOW_SCHEMA = pa.schema(
     [
         ("year", pa.int64()),
@@ -175,6 +191,7 @@ SCHEMAS: dict[str, pa.Schema] = {
     "country_year_series.parquet": COUNTRY_YEAR_SCHEMA,
     "gie_daily.parquet": GIE_DAILY_SCHEMA,
     "trade_flow.parquet": TRADE_FLOW_SCHEMA,
+    "comtrade_monthly.parquet": COMTRADE_MONTHLY_SCHEMA,
     "disruption_route.parquet": DISRUPTION_ROUTE_SCHEMA,
     "lng_voyage.parquet": LNG_VOYAGE_SCHEMA,
     "lng_trade_daily.parquet": LNG_TRADE_DAILY_SCHEMA,
@@ -198,6 +215,7 @@ REQUIRED: dict[str, tuple[str, ...]] = {
     "country_year_series.parquet": ("iso3", "year", "metric", "value", "unit", "source"),
     "gie_daily.parquet": ("iso3", "gas_day", "metric", "value", "unit", "source"),
     "trade_flow.parquet": ("year", "importer_iso3", "exporter_iso3", "hs_code", "source"),
+    "comtrade_monthly.parquet": ("month", "importer_iso3", "exporter_iso3", "hs_code", "source"),
     "disruption_route.parquet": ("disruption_id", "kind", "exporter_iso3", "share", "source"),
     "lng_voyage.parquet": (
         "voyage_id",

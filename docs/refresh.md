@@ -121,6 +121,21 @@ Range-GETs every pinned file download and fails on a dead URL. Skipped by defaul
 - Refinery dedup (`build_refineries`) is sensitive to NETL's duplicate listings; check `test_no_two_netl_refineries_within_1km_same_country`.
 - Storage is filtered to bulk-storage records (`build_storage.is_bulk_storage` drops EPA cleanup sites, SPCC plans, a state master list and transfer points). A NETL re-ingest can add new source categories; watch the transform's kept/dropped counts before accepting a large row-count move.
 
+### UN Comtrade (monthly, backfills)
+
+```bash
+set -a; . ~/.config/secrets.env; set +a          # COMTRADE_API_KEY
+uv run python -m scripts.ingest.comtrade_monthly --to $(date -v-3m +%Y%m)
+uv run python -m scripts.build_all
+```
+
+- One call per (period, commodity), ~50 s each, one JSON per call so an interrupted run resumes. Asking for both commodities at once took 213 s; three periods at once returned 500.
+- **Comtrade backfills.** A month arrives thin and fills in over roughly six months: mature months carry 68–78 reporters, 2026-08 carried one. `build_comtrade_monthly` drops months below `MIN_REPORTERS` (50) and prints what it dropped, and every surviving row carries its month's `reporters_in_month`. Re-running later picks up the backfill — use `--force` for months you already have.
+- **Two aggregation traps, both silent.** Comtrade returns each (reporter, partner) pair several times over, partitioned by customs procedure, mode of transport and second partner, *plus* a totals row; and 31 % of rows are `partnerCode == 0`, the reporter's world total. Summing either inflates everything — Germany's 2025 crude imports came out at $319bn against BACI's $42bn for 2024 before the fix. The transform keeps only `customsCode == "C00"`, `motCode == 0`, `partner2Code == 0`, and drops partner 0.
+- **Sanity-check against BACI after any refresh.** Per-country ratios should sit near 0.8–1.0. A ratio of 3 or 8 means a partition filter has stopped working, and nothing else will tell you.
+- Country codes are M49 numerics with the ISO fields null; the transform reuses BACI's shipped `country_codes_V*.csv` map rather than duplicating one.
+- Free keys are regenerated ad hoc and deactivated if the account goes unused, so a failing refresh may just need a new key from https://comtradedeveloper.un.org/.
+
 ### GIE AGSI + ALSI (daily)
 
 A rolling daily feed, so there is no "release" — the pin is the last gas day ingested, and a refresh is just re-running with a later `--to`.

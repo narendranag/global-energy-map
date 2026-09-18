@@ -78,6 +78,27 @@ OPEN_EXTRACTS: dict[str, str] = {"/data/assets.parquet": "assets_open.parquet"}
 
 REGISTRY: list[dict[str, Any]] = [
     {
+        "id": "comtrade_monthly",
+        "label": "Monthly crude + LNG imports (as reported)",
+        "path": "/data/comtrade_monthly.parquet",
+        "format": "parquet",
+        "source_name": "UN Comtrade",
+        "source_url": pins.COMTRADE.landing_url,
+        "license": "UN Comtrade terms; re-dissemination limited",
+        "as_of": pins.COMTRADE.as_of,
+        # Its own tag: this is a different measurement from BACI (as-reported,
+        # monthly, unreconciled), so it must never be silently swapped in for
+        # the trade layer the scenarios run on.
+        "layers": ["trade_monthly"],
+        "redistributable": False,
+        "download_note": (
+            "UN Comtrade limits re-dissemination of its data, so the monthly "
+            "series is shown in the app and not offered for download; get it "
+            "from https://comtradeplus.un.org/ with your own free key."
+        ),
+        "attribution": "Data: UN Comtrade",
+    },
+    {
         "id": "gie_daily",
         "label": "EU gas storage + LNG terminal daily series",
         "path": "/data/gie_daily.parquet",

@@ -38,6 +38,7 @@ TRANSFORMS: list[str] = [
     "build_country_year",
     "build_gie_daily",
     "build_trade_flow",
+    "build_comtrade_monthly",
     "build_assets",
     "build_refineries",
     "build_storage",

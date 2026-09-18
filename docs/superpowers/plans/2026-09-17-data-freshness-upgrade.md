@@ -86,7 +86,20 @@ Follow the per-source procedure in `docs/refresh.md` for each. These are indepen
 
 Each follows the established pattern exactly: one ingest under `scripts/ingest/`, one transform under `scripts/transform/`, a `SourcePin`, a `catalog.json` entry, a hardcoded path in a `src/lib/data/` loader, symbology in `src/lib/symbology/`, a `formatXTooltip`, and a Legend entry. No runtime provider calls.
 
+**B.1 — GIE AGSI/ALSI — DONE 2026-09-17** (`def9686`): 188,767 rows, 22 countries, daily, 2020-01-01 → present. Country level only; terminal-level deferred because ALSI facility names join to ours at only ~71 %. Data pipeline only — no map layer yet, since rendering a country-level daily series is a design decision. Original item:
+
 **B.1 — GIE AGSI/ALSI (highest value).** Daily EU gas storage fullness and LNG terminal send-out. This is the single biggest recency upgrade available for free: it turns the LNG layer from a static 2020–24 archive into something current for Europe. Register the key, add `GIE_API_KEY` to `~/.config/secrets.env`, build a `storage_daily` / `lng_terminal_daily` table keyed to existing terminal names where they join (name is already the runtime join key for LNG). Attribution string "GIE AGSI / ALSI" into the catalog and the footer.
+
+**B.2 — UN Comtrade monthly. BLOCKED on a decision (re-checked 2026-09-17).**
+
+Two findings change this item from "do it" to "decide first":
+
+1. **BACI is less stale than assumed.** `trade_flow.parquet` already runs 1995–**2024**, not 2023. The gain from Comtrade is therefore ~1.5 years, not the 2+ this plan originally claimed.
+2. **The keyless preview tier cannot produce global coverage.** `reporterCode=all` returns HTTP 400, omitting `reporterCode` returns 429, and single-reporter queries rate-limit under light sequential use. A global bilateral matrix needs ~200 reporters × N months × 2 HS codes, which that tier will not serve.
+
+So the options are: register a free Comtrade API key for higher limits; restrict scope to the top ~20–30 traders and disclose the coverage gap; or skip it, since BACI to 2024 is reasonable. Building a partially-covered trade layer without that decision would put an undisclosed gap into the most-cited layer, so it is not being done on initiative.
+
+*(original item below)*
 
 **B.2 — UN Comtrade monthly.** Supplements, does not replace, BACI: BACI stays the harmonised annual backbone; Comtrade adds recent months so the trade layer is not two years stale. Must throttle (§1.4) and cache raw responses under `data/raw/comtrade/`. Decide and document how the two series are shown together without implying they are the same measurement — a `sourceGapNote`-style treatment, as already used for BACI year gaps.
 

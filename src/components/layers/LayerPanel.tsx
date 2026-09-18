@@ -2,6 +2,8 @@
 import { useId, useState } from "react";
 import { TIME_AWARE, TIME_AWARE_NOTE, timeAwareLabel } from "@/lib/symbology/time-aware";
 import { Chevron } from "@/components/ui/Chevron";
+import { LAYER_LABELS } from "@/lib/export/layers";
+import { formatAsOf, layerVintages } from "@/lib/data/vintage";
 import { Legend } from "./Legend";
 
 export interface LayerState {
@@ -15,6 +17,7 @@ export interface LayerState {
   gas_pipelines: boolean;
   lng_terminals: boolean;
   lng_voyages: boolean;     // Phase 6
+  gas_storage: boolean;     // GIE AGSI — live, slider-independent
 }
 
 export interface LayerPanelProps {
@@ -48,13 +51,19 @@ const ROWS: readonly Row[] = [
   { kind: "toggle", key: "gas_pipelines", label: "Gas pipelines" },
   { kind: "toggle", key: "lng_terminals", label: "LNG terminals" },
   { kind: "toggle", key: "lng_voyages", label: "LNG voyages (2020–2024)" },
+  { kind: "toggle", key: "gas_storage", label: "Gas storage (EU)" },
 ];
 
-const BADGE_CLASS: Record<"yes" | "partial" | "no", string> = {
+const BADGE_CLASS: Record<"yes" | "partial" | "no" | "live", string> = {
   yes: "border-slate-400 bg-slate-100 text-slate-700",
   partial: "border-slate-300 bg-white text-slate-600",
   no: "border-transparent text-slate-600",
+  // Cool tint, matching the layer's own ramp, to read as "this is current".
+  live: "border-sky-600 bg-sky-50 text-sky-900",
 };
+
+// Static: the catalog is bundled at build, so this never changes at runtime.
+const VINTAGES = layerVintages(LAYER_LABELS);
 
 /**
  * Left panel: the "Layers" disclosure (toggles + time-aware badges) above the
@@ -63,9 +72,11 @@ const BADGE_CLASS: Record<"yes" | "partial" | "no", string> = {
 export function LayerPanel({ state, onChange, scenarioNoun, defaultOpen = true }: LayerPanelProps) {
   const [open, setOpen] = useState(defaultOpen);
   const [phoneOpen, setPhoneOpen] = useState(false);
+  const [vintageOpen, setVintageOpen] = useState(false);
   const uid = useId();
   const listId = `${uid}-layers`;
   const bodyId = `${uid}-body`;
+  const vintageId = `${uid}-vintage`;
   const activeCount = Object.values(state).filter(Boolean).length;
 
   return (
@@ -147,6 +158,29 @@ export function LayerPanel({ state, onChange, scenarioNoun, defaultOpen = true }
         <div className="mt-3 border-t border-slate-200 pt-2">
           <h2 className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-600">Legend</h2>
           <Legend layers={state} scenarioNoun={scenarioNoun} />
+        </div>
+        <div className="mt-3 border-t border-slate-200 pt-2">
+          <button
+            type="button"
+            className="flex w-full items-center gap-2 text-left text-xs font-medium uppercase tracking-wide text-slate-600 hover:text-slate-900"
+            aria-expanded={vintageOpen}
+            aria-controls={vintageId}
+            onClick={() => {
+              setVintageOpen((v) => !v);
+            }}
+          >
+            <Chevron open={vintageOpen} />
+            <span>Data vintage</span>
+          </button>
+          {/* Generated from catalog.json, so it cannot drift from the data. */}
+          <dl id={vintageId} hidden={!vintageOpen} className="mt-2 space-y-1" data-testid="data-vintage">
+            {VINTAGES.map((v) => (
+              <div key={v.key} className="flex items-baseline gap-2 text-[11px] leading-4">
+                <dt className="min-w-0 flex-1 truncate text-slate-700">{v.label}</dt>
+                <dd className="shrink-0 tabular-nums text-slate-600">{formatAsOf(v.asOf)}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </div>
     </section>

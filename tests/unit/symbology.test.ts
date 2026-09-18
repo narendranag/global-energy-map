@@ -33,6 +33,7 @@ const ALL_LAYER_KEYS: readonly LayerKey[] = [
   "gas_pipelines",
   "lng_terminals",
   "lng_voyages",
+  "gas_storage",
 ];
 
 function monotonic(xs: readonly number[], dir: "up" | "down"): boolean {

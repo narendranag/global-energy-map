@@ -22,6 +22,7 @@ const ALL_ON: LayerState = {
   gas_pipelines: true,
   lng_terminals: true,
   lng_voyages: true,
+  gas_storage: false,
 };
 
 const ALL_OFF: LayerState = {
@@ -35,6 +36,7 @@ const ALL_OFF: LayerState = {
   gas_pipelines: false,
   lng_terminals: false,
   lng_voyages: false,
+  gas_storage: false,
 };
 
 const DEFAULTS: AppState = {

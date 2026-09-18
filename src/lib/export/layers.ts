@@ -30,6 +30,7 @@ export const LAYER_LABELS: Record<LayerKey, string> = {
   gas_pipelines: "Gas pipelines",
   lng_terminals: "LNG terminals",
   lng_voyages: "LNG voyages",
+  gas_storage: "Gas storage (EU)",
 };
 
 /** Display order in the Share menu (matches the layer panel). */

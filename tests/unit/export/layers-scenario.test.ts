@@ -48,6 +48,7 @@ describe("layer export policy (shipped catalog)", () => {
     const layers = {
       reserves: true, basins: false, extraction: false, pipelines: true, refineries: false,
       storage: false, ports: false, gas_pipelines: true, lng_terminals: false, lng_voyages: false,
+      gas_storage: false,
     };
     expect(enabledLayers(layers)).toEqual(["reserves", "pipelines", "gas_pipelines"]);
   });

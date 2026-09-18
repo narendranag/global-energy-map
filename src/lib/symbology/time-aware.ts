@@ -8,7 +8,7 @@ import type { LayerState } from "@/components/layers/LayerPanel";
 
 type LayerKey = keyof LayerState;
 
-export type TimeAwareLevel = "yes" | "partial" | "no";
+export type TimeAwareLevel = "yes" | "partial" | "no" | "live";
 
 /** Per-layer time-awareness: "yes" (fully year-keyed), "partial" (some rows dated), "no". */
 export const TIME_AWARE: Readonly<Record<LayerKey, TimeAwareLevel>> = {
@@ -22,6 +22,9 @@ export const TIME_AWARE: Readonly<Record<LayerKey, TimeAwareLevel>> = {
   gas_pipelines: "partial",
   lng_terminals: "partial",
   lng_voyages: "yes",
+  // Not "no": static means undated and shown in every year. This layer is
+  // dated and deliberately ignores the slider, which is a different claim.
+  gas_storage: "live",
 };
 
 /**
@@ -41,6 +44,7 @@ export const TIME_AWARE_COVERAGE: Readonly<Record<LayerKey, number | null>> = {
   gas_pipelines: 74,
   lng_terminals: 97,
   lng_voyages: null,
+  gas_storage: null,
 };
 
 /** One-line explanation for a badge tooltip. */
@@ -55,11 +59,14 @@ export const TIME_AWARE_NOTE: Readonly<Record<LayerKey, string>> = {
   gas_pipelines: "Start year known for 74 % of gas pipelines; undated lines show in every year.",
   lng_terminals: "Start year known for 97 % of terminals; undated terminals show in every year.",
   lng_voyages: "Voyages observed 2020–2024 only (LNG-T3); hidden outside that range.",
+  gas_storage:
+    "GIE publishes daily; this layer always shows the latest gas day and ignores the year slider.",
 };
 
 /** Short badge text, e.g. "time: 64 %", "time: yes", "static". */
 export function timeAwareLabel(key: LayerKey): string {
   const level = TIME_AWARE[key];
+  if (level === "live") return "live";
   if (level === "no") return "static";
   const cov = TIME_AWARE_COVERAGE[key];
   if (level === "partial" && cov !== null) return `time: ${cov.toString()} %`;

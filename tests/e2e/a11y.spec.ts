@@ -3,6 +3,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
 import { SPEC_TIMEOUT, clickUntil, expect, gotoReady, test } from "./helpers";
+import { LAYER_LABELS } from "../../src/lib/export/layers";
 
 test.setTimeout(SPEC_TIMEOUT);
 
@@ -76,7 +77,9 @@ test("controls have accessible names; the map region is labelled", async ({ page
 
   // D12: every layer checkbox was named "on"; now each is named by its label.
   const boxes = page.getByRole("checkbox", { includeHidden: true });
-  await expect(boxes).toHaveCount(10);
+  // Derived, not hard-coded: adding a layer should not fail this test, which
+  // is about every checkbox having a real name, not about how many there are.
+  await expect(boxes).toHaveCount(Object.keys(LAYER_LABELS).length);
   await expect(page.getByRole("checkbox", { name: "on", exact: true, includeHidden: true })).toHaveCount(0);
   await expect(page.getByRole("checkbox", { name: "Refineries", includeHidden: true })).toHaveCount(1);
 

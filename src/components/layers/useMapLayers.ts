@@ -2,6 +2,7 @@
 import { useMemo } from "react";
 import type { Layer } from "@deck.gl/core";
 import type { AssetsByKind } from "@/lib/data/assets";
+import { loadGasStorage } from "@/lib/data/gas-storage";
 import { loadReserves } from "@/lib/data/reserves";
 import { useAsync } from "@/lib/data/useAsync";
 import {
@@ -29,6 +30,7 @@ import { buildLngVoyagesLayer } from "./LngVoyagesLayer";
 import { buildPipelinesLayer, loadPipelines } from "./PipelinesLayer";
 import { buildPortsLayer } from "./PortsLayer";
 import { buildRefineriesLayer } from "./RefineriesLayer";
+import { buildGasStorageLayer, gasStorageFeatures } from "./GasStorageChoropleth";
 import { buildReservesLayer, reservesFeatures } from "./ReservesChoropleth";
 import { buildStorageLayer } from "./StorageLayer";
 import type { TooltipContext } from "./tooltip";
@@ -78,7 +80,9 @@ export function useMapLayers({ layers, year, commodity, scenario, assets }: MapL
   const portsVisible = !isZoomGated("ports", zoom);
 
   // --- data -----------------------------------------------------------------
-  const countries = useAsync(loadCountries, layers.reserves ? [] : null);
+  // Both choropleths need country polygons, so either layer pulls them.
+  const countries = useAsync(loadCountries, layers.reserves || layers.gas_storage ? [] : null);
+  const gasStorage = useAsync(loadGasStorage, layers.gas_storage ? [] : null);
   const reserves = useAsync(loadReserves, layers.reserves ? [commodity, reservesDataYear(year)] : null);
   const basins = useAsync(loadBasins, layers.basins ? [] : null);
   const pipelines = useAsync(loadPipelines, layers.pipelines || layers.gas_pipelines ? [] : null);
@@ -100,6 +104,19 @@ export function useMapLayers({ layers, year, commodity, scenario, assets }: MapL
   const reservesLayer = useMemo(
     () => (layers.reserves && reservesFc ? buildReservesLayer(reservesFc, reservesMax, overlay) : null),
     [layers.reserves, reservesFc, reservesMax, overlay],
+  );
+
+  // No year in the deps: this layer is deliberately slider-independent.
+  const gasStorageFc = useMemo(
+    () =>
+      countries.data && gasStorage.data
+        ? gasStorageFeatures(countries.data, gasStorage.data)
+        : null,
+    [countries.data, gasStorage.data],
+  );
+  const gasStorageLayer = useMemo(
+    () => (layers.gas_storage && gasStorageFc ? buildGasStorageLayer(gasStorageFc) : null),
+    [layers.gas_storage, gasStorageFc],
   );
   const basinsLayer = useMemo(
     () => (layers.basins && basins.data ? buildBasinsLayer(basins.data) : null),
@@ -167,12 +184,15 @@ export function useMapLayers({ layers, year, commodity, scenario, assets }: MapL
     [showVoyages, positionedVoyages, voyageImpacts],
   );
 
-  // Z-order (bottom to top): basins, reserves, extraction, oil pipes, gas
-  // pipes, LNG voyage arcs, refineries, storage, ports, LNG terminals.
+  // Z-order (bottom to top): basins, gas storage, reserves, extraction, oil
+  // pipes, gas pipes, LNG voyage arcs, refineries, storage, ports, LNG
+  // terminals. Gas storage sits under reserves so that with both on, the
+  // reserves ramp — the one the year slider drives — stays legible on top.
   const deckLayers = useMemo(
     () =>
       [
         basinsLayer,
+        gasStorageLayer,
         reservesLayer,
         extractionLayer,
         oilPipesLayer,
@@ -185,6 +205,7 @@ export function useMapLayers({ layers, year, commodity, scenario, assets }: MapL
       ].filter((l): l is NonNullable<typeof l> => l !== null) as Layer[],
     [
       basinsLayer,
+      gasStorageLayer,
       reservesLayer,
       extractionLayer,
       oilPipesLayer,
@@ -201,6 +222,7 @@ export function useMapLayers({ layers, year, commodity, scenario, assets }: MapL
   const pending = [
     layers.basins && !basins.ready,
     layers.reserves && (!countries.ready || !reserves.ready),
+    layers.gas_storage && (!countries.ready || !gasStorage.ready),
     layers.extraction && assetsPending,
     layers.pipelines && !pipelines.ready,
     layers.gas_pipelines && !pipelines.ready,

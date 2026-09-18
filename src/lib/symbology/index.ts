@@ -57,6 +57,12 @@ export const PALETTE = {
   // red is the only hue on the choropleth.
   reservesMutedHigh: "#d0d0cb",
 
+  // Gas storage fullness — cool sequential, staying in the gas family
+  // (hue ≈ 200°) and distinct from the olive reserves ramp, since the two
+  // choropleths can be on at once.
+  gasStorageLow: "#e8f0f2",
+  gasStorageHigh: "#1d5f78",
+
   // Scenario — red only.
   exposureLow: "#fcbba1",
   exposureHigh: "#99000d",
@@ -139,6 +145,41 @@ export function reservesColor(value: number | null | undefined, max: number, mut
     return RESERVES_NO_DATA_COLOR;
   }
   return reservesRampColor(reservesRampT(value, max), muted);
+}
+
+// ---------------------------------------------------------------------------
+// Gas storage fullness (GIE AGSI)
+// ---------------------------------------------------------------------------
+
+const GAS_STORAGE_LOW = hex(PALETTE.gasStorageLow);
+const GAS_STORAGE_HIGH = hex(PALETTE.gasStorageHigh);
+const GAS_STORAGE_ALPHA = 215;
+
+/** Countries GIE does not report — distinct from a country reporting 0 % full. */
+export const GAS_STORAGE_NO_DATA_COLOR: Rgba = paletteRgba("noData", 90);
+
+/**
+ * Ramp position for a storage fullness percentage.
+ *
+ * Linear over 0–100, and **clamped above 100 rather than rescaled**: about
+ * 2.8 % of GIE's readings exceed 100 % (Belgium reached 118 % during the 2022
+ * gas crisis) because `gasInStorage / workingGasVolume` can exceed nominal
+ * working volume. Rescaling the ramp to the observed maximum would make every
+ * ordinary country paler to accommodate a handful of outliers; clamping keeps
+ * "full" meaning full. The tooltip still reports the true figure.
+ */
+export function gasStorageRampT(pct: number): number {
+  if (!Number.isFinite(pct) || pct <= 0) return 0;
+  return Math.min(1, pct / 100);
+}
+
+/** Fill colour for a storage fullness percentage; null/undefined → no-data grey. */
+export function gasStorageColor(pct: number | null | undefined): Rgba {
+  if (pct === null || pct === undefined || !Number.isFinite(pct)) {
+    return GAS_STORAGE_NO_DATA_COLOR;
+  }
+  const [r, g, b] = lerpRgb(GAS_STORAGE_LOW, GAS_STORAGE_HIGH, gasStorageRampT(pct));
+  return [Math.round(r), Math.round(g), Math.round(b), GAS_STORAGE_ALPHA];
 }
 
 // ---------------------------------------------------------------------------
@@ -343,6 +384,7 @@ export interface LegendItem {
 export type LayerKey = keyof LayerState;
 
 const RESERVES_LEGEND_STOPS: readonly Rgba[] = [0, 0.25, 0.5, 0.75, 1].map((t) => reservesRampColor(t));
+const GAS_STORAGE_LEGEND_STOPS: readonly Rgba[] = [0, 25, 50, 75, 100].map((p) => gasStorageColor(p));
 
 /**
  * Legend rows per layer toggle. "size = capacity" is claimed only where
@@ -353,6 +395,10 @@ export const LEGEND: Readonly<Record<LayerKey, readonly LegendItem[]>> = {
   reserves: [
     { label: "Proved reserves, low → high (log)", swatch: { kind: "gradient", stops: RESERVES_LEGEND_STOPS } },
     { label: "No reserves data in source", swatch: { kind: "fill", color: RESERVES_NO_DATA_COLOR } },
+  ],
+  gas_storage: [
+    { label: "Gas storage 0 → 100 % full", swatch: { kind: "gradient", stops: GAS_STORAGE_LEGEND_STOPS } },
+    { label: "Not reported to GIE", swatch: { kind: "fill", color: GAS_STORAGE_NO_DATA_COLOR } },
   ],
   basins: [{ label: "Sedimentary basin", swatch: { kind: "fill", color: BASIN_FILL, outline: BASIN_LINE } }],
   extraction: [
@@ -396,7 +442,7 @@ export const LEGEND: Readonly<Record<LayerKey, readonly LegendItem[]>> = {
 export const LEGEND_GROUPS: readonly { readonly title: string; readonly keys: readonly LayerKey[] }[] = [
   { title: "Reserves & geology", keys: ["reserves", "basins"] },
   { title: "Oil", keys: ["pipelines", "extraction", "refineries", "storage"] },
-  { title: "Gas", keys: ["gas_pipelines", "lng_terminals", "lng_voyages"] },
+  { title: "Gas", keys: ["gas_pipelines", "lng_terminals", "lng_voyages", "gas_storage"] },
   { title: "Shipping", keys: ["ports"] },
 ];
 

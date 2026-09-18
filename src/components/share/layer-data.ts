@@ -47,8 +47,12 @@ export async function loadLayerTable(key: LayerKey, year: number): Promise<Expor
       const coords = terminalCoordinates(lngTerminalRows(a.lngExport, a.lngImport));
       return voyageTable(positionVoyages(voyages, coords), year);
     }
+    // View-only by licence: EI asks permission before extensive reproduction,
+    // refineries mix in ODbL OSM rows, and GIE publishes on its own terms
+    // rather than an open licence.
     case "reserves":
     case "refineries":
+    case "gas_storage":
       return null;
   }
 }

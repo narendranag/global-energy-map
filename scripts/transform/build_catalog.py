@@ -25,6 +25,18 @@ Computed fields per entry:
                     entry sharing the file is redistributable (assets.parquet is
                     not, because of its 88 ODbL OpenStreetMap refinery rows)
     download_note   why a non-downloadable entry is view-only
+    coverage        for time series, the span the rows actually cover, from the
+                    registry's ``coverage`` specs (column, grain year|month|day,
+                    optional ``where`` filter and ``layers`` restriction):
+                    ``[{"from", "through", "grain", "layers"?}]``. ``as_of`` is
+                    when the source was released or retrieved; ``coverage`` is
+                    what period the data describes. They differ by years for
+                    EI reserves (released 2026, ending 2020), so the UI dates
+                    layers by coverage where it exists. Snapshot tables
+                    (assets, pipelines, basins) have none: as_of is their date.
+
+Pin-derived field: ``cadence`` (how often the publisher releases), copied from
+the entry's ``SourcePin`` in scripts/common/sources.py.
 
 It also writes ``src/lib/export/citations.generated.json`` (site citation from
 CITATION.cff + scenario route-share citations from disruption_route.parquet),
@@ -57,7 +69,7 @@ from scripts.common import sources as pins
 
 PUBLIC = Path("public")
 OUT = PUBLIC / "data" / "catalog.json"
-CATALOG_VERSION = 6
+CATALOG_VERSION = 7
 
 GEM_ATTRIBUTION = "Data: Global Energy Monitor, CC BY 4.0"
 LNG_T3_ATTRIBUTION = "Data: Zhou, C. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0"
@@ -86,9 +98,11 @@ REGISTRY: list[dict[str, Any]] = [
         "source_url": pins.COMTRADE.landing_url,
         "license": "UN Comtrade terms; re-dissemination limited",
         "as_of": pins.COMTRADE.as_of,
+        "cadence": pins.COMTRADE.cadence,
         # Its own tag: this is a different measurement from BACI (as-reported,
         # monthly, unreconciled), so it must never be silently swapped in for
         # the trade layer the scenarios run on.
+        "coverage": [{"column": "month", "grain": "month"}],
         "layers": ["trade_monthly"],
         "redistributable": False,
         "download_note": (
@@ -107,11 +121,13 @@ REGISTRY: list[dict[str, Any]] = [
         "source_url": pins.GIE.landing_url,
         "license": "Free with registration; attribution required",
         "as_of": pins.GIE.as_of,
+        "cadence": pins.GIE.cadence,
         # Country-level, so it feeds neither the terminal-point layer nor any
         # other shipped layer yet — these ids are placeholders for the layer
         # this table will drive. Tagging it "lng_terminals" would have made
         # that CC-BY layer non-exportable by association, which is wrong:
         # no GIE row is in it.
+        "coverage": [{"column": "gas_day", "grain": "day"}],
         "layers": ["gas_storage", "lng_send_out"],
         # Not CC BY / public domain / Etalab, so view-only under the rule in
         # LICENSE-DATA.md. GIE gives it away freely but on its own terms.
@@ -133,6 +149,24 @@ REGISTRY: list[dict[str, Any]] = [
         "source_url": pins.EI.landing_url,
         "license": "Free to quote with attribution; extensive reproduction needs EI permission",
         "as_of": pins.EI.as_of,
+        "cadence": pins.EI.cadence,
+        # Two spans, because the file's two measures end years apart: EI has not
+        # refreshed reserves since 2020, while production runs a year behind
+        # the edition. One file-wide span would date the reserves layer 2025.
+        "coverage": [
+            {
+                "column": "year",
+                "grain": "year",
+                "where": {"metric": ["proved_reserves_oil_bbn_bbl", "proved_reserves_gas_tcm"]},
+                "layers": ["reserves", "reserves:gas"],
+            },
+            {
+                "column": "year",
+                "grain": "year",
+                "where": {"metric": ["production_crude_kbpd"]},
+                "layers": ["production"],
+            },
+        ],
         "layers": ["reserves", "reserves:gas", "production"],
         "redistributable": False,
         "download_note": (
@@ -152,6 +186,7 @@ REGISTRY: list[dict[str, Any]] = [
         "source_url": pins.GEM_GOGET.landing_url,
         "license": "CC BY 4.0",
         "as_of": pins.GEM_GOGET.as_of,
+        "cadence": pins.GEM_GOGET.cadence,
         "layers": ["extraction"],
         "redistributable": True,
         "attribution": GEM_ATTRIBUTION,
@@ -169,6 +204,7 @@ REGISTRY: list[dict[str, Any]] = [
         "source_url": "https://prod.arcgis.netl.doe.gov/server/rest/services/Hosted/Refineries/FeatureServer",
         "license": NETL_LICENSE,
         "as_of": NETL_SNAPSHOT,
+        "cadence": pins.NETL.cadence,
         "layers": ["refineries"],
         "redistributable": True,
         "attribution": NETL_ATTRIBUTION,
@@ -183,6 +219,7 @@ REGISTRY: list[dict[str, Any]] = [
         "source_url": pins.OSM.landing_url,
         "license": "ODbL (Open Database License)",
         "as_of": pins.OSM.as_of,
+        "cadence": pins.OSM.cadence,
         "layers": ["refineries"],
         "redistributable": False,
         "download_note": (
@@ -202,6 +239,7 @@ REGISTRY: list[dict[str, Any]] = [
         "source_url": NETL_GOGI_URL,
         "license": NETL_LICENSE,
         "as_of": NETL_SNAPSHOT,
+        "cadence": pins.NETL.cadence,
         "layers": ["storage"],
         "redistributable": True,
         "attribution": NETL_ATTRIBUTION,
@@ -216,6 +254,7 @@ REGISTRY: list[dict[str, Any]] = [
         "source_url": NETL_GOGI_URL,
         "license": NETL_LICENSE,
         "as_of": NETL_SNAPSHOT,
+        "cadence": pins.NETL.cadence,
         "layers": ["ports"],
         "redistributable": True,
         "attribution": NETL_ATTRIBUTION,
@@ -233,6 +272,7 @@ REGISTRY: list[dict[str, Any]] = [
         "source_url": LNG_T3_URL,
         "license": "CC BY 4.0",
         "as_of": pins.LNG_T3.as_of,
+        "cadence": pins.LNG_T3.cadence,
         "layers": ["lng_terminals"],
         "redistributable": True,
         "attribution": LNG_T3_ATTRIBUTION,
@@ -250,6 +290,7 @@ REGISTRY: list[dict[str, Any]] = [
         "source_url": pins.GEM_GGIT.landing_url,
         "license": "CC BY 4.0",
         "as_of": pins.GEM_GGIT.as_of,
+        "cadence": pins.GEM_GGIT.cadence,
         "layers": ["lng_terminals"],
         "redistributable": True,
         "attribution": GEM_ATTRIBUTION,
@@ -280,6 +321,7 @@ REGISTRY: list[dict[str, Any]] = [
         "source_url": pins.GEM_GOIT.landing_url,
         "license": "CC BY 4.0",
         "as_of": pins.GEM_GOIT.as_of,
+        "cadence": pins.GEM_GOIT.cadence,
         "layers": ["pipelines"],
         "redistributable": True,
         "attribution": GEM_ATTRIBUTION,
@@ -294,6 +336,7 @@ REGISTRY: list[dict[str, Any]] = [
         "source_url": pins.GEM_GGIT.landing_url,
         "license": "CC BY 4.0",
         "as_of": pins.GEM_GGIT.as_of,
+        "cadence": pins.GEM_GGIT.cadence,
         "layers": ["gas_pipelines"],
         "redistributable": True,
         "attribution": GEM_ATTRIBUTION,
@@ -307,6 +350,7 @@ REGISTRY: list[dict[str, Any]] = [
         "source_url": NETL_GOGI_URL,
         "license": NETL_LICENSE,
         "as_of": NETL_SNAPSHOT,
+        "cadence": pins.NETL.cadence,
         "layers": ["basins"],
         "redistributable": True,
         "attribution": NETL_ATTRIBUTION,
@@ -320,6 +364,8 @@ REGISTRY: list[dict[str, Any]] = [
         "source_url": pins.BACI.landing_url,
         "license": "Etalab Open Licence 2.0; cite Gaulier & Zignago (2010)",
         "as_of": pins.BACI.as_of,
+        "cadence": pins.BACI.cadence,
+        "coverage": [{"column": "year", "grain": "year"}],
         "layers": [
             "trade",
             "scenario:hormuz",
@@ -362,6 +408,7 @@ REGISTRY: list[dict[str, Any]] = [
         "source_url": pins.NATURAL_EARTH.landing_url,
         "license": "Public domain",
         "as_of": pins.NATURAL_EARTH.as_of,
+        "cadence": pins.NATURAL_EARTH.cadence,
         "layers": ["basemap", "reserves"],
         "redistributable": True,
     },
@@ -374,6 +421,8 @@ REGISTRY: list[dict[str, Any]] = [
         "source_url": LNG_T3_URL,
         "license": "CC BY 4.0",
         "as_of": pins.LNG_T3.as_of,
+        "cadence": pins.LNG_T3.cadence,
+        "coverage": [{"column": "end_date", "grain": "day"}],
         "layers": ["lng_voyages", "scenario:hormuz-lng"],
         "redistributable": True,
         "attribution": LNG_T3_ATTRIBUTION,
@@ -387,6 +436,8 @@ REGISTRY: list[dict[str, Any]] = [
         "source_url": LNG_T3_URL,
         "license": "CC BY 4.0",
         "as_of": pins.LNG_T3.as_of,
+        "cadence": pins.LNG_T3.cadence,
+        "coverage": [{"column": "date", "grain": "day"}],
         "layers": [],
         "redistributable": True,
         "attribution": LNG_T3_ATTRIBUTION,
@@ -401,6 +452,8 @@ REGISTRY: list[dict[str, Any]] = [
         "source_url": LNG_T3_URL,
         "license": "CC BY 4.0",
         "as_of": pins.LNG_T3.as_of,
+        "cadence": pins.LNG_T3.cadence,
+        "coverage": [{"column": "date", "grain": "day"}],
         "layers": [],
         "redistributable": True,
         "attribution": LNG_T3_ATTRIBUTION,
@@ -418,6 +471,8 @@ _FIELD_ORDER = [
     "source_url",
     "license",
     "as_of",
+    "cadence",
+    "coverage",
     "layers",
     "attribution",
     "runtime",
@@ -462,6 +517,38 @@ def _count_rows(path: Path, subset: dict[str, list[str]] | None) -> int:
             if all((f.get("properties") or {}).get(c) in v for c, v in subset.items())
         )
     raise ValueError(f"don't know how to count rows in {path}")
+
+
+_GRAINS = {"year": 4, "month": 7, "day": 10}
+
+
+def _coverage(path: Path, specs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Observed span of each coverage spec, formatted to its grain.
+
+    Fails rather than emitting an empty span: a spec that matches no rows means
+    the filter or the column drifted, and a silently missing date is exactly
+    what this field exists to prevent.
+    """
+    out = []
+    for spec in specs:
+        grain = spec["grain"]
+        if grain not in _GRAINS:
+            raise ValueError(f"{path}: unknown coverage grain {grain!r}")
+        where = spec.get("where") or {}
+        df = pd.read_parquet(path, columns=[spec["column"], *where])
+        for col, values in where.items():
+            df = df[df[col].isin(values)]
+        col = df[spec["column"]].dropna()
+        if col.empty:
+            raise ValueError(f"{path}: coverage spec {spec} matches no rows")
+        span: dict[str, Any] = {}
+        for key, v in (("from", col.min()), ("through", col.max())):
+            span[key] = str(int(v)) if grain == "year" else str(v)[: _GRAINS[grain]]
+        span["grain"] = grain
+        if "layers" in spec:
+            span["layers"] = list(spec["layers"])
+        out.append(span)
+    return out
 
 
 def _download_flags(
@@ -527,7 +614,9 @@ def build_catalog(public: Path = PUBLIC) -> dict[str, Any]:
         path = _disk_path(spec["path"], public)
         if not path.exists():
             raise FileNotFoundError(f"{spec['id']}: {path} does not exist")
-        entry = {k: v for k, v in spec.items() if k not in ("subset", "download_note")}
+        entry = {k: v for k, v in spec.items() if k not in ("subset", "download_note", "coverage")}
+        if "coverage" in spec:
+            entry["coverage"] = _coverage(path, spec["coverage"])
         entry.setdefault("runtime", True)
         entry["redistributable"] = bool(spec.get("redistributable", False))
         downloadable, note = flags[spec["id"]]

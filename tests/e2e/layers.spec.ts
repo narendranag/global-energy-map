@@ -26,7 +26,7 @@ const LAYER_LABELS = [
   "Ports",
   "Gas pipelines",
   "LNG terminals",
-  "LNG voyages (2020–2024)",
+  "LNG voyages",
 ] as const;
 
 /** Infrastructure (the default mode) shows exactly these five (D1). */
@@ -122,10 +122,18 @@ test.describe("Layer panel", () => {
     expect(errors).toEqual([]);
   });
 
+  test("layers whose data ended long ago are marked old", async ({ page }) => {
+    await gotoReady(page, "/?layers=reserves");
+    // Reserves stop in 2020 (EI has not refreshed them), so this holds for good.
+    await expect(page.getByTestId("stale-badge-reserves")).toHaveAttribute("title", /^Data ends 2020, \d+ months ago/);
+    // Live daily data is never old.
+    await expect(page.getByTestId("stale-badge-gas_storage")).toHaveCount(0);
+  });
+
   test("LNG voyages layer boots with the checkbox checked", async ({ page }) => {
     const errors = collectConsoleErrors(page);
     await gotoReady(page, "/?layers=reserves,lng_terminals,lng_voyages&year=2023");
-    await expect(page.getByLabel("LNG voyages (2020–2024)")).toBeChecked();
+    await expect(page.getByLabel("LNG voyages")).toBeChecked();
     expect(errors).toEqual([]);
   });
 

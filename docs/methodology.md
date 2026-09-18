@@ -14,20 +14,27 @@ This is the **current-state** methodology of Global Energy Map: for every map la
 | Refineries | NETL GOGI (primary) + OpenStreetMap | 2026-09 | 1,164 (1,075 + 89) | No | kb/d (30 % known) |
 | Storage hubs | NETL GOGI (EPA regulatory records filtered out) | 2026-05-17 | 7,733 | No | — |
 | Ports | NETL GOGI | 2026-05-17 | 3,694 | No | — |
-| LNG terminals | LNG-T3 (primary) + GEM GGIT | 2026-04-01 / 2026-02-20 | 312 (305 + 7) | Yes — 98 % dated | Mtpa |
+| LNG terminals | LNG-T3 (primary) + GEM GGIT | 2026-04-01 / 2026-02-20 | 314 (305 + 9) | Yes — 97.5 % dated | Mtpa |
 | LNG voyages | LNG-T3 | 2026-04-01 | 17,592 voyages, 2020–2024 | Yes, 2020–2024 only | m³ of LNG |
+| Gas storage (EU) | GIE AGSI | daily, latest gas day | 20 countries | No — always the latest gas day | % full |
 | Scenario trade | CEPII BACI, HS 2709 + 271111 | V202601 | 53,727 country-pair-years, 1995–2024 | Yes | tonnes |
 | Scenario route shares | EIA / IEA / Argus (Kpler) / GEM, per row | 2026-09-11 | 18 shares + 54 intra-Gulf share-0 pairs | No — static | fraction |
 
 "Dated" means the feature carries a start or commissioning year. Undated features are shown in every year, so for layers that are only partly dated the map *over*-states what existed in early years.
 
+### How current each layer is
+
+Generated from the data catalog at build time, so it cannot drift from the files. **Covers** is the period the rows describe; **Released** is when the source published (or, for live services, when it was retrieved). They can be years apart: the Energy Institute's 2026 edition still ends its reserves in 2020. On the map, the *Data vintage* section of the layer panel lists the same dates, and a layer whose data ended more than 18 months ago is marked **old**.
+
+<!-- generated:recency -->
+
 ## Map layers
 
 ### Reserves (country choropleth)
 
-- **Source:** Energy Institute, *Statistical Review of World Energy* 2025 — "Oil: Proved reserves history" and "Gas: Proved reserves history" sheets. File `country_year_series.parquet`.
-- **Coverage:** proved oil reserves (billion barrels) and proved gas reserves (trillion cubic metres), country-year, **1990–2020**. The same file carries crude production (kb/d) 1990–2024, used in tooltips.
-- **Reserves stop in 2020.** The EI edition that refreshed production to 2024 did not update the reserves tables. For 2021–2024 the choropleth shows the **2020 value** and says so on the map ("Reserves: 2020 value"). No post-2020 change in the map is a real change in reserves.
+- **Source:** Energy Institute, *Statistical Review of World Energy* 2026 (75th edition) — "Oil: Proved reserves history" and "Gas: Proved reserves history" sheets. File `country_year_series.parquet`.
+- **Coverage:** proved oil reserves (billion barrels) and proved gas reserves (trillion cubic metres), country-year, **1990–2020**. The same file carries crude production (kb/d) 1990–2025, used in tooltips.
+- **Reserves stop in 2020.** The reserves tables have not been updated past 2020; the 2026 edition extends production to 2025 but still ends reserves in 2020. For 2021–2024 the choropleth shows the **2020 value** and says so on the map ("Reserves: 2020 value"). No post-2020 change in the map is a real change in reserves.
 - **Colour scale:** logarithmic, so both Venezuela-scale and small producers are distinguishable. Countries with no reserves row in the source get a neutral no-data tint, not the bottom of the ramp.
 - **Gaps:** country aggregates only (no field, basin or sub-national split); EI's regional "Other …" residuals are not attributed to any country.
 - **Scenarios:** not used. When a scenario is active the country fill switches from reserves to exposure.
@@ -100,9 +107,9 @@ This is the **current-state** methodology of Global Energy Map: for every map la
 ### LNG terminals
 
 - **Sources:** LNG-T3 (Zhou, C. 2026, Zenodo, CC BY 4.0) as primary; GEM GGIT (CC BY 4.0) as supplement.
-- **Build:** LNG-T3's 545 terminals are filtered to operating and in-construction (330); 25 names that carry both an operating and an expansion record are collapsed to the operating record, leaving **305**. GEM's per-train records are collapsed to one per terminal; a GEM terminal is dropped if an LNG-T3 terminal in the same country has the same name, or lies within **25 km** (terminal campuses are large). **7** GEM terminals survive. Result: **312 terminals** (73 export, 239 import).
-- **Units:** nameplate capacity in million tonnes per annum, known for 310 of 312; LNG-T3 terminals also carry total processed volume (bcm), unit count and UN/LOCODE.
-- **Time:** `commissioned_year` known for **305 of 312 (97.8 %)** — the best-dated layer on the map.
+- **Build:** LNG-T3's 545 terminals are filtered to operating and in-construction (330); 25 names that carry both an operating and an expansion record are collapsed to the operating record, leaving **305**. GEM's per-train records are collapsed to one per terminal; a GEM terminal is dropped if an LNG-T3 terminal in the same country has the same name, or lies within **25 km** (terminal campuses are large). **9** GEM terminals survive. Result: **314 terminals** (74 export, 240 import).
+- **Units:** nameplate capacity in million tonnes per annum, known for 312 of 314; LNG-T3 terminals also carry total processed volume (bcm), unit count and UN/LOCODE.
+- **Time:** `commissioned_year` known for **306 of 314 (97.5 %)** — the best-dated layer on the map.
 - **Scenarios:** the Hormuz-LNG scenario attributes at-risk LNG imports to import terminals — see [LNG import-terminal attribution](#lng-import-terminal-attribution).
 
 ### LNG voyages
@@ -122,6 +129,15 @@ This is the **current-state** methodology of Global Energy Map: for every map la
 | 2024 | 129.4 | 407.0 | 0.32 |
 
   (`scripts/validate/lng_t3_vs_giignl.py`, output checked in at `data/validation/lng_t3_vs_giignl.txt`.) The voyage arcs are therefore a sample of routes, not a census of trade, and **LNG-T3 is never used as a country total** anywhere in the site.
+
+### Gas storage (EU)
+
+- **Source:** Gas Infrastructure Europe, AGSI (storage) — daily, country level, 2020-01-01 to the latest published gas day. File `gie_daily.parquet`, which also carries ALSI LNG send-out and inventory (not drawn).
+- **What is drawn:** each country's storage fullness as AGSI reports it (gas in store as a % of working gas volume) on the **most recent gas day** in the file. Countries GIE does not cover are drawn as no data, not as empty.
+- **Time:** **not affected by the year slider.** The slider is annual and ends in 2024; this layer is a daily reading of the present, so it always shows the latest day, and its tooltip says which.
+- **Scale:** the ramp tops out at 100 % and clamps above it. About 3 % of readings exceed 100 % (a site filled beyond its declared working volume); rescaling to the maximum would pale every ordinary country.
+- **Gaps:** country level only. ALSI facility names match our LNG terminal names for only about 71 % of terminals, so terminal-level send-out is not joined.
+- **Licence:** free with registration, attribution "GIE AGSI / ALSI"; not an open licence, so view-only (see [Licences](#licences)).
 
 ### Country boundaries and basemap
 

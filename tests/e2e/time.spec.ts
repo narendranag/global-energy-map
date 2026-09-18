@@ -72,7 +72,7 @@ test.describe("Time axis — 1990–2024", () => {
     // data-ready flips only once every visible layer — including the voyages
     // ArcLayer — has its data.
     await gotoReady(page, "/?layers=lng_terminals,lng_voyages&year=2023");
-    await expect(page.getByLabel("LNG voyages (2020–2024)")).toBeChecked();
+    await expect(page.getByLabel("LNG voyages")).toBeChecked();
     await expect(page.getByRole("status")).toHaveCount(0);
     expect(errors).toEqual([]);
   });

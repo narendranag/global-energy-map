@@ -1,5 +1,15 @@
 export type DataFormat = "parquet" | "geoparquet" | "json";
 
+/** A span of time the rows actually cover (catalog version 7+). */
+export interface CoverageSpan {
+  /** Formatted to the grain: "1990", "2025-01", "2020-01-01". */
+  readonly from: string;
+  readonly through: string;
+  readonly grain: "year" | "month" | "day";
+  /** Only these layer tags; absent = every layer the entry feeds. */
+  readonly layers?: readonly string[];
+}
+
 export interface CatalogEntry {
   readonly id: string;
   readonly label: string;
@@ -10,6 +20,14 @@ export interface CatalogEntry {
   readonly license: string;
   /** Always YYYY-MM-DD from catalog version 6 on (see scripts/transform/build_catalog.py). */
   readonly as_of: string;
+  /** How often the publisher releases, from the source pin. */
+  readonly cadence?: string;
+  /**
+   * What period the data describes, for time series. Differs from `as_of`
+   * (release/retrieval date): EI's 2026 release has reserves through 2020.
+   * Absent for snapshot tables, where `as_of` is the date.
+   */
+  readonly coverage?: readonly CoverageSpan[];
   readonly layers: readonly string[];
   /** Attribution string the source requires (GEM, LNG-T3, OSM …). */
   readonly attribution?: string;

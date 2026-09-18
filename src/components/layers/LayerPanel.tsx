@@ -3,7 +3,8 @@ import { useId, useState } from "react";
 import { TIME_AWARE, TIME_AWARE_NOTE, timeAwareLabel } from "@/lib/symbology/time-aware";
 import { Chevron } from "@/components/ui/Chevron";
 import { LAYER_LABELS } from "@/lib/export/layers";
-import { formatAsOf, layerVintages } from "@/lib/data/vintage";
+import { STALE_AFTER_MONTHS, formatVintage, isStale, layerVintages, staleNote } from "@/lib/data/vintage";
+import { useToday } from "./useToday";
 import { Legend } from "./Legend";
 
 export interface LayerState {
@@ -50,7 +51,7 @@ const ROWS: readonly Row[] = [
   { kind: "group", label: "Gas" },
   { kind: "toggle", key: "gas_pipelines", label: "Gas pipelines" },
   { kind: "toggle", key: "lng_terminals", label: "LNG terminals" },
-  { kind: "toggle", key: "lng_voyages", label: "LNG voyages (2020–2024)" },
+  { kind: "toggle", key: "lng_voyages", label: "LNG voyages" },
   { kind: "toggle", key: "gas_storage", label: "Gas storage (EU)" },
 ];
 
@@ -64,6 +65,23 @@ const BADGE_CLASS: Record<"yes" | "partial" | "no" | "live", string> = {
 
 // Static: the catalog is bundled at build, so this never changes at runtime.
 const VINTAGES = layerVintages(LAYER_LABELS);
+const VINTAGE_BY_KEY = new Map(VINTAGES.map((v) => [v.key, v]));
+
+/** "old" beside a layer whose data ended more than STALE_AFTER_MONTHS ago. */
+function StaleBadge({ layer, today }: { layer: keyof LayerState; today: string | null }) {
+  const v = VINTAGE_BY_KEY.get(layer);
+  if (today === null || v === undefined || !isStale(v, today)) return null;
+  const note = staleNote(v, today);
+  return (
+    <span
+      title={note}
+      data-testid={`stale-badge-${layer}`}
+      className="shrink-0 whitespace-nowrap rounded border border-amber-600 bg-amber-50 px-1 text-[11px] leading-4 text-amber-900"
+    >
+      old<span className="sr-only">: {note}</span>
+    </span>
+  );
+}
 
 /**
  * Left panel: the "Layers" disclosure (toggles + time-aware badges) above the
@@ -78,6 +96,8 @@ export function LayerPanel({ state, onChange, scenarioNoun, defaultOpen = true }
   const bodyId = `${uid}-body`;
   const vintageId = `${uid}-vintage`;
   const activeCount = Object.values(state).filter(Boolean).length;
+  // Null until mounted: staleness is judged against the reader's today.
+  const today = useToday();
 
   return (
     <section
@@ -141,6 +161,7 @@ export function LayerPanel({ state, onChange, scenarioNoun, defaultOpen = true }
                 <label htmlFor={`${uid}-${r.key}`} className="min-w-0 flex-1 truncate">
                   {r.label}
                 </label>
+                <StaleBadge layer={r.key} today={today} />
                 <span
                   title={TIME_AWARE_NOTE[r.key]}
                   data-testid={`time-badge-${r.key}`}
@@ -173,14 +194,29 @@ export function LayerPanel({ state, onChange, scenarioNoun, defaultOpen = true }
             <span>Data vintage</span>
           </button>
           {/* Generated from catalog.json, so it cannot drift from the data. */}
-          <dl id={vintageId} hidden={!vintageOpen} className="mt-2 space-y-1" data-testid="data-vintage">
-            {VINTAGES.map((v) => (
-              <div key={v.key} className="flex items-baseline gap-2 text-[11px] leading-4">
-                <dt className="min-w-0 flex-1 truncate text-slate-700">{v.label}</dt>
-                <dd className="shrink-0 tabular-nums text-slate-600">{formatAsOf(v.asOf)}</dd>
-              </div>
-            ))}
-          </dl>
+          <div id={vintageId} hidden={!vintageOpen} className="mt-2" data-testid="data-vintage">
+            <p className="mb-1.5 text-[11px] leading-4 text-slate-600">
+              When each layer&apos;s data ends (&ldquo;as of&rdquo; for snapshots). Older than{" "}
+              {STALE_AFTER_MONTHS} months is marked old.
+            </p>
+            <dl className="space-y-1">
+              {VINTAGES.map((v) => {
+                const stale = today !== null && isStale(v, today);
+                return (
+                  <div key={v.key} className="flex items-baseline gap-2 text-[11px] leading-4">
+                    <dt className="min-w-0 flex-1 truncate text-slate-700">{v.label}</dt>
+                    <dd
+                      className={"shrink-0 tabular-nums " + (stale ? "font-medium text-amber-900" : "text-slate-600")}
+                      title={stale ? staleNote(v, today) : undefined}
+                    >
+                      {formatVintage(v)}
+                      {stale && " · old"}
+                    </dd>
+                  </div>
+                );
+              })}
+            </dl>
+          </div>
         </div>
       </div>
     </section>

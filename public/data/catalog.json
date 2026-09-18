@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "generated_at": "2026-09-17T00:00:00+00:00",
   "entries": [
     {
@@ -11,6 +11,14 @@
       "source_url": "https://comtradeplus.un.org/",
       "license": "UN Comtrade terms; re-dissemination limited",
       "as_of": "2026-09-17",
+      "cadence": "monthly, as reporters file (lags ~3-6 months and backfills)",
+      "coverage": [
+        {
+          "from": "2025-01",
+          "through": "2026-05",
+          "grain": "month"
+        }
+      ],
       "layers": [
         "trade_monthly"
       ],
@@ -32,6 +40,14 @@
       "source_url": "https://www.gie.eu/agsi-and-alsi-transparency-platforms/",
       "license": "Free with registration; attribution required",
       "as_of": "2026-09-17",
+      "cadence": "daily, published 19:30 CET",
+      "coverage": [
+        {
+          "from": "2020-01-01",
+          "through": "2026-09-17",
+          "grain": "day"
+        }
+      ],
       "layers": [
         "gas_storage",
         "lng_send_out"
@@ -54,6 +70,26 @@
       "source_url": "https://www.energyinst.org/statistical-review/resources-and-data-downloads",
       "license": "Free to quote with attribution; extensive reproduction needs EI permission",
       "as_of": "2026-07-01",
+      "cadence": "annual, late June",
+      "coverage": [
+        {
+          "from": "1990",
+          "through": "2020",
+          "grain": "year",
+          "layers": [
+            "reserves",
+            "reserves:gas"
+          ]
+        },
+        {
+          "from": "1990",
+          "through": "2025",
+          "grain": "year",
+          "layers": [
+            "production"
+          ]
+        }
+      ],
       "layers": [
         "reserves",
         "reserves:gas",
@@ -77,6 +113,7 @@
       "source_url": "https://globalenergymonitor.org/projects/global-oil-gas-extraction-tracker/",
       "license": "CC BY 4.0",
       "as_of": "2026-03-01",
+      "cadence": "per tracker release (irregular, roughly annual)",
       "layers": [
         "extraction"
       ],
@@ -98,6 +135,7 @@
       "source_url": "https://prod.arcgis.netl.doe.gov/server/rest/services/Hosted/Refineries/FeatureServer",
       "license": "US Government work, public domain (17 USC §105)",
       "as_of": "2026-05-17",
+      "cadence": "ad hoc (NETL updates the live layers without release notes)",
       "layers": [
         "refineries"
       ],
@@ -119,6 +157,7 @@
       "source_url": "https://www.openstreetmap.org/",
       "license": "ODbL (Open Database License)",
       "as_of": "2026-09-17",
+      "cadence": "quarterly (live database; re-query when refreshing refineries)",
       "layers": [
         "refineries"
       ],
@@ -140,6 +179,7 @@
       "source_url": "https://arcgis.netl.doe.gov/portal/home/item.html?id=1e1c13b43dfb4af68040598c6f4baf44",
       "license": "US Government work, public domain (17 USC §105)",
       "as_of": "2026-05-17",
+      "cadence": "ad hoc (NETL updates the live layers without release notes)",
       "layers": [
         "storage"
       ],
@@ -161,6 +201,7 @@
       "source_url": "https://arcgis.netl.doe.gov/portal/home/item.html?id=1e1c13b43dfb4af68040598c6f4baf44",
       "license": "US Government work, public domain (17 USC §105)",
       "as_of": "2026-05-17",
+      "cadence": "ad hoc (NETL updates the live layers without release notes)",
       "layers": [
         "ports"
       ],
@@ -182,6 +223,7 @@
       "source_url": "https://doi.org/10.5281/zenodo.19571058",
       "license": "CC BY 4.0",
       "as_of": "2026-04-01",
+      "cadence": "per Zenodo version (check the concept DOI for newer versions)",
       "layers": [
         "lng_terminals"
       ],
@@ -203,6 +245,7 @@
       "source_url": "https://globalenergymonitor.org/projects/global-gas-infrastructure-tracker/",
       "license": "CC BY 4.0",
       "as_of": "2026-02-20",
+      "cadence": "per tracker release (irregular, roughly annual)",
       "layers": [
         "lng_terminals"
       ],
@@ -241,6 +284,7 @@
       "source_url": "https://globalenergymonitor.org/projects/global-oil-infrastructure-tracker/",
       "license": "CC BY 4.0",
       "as_of": "2025-04-09",
+      "cadence": "per tracker release (irregular, roughly annual)",
       "layers": [
         "pipelines"
       ],
@@ -261,6 +305,7 @@
       "source_url": "https://globalenergymonitor.org/projects/global-gas-infrastructure-tracker/",
       "license": "CC BY 4.0",
       "as_of": "2026-02-20",
+      "cadence": "per tracker release (irregular, roughly annual)",
       "layers": [
         "gas_pipelines"
       ],
@@ -281,6 +326,7 @@
       "source_url": "https://arcgis.netl.doe.gov/portal/home/item.html?id=1e1c13b43dfb4af68040598c6f4baf44",
       "license": "US Government work, public domain (17 USC §105)",
       "as_of": "2026-05-17",
+      "cadence": "ad hoc (NETL updates the live layers without release notes)",
       "layers": [
         "basins"
       ],
@@ -301,6 +347,14 @@
       "source_url": "https://www.cepii.fr/CEPII/en/bdd_modele/bdd_modele_item.asp?id=37",
       "license": "Etalab Open Licence 2.0; cite Gaulier & Zignago (2010)",
       "as_of": "2026-01-01",
+      "cadence": "annual, January–February",
+      "coverage": [
+        {
+          "from": "1995",
+          "through": "2024",
+          "grain": "year"
+        }
+      ],
       "layers": [
         "trade",
         "scenario:hormuz",
@@ -349,6 +403,7 @@
       "source_url": "https://www.naturalearthdata.com/downloads/110m-cultural-vectors/110m-admin-0-countries/",
       "license": "Public domain",
       "as_of": "2024-10-01",
+      "cadence": "rarely (major Natural Earth releases)",
       "layers": [
         "basemap",
         "reserves"
@@ -369,6 +424,14 @@
       "source_url": "https://doi.org/10.5281/zenodo.19571058",
       "license": "CC BY 4.0",
       "as_of": "2026-04-01",
+      "cadence": "per Zenodo version (check the concept DOI for newer versions)",
+      "coverage": [
+        {
+          "from": "2020-01-07",
+          "through": "2024-12-31",
+          "grain": "day"
+        }
+      ],
       "layers": [
         "lng_voyages",
         "scenario:hormuz-lng"
@@ -390,6 +453,14 @@
       "source_url": "https://doi.org/10.5281/zenodo.19571058",
       "license": "CC BY 4.0",
       "as_of": "2026-04-01",
+      "cadence": "per Zenodo version (check the concept DOI for newer versions)",
+      "coverage": [
+        {
+          "from": "2020-01-01",
+          "through": "2024-12-31",
+          "grain": "day"
+        }
+      ],
       "layers": [],
       "attribution": "Data: Zhou, C. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0",
       "runtime": false,
@@ -408,6 +479,14 @@
       "source_url": "https://doi.org/10.5281/zenodo.19571058",
       "license": "CC BY 4.0",
       "as_of": "2026-04-01",
+      "cadence": "per Zenodo version (check the concept DOI for newer versions)",
+      "coverage": [
+        {
+          "from": "2020-01-01",
+          "through": "2024-12-31",
+          "grain": "day"
+        }
+      ],
       "layers": [],
       "attribution": "Data: Zhou, C. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0",
       "runtime": false,

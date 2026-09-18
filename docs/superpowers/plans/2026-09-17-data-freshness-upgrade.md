@@ -115,9 +115,9 @@ More than half the credibility problem is presentational. Whatever Tracks A and 
 
 **C.1 — DONE (`4dcda2f`, Data vintage section in the LayerPanel, generated from the catalog).** Per-layer as-of surfaced in the Legend and LayerPanel, not only in tooltips — read from the bundled catalog, which already carries `as_of`.
 
-**C.2** A visible marker on layers more than N months old, using the same honesty principle as the existing "reserves frozen after 2020" badge.
+**C.2 — DONE 2026-09-18.** An amber "old" badge on layer rows whose data ended more than 18 months before the reader's today (reserves, LNG voyages at present), dated by catalog `coverage` rather than release date. Original: A visible marker on layers more than N months old, using the same honesty principle as the existing "reserves frozen after 2020" badge.
 
-**C.3** Extend `/methodology` with a recency table generated from `catalog.json` — path, as-of, cadence, and whether the pin is current. No hand-maintained list.
+**C.3 — DONE 2026-09-18.** `<!-- generated:recency -->` on /methodology: covers / released / publisher cadence per runtime file, from catalog v7 (`coverage`, `cadence`). "Whether the pin is current" is left to `test_source_liveness.py` — the page is static and cannot check upstream. Original: Extend `/methodology` with a recency table generated from `catalog.json` — path, as-of, cadence, and whether the pin is current. No hand-maintained list.
 
 ## 6. Risks
 

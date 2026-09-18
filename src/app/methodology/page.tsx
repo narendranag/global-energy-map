@@ -11,6 +11,8 @@ import { groupIdenticalPairShares, pairLabel } from "@/lib/scenarios/share-group
 import type { ScenarioId } from "@/lib/scenarios/types";
 import { PROSE } from "@/components/ui/prose";
 import { SiteFooter } from "@/components/ui/SiteFooter";
+import { formatAsOf, formatSpan, periodEnd } from "@/lib/data/vintage";
+import type { CatalogEntry } from "@/lib/data-catalog/types";
 import { renderDoc, type TocItem } from "./markdown";
 
 export const metadata: Metadata = {
@@ -87,6 +89,57 @@ function ScenarioSharesTable() {
   );
 }
 
+/** When an entry's data ends: its newest coverage span, else its as-of. */
+function dataEnd(e: CatalogEntry): string {
+  const ends = (e.coverage ?? []).map((s) => periodEnd(s.through, s.grain));
+  return ends.length > 0 ? ends.sort().at(-1) ?? e.as_of : e.as_of;
+}
+
+/** Every runtime file with what it covers and when its source released — from catalog.json. */
+function RecencyTable() {
+  const rows = BUNDLED_CATALOG.entries
+    .filter((e) => e.runtime !== false)
+    .toSorted((a, b) => (dataEnd(a) < dataEnd(b) ? 1 : dataEnd(a) > dataEnd(b) ? -1 : 0));
+  const th = "border-b border-slate-300 py-1.5 pr-4 font-semibold";
+  const td = "border-t border-panel-border py-2 pr-4";
+  return (
+    <div className="mt-4 overflow-x-auto" data-testid="recency">
+      <table className="w-full text-sm">
+        <caption className="sr-only">Period covered, release date and update cadence of every data file the map reads</caption>
+        <thead>
+          <tr className="text-left text-ink">
+            <th scope="col" className={th}>Data</th>
+            <th scope="col" className={th}>Source</th>
+            <th scope="col" className={th}>Covers</th>
+            <th scope="col" className={th}>Released / retrieved</th>
+            <th scope="col" className={th}>Publisher updates</th>
+          </tr>
+        </thead>
+        <tbody className="text-ink-muted">
+          {rows.map((e) => (
+            <tr key={e.id} className="align-top">
+              <td className={`${td} text-ink`}>{e.label}</td>
+              <td className={td}>{e.source_name}</td>
+              <td className={`${td} whitespace-nowrap tabular-nums`}>
+                {e.coverage && e.coverage.length > 0
+                  ? e.coverage.map((s) => (
+                      <div key={s.layers?.join() ?? "all"}>
+                        {s.layers ? <span className="text-ink-subtle">{s.layers[0]}: </span> : null}
+                        {formatSpan(s)}
+                      </div>
+                    ))
+                  : <span className="text-ink-subtle">snapshot</span>}
+              </td>
+              <td className={`${td} whitespace-nowrap tabular-nums`}>{formatAsOf(e.as_of)}</td>
+              <td className={td}>{e.cadence ?? "—"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function Attributions() {
   const lines = [...attributionsFor(BUNDLED_CATALOG.entries), BASEMAP_ATTRIBUTION];
   return (
@@ -105,6 +158,7 @@ function Attributions() {
 
 const GENERATED: Record<string, () => ReactNode> = {
   "scenario-shares": () => <ScenarioSharesTable />,
+  recency: () => <RecencyTable />,
   "how-to-cite": () => <CitationBlock />,
   attributions: () => <Attributions />,
 };

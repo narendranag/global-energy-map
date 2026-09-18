@@ -38,7 +38,7 @@ test.describe("URL state", () => {
 
   test("a URL without lng_voyages leaves the checkbox unchecked", async ({ page }) => {
     await gotoReady(page, "/?layers=reserves,lng_terminals&year=2023");
-    await expect(page.getByLabel("LNG voyages (2020–2024)")).not.toBeChecked();
+    await expect(page.getByLabel("LNG voyages")).not.toBeChecked();
   });
 
   test("flipping a toggle updates the URL", async ({ page }) => {

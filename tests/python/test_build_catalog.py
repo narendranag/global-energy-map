@@ -99,3 +99,39 @@ def test_citations_sidecar_is_current():
     on_disk = json.loads(bc.CITATIONS_OUT.read_text())
     assert on_disk == bc.build_citations()
     assert len(on_disk["scenario_shares"]) == 72  # 18 hand-set + 54 intra-Gulf share-0 pairs
+
+
+def test_coverage_spans_follow_filters_and_grain(tmp_path):
+    import pandas as pd
+    import pytest
+
+    p = tmp_path / "s.parquet"
+    pd.DataFrame(
+        {
+            "year": [1990, 2020, 2025],
+            "metric": ["reserves", "reserves", "production"],
+            "day": pd.to_datetime(["2020-01-01", "2024-12-31", "2026-05-09"]).date,
+        }
+    ).to_parquet(p)
+    spans = bc._coverage(
+        p,
+        [
+            {"column": "year", "grain": "year", "where": {"metric": ["reserves"]}, "layers": ["r"]},
+            {"column": "day", "grain": "month"},
+        ],
+    )
+    assert spans == [
+        {"from": "1990", "through": "2020", "grain": "year", "layers": ["r"]},
+        {"from": "2020-01", "through": "2026-05", "grain": "month"},
+    ]
+    # A filter that matches nothing is drift, not an empty span.
+    with pytest.raises(ValueError, match="matches no rows"):
+        bc._coverage(p, [{"column": "year", "grain": "year", "where": {"metric": ["gone"]}}])
+
+
+def test_shipped_reserves_coverage_is_not_the_release_date():
+    """The reason coverage exists: EI's 2026 release ends its reserves in 2020."""
+    cat = json.loads(bc.OUT.read_text())
+    ei = next(e for e in cat["entries"] if e["id"] == "ei_country_year")
+    spans = {tuple(s.get("layers", [])): s for s in ei["coverage"]}
+    assert spans[("reserves", "reserves:gas")]["through"] < ei["as_of"][:4]

@@ -39,7 +39,7 @@ const LABEL: Record<(typeof ALL_LAYERS)[number], string> = {
   ports: "Ports",
   gas_pipelines: "Gas pipelines",
   lng_terminals: "LNG terminals",
-  lng_voyages: "LNG voyages (2020–2024)",
+  lng_voyages: "LNG voyages",
 };
 
 /** Assert exactly `on` are ticked in the panel (every other layer unticked). */

@@ -23,6 +23,12 @@ test.describe("/methodology", () => {
     await expect(attributions).toContainText("CC BY 4.0");
     await expect(attributions).toContainText("OpenStreetMap");
 
+    // Recency, generated from catalog.json: coverage is not the release date.
+    const recency = page.getByTestId("recency");
+    const ei = recency.getByRole("row").filter({ hasText: "Energy Institute" });
+    await expect(ei).toContainText("reserves: 1990–2020");
+    await expect(recency.getByRole("row").filter({ hasText: "BACI" })).toContainText("1995–2024");
+
     await expect(page.getByTestId("how-to-cite")).toContainText("@software{");
   });
 

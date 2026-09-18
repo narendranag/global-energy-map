@@ -28,7 +28,17 @@ pytestmark = pytest.mark.network
 # Pins whose download_url is a direct file fetch, so a HEAD/range GET is
 # meaningful. The others are service endpoints that answer only real queries:
 # NETL is an ArcGIS FeatureServer root and OSM is an Overpass POST endpoint.
-_FILE_DOWNLOAD_KEYS = {"ei", "baci", "gem_goget", "gem_goit", "gem_ggit", "gem_routes", "lng_t3"}
+_FILE_DOWNLOAD_KEYS = {
+    "ei",
+    "baci",
+    "gem_goget",
+    "gem_goit",
+    "gem_ggit",
+    "gem_routes",
+    "lng_t3",
+    "eia_dpr_counties",
+    "census_counties",
+}
 
 _OK = {200, 206}
 # Cloudflare and friends answer bots with 403 rather than telling us the file

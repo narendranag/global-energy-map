@@ -22,6 +22,7 @@ const LAYERS: LayerState = {
   lng_terminals: true,
   lng_voyages: false,
   gas_storage: false,
+  shale_regions: false,
 };
 
 const DEFAULTS: AppState = { mode: "infrastructure", year: 2020, commodity: "oil", scenario: null, layers: LAYERS };

@@ -7,11 +7,14 @@ import {
 } from "@/lib/data/voyages";
 import { loadBasins } from "@/components/layers/BasinPolygonsLayer";
 import { loadPipelines } from "@/components/layers/PipelinesLayer";
+import { shaleRegionFeatures } from "@/components/layers/ShaleRegionsLayer";
+import { loadShaleRegionData, loadShaleRegionShapes } from "@/lib/data/shale-regions";
 import {
   assetTable,
   basinTable,
   lngTerminalRows,
   pipelineTable,
+  shaleRegionTable,
   voyageTable,
   type ExportTable,
   type LayerKey,
@@ -41,6 +44,10 @@ export async function loadLayerTable(key: LayerKey, year: number): Promise<Expor
       return pipelineTable((await loadPipelines()).features, "gas", year);
     case "basins":
       return basinTable((await loadBasins()).features);
+    case "shale_regions": {
+      const [shapes, data] = await Promise.all([loadShaleRegionShapes(), loadShaleRegionData()]);
+      return shaleRegionTable(shaleRegionFeatures(shapes, data, year).features);
+    }
     case "lng_voyages": {
       if (!voyagesInRange(year)) return null;
       const [voyages, a] = await Promise.all([loadVoyages(year), loadAssets()]);

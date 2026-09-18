@@ -13,9 +13,12 @@ The per-file licence, row count, size and sha256 are also listed on the live [Da
 | Global Energy Monitor (GOGET, GOIT, GGIT) | CC BY 4.0 | `assets.parquet`, `assets_open.parquet`, `pipelines.geojson` | Yes (`assets_open.parquet`, `pipelines.geojson`) | Data: Global Energy Monitor, CC BY 4.0 |
 | LNG-T3 (Zhou, C. 2026, Zenodo) | CC BY 4.0 | `assets.parquet`, `assets_open.parquet`, `lng_voyage.parquet`, `lng_trade_daily.parquet`, `lng_terminal_daily.parquet` | Yes | Data: Zhou, C. 2026, LNG-T3 (Zenodo 10.5281/zenodo.19571058), CC BY 4.0 |
 | NETL Global Oil & Gas Infrastructure (US DOE) | US Government work (public domain); NETL's data portal lists it as Creative Commons Attribution | `assets.parquet`, `assets_open.parquet`, `basins.geojson` | Yes (`assets_open.parquet`, `basins.geojson`) | Data: NETL Global Oil & Gas Infrastructure (GOGI), US DOE |
+| US Energy Information Administration (STEO; DPR region counties) + US Census Bureau (county shapes) | US Government works, public domain | `shale_region_year.parquet`, `shale_regions.geojson` | Yes | Data: US Energy Information Administration (STEO); county shapes: US Census Bureau |
+| Gas Infrastructure Europe (AGSI + ALSI) | Free with registration; GIE's own terms, not an open licence | `gie_daily.parquet` | No (shown in the app only) | Data: GIE AGSI / ALSI |
+| UN Comtrade | UN Comtrade terms; re-dissemination limited | `comtrade_monthly.parquet` | No (not shown on the map yet) | Data: UN Comtrade |
 | Natural Earth | Public domain | `countries.geojson` | Yes | None required ("Made with Natural Earth" appreciated) |
 | OpenStreetMap (88 refinery rows) | ODbL 1.0 (share-alike) | `assets.parquet` only | No | © OpenStreetMap contributors, ODbL |
-| Energy Institute Statistical Review | EI terms: quote with attribution, permission for extensive reproduction | `country_year_series.parquet` | No (shown in the app only) | Data: Energy Institute Statistical Review of World Energy 2025 |
+| Energy Institute Statistical Review | EI terms: quote with attribution, permission for extensive reproduction | `country_year_series.parquet` | No (shown in the app only) | Data: Energy Institute Statistical Review of World Energy 2026 |
 | CEPII BACI | Etalab Open Licence 2.0 | `trade_flow.parquet` | Yes | Data: CEPII BACI (release V202601); cite Gaulier & Zignago (2010) |
 | Scenario route shares (our derivation from EIA, IEA, GEM, Argus/Kpler reporting) | Our own table, per-row citations | `disruption_route.parquet` | Yes | Cite this project and the source on each row |
 | Basemap: OpenFreeMap / OpenMapTiles / OpenStreetMap | OSM data ODbL; OpenMapTiles design CC BY 4.0; OpenFreeMap MIT | Not shipped (tiles load from OpenFreeMap) | — | OpenFreeMap © OpenMapTiles, data from OpenStreetMap contributors |
@@ -45,6 +48,12 @@ The per-file licence, row count, size and sha256 are also listed on the live [Da
 - **What we redistribute:** 1,046 basin polygons (`basins.geojson`, simplified), 7,733 storage sites, 3,694 ports and 1,075 refineries (rows of `assets.parquet` / `assets_open.parquet`), from a 2026-05-17 snapshot of NETL's ArcGIS layers.
 - **Changes we made:** duplicate refinery listings merged within 1 km, capacities parsed from text, country names mapped to ISO3, basin geometry simplified.
 - **Please cite:** Sabbatino, M., Romeo, L., Baker, V., Bauer, J., Barkhurst, A., Bean, A., DiGiulio, J., Jones, K., Jones, T.J., Justman, D., Miller III, R., Rose, K., and Tong, A., *Global Oil & Gas Features Database*, NETL EDX, 2017-12-12, [doi:10.18141/1427300](https://doi.org/10.18141/1427300).
+
+### US Energy Information Administration + US Census Bureau — US Government works
+
+- **Terms:** works of US federal employees are not subject to US copyright ([17 USC §105](https://www.law.cornell.edu/uscode/text/17/105)); EIA asks for credit ([EIA copyrights and reuse](https://www.eia.gov/about/copyrights_reuse.php)), and the Census Bureau's cartographic boundary files are public domain.
+- **What we redistribute:** annual crude and marketed-gas production for five US shale regions, 2009–2025, from the September 2026 STEO (`shale_region_year.parquet`), and the five region outlines, dissolved from Census 1:20m counties using EIA's DPR county list (`shale_regions.geojson`).
+- **Please cite:** US Energy Information Administration, *Short-Term Energy Outlook*, September 2026, https://www.eia.gov/outlooks/steo/.
 
 ### Natural Earth — public domain
 

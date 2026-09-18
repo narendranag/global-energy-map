@@ -19,6 +19,7 @@ export interface LayerState {
   lng_terminals: boolean;
   lng_voyages: boolean;     // Phase 6
   gas_storage: boolean;     // GIE AGSI — live, slider-independent
+  shale_regions: boolean;   // EIA STEO — US shale-region production, annual
 }
 
 export interface LayerPanelProps {
@@ -42,6 +43,7 @@ const ROWS: readonly Row[] = [
   { kind: "group", label: "Geology" },
   { kind: "toggle", key: "reserves", label: "Reserves (country)" },
   { kind: "toggle", key: "basins", label: "Basins" },
+  { kind: "toggle", key: "shale_regions", label: "US shale regions" },
   { kind: "group", label: "Oil" },
   { kind: "toggle", key: "extraction", label: "Extraction sites" },
   { kind: "toggle", key: "pipelines", label: "Oil pipelines" },

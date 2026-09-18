@@ -258,6 +258,69 @@ GIE = SourcePin(
     },
 )
 
+# ── EIA Short-Term Energy Outlook: US shale-region production ───────────────
+# Since June 2024 STEO carries what the Drilling Productivity Report used to:
+# crude and marketed-gas production for five county-defined producing regions.
+# STEO mixes history and forecast in one series with no flag between them, so
+# the pin names the last historical year explicitly and the transform refuses
+# anything later. Never ship a forecast as data.
+EIA_STEO = SourcePin(
+    key="eia_steo",
+    name="US Energy Information Administration — Short-Term Energy Outlook",
+    release="2026-09",  # September 2026 STEO
+    as_of="2026-09-09",
+    licence="US Government work, public domain (17 USC §105); credit EIA",
+    landing_url="https://www.eia.gov/outlooks/steo/",
+    terms_url="https://www.eia.gov/about/copyrights_reuse.php",
+    cadence="monthly, early in the month",
+    raw_dir=Path("data/raw/eia_steo"),
+    ingest="eia_steo",
+    download_url="https://api.eia.gov/v2/steo/data/",
+    extra={
+        "api_key_env": "EIA_API_KEY",
+        # Annual values for this year and later are STEO forecasts. Bump with
+        # the release: a January–December release forecasts its own year, so
+        # the last complete historical year is the release year minus one.
+        "history_through_year": "2025",
+    },
+)
+
+# The county list that defines those regions. Published with the DPR, which
+# EIA folded into STEO; STEO documents no separate list, so the DPR's is used
+# for the five regions STEO kept (Anadarko and Niobrara went into "rest of
+# Lower 48"). Stated as an assumption in docs/methodology.md.
+EIA_DPR_COUNTIES = SourcePin(
+    key="eia_dpr_counties",
+    name="US Energy Information Administration — Drilling Productivity Report regions",
+    release="2024-05",  # final DPR workbook (file dated 2024-05-13) before the move into STEO
+    as_of="2024-05-13",
+    licence="US Government work, public domain (17 USC §105); credit EIA",
+    landing_url="https://www.eia.gov/petroleum/drilling/",
+    terms_url="https://www.eia.gov/about/copyrights_reuse.php",
+    cadence="discontinued (folded into STEO, June 2024)",
+    raw_dir=Path("data/raw/eia_steo"),
+    ingest="eia_steo",
+    download_url="https://www.eia.gov/petroleum/drilling/xls/dpr-data.xlsx",
+    dest_filename="dpr-data.xlsx",
+)
+
+# County polygons to draw those regions with. Cartographic boundary file at
+# 1:20m: coarse, which is what a world map needs.
+CENSUS_COUNTIES = SourcePin(
+    key="census_counties",
+    name="US Census Bureau — Cartographic Boundary Files (counties, 1:20m)",
+    release="2023",
+    as_of="2024-04-16",  # file date on census.gov
+    licence="US Government work, public domain (17 USC §105)",
+    landing_url="https://www.census.gov/geographies/mapping-files/time-series/geo/cartographic-boundary.html",
+    terms_url="https://www.census.gov/about/policies/open-gov/open-data.html",
+    cadence="annual",
+    raw_dir=Path("data/raw/eia_steo"),
+    ingest="eia_steo",
+    download_url="https://www2.census.gov/geo/tiger/GENZ2023/shp/cb_2023_us_county_20m.zip",
+    dest_filename="cb_2023_us_county_20m.zip",
+)
+
 # ── NETL Global Oil & Gas Infrastructure (GOGI) ─────────────────────────────
 NETL = SourcePin(
     key="netl",
@@ -323,6 +386,9 @@ ALL: tuple[SourcePin, ...] = (
     GEM_GGIT,
     GEM_ROUTES,
     GIE,
+    EIA_STEO,
+    EIA_DPR_COUNTIES,
+    CENSUS_COUNTIES,
     LNG_T3,
     NETL,
     OSM,

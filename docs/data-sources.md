@@ -250,6 +250,48 @@ Each row: year, exporter ISO3, importer ISO3, quantity (tonnes).
 
 ---
 
+### EIA Short-Term Energy Outlook — US shale-region production
+
+- **URL:** https://www.eia.gov/outlooks/steo/ (API v2, `api.eia.gov/v2/steo/data/`; free key, `EIA_API_KEY`)
+- **License:** Public domain (US Government); credit EIA
+- **As-of:** September 2026 STEO (released 2026-09-09); history through 2025
+- **Where it lands:** `shale_region_year.parquet` (annual crude kb/d and marketed gas bcf/d per region) and `shale_regions.geojson` (region outlines)
+- **Layers/scenarios using it:** US shale regions layer
+
+**What we ingest:** annual `COPR{PM,BK,EF,HA,AP}` and `NGMP{PM,BK,EF,HA,AP}` — crude oil and marketed natural gas production for the Permian, Bakken, Eagle Ford, Haynesville and Appalachia regions, in one API request. The region outlines come from two more public-domain files: the county list in EIA's final Drilling Productivity Report workbook (`dpr-data.xlsx`, sheet `RegionCounties`, 249 counties for these five regions) and US Census cartographic-boundary counties at 1:20m. All 249 counties join by state + normalised name.
+
+**Coverage gaps:**
+- **Forecasts share the series.** STEO returns projected years in the same series as history. The pin sets `history_through_year` (2025 for the Sept 2026 release) and the transform drops everything after it — bump it with each January release.
+- **Region definitions are the DPR's.** STEO took over the DPR in June 2024 without publishing its own county list; if EIA redraws a region, the outline lags.
+- US only. Anadarko and Niobrara, DPR regions STEO folded into "rest of Lower 48", are not drawn.
+- Replaces the earlier idea of mapping EIA regions onto NETL basin polygons: all 88 of NETL's US basin polygons carry no name and no area, so there is nothing to join on.
+
+---
+
+### Gas Infrastructure Europe — AGSI + ALSI (daily)
+
+- **URL:** https://www.gie.eu/agsi-and-alsi-transparency-platforms/ (free key, `GIE_API_KEY`)
+- **License:** free with registration, attribution "GIE AGSI / ALSI"; not an open licence, so view-only
+- **As-of:** rolling; the pin is the last gas day ingested
+- **Where it lands:** `gie_daily.parquet`
+- **Layers/scenarios using it:** Gas storage (EU) — the latest gas day, independent of the year slider
+
+Country-level daily storage fullness, gas in store, working volume, LNG send-out and inventory, 2020-01-01 on. Terminal-level is deliberately not joined — see `docs/refresh.md`.
+
+---
+
+### UN Comtrade — monthly crude + LNG imports (as reported)
+
+- **URL:** https://comtradeplus.un.org/ (free key, `COMTRADE_API_KEY`)
+- **License:** UN Comtrade terms; re-dissemination limited, so view-only
+- **As-of:** retrieved 2026-09-17; months 2025-01 → 2026-05
+- **Where it lands:** `comtrade_monthly.parquet`
+- **Layers/scenarios using it:** none yet — ingested, not drawn
+
+Importer-declared HS 2709 and HS 271111 imports by month. **Supplements BACI, never merged with it**: BACI is annual and reconciles both sides of every flow; this is one side, monthly, and reaches about 18 months further. Months with fewer than 50 reporters are dropped as reporting lag.
+
+---
+
 ### Natural Earth — country boundaries
 
 - **URL:** https://www.naturalearthdata.com/downloads/110m-cultural-vectors/110m-admin-0-countries/
@@ -288,15 +330,6 @@ Each row: year, exporter ISO3, importer ISO3, quantity (tonnes).
 Phase 7 became a correctness pass (EI year parsing, BACI aggregates, reproducible assets, generated catalog), and Phase 8 then delivered the engineering cleanup that preceded new data sources: one cached asset load, an app state store that syncs to the URL, explicit ready signals for e2e, a Legend driven by `LayerState`, and dropping the unused `pipelines.parquet`. Still open from that list: a daily-throughput tooltip. The vintage filter on scenario inputs landed partly on 2026-09-11 as the in-service rule for LNG import terminals; refineries still carry no dates.
 
 Surfaced via Tavily/Exa research. Listed roughly in order of analytical value × tractability.
-
-### EIA STEO — tight oil and shale gas by US region/formation
-
-- **URL:** https://www.eia.gov/petroleum/drilling/ (data now published in STEO data tables since June 2024)
-- **API:** EIA API v2 (`api.eia.gov/v2/steo/...`), requires free API key registration
-- **License:** Public (US government)
-- **What it offers:** Monthly tight oil and shale gas production for eight US shale regions — Anadarko, Appalachia, Bakken, Eagle Ford, Haynesville, Niobrara, Permian, Utica. As of the March 2026 STEO, Permian is further broken down by formation (Avalon, Barnett, Bone Spring, Dean, Spraberry, Wolfcamp, Woodford).
-- **Why it matters:** This is the **only authoritative open per-basin time-series production dataset we've found.** It enables time-varying basin production for the world's #1 producer region, replacing the current country-aggregated production view with structural detail. Globally, no equivalent open dataset exists.
-- **Cost:** New ingest script (EIA API v2 client), region/formation → NETL basin_id mapping (~8 entries), new `basin_year_production.parquet` schema. Asymmetric coverage (US-only) requires honest documentation.
 
 ### EIA Refinery Capacity Report
 

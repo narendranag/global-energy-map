@@ -48,6 +48,7 @@ TRANSFORMS: list[str] = [
     "build_lng_voyages",
     "build_pipelines",
     "build_basins",
+    "build_shale_regions",
     "build_disruption_routing",
     "build_catalog",
 ]
@@ -61,6 +62,7 @@ INGESTS: list[str] = [
     "netl_gogi",
     "osm_refineries",
     "lng_t3",
+    "eia_steo",
 ]
 
 

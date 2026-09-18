@@ -82,6 +82,8 @@ NETL_GOGI_URL = pins.NETL.landing_url
 NETL_SNAPSHOT = pins.NETL.as_of
 LNG_T3_URL = pins.LNG_T3.landing_url
 LNG_T3_SOURCE = pins.LNG_T3.name
+EIA_LICENSE = "US Government work, public domain (17 USC §105)"
+EIA_ATTRIBUTION = "Data: US Energy Information Administration (STEO); county shapes: US Census Bureau"
 LICENSE_DATA_URL = "https://github.com/narendranag/global-energy-map/blob/main/LICENSE-DATA.md"
 
 # Files that are view-only as-is but have a downloadable open subset
@@ -340,6 +342,35 @@ REGISTRY: list[dict[str, Any]] = [
         "layers": ["gas_pipelines"],
         "redistributable": True,
         "attribution": GEM_ATTRIBUTION,
+    },
+    {
+        "id": "eia_steo_shale_regions",
+        "label": "US shale-region production, annual (EIA STEO history)",
+        "path": "/data/shale_region_year.parquet",
+        "format": "parquet",
+        "source_name": "US Energy Information Administration — STEO",
+        "source_url": pins.EIA_STEO.landing_url,
+        "license": EIA_LICENSE,
+        "as_of": pins.EIA_STEO.as_of,
+        "cadence": pins.EIA_STEO.cadence,
+        "coverage": [{"column": "year", "grain": "year"}],
+        "layers": ["shale_regions"],
+        "redistributable": True,
+        "attribution": EIA_ATTRIBUTION,
+    },
+    {
+        "id": "eia_shale_region_shapes",
+        "label": "US shale-region outlines (EIA DPR counties, Census 1:20m)",
+        "path": "/data/shale_regions.geojson",
+        "format": "json",
+        "source_name": "US Energy Information Administration — DPR regions; US Census Bureau",
+        "source_url": pins.EIA_DPR_COUNTIES.landing_url,
+        "license": EIA_LICENSE,
+        "as_of": pins.EIA_DPR_COUNTIES.as_of,
+        "cadence": pins.EIA_DPR_COUNTIES.cadence,
+        "layers": ["shale_regions"],
+        "redistributable": True,
+        "attribution": EIA_ATTRIBUTION,
     },
     {
         "id": "netl_basins",

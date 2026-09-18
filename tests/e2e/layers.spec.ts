@@ -130,6 +130,19 @@ test.describe("Layer panel", () => {
     await expect(page.getByTestId("stale-badge-gas_storage")).toHaveCount(0);
   });
 
+  test("US shale regions boot from the URL and fetch their two files", async ({ page }) => {
+    const errors = collectConsoleErrors(page);
+    const files: string[] = [];
+    page.on("request", (r) => {
+      const m = /\/data\/(shale_region[^?]*)/.exec(r.url());
+      if (m?.[1]) files.push(m[1]);
+    });
+    await gotoReady(page, "/?layers=shale_regions&year=2024&lon=-100&lat=34&z=4");
+    await expect(page.getByLabel("US shale regions")).toBeChecked();
+    expect(files.sort()).toEqual(["shale_region_year.parquet", "shale_regions.geojson"]);
+    expect(errors).toEqual([]);
+  });
+
   test("LNG voyages layer boots with the checkbox checked", async ({ page }) => {
     const errors = collectConsoleErrors(page);
     await gotoReady(page, "/?layers=reserves,lng_terminals,lng_voyages&year=2023");

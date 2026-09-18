@@ -63,6 +63,16 @@ export const PALETTE = {
   gasStorageLow: "#e8f0f2",
   gasStorageHigh: "#1d5f78",
 
+  // US shale regions (EIA) — production, one ramp per commodity, each in
+  // its family: orange for crude, blue for marketed gas. Both tops are kept
+  // light on purpose: the Permian is the darkest fill and the densest patch
+  // of wells and pipes, so the marks over it must hold contrast
+  // (symbology-contrast.test.ts: ≥ 2.5:1 oil marks, ≥ 2:1 gas lines).
+  shaleOilLow: "#f6e8d8",
+  shaleOilHigh: "#c98446",
+  shaleGasLow: "#e4ebf6",
+  shaleGasHigh: "#7f98cf",
+
   // Scenario — red only.
   exposureLow: "#fcbba1",
   exposureHigh: "#99000d",
@@ -228,6 +238,44 @@ export function atRiskColor(shareAtRisk: number): Rgba {
 }
 
 // ---------------------------------------------------------------------------
+// US shale regions (EIA STEO)
+// ---------------------------------------------------------------------------
+
+const SHALE_RAMP: Readonly<Record<"oil" | "gas", readonly [Rgb, Rgb]>> = {
+  oil: [hex(PALETTE.shaleOilLow), hex(PALETTE.shaleOilHigh)],
+  gas: [hex(PALETTE.shaleGasLow), hex(PALETTE.shaleGasHigh)],
+};
+const SHALE_ALPHA = 200;
+
+/** A region-year EIA does not report (before 2009) — outline only, faint fill. */
+export const SHALE_NO_DATA_COLOR: Rgba = paletteRgba("noData", 70);
+export const SHALE_OUTLINE: Rgba = paletteRgba("basin", 220);
+export const SHALE_OUTLINE_MIN_PX = 1;
+
+/**
+ * Ramp position for a region's output, square-root scaled against the largest
+ * value of that commodity across all regions and years. A fixed anchor makes
+ * growth visible as the slider moves (the Permian darkening 2010 → 2024);
+ * square root keeps the smaller regions distinguishable beside the Permian,
+ * which alone is about half of US crude.
+ */
+export function shaleRampT(value: number, max: number): number {
+  if (!Number.isFinite(value) || value <= 0 || !(max > 0)) return 0;
+  return Math.min(1, Math.sqrt(value / max));
+}
+
+export function shaleRampColor(t: number, commodity: "oil" | "gas"): Rgba {
+  const [lo, hi] = SHALE_RAMP[commodity];
+  const [r, g, b] = lerpRgb(lo, hi, t);
+  return [Math.round(r), Math.round(g), Math.round(b), SHALE_ALPHA];
+}
+
+export function shaleRegionColor(value: number | null, max: number, commodity: "oil" | "gas"): Rgba {
+  if (value === null || !Number.isFinite(value)) return SHALE_NO_DATA_COLOR;
+  return shaleRampColor(shaleRampT(value, max), commodity);
+}
+
+// ---------------------------------------------------------------------------
 // Basins
 // ---------------------------------------------------------------------------
 
@@ -384,6 +432,8 @@ export interface LegendItem {
 export type LayerKey = keyof LayerState;
 
 const RESERVES_LEGEND_STOPS: readonly Rgba[] = [0, 0.25, 0.5, 0.75, 1].map((t) => reservesRampColor(t));
+const SHALE_OIL_LEGEND_STOPS: readonly Rgba[] = [0, 0.25, 0.5, 0.75, 1].map((t) => shaleRampColor(t, "oil"));
+const SHALE_GAS_LEGEND_STOPS: readonly Rgba[] = [0, 0.25, 0.5, 0.75, 1].map((t) => shaleRampColor(t, "gas"));
 const GAS_STORAGE_LEGEND_STOPS: readonly Rgba[] = [0, 25, 50, 75, 100].map((p) => gasStorageColor(p));
 
 /**
@@ -399,6 +449,11 @@ export const LEGEND: Readonly<Record<LayerKey, readonly LegendItem[]>> = {
   gas_storage: [
     { label: "Gas storage 0 → 100 % full", swatch: { kind: "gradient", stops: GAS_STORAGE_LEGEND_STOPS } },
     { label: "Not reported to GIE", swatch: { kind: "fill", color: GAS_STORAGE_NO_DATA_COLOR } },
+  ],
+  shale_regions: [
+    { label: "US shale region crude output (oil view)", swatch: { kind: "gradient", stops: SHALE_OIL_LEGEND_STOPS } },
+    { label: "US shale region gas output (gas view)", swatch: { kind: "gradient", stops: SHALE_GAS_LEGEND_STOPS } },
+    { label: "No EIA data for the year", swatch: { kind: "fill", color: SHALE_NO_DATA_COLOR, outline: SHALE_OUTLINE } },
   ],
   basins: [{ label: "Sedimentary basin", swatch: { kind: "fill", color: BASIN_FILL, outline: BASIN_LINE } }],
   extraction: [
@@ -440,7 +495,7 @@ export const LEGEND: Readonly<Record<LayerKey, readonly LegendItem[]>> = {
 
 /** Legend sections, grouped by commodity (reserves first, then oil, gas, shared). */
 export const LEGEND_GROUPS: readonly { readonly title: string; readonly keys: readonly LayerKey[] }[] = [
-  { title: "Reserves & geology", keys: ["reserves", "basins"] },
+  { title: "Reserves & geology", keys: ["reserves", "basins", "shale_regions"] },
   { title: "Oil", keys: ["pipelines", "extraction", "refineries", "storage"] },
   { title: "Gas", keys: ["gas_pipelines", "lng_terminals", "lng_voyages", "gas_storage"] },
   { title: "Shipping", keys: ["ports"] },

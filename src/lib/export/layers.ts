@@ -31,12 +31,14 @@ export const LAYER_LABELS: Record<LayerKey, string> = {
   lng_terminals: "LNG terminals",
   lng_voyages: "LNG voyages",
   gas_storage: "Gas storage (EU)",
+  shale_regions: "US shale regions",
 };
 
 /** Display order in the Share menu (matches the layer panel). */
 export const LAYER_ORDER: readonly LayerKey[] = [
   "reserves",
   "basins",
+  "shale_regions",
   "extraction",
   "pipelines",
   "refineries",
@@ -45,6 +47,7 @@ export const LAYER_ORDER: readonly LayerKey[] = [
   "gas_pipelines",
   "lng_terminals",
   "lng_voyages",
+  "gas_storage",
 ];
 
 /** Catalog `layers` tags behind a map layer. */
@@ -212,6 +215,19 @@ export function basinTable(features: readonly Feature<Geometry, BasinLikeProps>[
   const fs = reprojectProps(features, BASIN_COLUMNS);
   return {
     columns: BASIN_COLUMNS,
+    rows: fs.map((f) => (f.properties ?? {}) as Record<string, CsvValue>),
+    features: fs,
+    filter: null,
+  };
+}
+
+const SHALE_REGION_COLUMNS = ["region_id", "name", "counties", "year", "crude_kbpd", "gas_bcfd"] as const;
+
+/** One row per region for the slider year; geometry = the region outline. */
+export function shaleRegionTable(features: readonly Feature<Geometry, Record<string, unknown>>[]): ExportTable {
+  const fs = reprojectProps(features, SHALE_REGION_COLUMNS);
+  return {
+    columns: SHALE_REGION_COLUMNS,
     rows: fs.map((f) => (f.properties ?? {}) as Record<string, CsvValue>),
     features: fs,
     filter: null,

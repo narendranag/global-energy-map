@@ -318,6 +318,55 @@
       "sha256": "3141fe28fb89df0b32902ca880af6c248a46fd073805983d8c7bb6bfe4a340e2"
     },
     {
+      "id": "eia_steo_shale_regions",
+      "label": "US shale-region production, annual (EIA STEO history)",
+      "path": "/data/shale_region_year.parquet",
+      "format": "parquet",
+      "source_name": "US Energy Information Administration — STEO",
+      "source_url": "https://www.eia.gov/outlooks/steo/",
+      "license": "US Government work, public domain (17 USC §105)",
+      "as_of": "2026-09-09",
+      "cadence": "monthly, early in the month",
+      "coverage": [
+        {
+          "from": "2009",
+          "through": "2025",
+          "grain": "year"
+        }
+      ],
+      "layers": [
+        "shale_regions"
+      ],
+      "attribution": "Data: US Energy Information Administration (STEO); county shapes: US Census Bureau",
+      "runtime": true,
+      "redistributable": true,
+      "downloadable": true,
+      "rows": 170,
+      "bytes": 6553,
+      "sha256": "c6e962f93b0b8f20c08ea74c76383e3e9b3182adb39a40eb4bf75d3417f98e28"
+    },
+    {
+      "id": "eia_shale_region_shapes",
+      "label": "US shale-region outlines (EIA DPR counties, Census 1:20m)",
+      "path": "/data/shale_regions.geojson",
+      "format": "json",
+      "source_name": "US Energy Information Administration — DPR regions; US Census Bureau",
+      "source_url": "https://www.eia.gov/petroleum/drilling/",
+      "license": "US Government work, public domain (17 USC §105)",
+      "as_of": "2024-05-13",
+      "cadence": "discontinued (folded into STEO, June 2024)",
+      "layers": [
+        "shale_regions"
+      ],
+      "attribution": "Data: US Energy Information Administration (STEO); county shapes: US Census Bureau",
+      "runtime": true,
+      "redistributable": true,
+      "downloadable": true,
+      "rows": 5,
+      "bytes": 11524,
+      "sha256": "7a73d2b7c3bd66fae8254319c8b8947a9982afd668324bc785520955a9909a00"
+    },
+    {
       "id": "netl_basins",
       "label": "Oil & gas basins (NETL GOGI; simplified GeoJSON)",
       "path": "/data/basins.geojson",

@@ -25,6 +25,7 @@ import {
   exposureColor,
   pipelineColor,
   reservesRampColor,
+  shaleRampColor,
   type Rgb,
   type Rgba,
 } from "@/lib/symbology";
@@ -113,6 +114,23 @@ describe("marks vs the Positron basemap (WCAG contrast of the mark's edge)", () 
       note({ pair: `${m} / reserves top`, contrast: r2(c) });
       expect(c).toBeGreaterThanOrEqual(2.5);
     }
+  });
+});
+
+describe("US shale regions (EIA) as ground", () => {
+  // The Permian is the densest patch of wells and pipes on the map, and it is
+  // also the darkest shale fill. The marks drawn over it must still read.
+  it("oil marks keep ≥ 2.5:1 on the darkest shale crude fill; gas lines on the gas fill", () => {
+    const oilTop = over(shaleRampColor(1, "oil"), LAND);
+    const gasTop = over(shaleRampColor(1, "gas"), LAND);
+    for (const m of ["refineryOutline", "extractionOutline", "oilPipeline"] as const) {
+      const c = contrast(MARKS[m], oilTop);
+      note({ pair: `${m} / shale oil top`, contrast: r2(c) });
+      expect(c).toBeGreaterThanOrEqual(2.5);
+    }
+    const c = contrast(MARKS.gasPipeline, gasTop);
+    note({ pair: "gasPipeline / shale gas top", contrast: r2(c) });
+    expect(c).toBeGreaterThanOrEqual(2);
   });
 });
 

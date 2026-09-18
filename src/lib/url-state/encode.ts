@@ -29,6 +29,7 @@ const LAYER_KEYS: readonly (keyof LayerState)[] = [
   // Appended, never inserted: the order is the URL's wire format, so adding
   // a key anywhere but the end would re-map every previously shared link.
   "gas_storage",
+  "shale_regions",
 ];
 
 export function encodeAppState(state: AppState): string {

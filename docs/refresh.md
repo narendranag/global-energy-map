@@ -152,6 +152,19 @@ uv run python -m scripts.build_all --only build_gie_daily && uv run python -m sc
 - **Storage fullness legitimately exceeds 100 %** — 2.8 % of rows, e.g. Belgium at 118 % through the 2022 gas crisis. It is `gasInStorage / workingGasVolume` and operators can hold more than nominal working volume. Verified against the components; do not clamp it, and do not build a colour ramp that assumes a 0–100 domain.
 - Licence is free-with-registration, not an open licence, so the file is **view-only** in the catalog.
 
+### EIA STEO shale regions (monthly release)
+
+```bash
+set -a; . ~/.config/secrets.env; set +a          # EIA_API_KEY (falls back to the shared DEMO_KEY)
+uv run python -m scripts.ingest.eia_steo --force
+uv run python -m scripts.build_all --only build_shale_regions && uv run python -m scripts.build_all --from build_catalog
+```
+
+- Bump `EIA_STEO.release` / `as_of` to the STEO release date (top of https://www.eia.gov/outlooks/steo/).
+- **Bump `history_through_year` in January.** STEO puts forecasts in the same series as history; the transform keeps years up to that pin and fails if a series stops short of it. A September 2026 release forecasts 2026, so the pin is 2025.
+- One API request fetches all ten series. The DEMO_KEY fallback allows only a few calls an hour, and exploratory calls count against it — register a key.
+- The DPR county list and Census counties are static (`EIA_DPR_COUNTIES`, `CENSUS_COUNTIES`); refetch only if EIA publishes a STEO county list, which would replace the DPR one.
+
 ### NETL GOGI (ad hoc, live layers)
 
 NETL serves live unversioned layers, so "is there a new release?" has no answer from the landing page. Ask the server for feature counts instead, and only re-ingest if they moved — a full re-snapshot is ~81 MB and restamps `source_version` on every NETL row:

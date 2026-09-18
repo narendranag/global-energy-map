@@ -20,21 +20,11 @@ import {
   type LayerKey,
 } from "@/lib/symbology";
 import { legendItems } from "@/components/layers/Legend";
+import { LAYER_LABELS } from "@/lib/export/layers";
 import type { LayerState } from "@/components/layers/LayerPanel";
 
-const ALL_LAYER_KEYS: readonly LayerKey[] = [
-  "reserves",
-  "basins",
-  "extraction",
-  "pipelines",
-  "refineries",
-  "storage",
-  "ports",
-  "gas_pipelines",
-  "lng_terminals",
-  "lng_voyages",
-  "gas_storage",
-];
+// Derived from the panel's labels, so a new layer is checked, not forgotten.
+const ALL_LAYER_KEYS: readonly LayerKey[] = Object.keys(LAYER_LABELS) as LayerKey[];
 
 function monotonic(xs: readonly number[], dir: "up" | "down"): boolean {
   return xs.every((x, i) => i === 0 || (dir === "up" ? x > (xs[i - 1] ?? x) : x < (xs[i - 1] ?? x)));

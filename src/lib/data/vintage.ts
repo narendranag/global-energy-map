@@ -42,6 +42,7 @@ const CATALOG_TAG: Readonly<Record<LayerKey, string>> = {
   lng_terminals: "lng_terminals",
   lng_voyages: "lng_voyages",
   gas_storage: "gas_storage",
+  shale_regions: "shale_regions",
 };
 
 /**

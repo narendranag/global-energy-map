@@ -8,6 +8,7 @@ This is the **current-state** methodology of Global Energy Map: for every map la
 |---|---|---|---|---|---|
 | Reserves (country) | Energy Institute Statistical Review | 2026 edition | 1990–2020, country-year | Yes, to 2020; 2020 value shown for 2021–2024 | oil: billion bbl · gas: Tcm |
 | Basins | NETL GOGI | 2026-05-17 snapshot | 1,046 polygons | No | area km² |
+| US shale regions | EIA STEO (history) + DPR county list | Sept 2026 STEO | 5 regions, 249 counties, 2009–2025 | Yes, from 2009 | crude kb/d · gas bcf/d |
 | Extraction sites | GEM GOGET | 2026-03 | 7,055 | Partly — 32 % dated | — (no capacity) |
 | Oil pipelines | GEM GOIT | 2025-04-09 | 1,185 | Partly — 64 % dated | kb/d |
 | Gas pipelines | GEM GGIT | 2026-02-20 | 2,772 | Partly — 74 % dated | bcm/y |
@@ -46,6 +47,16 @@ Generated from the data catalog at build time, so it cannot drift from the files
 - **Coverage:** 1,046 petroleum-bearing basin polygons with name, country, region and area. Geometry is simplified to ≈1 km for the browser (`basins.geojson`); full resolution stays in the build.
 - **Gaps:** geological outlines, not production; many polygons lack a name; no time dimension.
 - **Scenarios:** not used.
+
+### US shale regions
+
+- **Source:** US Energy Information Administration, *Short-Term Energy Outlook* (September 2026), API v2 series `COPR*` (crude oil production) and `NGMP*` (marketed natural gas production) for the Permian, Bakken, Eagle Ford, Haynesville and Appalachia regions. Files `shale_region_year.parquet` and `shale_regions.geojson`. US Government work, public domain.
+- **What the regions are:** EIA defines each region as a set of **counties**, not a geological outline, and its numbers are everything produced in those counties. We draw exactly that: the counties listed in EIA's Drilling Productivity Report workbook (`RegionCounties`), dissolved over US Census 1:20m county polygons. A region's edge is a county line, and it includes production from every formation beneath it.
+- **Assumption:** EIA moved the DPR into STEO in June 2024 and publishes no separate county list for the STEO regions, so we use the DPR's list for the five regions STEO kept (Anadarko and Niobrara now fall into STEO's "rest of Lower 48", which is not drawn). If EIA has since redrawn a region, our outline is out of date while the numbers are current.
+- **History only.** STEO series run 18 months into the future in the same series as history, with no flag between them. The build keeps annual values through **2025** — the last complete year before the September 2026 release — and fails if a series stops short of that. No forecast is on the map.
+- **Colour:** the slider year's crude output (oil view) or marketed gas output (gas view), square-root scaled against the largest value of that commodity in any region and year, so the Permian's growth shows as the slider moves. Before 2009 there is no EIA regional series and the regions draw as outlines only.
+- **Units:** crude in thousand barrels per day (STEO's million b/d × 1,000, matching the reserves layer's production figures); marketed gas in billion cubic feet per day as EIA publishes it. The tooltip also shows 2025, a year past the slider's end.
+- **Gaps:** US only — no open per-region production series exists elsewhere. Monthly values are ingested by EIA but not used; the slider is annual.
 
 ### Extraction sites
 
@@ -151,6 +162,7 @@ The slider runs **1990–2024**. Each layer behaves differently:
 - Reserves change until 2020, then hold the 2020 value (flagged on the map).
 - Pipelines, extraction sites and LNG terminals hide features whose start/commissioning year is after the selected year; undated features always show.
 - LNG voyages exist only for 2020–2024.
+- US shale regions have EIA data from 2009; earlier years draw outlines only.
 - Refineries, storage, ports and basins have no dates and are the same in every year — the map shows today's facilities on a 1990 background.
 - Scenario trade data (BACI) starts in **1995**; a scenario in 1990–1994 has no trade to put at risk.
 

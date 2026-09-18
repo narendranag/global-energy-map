@@ -25,6 +25,7 @@ export const TIME_AWARE: Readonly<Record<LayerKey, TimeAwareLevel>> = {
   // Not "no": static means undated and shown in every year. This layer is
   // dated and deliberately ignores the slider, which is a different claim.
   gas_storage: "live",
+  shale_regions: "yes",
 };
 
 /**
@@ -45,6 +46,7 @@ export const TIME_AWARE_COVERAGE: Readonly<Record<LayerKey, number | null>> = {
   lng_terminals: 97,
   lng_voyages: null,
   gas_storage: null,
+  shale_regions: null,
 };
 
 /** One-line explanation for a badge tooltip. */
@@ -61,6 +63,7 @@ export const TIME_AWARE_NOTE: Readonly<Record<LayerKey, string>> = {
   lng_voyages: "Voyages observed 2020–2024 only (LNG-T3); hidden outside that range.",
   gas_storage:
     "GIE publishes daily; this layer always shows the latest gas day and ignores the year slider.",
+  shale_regions: "Annual output 2009 onward (EIA STEO history; forecasts excluded); no data before 2009.",
 };
 
 /** Short badge text, e.g. "time: 64 %", "time: yes", "static". */

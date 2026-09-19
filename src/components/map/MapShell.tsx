@@ -124,6 +124,12 @@ function anchorBeneathLabels(layers: readonly Layer[], beforeId: string | undefi
 export function MapShell({ layers, getTooltip, onPick }: MapShellProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<MapboxOverlay | null>(null);
+  // The click handler is read through a ref so the map is built once: `onPick`
+  // changes identity whenever the caller's state does.
+  const onPickRef = useRef(onPick);
+  useEffect(() => {
+    onPickRef.current = onPick;
+  }, [onPick]);
   // null until the style has loaded: deck layers can only be inserted into a
   // loaded style, and must know which label layer to sit beneath.
   const [labelAnchor, setLabelAnchor] = useState<LabelAnchor | null>(null);
@@ -181,6 +187,37 @@ export function MapShell({ layers, getTooltip, onPick }: MapShellProps) {
     map.addControl(overlay);
     overlayRef.current = overlay;
 
+    // Clicks come from MapLibre, not from deck.
+    //
+    // `MapboxOverlay` wires MapLibre's mouse events into Deck only in
+    // *overlaid* mode (`_onAddOverlaid`); the interleaved path registers
+    // nothing but `styledata`, and the Deck instance it builds around
+    // MapLibre's GL context never receives a click of its own. Hover still
+    // works — deck re-picks on its own pointer move — which is what made this
+    // look wired when it was not: `onClick` simply never fired, so a click on
+    // a country selected nothing.
+    //
+    // So we do the two things `onClick` would have done: pick at the click
+    // point, and report a miss as `layer: null` (the caller reads that as
+    // "clicked the sea" and clears the selection).
+    map.on("click", (e) => {
+      const handler = onPickRef.current;
+      if (!handler) return;
+      const picked = overlay.pickObject({ x: e.point.x, y: e.point.y, radius: PICKING_RADIUS });
+      handler(
+        picked ??
+          ({
+            layer: null,
+            object: null,
+            picked: false,
+            index: -1,
+            x: e.point.x,
+            y: e.point.y,
+            coordinate: [e.lngLat.lng, e.lngLat.lat],
+          } as unknown as PickingInfo),
+      );
+    });
+
     // The camera seam: anything in the app can ask the map to move without
     // holding this handle (`useCamera` → store.requestCamera). A request
     // posted before this subscription — `?focus=JPN` fitting on load — is
@@ -202,11 +239,12 @@ export function MapShell({ layers, getTooltip, onPick }: MapShellProps) {
       layers: labelAnchor ? anchorBeneathLabels(layers, labelAnchor.beforeId) : [],
       // exactOptionalPropertyTypes: use null (not undefined) to satisfy DeckProps.getTooltip type
       getTooltip: getTooltip ? makeDeckTooltip(getTooltip) : null,
-      // deck calls this for every click, picked or not, so a click on empty
-      // sea arrives too (with `info.layer === null`).
-      onClick: onPick ?? null,
+      // `onClick` is deliberately not set: in interleaved mode deck never
+      // fires it (see the `map.on("click")` handler above, which is the only
+      // click path). Setting it as well would double-handle the day deck
+      // changes that.
     });
-  }, [layers, getTooltip, onPick, labelAnchor]);
+  }, [layers, getTooltip, labelAnchor]);
 
   return (
     <div className="relative h-full w-full">

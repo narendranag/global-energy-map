@@ -5,6 +5,7 @@ import type { PickingInfo } from "@deck.gl/core";
 import { MapShell } from "@/components/map/MapShell";
 import { LayerPanel, type LayerState } from "@/components/layers/LayerPanel";
 import { countryFromPick } from "@/components/layers/CountryPickLayer";
+import { CountryPanel } from "@/components/country/CountryPanel";
 import { formatTooltip } from "@/components/layers/tooltips";
 import { needsAssets, useMapLayers } from "@/components/layers/useMapLayers";
 import { Chevron } from "@/components/ui/Chevron";
@@ -91,6 +92,8 @@ function HomeInner() {
   const focusPickerRef = useRef(false);
   /** Phone (< 768 px) only: the scenario panel is collapsed to its header. */
   const [scenarioOpenOnPhone, setScenarioOpenOnPhone] = useState(false);
+  /** Phone (< 768 px) only: same for the country panel. Opens with the selection. */
+  const [countryOpenOnPhone, setCountryOpenOnPhone] = useState(true);
 
   const selectMode = useCallback(
     (next: Mode, via: "pointer" | "keyboard" = "pointer") => {
@@ -201,7 +204,7 @@ function HomeInner() {
       <div className="relative min-h-0 flex-1">
         {/*
           DOM order is focus order (header → intro → layers → scenario →
-          commodity → year → map): the map is
+          country → commodity → year → map): the map is
           last in the DOM and painted beneath the panels by its own z-0
           stacking context; every panel carries z-10 or higher.
 
@@ -261,6 +264,57 @@ function HomeInner() {
                 onChange={setScenarioId}
                 commodity={commodity}
                 result={scenario}
+              />
+            </div>
+          </>
+        )}
+        {/*
+          Embed rule (S7): the country panel does not render under `?embed=1`
+          at all. It is a deep-read surface — five sections, two lists of
+          buttons and a download — and an embed frame is where a reader looks
+          at *the map*; the focused country is still outlined, and "open full
+          map" leads to the panel.
+        */}
+        {focus !== null && !embed && (
+          <>
+            <button
+              type="button"
+              className={
+                "pointer-events-auto absolute right-4 z-10 flex items-center gap-2 rounded-md border border-slate-200 bg-white/95 px-3 py-2 text-xs font-medium uppercase tracking-wide text-slate-700 shadow-lg md:hidden " +
+                (showScenarioPanel ? "top-16" : "top-4")
+              }
+              aria-expanded={countryOpenOnPhone}
+              onClick={() => {
+                setCountryOpenOnPhone((v) => !v);
+              }}
+            >
+              <Chevron open={countryOpenOnPhone} />
+              Country
+            </button>
+            {/*
+              The country panel's slot. It sits left of the scenario panel's
+              26rem column when one is open, so a researcher can read a
+              country and the scenario that threatens it at the same time;
+              alone, it takes the right edge itself. Like the scenario slot it
+              ends above the commodity toggle and the year slider and scrolls,
+              and on phones it hangs below its own collapsed header button.
+            */}
+            <div
+              data-testid="country-slot"
+              className={
+                "pointer-events-none absolute bottom-40 top-0 z-20 w-[min(22rem,100%)] overflow-y-auto overscroll-contain max-md:right-0 " +
+                (showScenarioPanel ? "right-[26rem] max-md:top-24 " : "right-0 max-md:top-10 ") +
+                (countryOpenOnPhone ? "" : "max-md:hidden")
+              }
+            >
+              <CountryPanel
+                iso3={focus}
+                year={year}
+                commodity={commodity}
+                onClose={() => { setFocus(null); }}
+                onFocus={setFocus}
+                onScenario={setScenarioId}
+                scenarioOpen={showScenarioPanel}
               />
             </div>
           </>

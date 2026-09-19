@@ -75,6 +75,23 @@ Hover any country, pipeline, terminal, refinery or voyage for a tooltip. Every t
 - **Refineries and LNG terminals** show capacity and, under a scenario, their attributed exposure and top historical suppliers.
 - **LNG voyages** show loading and discharge terminals, dates, cargo in cubic metres (with an approximate tonnage at 0.4245 t/m³) and the LNG-T3 confidence score.
 
+## Selecting a country: the country panel
+
+Hovering answers "what is this?"; selecting answers "what is going on here?". **Click a country** — or open a link carrying `focus=ISO3` — and a panel opens on the right with that country read end to end. Clicking it again, clicking empty sea, pressing **Escape** or using the panel's **✕** clears the selection. A click on a pipeline, terminal or refinery is a click on *that*, and leaves the selection alone.
+
+The panel's header carries the country's name and ISO3 code, **Zoom to** (fits the country's bounds, clear of the panels) and **Download CSV**. Below it, in order, and each section present only if the country has data for it:
+
+1. **Reserves and production** — proved reserves (billion barrels of oil, or trillion cubic metres of gas) and crude production in kb/d, each with an inline sparkline over the whole series and a dot on the selected year. The headline number is the value *at* that year; where the series stops earlier the panel says so in words ("2020 value — the Energy Institute has not refreshed reserves since") rather than showing a blank or carrying the last value forward silently. Each sparkline is announced to screen readers as a sentence: span, first and last value, low and high with their years.
+2. **Trade in the selected year** — total imports and exports (BACI, kb/d for crude or Mt for LNG), a sparkline of each over 1995–2024, and the top five suppliers and top five customers with their shares. **Every partner row is a button**: selecting one moves the panel to that country, so a supply chain can be walked upstream.
+3. **Exposure** — the country's share and volume at risk under *every* scenario that applies to the current commodity, computed on the same engine and the same cited route shares the scenario panel uses, highest first. Selecting a row activates that scenario on the map; the country panel stays open beside it.
+4. **Infrastructure, gas storage and recent imports** — counts and summed capacity of LNG terminals, refineries and extraction sites (with how many of them carry a capacity in the source); EU gas-storage fullness on GIE's latest gas day, which is independent of the year slider; and the country's latest 12-month Comtrade import window.
+
+Every section ends with its own source and as-of line, taken from the data catalogue.
+
+**Download CSV** gives exactly what the panel shows, in long format, *minus what may not be redistributed*. The rule is the same one the layer downloads follow: a section ships only if every source behind it is CC BY 4.0, public domain or Etalab. In practice BACI trade, the exposure derived from it and the LNG-terminal and extraction-site counts ship; Energy Institute reserves and production, GIE storage, the Comtrade window and refineries (which mix in ODbL OpenStreetMap rows) do not. The panel names the omissions before you download, and the file repeats them in its `#` header, so an absent section is never mistaken for a zero.
+
+On a narrow screen the panel collapses to a **Country** button, below the Scenario one.
+
 ## The scenario panel
 
 In Scenarios mode (or whenever a scenario is set) a panel opens on the right. From top to bottom:
@@ -119,6 +136,7 @@ The address bar always reflects the current view, so you can bookmark or paste i
 | `commodity` | `oil`, `gas` | Unknown → the mode default. |
 | `scenario` | `hormuz`, `druzhba`, `btc`, `cpc` | Unknown → none. Hormuz with `commodity=gas` is the LNG scenario. |
 | `layers` | comma-separated: `reserves`, `basins`, `extraction`, `pipelines`, `refineries`, `storage`, `ports`, `gas_pipelines`, `lng_terminals`, `lng_voyages` | Replaces the preset entirely; `layers=` switches everything off. |
+| `focus` | ISO3 code | The selected country: outlines it and opens the country panel. A code we hold no polygon for is ignored. Written only while a country is selected, so older links are unchanged. |
 | `lon`, `lat` | decimal degrees | Longitude wrapped to −180…180; latitude clamped to ±85.05; two decimals kept. |
 | `z` | zoom 0–8 | Clamped; the data are not useful beyond zoom 8. |
 

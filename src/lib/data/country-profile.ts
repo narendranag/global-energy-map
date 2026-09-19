@@ -219,7 +219,7 @@ export function toTimeSeries(
   let last: SeriesPoint | null = null;
   for (const p of points) {
     if (p.value === null) continue;
-    if (first === null) first = p;
+    first ??= p;
     last = p;
     if (min === null || p.value < min.value) min = { year: p.year, value: p.value };
     if (max === null || p.value > max.value) max = { year: p.year, value: p.value };
@@ -400,7 +400,7 @@ export function buildExposure(
   for (const def of scenarios) {
     if (!def.commodities.includes(commodity)) continue;
     const result = results.get(def.id);
-    if (result === undefined || result.commodity !== commodity) continue;
+    if (result?.commodity !== commodity) continue;
     const impact = result.byImporter.find((i) => i.iso3 === iso3);
     if (impact === undefined || impact.totalQty <= 0) continue;
     rows.push({

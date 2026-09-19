@@ -81,24 +81,25 @@ export function sparklinePath(
   const out: string[] = [];
   let open = false;
   let drewSegment = false;
-  values.forEach((v, i) => {
+  for (let i = 0; i < values.length; i++) {
+    const v = values[i];
     if (v === null || v === undefined || !Number.isFinite(v)) {
       if (open && !drewSegment) out.push("h0"); // lone point: keep a visible dot
       open = false;
       drewSegment = false;
-      return;
+      continue;
     }
     const x = round(sparklineX(scale, i));
     const y = round(sparklineY(scale, v));
-    if (!open) {
+    if (open) {
+      out.push(`L${x} ${y}`);
+      drewSegment = true;
+    } else {
       out.push(`M${x} ${y}`);
       open = true;
       drewSegment = false;
-    } else {
-      out.push(`L${x} ${y}`);
-      drewSegment = true;
     }
-  });
+  }
   if (open && !drewSegment) out.push("h0");
   return out.join(" ");
 }

@@ -25,6 +25,7 @@ import {
   layerExportStatus,
   layerTags,
   scenarioTags,
+  TRADE_FLOW_COMMODITY_LABEL,
   type LayerKey,
 } from "@/lib/export/layers";
 import { scenarioCsv, scenarioFilename } from "@/lib/export/scenario";
@@ -268,10 +269,20 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
         return;
       }
       const ctx = { viewUrl, exported: accessed };
+      // A3: crude and LNG pairs would otherwise share one filename.
+      const commoditySuffix = key === "trade_flows" ? TRADE_FLOW_COMMODITY_LABEL[commodity] : undefined;
       if (ext === "csv") {
-        downloadText(layerFilename(key, year, "csv"), layerCsv(st, table, ctx), "text/csv");
+        downloadText(
+          layerFilename(key, year, "csv", commoditySuffix),
+          layerCsv(st, table, ctx),
+          "text/csv",
+        );
       } else {
-        downloadText(layerFilename(key, year, "geojson"), layerGeoJson(st, table, ctx), "application/geo+json");
+        downloadText(
+          layerFilename(key, year, "geojson", commoditySuffix),
+          layerGeoJson(st, table, ctx),
+          "application/geo+json",
+        );
       }
       setStatus(`${st.label}: ${String(table.rows.length)} rows downloaded (${ext.toUpperCase()}).`);
     } catch (err: unknown) {

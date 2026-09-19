@@ -219,6 +219,16 @@ export interface HowComputedOptions {
 }
 
 /**
+ * A severity as a percentage for prose: "50%", but "0.4%" rather than "0%"
+ * (review finding 6 — a rounded-to-zero severity described a closure that the
+ * numbers on screen plainly were not).
+ */
+export function severityPct(severity: number): string {
+  const p = severity * 100;
+  return `${p < 1 && p > 0 ? p.toFixed(1) : p.toFixed(0)}%`;
+}
+
+/**
  * Plain-language steps behind the scenario numbers, for the panel's
  * "How this is computed" disclosure. Mirrors engine.ts / shares.ts /
  * refinery.ts / lng.ts / lng-t3.ts — change those and this text must follow.
@@ -258,13 +268,16 @@ export function howComputed(
 
   const severity = options.severity;
   if (severity !== undefined && severity < 1) {
-    const pct = `${(severity * 100).toFixed(0)}%`;
+    const pct = severityPct(severity);
     steps.push(
       `Severity ${pct}: only ${pct} of what each route carries is cut, so every route share is multiplied by ${pct}. Total imports — the denominator of "% at risk" — are untouched.`,
     );
   }
 
-  const combined = options.combinedWith ?? [];
+  // Deduped (finding 6): the same scenario listed twice is one closure, and
+  // "2 routes are closed at once (the Strait of Hormuz and the Strait of
+  // Hormuz)" would be nonsense.
+  const combined = [...new Map((options.combinedWith ?? []).map((d) => [d.id, d])).values()];
   if (combined.length > 1) {
     const names = combined.map((s) => s.routeName);
     const list = `${names.slice(0, -1).join(", ")} and ${names[names.length - 1] ?? ""}`;

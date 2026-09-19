@@ -54,7 +54,35 @@ describe("exporter-side impact", () => {
     expect(exporterTotal).toBe(importerTotal);
     const exporterRisk = (r.byExporter ?? []).reduce((s, e) => s + e.atRiskQty, 0);
     const importerRisk = r.byImporter.reduce((s, i) => s + i.atRiskQty, 0);
-    expect(exporterRisk).toBeCloseTo(importerRisk, 9);
+    // Relative, not absolute (review finding 7): `toBeCloseTo(x, 9)` asks for
+    // agreement to 5e-10 in *absolute* tonnes, which these two-figure
+    // fixtures pass and real BACI totals (1e8 t, where a double's own ulp is
+    // ~1e-8) could not. The identity is exact in exact arithmetic, so the
+    // only slack it needs is floating-point noise proportional to the sum.
+    expect(Math.abs(exporterRisk - importerRisk)).toBeLessThanOrEqual(
+      Math.max(Math.abs(exporterRisk), 1) * 1e-12,
+    );
+  });
+
+  it("holds the two-sided identity at BACI-sized quantities", () => {
+    // Same rows, realistic magnitudes: ~1.2e8 tonnes across many pairs, where
+    // an absolute tolerance of 5e-10 would be smaller than one ulp.
+    const big: TradeFlowRow[] = [];
+    for (let i = 0; i < 200; i++) {
+      big.push({ year: 2024, importer_iso3: `I${String(i)}`, exporter_iso3: "SAU", qty: 613_457.31 + i });
+      big.push({ year: 2024, importer_iso3: `I${String(i)}`, exporter_iso3: "USA", qty: 91_233.07 + i });
+    }
+    const r = computeScenarioImpact({
+      scenarioId: "hormuz",
+      commodity: "oil",
+      year: 2024,
+      tradeFlows: big,
+      routes: ROUTES,
+    });
+    const exporterRisk = (r.byExporter ?? []).reduce((s, e) => s + e.atRiskQty, 0);
+    const importerRisk = r.byImporter.reduce((s, i) => s + i.atRiskQty, 0);
+    expect(exporterRisk).toBeGreaterThan(1e7);
+    expect(Math.abs(exporterRisk - importerRisk) / exporterRisk).toBeLessThan(1e-12);
   });
 
   it("scales with severity", () => {

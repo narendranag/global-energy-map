@@ -118,9 +118,24 @@ export const DEFAULT_APP_STATE: AppState = {
   year: DEFAULT_YEAR,
   commodity: "oil",
   scenario: null,
+  scenario2: null,
+  severity: 1,
+  view: "importers",
   focus: null,
   layers: MODE_LAYERS[DEFAULT_MODE],
 };
+
+/**
+ * T1: everything a scenario carries, cleared together. A severity or an
+ * exporter view left behind by a scenario that is no longer active would sit
+ * in the URL describing nothing, and would reappear on the next scenario.
+ */
+const NO_SCENARIO = {
+  scenario: null,
+  scenario2: null,
+  severity: 1,
+  view: "importers",
+} as const;
 
 /** True when the Layers disclosure starts expanded for this mode. */
 export function layersOpenByDefault(mode: Mode): boolean {
@@ -147,7 +162,7 @@ export function applyMode(state: AppState, mode: Mode): AppState {
   const layers = MODE_LAYERS[mode];
   switch (mode) {
     case "infrastructure":
-      return { ...state, mode, layers, scenario: null };
+      return { ...state, mode, layers, ...NO_SCENARIO };
     case "flows": {
       const inRange = state.year >= TRADE_FIRST_YEAR && state.year <= TRADE_LAST_YEAR;
       return {
@@ -156,7 +171,7 @@ export function applyMode(state: AppState, mode: Mode): AppState {
         layers,
         commodity: "gas",
         year: inRange ? state.year : FLOWS_DEFAULT_YEAR,
-        scenario: null,
+        ...NO_SCENARIO,
       };
     }
     case "scenarios":

@@ -223,6 +223,48 @@ This is a **static first-order exposure measure**: what fraction of last year's 
 
 <!-- generated:scenario-shares -->
 
+### Partial closures, combined scenarios and the exporter view
+
+Three controls change what the numbers above describe. Each writes one URL parameter, so a link carries exactly what was on screen; a link with none of them means what it always did.
+
+**Severity (`sev=`, 5–100 %).** The slider is the fraction of what the route carries that is cut, not a fraction of the country's supply. It multiplies the route share and nothing else:
+
+```
+at_risk(importer) = Σ over exporters X of imports(X → importer) × share(S, X, importer) × severity
+```
+
+Total imports — the denominator of `share_at_risk` — are untouched, so a 50 % closure is exactly half the volume at risk and half the percentage. Every downstream view (refineries, LNG terminals, the map fills, the CSV) reads the same multiplied share. The scale is deliberately linear and deliberately dumb: it says "this much of the route stops", not "this is what a partial closure would do to prices, queues or rerouting", none of which this model contains.
+
+**Combining two scenarios (`scenario2=`), reported as a range.** Each scenario's own rows are resolved first — pair beats wildcard, including a share of 0 — and only then combined, so a flow one scenario carves out cannot be readmitted by another's wildcard. For two closures A and B carrying shares *a* and *b* of one flow, we know the fractions but **not which cargoes**, so the truly-cut fraction is unknown. It is, however, bounded, and both bounds are arithmetic rather than modelling choices:
+
+```
+max(a, b)  ≤  cut  ≤  min(1, a + b)
+```
+
+The lower bound is reached when the routes are **in series** — the same barrels cross both, so closing both cuts that cargo once. Qatari LNG to Japan transits Hormuz *and* Malacca; closing both does not cut it twice. The upper bound is reached when they are **in parallel** — different barrels, e.g. Canadian crude reaching the US Midwest either on Keystone or on the Enbridge Mainline, so the two closures add. Every headline figure quotes the **lower bound** (the defensible "at least this much"), and the range is shown beside it only where the two ends actually differ once rounded.
+
+Worked examples, both crude, 2024, from the shipped data:
+
+| Scenarios | Country | Range |
+|---|---|---|
+| Hormuz | Japan | 73.3 % |
+| Malacca | Japan | 94.9 % |
+| Hormuz + Malacca | Japan | 94.9 % (in series — no wider than Malacca alone) |
+| Keystone + Enbridge Mainline | United States | 36.5 – 45.0 % (in parallel) |
+
+Limits worth stating plainly: the bounds are only as good as the shares they combine, and the shares are static across years; the range is not a confidence interval and carries no probability; `1 − (1 − a)(1 − b)` (independent-probability composition) is **not** used, because these are fixed physical routings rather than independent random events and that formula lands between the bounds for no reason anyone can cite. Asset-level rows — refineries and LNG terminals — quote the lower bound only: spreading a *range* across a country's plants by capacity would multiply an already-coarse proxy by an interval, and the CSV header says so.
+
+**Exporter view (`view=exporters`).** The same rows read the other way round: what an exporter loses of its outlet, rather than what an importer loses of its supply.
+
+```
+at_risk(exporter) = Σ over importers M of exports(exporter → M) × share(S, exporter, M) × severity
+share_at_risk     = at_risk(exporter) / total exports(exporter, year)
+```
+
+Because both sides sum the same products over the same flows, Σ exporter at-risk ≡ Σ importer at-risk — the two views are two readings of one number, and the map's red ramp simply shades the other side. The denominator differs, though: an exporter's total is everything BACI records it exporting of that commodity, so a country with no BACI export rows does not appear at all. For Hormuz crude in 2024 the exporter view ranks Saudi Arabia first (272.1 Mt at risk of 309.2 Mt exported, 88 %), then Iraq (156.2 Mt, 90 %) and the UAE (119.0 Mt, 65 %).
+
+The country panel's exposure list is deliberately **not** affected by any of the three: it runs every scenario one at a time at full severity, which is what makes its rows comparable with each other. When a partial or combined closure is active the panel says so, so the two figures on screen cannot silently disagree.
+
 ### Refinery attribution
 
 For oil scenarios, a country's imports (and its at-risk imports) are split across its refineries in proportion to capacity:

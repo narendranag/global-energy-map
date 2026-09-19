@@ -124,14 +124,16 @@ export function markBounds(
 }
 
 /**
- * The box the camera should fit for an active scenario: the disruption mark
- * plus the top exposed importers' boxes. Null when we have neither — the
- * camera then stays where the viewer left it rather than guessing.
+ * The box the camera should fit for an active scenario: the disruption
+ * mark(s) plus the top exposed importers' boxes. Null when we have neither —
+ * the camera then stays where the viewer left it rather than guessing.
+ *
+ * T1 takes a *list* of marks: a combined run closes two routes and framing
+ * only the first would hide half the reason the numbers moved.
  */
 export function scenarioFitBounds(
-  mark: { readonly lon: number; readonly lat: number } | null,
+  marks: readonly { readonly lon: number; readonly lat: number }[],
   importerBoxes: readonly Bounds[],
 ): Bounds | null {
-  const boxes = [...(mark === null ? [] : [markBounds(mark)]), ...importerBoxes];
-  return unionBounds(boxes);
+  return unionBounds([...marks.map((m) => markBounds(m)), ...importerBoxes]);
 }

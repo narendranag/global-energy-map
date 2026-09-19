@@ -1,6 +1,7 @@
 import type { LayerKey } from "@/lib/symbology";
 import {
   DISRUPTION_MARK_LAYER_ID,
+  SECOND_SCENARIO_SUFFIX,
   formatDisruptionTooltip,
 } from "@/components/scenarios/disruption-layers";
 import { BASINS_LAYER_ID, formatBasinTooltip } from "./BasinPolygonsLayer";
@@ -65,6 +66,9 @@ const BY_DECK_ID: ReadonlyMap<string, TooltipFormatter<never>> = new Map<
   // Not a layer toggle: the disruption mark exists because a scenario is
   // active (S1), so it has no `LayerKey` and is registered on its own id.
   [DISRUPTION_MARK_LAYER_ID, formatDisruptionTooltip],
+  // T1: a combined run draws a second mark on its own id suffix, so that one
+  // needs the same formatter (the primary's id is unchanged).
+  [`${DISRUPTION_MARK_LAYER_ID}${SECOND_SCENARIO_SUFFIX}`, formatDisruptionTooltip],
 ]);
 
 /** Tooltip text for a hovered object on deck layer `layerId`, or null. */

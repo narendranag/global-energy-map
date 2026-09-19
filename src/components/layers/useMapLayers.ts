@@ -17,11 +17,12 @@ import {
 import { loadCountries } from "@/lib/geo/countries";
 import { useSearchHighlight } from "@/lib/search/highlight";
 import type { Commodity, ScenarioResult } from "@/lib/scenarios/types";
+import type { ScenarioView } from "@/lib/url-state/encode";
 import { reservesDataYear } from "@/lib/time/range";
 import { useMapView } from "@/lib/state";
 import { extractionOpacity, glyphScale, isZoomGated } from "@/lib/symbology";
 import {
-  importerOverlay,
+  scenarioOverlay,
   lngImportImpactMap,
   lngVoyageImpactByTerminalName,
   refineryImpactMap,
@@ -66,6 +67,8 @@ export interface MapLayersInput {
   readonly assets: AssetsByKind | null;
   /** Selected country (ISO3), outlined above the fills. */
   readonly focus: string | null;
+  /** T1: which side of a scenario the exposure fills describe. */
+  readonly scenarioView?: ScenarioView;
 }
 
 export interface MapLayers {
@@ -90,6 +93,7 @@ export function useMapLayers({
   scenario,
   assets,
   focus,
+  scenarioView = "importers",
 }: MapLayersInput): MapLayers {
   // --- zoom (settled camera; quantised so a pan does not rebuild layers) -----
   const { zoom } = useMapView();
@@ -116,7 +120,10 @@ export function useMapLayers({
   const tradeFlows = useAsync(loadTradeFlows, showTradeFlows ? [year, commodity] : null);
 
   // --- scenario styling -----------------------------------------------------
-  const overlay = useMemo(() => importerOverlay(scenario, commodity), [scenario, commodity]);
+  const overlay = useMemo(
+    () => scenarioOverlay(scenario, commodity, scenarioView),
+    [scenario, commodity, scenarioView],
+  );
   const refineryImpacts = useMemo(() => refineryImpactMap(scenario), [scenario]);
   const lngImpacts = useMemo(() => lngImportImpactMap(scenario), [scenario]);
   const voyageImpacts = useMemo(() => lngVoyageImpactByTerminalName(scenario), [scenario]);

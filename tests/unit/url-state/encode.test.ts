@@ -50,6 +50,9 @@ const DEFAULTS: AppState = {
   year: 2020,
   commodity: "oil",
   scenario: null,
+  scenario2: null,
+  severity: 1,
+  view: "importers",
   focus: null,
   layers: ALL_ON,
 };
@@ -61,6 +64,9 @@ describe("encodeAppState", () => {
       year: 2015,
       commodity: "gas",
       scenario: "hormuz",
+      scenario2: null,
+      severity: 1,
+      view: "importers",
       focus: null,
       layers: { ...ALL_ON, basins: false, ports: false },
     });
@@ -82,6 +88,9 @@ describe("decodeAppState", () => {
       year: 2015,
       commodity: "gas",
       scenario: "hormuz",
+      scenario2: null,
+      severity: 1,
+      view: "importers",
       focus: null,
       layers: { ...ALL_ON, basins: false, ports: false, gas_pipelines: false },
     };
@@ -148,6 +157,9 @@ describe("decodeAppState", () => {
       year: 2023,
       commodity: "gas",
       scenario: "hormuz",
+      scenario2: null,
+      severity: 1,
+      view: "importers",
       focus: null,
       layers: { ...ALL_ON, lng_voyages: true },
     };
@@ -163,6 +175,80 @@ describe("decodeAppState", () => {
       DEFAULTS,
     );
     expect(decoded.layers.lng_voyages).toBe(false);
+  });
+});
+
+describe("severity, a second scenario and the exporter view (T1)", () => {
+  const base: AppState = { ...DEFAULTS, scenario: "hormuz" };
+
+  it("writes nothing for the defaults, so every pre-T1 link is byte-identical", () => {
+    const qs = encodeAppState(base);
+    const params = new URLSearchParams(qs);
+    expect(params.has("sev")).toBe(false);
+    expect(params.has("scenario2")).toBe(false);
+    expect(params.has("view")).toBe(false);
+  });
+
+  it("round-trips a half closure as an integer percentage", () => {
+    const qs = encodeAppState({ ...base, severity: 0.5 });
+    expect(new URLSearchParams(qs).get("sev")).toBe("50");
+    expect(decodeAppState(new URLSearchParams(qs), DEFAULTS).severity).toBe(0.5);
+  });
+
+  it("clamps sev to 5–100 and rounds it", () => {
+    const d = (qs: string) => decodeAppState(new URLSearchParams(qs), DEFAULTS).severity;
+    expect(d("sev=0")).toBe(0.05);
+    expect(d("sev=-40")).toBe(0.05);
+    expect(d("sev=400")).toBe(1);
+    expect(d("sev=37.4")).toBe(0.37);
+  });
+
+  it("falls back to the default for an unparseable sev rather than inventing 0", () => {
+    expect(decodeAppState(new URLSearchParams("sev=banana"), DEFAULTS).severity).toBe(1);
+    expect(decodeAppState(new URLSearchParams("sev="), DEFAULTS).severity).toBe(1);
+  });
+
+  it("round-trips a second scenario as its own parameter, never scenario=a+b", () => {
+    const qs = encodeAppState({ ...base, scenario2: "malacca" });
+    const params = new URLSearchParams(qs);
+    expect(params.get("scenario")).toBe("hormuz");
+    expect(params.get("scenario2")).toBe("malacca");
+    const decoded = decodeAppState(new URLSearchParams(qs), DEFAULTS);
+    expect(decoded.scenario).toBe("hormuz");
+    expect(decoded.scenario2).toBe("malacca");
+  });
+
+  it("drops a second scenario with no primary, or one that repeats it", () => {
+    expect(decodeAppState(new URLSearchParams("scenario2=malacca"), DEFAULTS).scenario2).toBeNull();
+    expect(
+      decodeAppState(new URLSearchParams("scenario=hormuz&scenario2=hormuz"), DEFAULTS).scenario2,
+    ).toBeNull();
+  });
+
+  it("drops a second scenario the commodity axis does not model", () => {
+    // Druzhba is crude-only: on the gas axis it has no route rows at all.
+    const d = decodeAppState(
+      new URLSearchParams("commodity=gas&scenario=hormuz&scenario2=druzhba"),
+      DEFAULTS,
+    );
+    expect(d.scenario).toBe("hormuz");
+    expect(d.scenario2).toBeNull();
+  });
+
+  it("drops both when the primary does not model the commodity", () => {
+    const d = decodeAppState(
+      new URLSearchParams("commodity=gas&scenario=druzhba&scenario2=malacca"),
+      DEFAULTS,
+    );
+    expect(d.scenario).toBeNull();
+    expect(d.scenario2).toBeNull();
+  });
+
+  it("round-trips the exporter view and ignores an unknown one", () => {
+    const qs = encodeAppState({ ...base, view: "exporters" });
+    expect(new URLSearchParams(qs).get("view")).toBe("exporters");
+    expect(decodeAppState(new URLSearchParams(qs), DEFAULTS).view).toBe("exporters");
+    expect(decodeAppState(new URLSearchParams("view=sideways"), DEFAULTS).view).toBe("importers");
   });
 });
 
@@ -193,6 +279,9 @@ describe("decodeAppState — mode", () => {
       year: 2015,
       commodity: "gas",
       scenario: "hormuz",
+      scenario2: null,
+      severity: 1,
+      view: "importers",
       focus: null,
       layers: { ...ALL_OFF, reserves: true, lng_terminals: true },
     });

@@ -35,31 +35,43 @@ import { SCENARIO_FIT_MAX_ZOOM, scenarioFitBounds, topExposedIso3 } from "./fit"
 
 export interface ScenarioCameraInput {
   readonly scenarioId: ScenarioId | null;
-  /** The disruption mark, once it can be placed (null for an unplaceable one). */
-  readonly mark: { readonly lon: number; readonly lat: number } | null;
-  /** True while the mark cannot be placed *yet* (a pipeline route still loading). */
+  /**
+   * T1: the second scenario of a combined run, or null. Adding or removing
+   * one is a change of *what is closed*, so it re-frames exactly as picking a
+   * different scenario does.
+   */
+  readonly scenario2?: ScenarioId | null;
+  /** Every placed disruption mark (empty while none can be placed). */
+  readonly marks: readonly { readonly lon: number; readonly lat: number }[];
+  /** True while a mark cannot be placed *yet* (a pipeline route still loading). */
   readonly markPending: boolean;
   readonly result: ScenarioResult | null;
   readonly padding: Partial<CameraPadding>;
+  /** T1: which side's countries the fit frames — whichever the panel lists. */
+  readonly view?: "importers" | "exporters";
 }
 
 export function useScenarioCamera({
   scenarioId,
-  mark,
+  scenario2 = null,
+  marks,
   markPending,
   result,
   padding,
+  view = "importers",
 }: ScenarioCameraInput): void {
   const camera = useCamera();
-  /** `undefined` until the first render has been seen; then the last scenario. */
-  const seen = useRef<ScenarioId | null | undefined>(undefined);
+  /** What is closed right now: `null`, "hormuz", or "hormuz+malacca". */
+  const key = scenarioId === null ? null : `${scenarioId}${scenario2 === null ? "" : `+${scenario2}`}`;
+  /** `undefined` until the first render has been seen; then the last key. */
+  const seen = useRef<string | null | undefined>(undefined);
   /** The scenario whose result we are waiting on before fitting. */
   const awaiting = useRef<ScenarioId | null>(null);
 
   useEffect(() => {
     const first = seen.current === undefined;
-    if (!first && seen.current === scenarioId) return;
-    seen.current = scenarioId;
+    if (!first && seen.current === key) return;
+    seen.current = key;
     if (scenarioId === null) {
       awaiting.current = null;
       return;
@@ -67,7 +79,7 @@ export function useScenarioCamera({
     // The scenario the page loaded with is not a change the viewer made.
     if (first) return;
     awaiting.current = scenarioId;
-  }, [scenarioId]);
+  }, [key, scenarioId]);
 
   useEffect(() => {
     const want = awaiting.current;
@@ -82,15 +94,16 @@ export function useScenarioCamera({
     void (async () => {
       const fc = await loadCountries();
       if (ctrl.cancelled) return;
-      const boxes = topExposedIso3(result.byImporter)
+      const exposed = view === "exporters" ? result.byExporter ?? [] : result.byImporter;
+      const boxes = topExposedIso3(exposed)
         .map((iso3) => countryBoundsFrom(fc, iso3))
         .filter((b): b is Bounds => b !== null);
-      const bounds = scenarioFitBounds(mark, boxes);
+      const bounds = scenarioFitBounds(marks, boxes);
       if (bounds === null) return;
       camera.request({ kind: "fitBounds", bounds, padding, maxZoom: SCENARIO_FIT_MAX_ZOOM });
     })();
     return () => {
       ctrl.cancelled = true;
     };
-  }, [result, mark, markPending, camera, padding]);
+  }, [result, marks, markPending, camera, padding, view]);
 }

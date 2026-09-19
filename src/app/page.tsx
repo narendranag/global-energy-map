@@ -18,7 +18,7 @@ import { PhoneBanner } from "@/components/ui/PhoneBanner";
 import { YearSlider } from "@/components/time-slider/YearSlider";
 import { ScenarioPanel } from "@/components/scenarios/ScenarioPanel";
 import { useScenario } from "@/components/scenarios/useScenario";
-import { importsNoun } from "@/components/scenarios/overlay";
+import { sideNoun } from "@/components/scenarios/overlay";
 import { useScenarioMapLayers } from "@/components/scenarios/useScenarioMapLayers";
 import { useScenarioCamera } from "@/components/scenarios/useScenarioCamera";
 import { scenarioCameraPadding } from "@/components/scenarios/fit";
@@ -33,8 +33,9 @@ import {
   type ExampleQuestion,
   type Mode,
 } from "@/lib/modes";
-import { getScenario, scenarioForCommodity } from "@/lib/scenarios/registry";
+import { getScenario } from "@/lib/scenarios/registry";
 import type { Commodity, ScenarioId } from "@/lib/scenarios/types";
+import { activeScenarioIds, normalizeScenarioPair, type ScenarioView } from "@/lib/url-state/encode";
 import { panelPadding, requestInitialFit } from "@/lib/state";
 import { embedControlsHidden, isEmbed } from "@/lib/url-state/embed";
 import { useUrlState } from "@/lib/url-state/useUrlState";
@@ -45,19 +46,46 @@ const SCENARIO_PICKER = "select, input, button, [tabindex]:not([tabindex='-1'])"
 
 function HomeInner() {
   const [state, setState] = useUrlState(DEFAULT_APP_STATE);
-  const { mode, year, commodity, scenario: scenarioId, focus, layers } = state;
+  const {
+    mode,
+    year,
+    commodity,
+    scenario: scenarioId,
+    scenario2,
+    severity,
+    view,
+    focus,
+    layers,
+  } = state;
 
   const setYear = useCallback((y: number) => { setState({ year: y }); }, [setState]);
   // Flipping the axis clears a scenario the new commodity does not model: it
   // has no route rows there and would render a confident 0 % (A1).
   const setCommodity = useCallback(
     (c: Commodity) => {
-      setState({ commodity: c, scenario: scenarioForCommodity(scenarioId, c) });
+      setState({ commodity: c, ...normalizeScenarioPair(scenarioId, scenario2, c) });
     },
-    [setState, scenarioId],
+    [setState, scenarioId, scenario2],
   );
+  // Choosing a new primary drops the combination: "Hormuz + Malacca" then
+  // "Druzhba" means Druzhba, not Druzhba + Malacca (which nobody asked for).
   const setScenarioId = useCallback(
-    (id: ScenarioId | null) => { setState({ scenario: id }); },
+    (id: ScenarioId | null) =>
+      { setState(id === null
+        ? { scenario: null, scenario2: null, severity: 1, view: "importers" }
+        : { scenario: id, scenario2: null }); },
+    [setState],
+  );
+  const setScenario2 = useCallback(
+    (id: ScenarioId | null) => { setState({ scenario2: id }); },
+    [setState],
+  );
+  const setSeverity = useCallback(
+    (s: number) => { setState({ severity: s }); },
+    [setState],
+  );
+  const setView = useCallback(
+    (v: ScenarioView) => { setState({ view: v }); },
     [setState],
   );
   const setLayers = useCallback(
@@ -146,12 +174,16 @@ function HomeInner() {
   // --- data -------------------------------------------------------------------
   // One assets.parquet read shared by every point layer and the scenario.
   const assets = useAssets(needsAssets(layers, scenarioId !== null));
-  const scenario = useScenario(scenarioId, year, commodity, assets);
+  const scenario = useScenario(scenarioId, year, commodity, assets, scenario2, severity);
   // S1: the disruption mark / cut route and the panel-hover highlight. Not
   // layer-toggle layers, so they are built beside `useMapLayers` and appended
   // on top of its stack.
   const scenarioDef = scenarioId === null ? null : getScenario(scenarioId);
-  const scenarioMap = useScenarioMapLayers({ def: scenarioDef, year, commodity, assets });
+  const scenarioDefs = useMemo(
+    () => activeScenarioIds({ scenario: scenarioId, scenario2 }).map(getScenario),
+    [scenarioId, scenario2],
+  );
+  const scenarioMap = useScenarioMapLayers({ defs: scenarioDefs, year, commodity, assets });
   const { deckLayers, pending: layersPending, tooltipContext } = useMapLayers({
     layers,
     year,
@@ -159,15 +191,21 @@ function HomeInner() {
     scenario,
     assets,
     focus,
+    scenarioView: view,
   });
 
   // Loading indicator + e2e ready signal: visible layers still loading, plus
   // a scenario whose result does not yet match (scenario, year, commodity).
+  // T1: the second scenario and the severity are inputs too — without them
+  // `data-ready` would flip true while the panel still showed the single-
+  // scenario, full-closure numbers.
   const scenarioPending =
     scenarioId !== null &&
     (scenario?.scenarioId !== scenarioId ||
       scenario.year !== year ||
-      scenario.commodity !== commodity);
+      scenario.commodity !== commodity ||
+      (scenario.scenarioIds?.[1] ?? null) !== scenario2 ||
+      (scenario.severity ?? 1) !== severity);
   const pending = layersPending + scenarioMap.pending + (scenarioPending ? 1 : 0);
   const mapLayers = useMemo(
     () => [...deckLayers, ...scenarioMap.layers],
@@ -209,10 +247,12 @@ function HomeInner() {
   const scenarioPadding = useMemo(() => scenarioCameraPadding(focus !== null), [focus]);
   useScenarioCamera({
     scenarioId,
-    mark: scenarioMap.mark,
+    scenario2,
+    marks: scenarioMap.marks,
     markPending: scenarioMap.pending > 0,
     result: scenario,
     padding: scenarioPadding,
+    view,
   });
 
   const getTooltip = useCallback(
@@ -277,7 +317,9 @@ function HomeInner() {
           key={mode}
           state={layers}
           onChange={setLayers}
-          scenarioNoun={scenarioId !== null ? importsNoun(commodity) : undefined}
+          // The legend follows the side the panel lists: in the exporter view
+          // the same ramp shades who loses the outlet, so only the noun moves.
+          scenarioNoun={scenarioId !== null ? sideNoun(commodity, view) : undefined}
           scenarioKind={scenarioDef?.kind}
           defaultOpen={layersOpenByDefault(mode)}
           embedded={embed}
@@ -319,6 +361,12 @@ function HomeInner() {
                 onChange={setScenarioId}
                 commodity={commodity}
                 result={scenario}
+                second={scenario2}
+                onSecondChange={setScenario2}
+                severity={severity}
+                onSeverityChange={setSeverity}
+                view={view}
+                onViewChange={setView}
               />
             </div>
           </>
@@ -387,6 +435,7 @@ function HomeInner() {
                 onFocus={setFocus}
                 onScenario={setScenarioId}
                 scenarioOpen={showScenarioPanel}
+                scenarioAdjusted={scenarioId !== null && (scenario2 !== null || severity < 1)}
               />
             </div>
           </>

@@ -5,7 +5,7 @@ import { type KeyboardEvent as ReactKeyboardEvent, type Ref, useCallback, useEff
 import { BUNDLED_CATALOG } from "@/lib/data-catalog/bundled";
 import { loadCountries, countryNameMap } from "@/lib/geo/countries";
 import { voyagesInRange, LNG_T3_FIRST_YEAR, LNG_T3_LAST_YEAR } from "@/lib/data/voyages";
-import { getScenario } from "@/lib/scenarios/registry";
+import { getScenario, severityPct } from "@/lib/scenarios/registry";
 import type { ScenarioResult } from "@/lib/scenarios/types";
 import { peekAppStore } from "@/lib/state/store";
 import { encodeUrlState, type AppState } from "@/lib/url-state/encode";
@@ -209,15 +209,26 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
   const sources = useMemo(() => {
     if (!app) return [];
     const tags = layers.flatMap((k) => layerTags(k, commodity));
+    // Both scenarios (T1): a combined view's citation that named only the
+    // primary would omit half the route shares the numbers came from.
     if (app.scenario) tags.push(...scenarioTags(app.scenario, commodity));
+    if (app.scenario2) tags.push(...scenarioTags(app.scenario2, commodity));
     return entriesForTags(tags, BUNDLED_CATALOG);
   }, [app, layers, commodity]);
 
-  const scenarioLabel = app?.scenario ? getScenario(app.scenario).label : null;
+  const scenarioLabel = app?.scenario
+    ? [app.scenario, ...(app.scenario2 ? [app.scenario2] : [])]
+        .map((id) => getScenario(id).label)
+        .join(" + ")
+    : null;
   const summary = [
     String(year),
     commodity === "gas" ? "gas" : "oil",
     scenarioLabel ?? "no scenario",
+    ...(app?.severity !== undefined && app.severity < 1
+      ? [`${severityPct(app.severity)} of the route cut`]
+      : []),
+    ...(app?.view === "exporters" ? ["exporter view"] : []),
   ].join(" · ");
 
   const citeText =
@@ -238,7 +249,11 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
     scenario !== null &&
     app?.scenario === scenario.scenarioId &&
     app.year === scenario.year &&
-    app.commodity === scenario.commodity;
+    app.commodity === scenario.commodity &&
+    // T1: the second scenario and the severity are part of "this result is
+    // the view", or the CSV would be the previous run's numbers.
+    (scenario.scenarioIds?.[1] ?? null) === app.scenario2 &&
+    (scenario.severity ?? 1) === app.severity;
 
   const onScenarioCsv = async () => {
     if (!scenario) return;

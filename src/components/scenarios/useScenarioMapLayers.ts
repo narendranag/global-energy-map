@@ -22,37 +22,43 @@ import { loadPipelines } from "@/components/layers/PipelinesLayer";
 import {
   buildDisruptionLayers,
   disruptionMarkDatum,
+  SECOND_SCENARIO_SUFFIX,
   type DisruptionMarkDatum,
 } from "./disruption-layers";
 import { buildScenarioHoverLayers, type HoverableAsset } from "./hover-layers";
 import { useScenarioHover } from "./hover";
 
 export interface ScenarioMapLayersInput {
-  /** The active scenario, or null when none is selected. */
-  readonly def: ScenarioDef | null;
+  /**
+   * The active scenarios, primary first — empty when none is selected. T1:
+   * a combined run draws *both* closures, because a map showing one of two
+   * cuts while the panel quotes the pair would be a lie of omission.
+   */
+  readonly defs: readonly ScenarioDef[];
   readonly year: number;
   readonly commodity: Commodity;
   readonly assets: AssetsByKind | null;
 }
 
 export interface ScenarioMapLayers {
-  /** Bottom to top: the hover highlight, then the disruption mark. */
+  /** Bottom to top: the hover highlight, then each scenario's disruption mark. */
   readonly layers: readonly Layer[];
-  /** The mark's datum, for the camera fit; null while it cannot be placed. */
-  readonly mark: DisruptionMarkDatum | null;
+  /** Every placed mark, for the camera fit (empty while none can be placed). */
+  readonly marks: readonly DisruptionMarkDatum[];
   /** Visible scenario geometry still loading (counted into the page's pending). */
   readonly pending: number;
 }
 
 const NO_LAYERS: readonly Layer[] = [];
+const NO_MARKS: readonly DisruptionMarkDatum[] = [];
 
 export function useScenarioMapLayers({
-  def,
+  defs,
   year,
   commodity,
   assets,
 }: ScenarioMapLayersInput): ScenarioMapLayers {
-  const needsPipelines = def?.pipelineIds !== undefined;
+  const needsPipelines = defs.some((d) => d.pipelineIds !== undefined);
   const pipelines = useAsync(loadPipelines, needsPipelines ? [] : null);
   // Always loaded by the map itself; this is the same cached promise.
   const countries = useAsync(loadCountries, []);
@@ -75,20 +81,31 @@ export function useScenarioMapLayers({
     () => ({ commodity, year, pipelines: pipelines.data }),
     [commodity, year, pipelines.data],
   );
-  const mark = useMemo(
-    () => (def === null ? null : disruptionMarkDatum(def, options)),
-    [def, options],
+  const marks = useMemo(
+    () =>
+      defs.length === 0
+        ? NO_MARKS
+        : defs.flatMap((d) => {
+            const m = disruptionMarkDatum(d, options);
+            return m === null ? [] : [m];
+          }),
+    [defs, options],
   );
   const disruption = useMemo(
-    () => (def === null ? NO_LAYERS : buildDisruptionLayers(def, options)),
-    [def, options],
+    () =>
+      defs.length === 0
+        ? NO_LAYERS
+        : defs.flatMap((d, i) =>
+            buildDisruptionLayers(d, options, i === 0 ? "" : SECOND_SCENARIO_SUFFIX),
+          ),
+    [defs, options],
   );
   const hoverLayers = useMemo(
     () =>
-      def === null ? NO_LAYERS : buildScenarioHoverLayers(hover, countries.data, hoverable),
-    [def, hover, countries.data, hoverable],
+      defs.length === 0 ? NO_LAYERS : buildScenarioHoverLayers(hover, countries.data, hoverable),
+    [defs, hover, countries.data, hoverable],
   );
 
   const layers = useMemo(() => [...hoverLayers, ...disruption], [hoverLayers, disruption]);
-  return { layers, mark, pending: needsPipelines && !pipelines.ready ? 1 : 0 };
+  return { layers, marks, pending: needsPipelines && !pipelines.ready ? 1 : 0 };
 }

@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { computeScenarioImpact } from "@/lib/scenarios/engine";
-import type { DisruptionRouteRow, LngImportRow, RefineryRow, TradeFlowRow } from "@/lib/scenarios/types";
+import type {
+  DisruptionRouteRow,
+  LngImportRow,
+  LngVoyageRow,
+  RefineryRow,
+  TradeFlowRow,
+} from "@/lib/scenarios/types";
 
 const TRADE: readonly TradeFlowRow[] = [
   { year: 2024, importer_iso3: "IND", exporter_iso3: "SAU", qty: 100 },
@@ -66,6 +72,55 @@ describe("scenario severity", () => {
     });
     expect(r.byLngImport[0]?.atRiskQty).toBeCloseTo(20, 9);
     expect(r.byLngImport[0]?.shareAtRisk).toBeCloseTo(0.1, 9);
+  });
+
+  /**
+   * Review finding 7: severity was only ever exercised on the capacity-proxy
+   * LNG path. The LNG-T3 voyage path is a *different* function
+   * (`computeLngImportImpactsFromVoyages`) reached whenever voyages exist in
+   * 2020–2024, and it is the one the site actually uses for those years.
+   */
+  it("LNG-T3 voyage attribution follows severity too", () => {
+    const voyage = (to_terminal: string, amount_cbm: number): LngVoyageRow => ({
+      start_date: "2024-06-15",
+      end_date: "2024-06-20",
+      imo: 1,
+      voyage_type: "export",
+      from_terminal: "X",
+      to_terminal,
+      from_country_iso3: "SAU",
+      to_country_iso3: "IND",
+      amount_cbm,
+      confidence_score: 4,
+    });
+    const terminals: readonly LngImportRow[] = [
+      { asset_id: "t1", country_iso3: "IND", capacity: 10, name: "t1" },
+      { asset_id: "t2", country_iso3: "IND", capacity: 10, name: "t2" },
+    ];
+    const gas = (severity?: number) =>
+      computeScenarioImpact({
+        scenarioId: "hormuz",
+        commodity: "gas",
+        year: 2024,
+        tradeFlows: TRADE,
+        routes: ROUTES,
+        lngImports: terminals,
+        lngVoyages: [voyage("t1", 300), voyage("t2", 100)],
+        ...(severity === undefined ? {} : { severity }),
+      });
+    const full = gas();
+    const t1Full = full.byLngImport.find((t) => t.asset_id === "t1");
+    expect(t1Full?.coverage).toBe("measured");
+    // The voyage path takes the *supplier mix from the voyages* (100 % SAU
+    // here) and applies it to IND's whole BACI total of 200 t: 160 t at risk,
+    // split 3:1 by voyage volume.
+    expect(t1Full?.atRiskQty).toBeCloseTo(120, 9);
+
+    const half = gas(0.5);
+    const t1Half = half.byLngImport.find((t) => t.asset_id === "t1");
+    expect(t1Half?.coverage).toBe("measured");
+    expect(t1Half?.atRiskQty).toBeCloseTo(60, 9);
+    expect(t1Half?.shareAtRisk).toBeCloseTo((t1Full?.shareAtRisk ?? 0) / 2, 9);
   });
 
   it("clamps out-of-range and non-finite values", () => {

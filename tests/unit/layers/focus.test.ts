@@ -89,7 +89,20 @@ describe("focusFeatures", () => {
 describe("buildFocusLayer", () => {
   it("builds nothing when nothing is focused", () => {
     expect(buildFocusLayer(COUNTRIES, null)).toEqual([]);
-    expect(buildFocusLayer(COUNTRIES, "JPN")).toEqual([]);
+  });
+
+  // B1: a focusable country with no polygon in the collection (Singapore in
+  // the real file; JPN in this two-country fixture) is drawn as a cased ring
+  // at its anchor rather than not at all.
+  it("falls back to an anchor ring when the collection has no polygon", () => {
+    const built = buildFocusLayer(COUNTRIES, "JPN");
+    expect(built.map((l) => l.id)).toEqual([FOCUS_HALO_LAYER_ID, FOCUS_LAYER_ID]);
+    expect(buildFocusLayer(COUNTRIES, "SGP").map((l) => l.id)).toEqual([
+      FOCUS_HALO_LAYER_ID,
+      FOCUS_LAYER_ID,
+    ]);
+    // A code with no anchor at all (a BACI pseudo-country) still draws nothing.
+    expect(buildFocusLayer(COUNTRIES, "S19")).toEqual([]);
   });
 
   it("returns the halo first and the line on top, with stable ids", () => {

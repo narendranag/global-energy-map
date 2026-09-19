@@ -12,6 +12,7 @@ import {
   type TradeFlowsData,
 } from "@/lib/data/trade-flows";
 import type { PositionedVoyage } from "@/lib/data/voyages";
+import { SCENARIOS } from "@/lib/scenarios/registry";
 import type { Commodity, ScenarioId } from "@/lib/scenarios/types";
 import type { AppState } from "@/lib/url-state/encode";
 import { isVisibleAtYear } from "@/lib/vintage/filter";
@@ -73,10 +74,21 @@ export function layerTags(key: LayerKey, commodity: Commodity): string[] {
   return [key];
 }
 
-/** Catalog tags behind an active scenario (trade, route shares, attributed assets). */
+/**
+ * Catalog tags behind an active scenario (trade, route shares, attributed
+ * assets).
+ *
+ * The `-lng` share tag exists only for the scenarios that ship a gas axis
+ * (`def.commodities` includes "gas"). Appending it unconditionally named a
+ * catalog entry that does not exist, so on the gas axis an oil-only scenario
+ * silently dropped its route provenance from the citation and every CSV
+ * header (A1). Such a pair is only reachable from a hand-typed URL; the oil
+ * tag is the truthful one to cite for it.
+ */
 export function scenarioTags(id: ScenarioId, commodity: Commodity): string[] {
-  const tag = commodity === "gas" ? `scenario:${id}-lng` : `scenario:${id}`;
-  return [tag, commodity === "gas" ? "lng_terminals" : "refineries"];
+  const def = SCENARIOS.find((s) => s.id === id);
+  const gas = commodity === "gas" && (def === undefined || def.commodities.includes("gas"));
+  return [gas ? `scenario:${id}-lng` : `scenario:${id}`, gas ? "lng_terminals" : "refineries"];
 }
 
 export function enabledLayers(layers: AppState["layers"]): LayerKey[] {

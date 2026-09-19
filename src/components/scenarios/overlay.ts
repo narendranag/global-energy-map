@@ -5,6 +5,7 @@ import type {
   RefineryImpact,
   ScenarioResult,
 } from "@/lib/scenarios/types";
+import { polygonIso3 } from "@/lib/geo/iso3";
 import { getScenario } from "@/lib/scenarios/registry";
 import { exposureColor, type Rgba } from "@/lib/symbology";
 
@@ -32,16 +33,20 @@ export function importerOverlay(
   // hundred tonnes at 100 % would otherwise paint as dark as Pakistan.
   const world = r.byImporter.reduce((sum, i) => sum + i.totalQty, 0);
   const floor = world * MIN_SHARE_OF_WORLD;
+  // Keyed by the *polygon* code: the choropleth looks entries up by
+  // `feature.properties.iso3`, and Natural Earth spells South Sudan SDS and
+  // Palestine PSX where the trade data says SSD / PSE (A2).
   const m = new Map<string, OverlayEntry>();
   for (const imp of r.byImporter) {
+    const iso3 = polygonIso3(imp.iso3);
     const t = imp.shareAtRisk;
     const base = `Scenario: ${(t * 100).toFixed(1)}% of ${r.year.toString()} ${noun} routed through ${route}`;
     if (imp.totalQty < floor) {
-      m.set(imp.iso3, { tooltip: `${base} (negligible volume, under 0.1% of world ${noun}; not shaded)` });
+      m.set(iso3, { tooltip: `${base} (negligible volume, under 0.1% of world ${noun}; not shaded)` });
       continue;
     }
     const color = exposureColor(t);
-    m.set(imp.iso3, color ? { color, tooltip: base } : { tooltip: base });
+    m.set(iso3, color ? { color, tooltip: base } : { tooltip: base });
   }
   return m;
 }
@@ -65,7 +70,9 @@ export function rankImportersByShare(
   const world = importers.reduce((s, i) => s + i.totalQty, 0);
   const floor = world * minShareOfWorld;
   return importers
-    .filter((i) => i.shareAtRisk > 0 && i.totalQty >= floor && isKnownCountry(i.iso3))
+    // `isKnownCountry` speaks polygon codes; the impact rows speak the data's
+    // (A2), so South Sudan used to be filtered out of the ranking entirely.
+    .filter((i) => i.shareAtRisk > 0 && i.totalQty >= floor && isKnownCountry(polygonIso3(i.iso3)))
     .sort((a, b) => b.shareAtRisk - a.shareAtRisk || b.atRiskQty - a.atRiskQty);
 }
 

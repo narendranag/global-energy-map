@@ -187,4 +187,37 @@ test.describe("Scenarios", () => {
     await expect(page.getByText("LNG-T3 voyages")).not.toBeVisible();
     expect(errors).toEqual([]);
   });
+
+  // A1: an oil-only scenario has no gas route rows at all, so pairing it with
+  // the gas axis could only ever render a confident 0 %. Both the toggle and
+  // the URL clear it instead.
+  test("switching to Gas clears an oil-only scenario rather than showing zeros", async ({
+    page,
+  }) => {
+    await gotoReady(page, "/?mode=scenarios&scenario=druzhba&commodity=oil&year=2020&layers=reserves");
+    await expect(scenarioSelect(page)).toHaveValue("druzhba");
+
+    await press(page.getByRole("button", { name: "Gas" }));
+    await waitForReady(page);
+    await expect(scenarioSelect(page)).not.toHaveValue("druzhba");
+    expect(new URL(page.url()).searchParams.get("scenario")).toBeNull();
+  });
+
+  test("a hand-typed oil-only scenario on the gas axis decodes to no scenario", async ({
+    page,
+  }) => {
+    await gotoReady(page, "/?mode=scenarios&scenario=druzhba&commodity=gas&year=2020&layers=reserves");
+    // The querystring still reads `scenario=druzhba` — nothing changed state,
+    // so the store never rewrote the URL, exactly as an unknown `focus=`
+    // behaves. What matters is that the app decoded it as "no scenario": no
+    // selection in the picker and no result table of zeros.
+    await expect(scenarioSelect(page)).not.toHaveValue("druzhba");
+    await expect(page.getByTestId("ranked-importers")).toHaveCount(0);
+
+    // Selecting a gas scenario from here still works.
+    await scenarioSelect(page).selectOption("hormuz");
+    await expect(page.getByTestId("ranked-importers").locator("li").first()).toBeVisible({
+      timeout: RESULT_TIMEOUT,
+    });
+  });
 });

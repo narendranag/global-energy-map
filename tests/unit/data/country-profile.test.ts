@@ -128,7 +128,7 @@ describe("toTimeSeries", () => {
 describe("describeSeries", () => {
   it("names the span, the ends and the extremes", () => {
     const s = toTimeSeries(new Map([[2000, 10], [2001, 4]]), {
-      label: "Crude production",
+      label: "Oil production",
       unit: "kb/d",
       from: 2000,
       through: 2001,
@@ -137,7 +137,7 @@ describe("describeSeries", () => {
     });
     if (s === null) throw new Error("series");
     expect(describeSeries(s)).toBe(
-      "Crude production, 2000–2001: 10.0 to 4.00 kb/d; low 4.00 in 2001, high 10.0 in 2000.",
+      "Oil production, 2000–2001: 10.0 to 4.00 kb/d; low 4.00 in 2001, high 10.0 in 2000.",
     );
   });
 
@@ -228,6 +228,19 @@ describe("buildCountryProfile", () => {
     expect(p.reserves?.source).toMatch(/^Source: Energy Institute/);
   });
 
+  // B9: the EI sheet behind `production_crude_kbpd` is "Oil Production -
+  // barrels", which is total liquids (crude + shale + oil sands + condensate
+  // + NGLs), not crude. The label has to say so, and the row has no business
+  // on the gas axis, where EI publishes no production series at all.
+  it("labels production as total liquids and shows it on the oil axis only", () => {
+    const oil = buildCountryProfile({ ...EMPTY, names: NAMES, series }, "NOR", 2020, "oil");
+    expect(oil.production?.label).toBe("Oil production (total liquids)");
+    expect(oil.production?.label).not.toContain("Crude");
+
+    const gas = buildCountryProfile({ ...EMPTY, names: NAMES, series }, "NOR", 2020, "gas");
+    expect(gas.production).toBeNull();
+  });
+
   it("marks a reserves value as stale past the last published year", () => {
     const p = buildCountryProfile({ ...EMPTY, series }, "NOR", 2024, "oil");
     expect(p.reserves?.valueYear).toBe(2020);
@@ -276,6 +289,45 @@ describe("buildCountryProfile", () => {
     const p = buildCountryProfile({ ...EMPTY, trade }, "JPN", 2010, "oil");
     expect(p.trade?.emptyYear).toBe(true);
     expect(p.trade?.suppliers).toEqual([]);
+  });
+
+  // B11: 1,317 BACI rows carry no quantity. They must not be silently folded
+  // into the total (which would stop the shares reconciling) and they must
+  // not be invisible either: a partner nobody can see is a partner the
+  // reader will assume does not exist.
+  describe("rows with no recorded quantity (B11)", () => {
+    const withNulls: CountryTradeRow[] = [
+      { year: 2024, hs_code: "2709", importer_iso3: "JPN", exporter_iso3: "ARE", qty: 90 },
+      { year: 2024, hs_code: "2709", importer_iso3: "JPN", exporter_iso3: "SAU", qty: 10 },
+      { year: 2024, hs_code: "2709", importer_iso3: "JPN", exporter_iso3: "KWT", qty: null },
+      { year: 2024, hs_code: "2709", importer_iso3: "NOR", exporter_iso3: "JPN", qty: null },
+    ];
+
+    it("keeps the listed shares reconciling against the stated total", () => {
+      const t = buildCountryProfile({ ...EMPTY, names: NAMES, trade: withNulls }, "JPN", 2024, "oil")
+        .trade;
+      expect(t?.importsQty).toBe(100);
+      expect(t?.suppliers.map((s) => s.iso3)).toEqual(["ARE", "SAU"]);
+      expect(t?.suppliers.reduce((sum, s) => sum + s.share, 0)).toBeCloseTo(1);
+      expect(t?.suppliers.reduce((sum, s) => sum + s.qty, 0)).toBe(t?.importsQty);
+    });
+
+    it("counts the partners it had to leave out, per side", () => {
+      const t = buildCountryProfile({ ...EMPTY, names: NAMES, trade: withNulls }, "JPN", 2024, "oil")
+        .trade;
+      expect(t?.unquantifiedSuppliers).toBe(1);
+      expect(t?.unquantifiedCustomers).toBe(1);
+    });
+
+    it("does not call a year empty when BACI has rows but no quantities", () => {
+      const onlyNulls: CountryTradeRow[] = [
+        { year: 2024, hs_code: "2709", importer_iso3: "KAZ", exporter_iso3: "ARE", qty: null },
+      ];
+      const t = buildCountryProfile({ ...EMPTY, trade: onlyNulls }, "KAZ", 2024, "oil").trade;
+      expect(t?.importsQty).toBe(0);
+      expect(t?.emptyYear).toBe(false);
+      expect(t?.unquantifiedSuppliers).toBe(1);
+    });
   });
 
   it("counts assets and sums only the capacities the source carries", () => {

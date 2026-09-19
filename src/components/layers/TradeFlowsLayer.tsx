@@ -16,6 +16,7 @@ import {
 import { sourceLine } from "@/lib/data/sources";
 import {
   TRADE_FLOW_WIDTH,
+  tradeFlowMaxWidth,
   tradeFlowSourceColor,
   tradeFlowTargetColor,
   tradeFlowWidth,
@@ -44,6 +45,8 @@ export interface TradeFlowsLayerOptions {
   readonly commodity: Commodity;
   /** Selected country (ISO3), or null for the world top-N view. */
   readonly focus: string | null;
+  /** Settled map zoom: the width cap tapers with it (Wave 2 polish 1). */
+  readonly zoom: number;
 }
 
 /**
@@ -66,12 +69,13 @@ export function buildTradeFlowsLayer(
   data: TradeFlowsData,
   opts: TradeFlowsLayerOptions,
 ): ArcLayer<TradeFlowArc> {
-  const { commodity, focus } = opts;
+  const { commodity, focus, zoom } = opts;
   const mode: "world" | "focus" = focus === null ? "world" : "focus";
   const basePairs = focus === null ? topPairs(data, TOP_N_PAIRS).pairs : focusPairs(data, focus);
   const arcs = positionPairs(basePairs).map((p) => toArc(data, p));
   const maxQty = arcs.reduce((m, a) => Math.max(m, a.qty), 0);
 
+  const widthCap = tradeFlowMaxWidth(zoom);
   const sourceColor = tradeFlowSourceColor(commodity, mode);
   const targetColor = tradeFlowTargetColor(commodity, mode);
 
@@ -82,9 +86,9 @@ export function buildTradeFlowsLayer(
     getTargetPosition: (d) => [d.to_lon, d.to_lat],
     getSourceColor: [...sourceColor],
     getTargetColor: [...targetColor],
-    getWidth: (d) => tradeFlowWidth(d.qty, maxQty),
+    getWidth: (d) => tradeFlowWidth(d.qty, maxQty, widthCap),
     widthMinPixels: TRADE_FLOW_WIDTH.minPixels,
-    widthMaxPixels: TRADE_FLOW_WIDTH.maxPixels,
+    widthMaxPixels: widthCap,
     greatCircle: true,
     pickable: true,
     // `data` changes every year/commodity/focus switch already (a new array
@@ -94,7 +98,7 @@ export function buildTradeFlowsLayer(
     updateTriggers: {
       getSourceColor: [commodity, mode],
       getTargetColor: [commodity, mode],
-      getWidth: [maxQty],
+      getWidth: [maxQty, widthCap],
     },
   });
 }

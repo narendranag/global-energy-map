@@ -78,6 +78,9 @@ export const loadRoutes = cachedLoader(
   async (scenarioId: ScenarioId, commodity: Commodity): Promise<readonly RouteShareRow[]> => {
     const rows = await readParquet<RouteFileRow>("/data/disruption_route.parquet", ROUTE_COLUMNS);
     const key = routeKeyFor(scenarioId, commodity);
+    // No key = the scenario says nothing about this commodity (A1). The UI
+    // clears such a pairing, so this is a guard, not an expected path.
+    if (key === null) return [];
     // The engine and panel match rows on the active scenario id.
     return rows
       .filter((r) => r.disruption_id === key)

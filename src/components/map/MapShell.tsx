@@ -187,23 +187,32 @@ export function MapShell({ layers, getTooltip, onPick }: MapShellProps) {
     map.addControl(overlay);
     overlayRef.current = overlay;
 
-    // Clicks come from MapLibre, not from deck.
+    // Clicks come from MapLibre, not from deck — by choice, not by necessity.
     //
-    // `MapboxOverlay` wires MapLibre's mouse events into Deck only in
-    // *overlaid* mode (`_onAddOverlaid`); the interleaved path registers
-    // nothing but `styledata`, and the Deck instance it builds around
-    // MapLibre's GL context never receives a click of its own. Hover still
-    // works — deck re-picks on its own pointer move — which is what made this
-    // look wired when it was not: `onClick` simply never fired, so a click on
-    // a country selected nothing.
+    // Deck's own `onClick` *does* fire under `MapboxOverlay({interleaved:
+    // true})`: Deck binds its EventManager to MapLibre's canvas, which is the
+    // same path that makes hover work. (An earlier comment here blamed a
+    // missing event wiring; that diagnosis was wrong.) We keep the MapLibre
+    // path anyway because it gives one click path rather than two, MapLibre's
+    // own drag tolerance (a pan that ends on a country must not select it),
+    // and — the part deck cannot give us — a click that hits nothing at all,
+    // which the caller reads as "clicked the sea" and uses to clear the
+    // selection. `onClick` is left unset on the overlay, so nothing fires twice.
     //
     // So we do the two things `onClick` would have done: pick at the click
-    // point, and report a miss as `layer: null` (the caller reads that as
-    // "clicked the sea" and clears the selection).
+    // point, and report a miss as `layer: null`.
     map.on("click", (e) => {
       const handler = onPickRef.current;
       if (!handler) return;
-      const picked = overlay.pickObject({ x: e.point.x, y: e.point.y, radius: PICKING_RADIUS });
+      let picked: PickingInfo | null = null;
+      try {
+        picked = overlay.pickObject({ x: e.point.x, y: e.point.y, radius: PICKING_RADIUS });
+      } catch {
+        // Deck's picker is not ready (a click during the first frame, or
+        // mid-teardown). A failed pick is a miss, not an app error — it used
+        // to reach the global error panel and replace the map (B5).
+        picked = null;
+      }
       handler(
         picked ??
           ({

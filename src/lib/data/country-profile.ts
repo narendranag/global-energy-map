@@ -17,6 +17,7 @@ import type { GasStorageData } from "./gas-storage";
 import type { RecentImport, RecentImportsData } from "./recent-imports";
 import { sourceLine } from "./sources";
 import { RESERVES_METRIC } from "./reserves";
+import { dataIso3, polygonIso3 } from "@/lib/geo/iso3";
 import { YEAR_MAX, YEAR_MIN } from "@/lib/time/range";
 import { SCENARIOS, isScenarioActive, type ScenarioDef } from "@/lib/scenarios/registry";
 import type { Commodity, ScenarioId, ScenarioResult } from "@/lib/scenarios/types";
@@ -121,6 +122,14 @@ export interface CountryTrade {
   readonly source: string | null;
   /** True when BACI has no row at all for this country in this year. */
   readonly emptyYear: boolean;
+  /**
+   * Partners in the selected year whose BACI row carries no quantity (B11).
+   * They are excluded from the totals *and* from the lists — the same
+   * denominator on both sides, so the listed shares reconcile — and counted
+   * here so the panel can say they exist rather than imply they do not.
+   */
+  readonly unquantifiedSuppliers: number;
+  readonly unquantifiedCustomers: number;
 }
 
 export interface ExposureRow {
@@ -177,12 +186,22 @@ export interface CountryProfile {
 // Series helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * The EI metric key. Its name is a misnomer the parquet is stuck with: the
+ * sheet it comes from is "Oil Production - barrels", which EI defines as
+ * **total liquids** — crude oil, shale oil, oil sands, condensates *and*
+ * NGLs. (USA 2024: 20,276 kb/d here against roughly 13,200 kb/d of crude and
+ * condensate.) Labelling it "Crude production" overstated crude by half in
+ * the United States' case (B9). Renaming the key would be a data migration
+ * and a break for every `?q=` query console link, so the key stays and the
+ * label tells the truth.
+ */
 const PRODUCTION_METRIC = "production_crude_kbpd";
 
 const METRIC_LABEL: Record<string, string> = {
   proved_reserves_oil_bbn_bbl: "Proved oil reserves",
   proved_reserves_gas_tcm: "Proved gas reserves",
-  production_crude_kbpd: "Crude production",
+  production_crude_kbpd: "Oil production (total liquids)",
 };
 
 const METRIC_UNIT: Record<string, string> = {
@@ -310,12 +329,17 @@ function partnerRows(
     .filter(([, qty]) => qty > 0)
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .slice(0, limit)
-    .map(([iso3, qty]) => ({
-      iso3,
-      name: names?.get(iso3) ?? iso3,
-      qty,
-      share: grandTotal > 0 ? qty / grandTotal : 0,
-    }));
+    .map(([dataCode, qty]) => {
+      // Rows are clickable: hand back the polygon code so the selection they
+      // set has an outline and survives a reload (A2).
+      const iso3 = polygonIso3(dataCode);
+      return {
+        iso3,
+        name: names?.get(iso3) ?? names?.get(dataCode) ?? iso3,
+        qty,
+        share: grandTotal > 0 ? qty / grandTotal : 0,
+      };
+    });
 }
 
 /** How many partners each side of the trade lists before "and the rest". */
@@ -333,19 +357,35 @@ function buildTrade(
   const exportsByYear = new Map<number, number>();
   const suppliers = new Map<string, number>();
   const customers = new Map<string, number>();
+  // BACI leaves 1,317 rows without a quantity. They are worth nothing to
+  // either side of the arithmetic, so they add nothing to the totals and
+  // nothing to the partner maps — one denominator, shares that reconcile —
+  // but they are counted, because a partner the panel cannot show is a
+  // partner the reader will assume does not exist (B11).
+  const unquantified = { suppliers: new Set<string>(), customers: new Set<string>() };
   let touched = false;
+  let rowsThisYear = 0;
   for (const r of rows) {
     if (r.hs_code !== hs) continue;
-    const qty = r.qty ?? 0;
+    const known = r.qty !== null && Number.isFinite(r.qty) && r.qty > 0;
+    const qty = known ? r.qty : 0;
     if (r.importer_iso3 === iso3) {
       touched = true;
       importsByYear.set(r.year, (importsByYear.get(r.year) ?? 0) + qty);
-      if (r.year === year) suppliers.set(r.exporter_iso3, (suppliers.get(r.exporter_iso3) ?? 0) + qty);
+      if (r.year === year) {
+        rowsThisYear += 1;
+        if (known) suppliers.set(r.exporter_iso3, (suppliers.get(r.exporter_iso3) ?? 0) + qty);
+        else unquantified.suppliers.add(r.exporter_iso3);
+      }
     }
     if (r.exporter_iso3 === iso3) {
       touched = true;
       exportsByYear.set(r.year, (exportsByYear.get(r.year) ?? 0) + qty);
-      if (r.year === year) customers.set(r.importer_iso3, (customers.get(r.importer_iso3) ?? 0) + qty);
+      if (r.year === year) {
+        rowsThisYear += 1;
+        if (known) customers.set(r.importer_iso3, (customers.get(r.importer_iso3) ?? 0) + qty);
+        else unquantified.customers.add(r.importer_iso3);
+      }
     }
   }
   if (!touched) return null;
@@ -380,7 +420,12 @@ function buildTrade(
     importsSeries,
     exportsSeries,
     source,
-    emptyYear: importsQty === 0 && exportsQty === 0,
+    // "No trade" means no rows, not "no rows we could add up": Kazakhstan's
+    // three 2024 crude imports are all unquantified, and saying BACI records
+    // none of them would be false (B11).
+    emptyYear: rowsThisYear === 0,
+    unquantifiedSuppliers: unquantified.suppliers.size,
+    unquantifiedCustomers: unquantified.customers.size,
   };
 }
 
@@ -467,12 +512,17 @@ export function buildCountryProfile(
   commodity: Commodity,
 ): CountryProfile {
   const name = inputs.names?.get(iso3) ?? iso3;
+  // `iso3` is the polygon/focus code; every parquet we ship spells South Sudan
+  // SSD and Palestine PSE where Natural Earth says SDS / PSX (A2). One
+  // translation here covers the series, trade, exposure, asset, storage and
+  // Comtrade lookups below — all of which read the data's spelling.
+  const code = dataIso3(iso3);
 
   const reservesMetric = RESERVES_METRIC[commodity];
   const reserves =
     inputs.series === null
       ? null
-      : toTimeSeries(seriesByYear(inputs.series, iso3, reservesMetric), {
+      : toTimeSeries(seriesByYear(inputs.series, code, reservesMetric), {
           label: METRIC_LABEL[reservesMetric] ?? reservesMetric,
           unit: METRIC_UNIT[reservesMetric] ?? "",
           from: YEAR_MIN,
@@ -482,10 +532,12 @@ export function buildCountryProfile(
           staleLabel: "the Energy Institute has not refreshed reserves since",
         });
 
+  // Oil only: EI publishes no gas-production series here, and showing a
+  // liquids figure under a gas heading invited it to be read as one (B9).
   const production =
-    inputs.series === null
+    inputs.series === null || commodity !== "oil"
       ? null
-      : toTimeSeries(seriesByYear(inputs.series, iso3, PRODUCTION_METRIC), {
+      : toTimeSeries(seriesByYear(inputs.series, code, PRODUCTION_METRIC), {
           label: METRIC_LABEL[PRODUCTION_METRIC] ?? PRODUCTION_METRIC,
           unit: METRIC_UNIT[PRODUCTION_METRIC] ?? "",
           from: YEAR_MIN,
@@ -496,24 +548,24 @@ export function buildCountryProfile(
         });
 
   const trade =
-    inputs.trade === null ? null : buildTrade(inputs.trade, iso3, year, commodity, inputs.names);
+    inputs.trade === null ? null : buildTrade(inputs.trade, code, year, commodity, inputs.names);
 
   const exposure =
-    inputs.exposure === null ? [] : buildExposure(inputs.exposure, iso3, commodity, year);
+    inputs.exposure === null ? [] : buildExposure(inputs.exposure, code, commodity, year);
 
   const infrastructure: CountryInfrastructure[] = [];
   if (inputs.assets !== null) {
     const a = inputs.assets;
     const parts = [
-      summarise(a.lngImport, iso3, "lng_import", "LNG import terminals", "lng_terminals"),
-      summarise(a.lngExport, iso3, "lng_export", "LNG export terminals", "lng_terminals"),
-      summarise(a.refinery, iso3, "refinery", "Refineries", "refineries"),
-      summarise(a.extraction, iso3, "extraction_site", "Extraction sites", "extraction"),
+      summarise(a.lngImport, code, "lng_import", "LNG import terminals", "lng_terminals"),
+      summarise(a.lngExport, code, "lng_export", "LNG export terminals", "lng_terminals"),
+      summarise(a.refinery, code, "refinery", "Refineries", "refineries"),
+      summarise(a.extraction, code, "extraction_site", "Extraction sites", "extraction"),
     ];
     for (const p of parts) if (p !== null) infrastructure.push(p);
   }
 
-  const storagePct = inputs.gasStorage?.values.get(iso3);
+  const storagePct = inputs.gasStorage?.values.get(code);
   const gasStorage =
     inputs.gasStorage && storagePct !== undefined
       ? {
@@ -523,7 +575,7 @@ export function buildCountryProfile(
         }
       : null;
 
-  const recent = inputs.recentImports?.byIso3.get(iso3);
+  const recent = inputs.recentImports?.byIso3.get(code);
   const recentImports =
     recent === undefined
       ? null

@@ -37,7 +37,7 @@ export const MODE_DEFS: Readonly<Record<Mode, ModeDef>> = {
   flows: {
     id: "flows",
     label: "Flows",
-    blurb: "Where LNG cargoes went, 2020–2024 (LNG-T3 voyages).",
+    blurb: "Who bought crude and LNG from whom, 1995–2024 (BACI bilateral trade).",
   },
   scenarios: {
     id: "scenarios",

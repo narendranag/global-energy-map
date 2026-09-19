@@ -238,9 +238,16 @@ describe("decodeAppState — focus", () => {
   });
 
   it("drops an unknown or malformed code", () => {
-    for (const qs of ["focus=ZZZ", "focus=JP", "focus=JPNX", "focus=", "focus=SGP"]) {
+    for (const qs of ["focus=ZZZ", "focus=JP", "focus=JPNX", "focus=", "focus=S19"]) {
       expect(decode(qs).focus).toBeNull();
     }
+  });
+
+  // B1: a partner row can name a country with no 1:110m polygon. It is a real
+  // selection — outlined as a ring at its anchor — so the link keeps it.
+  it("keeps a polygon-less but anchored code", () => {
+    expect(decode("focus=SGP").focus).toBe("SGP");
+    expect(decode("focus=BHR").focus).toBe("BHR");
   });
 
   it("survives a mode preset: modes never clear a focus the URL carries", () => {
@@ -311,5 +318,24 @@ describe("encodeUrlState", () => {
     const params = new URLSearchParams(encodeUrlState(app, v));
     expect(decodeAppState(params, DEFAULTS)).toEqual(app);
     expect(decodeView(params, DEFAULT_VIEW)).toEqual(v);
+  });
+});
+
+describe("decodeAppState: scenario must model the commodity (A1)", () => {
+  const decodeQs = (qs: string) => decodeAppState(new URLSearchParams(qs), DEFAULTS);
+
+  it("drops a scenario the commodity does not support", () => {
+    // `druzhba` is oil-only; on the gas axis there are no `druzhba_lng` route
+    // rows at all, so the pair could only ever render a confident 0 %.
+    expect(decodeQs("scenario=druzhba&commodity=gas").scenario).toBeNull();
+    expect(decodeQs("scenario=btc&commodity=gas").scenario).toBeNull();
+    expect(decodeQs("scenario=keystone&commodity=gas").scenario).toBeNull();
+  });
+
+  it("keeps a scenario that does model the commodity", () => {
+    expect(decodeQs("scenario=hormuz&commodity=gas").scenario).toBe("hormuz");
+    expect(decodeQs("scenario=malacca&commodity=gas").scenario).toBe("malacca");
+    expect(decodeQs("scenario=druzhba&commodity=oil").scenario).toBe("druzhba");
+    expect(decodeQs("scenario=druzhba").scenario).toBe("druzhba");
   });
 });

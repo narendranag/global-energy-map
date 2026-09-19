@@ -35,7 +35,7 @@ If a future session loses running agents: `git worktree list`; in each `agent-*`
 6. **Exporter view** reuses the 0.1 %-of-world floor, so small high-share exporters are omitted.
 7. **Rename `production_crude_kbpd`** (it is total liquids) at the next EI refresh — breaks saved `?q=` links.
 8. **Scheduled refresh**: loading the launchd plist is the maintainer's action; first real run is untested end to end.
-9. **Announcement**: drafts only; must carry the 2026 Hormuz-closure sentence before publishing.
+9. **Announcement**: drafts only, headed DO NOT PUBLISH YET (the branch is not live). The 2026 Hormuz-closure sentence is in; re-read `docs/announce/fact-check.md` after the share decisions in item 1.
 10. Push `main` / open the PR.
 
 ## 5. Working rules that cost us time when ignored

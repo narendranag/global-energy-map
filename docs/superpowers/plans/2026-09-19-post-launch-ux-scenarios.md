@@ -85,6 +85,7 @@ Merge order inside 2b (least → most shared-file contact): S5, S8, S6, S2, S4, 
 | R2 + RV | done 2026-09-19 | Verifier: 7 confirmed, 1 wrong, 4 misapplied, 2 unverifiable. **Ship** Keystone 0.14 (CER), Enbridge Mainline **0.60** (CER 58% of all exports → CAN→USA basis; CAPP's 0.74 was crude+NGL incl. Eastern Canada and exceeded BACI's total), ESPO Daqing spur only RUS→CHN 0.28. **Hold** Saudi East–West (a flat exporter share is wrong for every importer: Yanbu serves Europe, Asia loads in the Gulf), Kirkuk–Ceyhan (needs `activeYears`, and must move the shipped Hormuz IRQ 0.90 → 0.87 in the same commit — maintainer's call), ESPO 0.85 (a 2026 wartime figure spanning three routes). Sudan is in the data after all (P0537 Greater Nile) |
 | R3 | running | |
 | S8 | merged 2026-09-19 | Haiku draft, Sonnet rewrite (runs in a disposable worktree, never the maintainer's checkout), orchestrator fixed bash-3.2 `mapfile` + data/raw symlink tripping the change guard. **Not installed** — loading the plist is the maintainer's call; first real run is untested end to end (no ingests/push/PR were run) |
-| S0–S7 | in progress | |
+| S5 | merged 2026-09-19 | Combined scenarios report a **range**: max(a,b) ≤ cut ≤ min(1,a+b) (series vs parallel routes; headline = lower bound). Precedence: exact pair (incl. 0) > max(exporter-wide, importer-wide). Old results pinned by a regression fixture. T1 must also move `explain.ts` and `panel-model.ts` onto `resolveScenarioShare`; inbound rows need a nullable `exporter_iso3` in the parquet + loader |
+| S0–S4, S6, S7 | in progress | |
 | T5 | dropped | per R4 |
 | T1–T4, T6 | pending | |

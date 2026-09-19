@@ -35,6 +35,7 @@ import {
 } from "@/lib/modes";
 import { getScenario } from "@/lib/scenarios/registry";
 import { isCurrentScenarioResult } from "@/lib/scenarios/current";
+import { scenarioSummaryParts } from "@/lib/scenarios/summary";
 import type { Commodity, ScenarioId } from "@/lib/scenarios/types";
 import { activeScenarioIds, normalizeScenarioPair, type ScenarioView } from "@/lib/url-state/encode";
 import { panelPadding, requestInitialFit } from "@/lib/state";
@@ -276,8 +277,15 @@ function HomeInner() {
   // `useSearchParams()` tracks the store's own debounced `replaceState`.
   const embed = isEmbed(searchParams);
   const hideControls = embed && embedControlsHidden(searchParams);
-  const activeScenarioLabel = scenarioId !== null ? getScenario(scenarioId).label : null;
-  const scenarioChipSummary = `${activeScenarioLabel ?? "Scenario"} · ${year.toString()} · ${commodity}`;
+  // The chip is the whole scenario panel, collapsed to one line — so it names
+  // everything the panel would: both scenarios, the severity and the side
+  // being listed (finding 11), through the same helper ShareMenu's citation
+  // summary uses.
+  const scenarioChipSummary = [
+    ...scenarioSummaryParts({ scenario: scenarioId, scenario2, severity, view }, "Scenario"),
+    year.toString(),
+    commodity,
+  ].join(" · ");
   // Collapse the phone-only scenario toggle at every width in embed mode
   // (not just under 768 px): an embed frame is often narrower than desktop
   // but not a phone.

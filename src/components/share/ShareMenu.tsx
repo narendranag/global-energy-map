@@ -5,8 +5,8 @@ import { type KeyboardEvent as ReactKeyboardEvent, type Ref, useCallback, useEff
 import { BUNDLED_CATALOG } from "@/lib/data-catalog/bundled";
 import { loadCountries, countryNameMap } from "@/lib/geo/countries";
 import { voyagesInRange, LNG_T3_FIRST_YEAR, LNG_T3_LAST_YEAR } from "@/lib/data/voyages";
-import { getScenario, severityPct } from "@/lib/scenarios/registry";
 import { isCurrentScenarioResult } from "@/lib/scenarios/current";
+import { scenarioSummaryParts } from "@/lib/scenarios/summary";
 import type { ScenarioResult } from "@/lib/scenarios/types";
 import { peekAppStore } from "@/lib/state/store";
 import { encodeUrlState, type AppState } from "@/lib/url-state/encode";
@@ -217,19 +217,17 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
     return entriesForTags(tags, BUNDLED_CATALOG);
   }, [app, layers, commodity]);
 
-  const scenarioLabel = app?.scenario
-    ? [app.scenario, ...(app.scenario2 ? [app.scenario2] : [])]
-        .map((id) => getScenario(id).label)
-        .join(" + ")
-    : null;
+  // The same naming the embed chip uses (finding 11): scenario, second
+  // scenario, severity, view — one helper so the two cannot drift.
   const summary = [
     String(year),
     commodity === "gas" ? "gas" : "oil",
-    scenarioLabel ?? "no scenario",
-    ...(app?.severity !== undefined && app.severity < 1
-      ? [`${severityPct(app.severity)} of the route cut`]
-      : []),
-    ...(app?.view === "exporters" ? ["exporter view"] : []),
+    ...scenarioSummaryParts({
+      scenario: app?.scenario ?? null,
+      scenario2: app?.scenario2 ?? null,
+      severity: app?.severity ?? 1,
+      view: app?.view ?? "importers",
+    }),
   ].join(" · ");
 
   const citeText =

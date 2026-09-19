@@ -9,6 +9,7 @@ import type { LayerState } from "@/components/layers/LayerPanel";
 import type { Camera } from "@/lib/state/useCamera";
 import { panelPadding } from "@/lib/state/camera";
 import { peekAppStore } from "@/lib/state/store";
+import { FEATURE_FIT_MAX_ZOOM } from "./build";
 import { setSearchHighlight } from "./highlight";
 import type { SearchItem } from "./types";
 
@@ -42,5 +43,5 @@ export function selectSearchItem(item: SearchItem, camera: Camera): void {
     camera.request({ kind: "flyTo", lon: t.lon, lat: t.lat, zoom: t.zoom });
     return;
   }
-  camera.request({ kind: "fitBounds", bounds: t.bounds, padding, maxZoom: 8 });
+  camera.request({ kind: "fitBounds", bounds: t.bounds, padding, maxZoom: FEATURE_FIT_MAX_ZOOM });
 }

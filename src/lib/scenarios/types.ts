@@ -85,6 +85,19 @@ export interface LngImportImpact {
   readonly coverage: "measured" | "capacity-proxy" | "none";
 }
 
+/**
+ * S5: the mirror of `ImporterImpact` — what an exporter loses rather than what
+ * an importer misses. `totalQty` is everything the country exported of this
+ * commodity in the year (as BACI records it, so a country with no BACI rows
+ * does not appear); `atRiskQty` is the part that moves on the cut route.
+ */
+export interface ExporterImpact {
+  readonly iso3: string;
+  readonly totalQty: number;
+  readonly atRiskQty: number;
+  readonly shareAtRisk: number;
+}
+
 export interface ImporterImpact {
   readonly iso3: string;
   readonly totalQty: number;
@@ -116,6 +129,13 @@ export interface ScenarioResult {
   readonly severity?: number;
   readonly byImporter: readonly ImporterImpact[];
   readonly rankedImporters: readonly ImporterImpact[];
+  /**
+   * S5: the exporter-side view of the same cut — who loses the outlet, not who
+   * loses the supply. Optional for the same reason as `severity`;
+   * `computeScenarioImpact` always sets both.
+   */
+  readonly byExporter?: readonly ExporterImpact[];
+  readonly rankedExporters?: readonly ExporterImpact[];
   readonly byRefinery: readonly RefineryImpact[];
   readonly rankedRefineries: readonly RefineryImpact[];
   readonly byLngImport: readonly LngImportImpact[];

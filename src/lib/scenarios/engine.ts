@@ -1,6 +1,7 @@
 import type {
   Commodity,
   DisruptionRouteRow,
+  ExporterImpact,
   ImporterImpact,
   LngImportRow,
   LngVoyageRow,
@@ -68,16 +69,25 @@ export function computeScenarioImpact(input: ScenarioInput): ScenarioResult {
     return share * severity;
   };
 
-  // Per-importer pass + remember flow rows for refinery view
+  // Per-importer and per-exporter pass + remember flow rows for refinery view.
+  // Both sides read the same rows and the same `lookupShare`, so the two views
+  // are two readings of one number: Σ importer at-risk ≡ Σ exporter at-risk.
   const totals = new Map<string, number>();
   const atRisk = new Map<string, number>();
+  const exporterTotals = new Map<string, number>();
+  const exporterAtRisk = new Map<string, number>();
   const flowsByImporter = new Map<string, { iso3: string; qty: number }[]>();
   for (const row of input.tradeFlows) {
     if (row.year !== input.year) continue;
     totals.set(row.importer_iso3, (totals.get(row.importer_iso3) ?? 0) + row.qty);
+    exporterTotals.set(row.exporter_iso3, (exporterTotals.get(row.exporter_iso3) ?? 0) + row.qty);
     const share = lookupShare(row.exporter_iso3, row.importer_iso3);
     if (share > 0) {
       atRisk.set(row.importer_iso3, (atRisk.get(row.importer_iso3) ?? 0) + row.qty * share);
+      exporterAtRisk.set(
+        row.exporter_iso3,
+        (exporterAtRisk.get(row.exporter_iso3) ?? 0) + row.qty * share,
+      );
     }
     const list = flowsByImporter.get(row.importer_iso3) ?? [];
     list.push({ iso3: row.exporter_iso3, qty: row.qty });
@@ -95,6 +105,18 @@ export function computeScenarioImpact(input: ScenarioInput): ScenarioResult {
     });
   }
   const rankedImporters = [...byImporter].sort((a, b) => b.atRiskQty - a.atRiskQty);
+
+  const byExporter: ExporterImpact[] = [];
+  for (const [iso3, totalQty] of exporterTotals) {
+    const atRiskQty = exporterAtRisk.get(iso3) ?? 0;
+    byExporter.push({
+      iso3,
+      totalQty,
+      atRiskQty,
+      shareAtRisk: totalQty > 0 ? atRiskQty / totalQty : 0,
+    });
+  }
+  const rankedExporters = [...byExporter].sort((a, b) => b.atRiskQty - a.atRiskQty);
 
   // Refinery view (only if refineries provided)
   const byRefinery =
@@ -137,6 +159,8 @@ export function computeScenarioImpact(input: ScenarioInput): ScenarioResult {
     severity,
     byImporter,
     rankedImporters,
+    byExporter,
+    rankedExporters,
     byRefinery,
     rankedRefineries,
     byLngImport,

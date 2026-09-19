@@ -17,25 +17,33 @@ export const DUCKDB_FILES = [
   "duckdb-browser-mvp.worker.js",
 ];
 
-// DuckDB's signed parquet extension for the core version inside the pinned
+// DuckDB's signed extensions for the core version inside the pinned
 // @duckdb/duckdb-wasm build (keep in sync with src/lib/duckdb/bundles.ts).
 // Downloaded once from extensions.duckdb.org at build time and verified
-// against these hashes, so the browser never fetches it from a third party.
+// against these hashes, so the browser never fetches them from a third party.
+//
+//   parquet - every query reads read_parquet('/data/...')
+//   json    - json_serialize_sql(), which the /query console's export gate
+//             uses to learn which tables a query reads. It is not statically
+//             linked in the wasm build; without it the gate fails closed and
+//             nothing is ever exportable.
 export const DUCKDB_CORE_VERSION = "v1.5.1";
-export const PARQUET_EXTENSIONS = [
-  { platform: "wasm_eh", sha256: "82dc14353de0d518f5824a799e69aedcc05eea82ff1a8d1814715ecf72bfc951" },
-  { platform: "wasm_mvp", sha256: "625d6db32ca5cecbeb4a27bc700d312d89dc27c9fa948865211ec6f1e386b222" },
+export const DUCKDB_EXTENSIONS = [
+  { name: "parquet", platform: "wasm_eh", sha256: "82dc14353de0d518f5824a799e69aedcc05eea82ff1a8d1814715ecf72bfc951" },
+  { name: "parquet", platform: "wasm_mvp", sha256: "625d6db32ca5cecbeb4a27bc700d312d89dc27c9fa948865211ec6f1e386b222" },
+  { name: "json", platform: "wasm_eh", sha256: "29844ad96567fbc1f05ff1d4d99a22c1e6723ba290e2e83f019f1777beb240f6" },
+  { name: "json", platform: "wasm_mvp", sha256: "44a65c235bcdfd7ec68064db96dabeca12f429229fa3b4bdf6fcb72c3b215351" },
 ];
 
 const sha256 = (buf) => createHash("sha256").update(buf).digest("hex");
 
 export async function fetchExtensions(dest) {
   let fetched = 0;
-  for (const { platform, sha256: want } of PARQUET_EXTENSIONS) {
-    const rel = join(DUCKDB_CORE_VERSION, platform, "parquet.duckdb_extension.wasm");
+  for (const { name, platform, sha256: want } of DUCKDB_EXTENSIONS) {
+    const rel = join(DUCKDB_CORE_VERSION, platform, `${name}.duckdb_extension.wasm`);
     const to = join(dest, "extensions", rel);
     if (existsSync(to) && sha256(readFileSync(to)) === want) continue;
-    const url = `https://extensions.duckdb.org/${DUCKDB_CORE_VERSION}/${platform}/parquet.duckdb_extension.wasm`;
+    const url = `https://extensions.duckdb.org/${DUCKDB_CORE_VERSION}/${platform}/${name}.duckdb_extension.wasm`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`copy-duckdb: ${url} -> HTTP ${String(res.status)}`);
     const buf = Buffer.from(await res.arrayBuffer());
@@ -46,7 +54,7 @@ export async function fetchExtensions(dest) {
     fetched += 1;
   }
   console.log(
-    `copy-duckdb: parquet extension ${DUCKDB_CORE_VERSION}: ${String(fetched)} downloaded, ${String(PARQUET_EXTENSIONS.length - fetched)} up to date`,
+    `copy-duckdb: extensions ${DUCKDB_CORE_VERSION}: ${String(fetched)} downloaded, ${String(DUCKDB_EXTENSIONS.length - fetched)} up to date`,
   );
 }
 

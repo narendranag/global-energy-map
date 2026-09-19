@@ -96,4 +96,18 @@ describe("next.config.ts cache headers", () => {
     }
     expect(IMMUTABLE).toBe("public, max-age=31536000, immutable");
   });
+
+  it("allows / to be framed (S7 embed mode) without relaxing anything else", async () => {
+    const rules = (await nextConfig.headers?.()) ?? [];
+    const mine = rules.filter((r) => r.source === "/");
+    expect(mine).toHaveLength(1);
+    expect(mine[0]?.headers).toEqual([
+      { key: "Content-Security-Policy", value: "frame-ancestors *" },
+    ]);
+    // Every rule set is scoped by `source`; nothing here applies frame-ancestors
+    // to /data, /methodology, /terms, /privacy, etc.
+    expect(rules.every((r) => r.source === "/" || !r.headers.some((h) => h.key === "Content-Security-Policy"))).toBe(
+      true,
+    );
+  });
 });

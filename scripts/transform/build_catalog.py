@@ -40,7 +40,10 @@ the entry's ``SourcePin`` in scripts/common/sources.py.
 
 It also writes ``src/lib/export/citations.generated.json`` (site citation from
 CITATION.cff + scenario route-share citations from disruption_route.parquet),
-which /methodology, /data and the Share menu import — see ``build_citations``.
+which /methodology, /data and the Share menu import — see ``build_citations``,
+and ``src/lib/query/schema.generated.json`` (each shipped Parquet file's
+columns and SQL types), which the /query console's schema sidebar renders
+without having to fetch a Parquet footer per file — see ``build_table_schemas``.
 
 ``generated_at`` is deterministic so that rebuilding unchanged inputs leaves
 catalog.json byte-identical (``scripts.build_all`` run twice → clean git tree):
@@ -83,7 +86,9 @@ NETL_SNAPSHOT = pins.NETL.as_of
 LNG_T3_URL = pins.LNG_T3.landing_url
 LNG_T3_SOURCE = pins.LNG_T3.name
 EIA_LICENSE = "US Government work, public domain (17 USC §105)"
-EIA_ATTRIBUTION = "Data: US Energy Information Administration (STEO); county shapes: US Census Bureau"
+EIA_ATTRIBUTION = (
+    "Data: US Energy Information Administration (STEO); county shapes: US Census Bureau"
+)
 LICENSE_DATA_URL = "https://github.com/narendranag/global-energy-map/blob/main/LICENSE-DATA.md"
 
 # Files that are view-only as-is but have a downloadable open subset
@@ -404,6 +409,16 @@ REGISTRY: list[dict[str, Any]] = [
             "scenario:druzhba",
             "scenario:btc",
             "scenario:cpc",
+            "scenario:malacca",
+            "scenario:malacca-lng",
+            "scenario:suez",
+            "scenario:suez-lng",
+            "scenario:bab_el_mandeb",
+            "scenario:bab_el_mandeb-lng",
+            "scenario:turkish_straits",
+            "scenario:keystone",
+            "scenario:enbridge_mainline",
+            "scenario:espo_spur",
         ],
         # Etalab Open Licence 2.0 permits redistribution with attribution;
         # made downloadable 2026-09-10 (user decision, Phase 10).
@@ -420,13 +435,23 @@ REGISTRY: list[dict[str, Any]] = [
         "source_name": "EIA / IEA / Argus Media (Kpler) / GEM — see source_* columns",
         "source_url": "https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz",
         "license": "Hand-set shares derived from public reports; per-row citations",
-        "as_of": "2026-09-11",
+        "as_of": "2026-09-19",
         "layers": [
             "scenario:hormuz",
             "scenario:hormuz-lng",
             "scenario:druzhba",
             "scenario:btc",
             "scenario:cpc",
+            "scenario:malacca",
+            "scenario:malacca-lng",
+            "scenario:suez",
+            "scenario:suez-lng",
+            "scenario:bab_el_mandeb",
+            "scenario:bab_el_mandeb-lng",
+            "scenario:turkish_straits",
+            "scenario:keystone",
+            "scenario:enbridge_mainline",
+            "scenario:espo_spur",
         ],
         "redistributable": True,
     },
@@ -677,6 +702,7 @@ def build_catalog(public: Path = PUBLIC) -> dict[str, Any]:
 
 CITATION_CFF = Path("CITATION.cff")
 CITATIONS_OUT = Path("src/lib/export/citations.generated.json")
+SCHEMAS_OUT = Path("src/lib/query/schema.generated.json")
 DISRUPTION_ROUTE = PUBLIC / "data" / "disruption_route.parquet"
 _CFF_SCALARS = ("title", "version", "date-released", "url", "repository-code", "license", "doi")
 
@@ -760,6 +786,45 @@ def build_citations(cff: Path = CITATION_CFF, routes: Path = DISRUPTION_ROUTE) -
     }
 
 
+# Arrow spells the shipped types its own way; the console is a SQL prompt, so
+# show the name DuckDB will use for the column. Anything unmapped falls
+# through as Arrow prints it rather than being guessed at.
+_SQL_TYPES = {
+    "large_string": "VARCHAR",
+    "string": "VARCHAR",
+    "int64": "BIGINT",
+    "int32": "INTEGER",
+    "int16": "SMALLINT",
+    "int8": "TINYINT",
+    "double": "DOUBLE",
+    "float": "FLOAT",
+    "bool": "BOOLEAN",
+    "date32[day]": "DATE",
+}
+
+
+def build_table_schemas(public: Path = PUBLIC) -> dict[str, Any]:
+    """Column names and SQL types per shipped Parquet file.
+
+    The /query console lists them in its schema sidebar. Reading a Parquet
+    footer in the browser just to name columns would cost a fetch per file,
+    so the schema is baked in here, from the same files the catalog hashes.
+    """
+    tables: dict[str, list[dict[str, str]]] = {}
+    for spec in REGISTRY:
+        path = spec["path"]
+        if not path.endswith(".parquet") or path in tables:
+            continue
+        arrow = pq.ParquetFile(_disk_path(path, public)).schema_arrow
+        tables[path] = [
+            {"name": f.name, "type": _SQL_TYPES.get(str(f.type), str(f.type))} for f in arrow
+        ]
+    return {
+        "_generated_by": "scripts/transform/build_catalog.py — do not edit",
+        "tables": dict(sorted(tables.items())),
+    }
+
+
 def main() -> None:
     catalog = build_catalog()
     OUT.write_text(json.dumps(catalog, indent=2, ensure_ascii=False) + "\n")
@@ -771,6 +836,10 @@ def main() -> None:
     CITATIONS_OUT.parent.mkdir(parents=True, exist_ok=True)
     CITATIONS_OUT.write_text(json.dumps(citations, indent=2, ensure_ascii=False) + "\n")
     print(f"wrote {CITATIONS_OUT}  scenario_shares={len(citations['scenario_shares'])}")
+    schemas = build_table_schemas()
+    SCHEMAS_OUT.parent.mkdir(parents=True, exist_ok=True)
+    SCHEMAS_OUT.write_text(json.dumps(schemas, indent=2, ensure_ascii=False) + "\n")
+    print(f"wrote {SCHEMAS_OUT}  tables={len(schemas['tables'])}")
 
 
 if __name__ == "__main__":

@@ -62,7 +62,7 @@ export function layerTags(key: LayerKey, commodity: Commodity): string[] {
 
 /** Catalog tags behind an active scenario (trade, route shares, attributed assets). */
 export function scenarioTags(id: ScenarioId, commodity: Commodity): string[] {
-  const tag = id === "hormuz" && commodity === "gas" ? "scenario:hormuz-lng" : `scenario:${id}`;
+  const tag = commodity === "gas" ? `scenario:${id}-lng` : `scenario:${id}`;
   return [tag, commodity === "gas" ? "lng_terminals" : "refineries"];
 }
 

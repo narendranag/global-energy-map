@@ -15,6 +15,7 @@ import {
   encodeUrlState,
   type AppState,
 } from "@/lib/url-state/encode";
+import { extractEmbedParams } from "@/lib/url-state/embed";
 import type { CameraRequest } from "./camera";
 import { DEFAULT_VIEW, normalizeView, sameView, type MapView } from "./view";
 
@@ -89,13 +90,23 @@ export function createAppStore(options: AppStoreOptions): AppStore {
   let app: AppState = defaults;
   let view: MapView = normalizeView(defaultView);
   let timer: ReturnType<typeof setTimeout> | null = null;
+  // S7: `embed`/`controls` are view flags, not AppState — decodeAppState never
+  // sees them, so they must be captured here and re-appended on every write,
+  // or the next debounced replaceState (e.g. a year change) would drop them.
+  let embedParams = "";
 
   const decode = (search: string) => {
     const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
     app = decodeAppState(params, defaults);
     view = decodeView(params, defaultView);
+    embedParams = extractEmbedParams(search);
   };
   decode(options.search ?? "");
+
+  const composeSearch = () => {
+    const base = encodeUrlState(app, view);
+    return embedParams ? `${base}&${embedParams}` : base;
+  };
 
   const notify = () => {
     for (const l of [...listeners]) l();
@@ -111,7 +122,7 @@ export function createAppStore(options: AppStoreOptions): AppStore {
   const flush = () => {
     if (timer === null) return;
     cancel();
-    writeSearch?.(encodeUrlState(app, view));
+    writeSearch?.(composeSearch());
   };
 
   const scheduleWrite = () => {
@@ -119,7 +130,7 @@ export function createAppStore(options: AppStoreOptions): AppStore {
     cancel();
     timer = setTimeout(() => {
       timer = null;
-      writeSearch(encodeUrlState(app, view));
+      writeSearch(composeSearch());
     }, debounceMs);
   };
 

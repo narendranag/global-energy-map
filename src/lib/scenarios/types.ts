@@ -1,4 +1,15 @@
-export type ScenarioId = "hormuz" | "druzhba" | "btc" | "cpc";
+export type ScenarioId =
+  | "hormuz"
+  | "druzhba"
+  | "btc"
+  | "cpc"
+  | "malacca"
+  | "suez"
+  | "bab_el_mandeb"
+  | "turkish_straits"
+  | "keystone"
+  | "enbridge_mainline"
+  | "espo_spur";
 
 export type Commodity = "oil" | "gas";
 

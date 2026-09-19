@@ -23,11 +23,11 @@ import type { Commodity, ScenarioId, ScenarioResult } from "@/lib/scenarios/type
  * (energy, TWh) — a unit conversion, not a claim about how much of that gas
  * physically reaches any one country's storage.
  *
- * 1 tonne of LNG ≈ 52 MJ higher heating value, the IGU/GIIGNL industry
+ * 1 tonne of LNG ≈ 52 GJ higher heating value, the IGU/GIIGNL industry
  * convention (International Gas Union, *Natural Gas Conversion Guide*, 2012 —
  * reprinted at
  * http://large.stanford.edu/courses/2025/ph240/uslu1/docs/igu-2012.pdf):
- * 52 MJ/t = 0.0144472 TWh/t, i.e. **14.447 TWh per million tonnes (Mt)**.
+ * 52 GJ/t = 0.0144472 TWh/t, i.e. **14.447 TWh per million tonnes (Mt)**.
  */
 export const TWH_PER_MT_LNG = 14.447;
 

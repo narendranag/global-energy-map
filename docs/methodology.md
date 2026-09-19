@@ -189,6 +189,8 @@ share_at_risk      = at_risk(importer) / total imports(importer, year)
 
 `share(S, X, importer)` is the fraction of X's exports to that importer that moves through the route. A per-pair share wins over a per-exporter share; exporters with no share contribute nothing. The map colours each importer by `share_at_risk` (red is reserved for this), and the scenario panel ranks importers, refineries or LNG terminals.
 
+The map also marks **where** the disruption is: a closure glyph at the chokepoint, or — for a pipeline scenario — the route's own GEM features redrawn as a highlighted cut line with the glyph on it. The cut route is shown whether or not the pipelines layer is switched on and whatever the year slider says, because the route is the subject of the scenario rather than infrastructure you chose to see; its position and vintage still come from `pipelines.geojson` unchanged. Picking a scenario frames the disruption together with the eight importers losing the most volume; a link that already carries a camera (`lon`/`lat`/`z`) keeps it. Hovering a ranked row highlights its country or asset on the map, and clicking one selects the country (and puts it in the URL as `focus=`).
+
 This is a **static first-order exposure measure**: what fraction of last year's supply moved through the route. It does not model rerouting, spare pipeline capacity, strategic stocks, price response, or substitution between suppliers.
 
 ### Trade data (BACI)

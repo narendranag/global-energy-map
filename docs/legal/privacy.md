@@ -1,6 +1,6 @@
 # Privacy
 
-**Effective 11 September 2026.** This policy covers the Global Energy Map at [energymap.marain.space](https://energymap.marain.space). The site is built and run by [Narendra Nag](https://narendranag.com) as a project of [Marain](https://marain.space), his operator's practice. Marain's own site has [its own privacy policy](https://marain.space/privacy).
+**Effective 19 September 2026.** This policy covers the Global Energy Map at [energymap.marain.space](https://energymap.marain.space). The site is built and run by [Narendra Nag](https://narendranag.com) as a project of [Marain](https://marain.space), his operator's practice. Marain's own site has [its own privacy policy](https://marain.space/privacy).
 
 ## The short version
 
@@ -9,6 +9,7 @@
 - Your browser fetches map tiles from OpenFreeMap, a third party, which sees your IP address like any web server does.
 - The map remembers one thing on your device: that you closed the intro card.
 - Everything you do on the map (filtering, scenarios, exports) runs in your browser. Nothing you select is sent to us.
+- The query console at `/query` is the same: the database engine and the data are downloaded to your browser, and your SQL is never sent anywhere.
 
 ## What is collected, by whom, and why
 
@@ -29,6 +30,10 @@ The background map (coastlines, place names, roads) comes from [OpenFreeMap](htt
 ### Data files and fonts
 
 All other files, including the energy datasets, the map's code and its fonts, are served from this site. There are no advertising, social-media or tag-manager scripts.
+
+### Query console (`/query`)
+
+The query console runs [DuckDB](https://duckdb.org) compiled to WebAssembly **inside your browser**. The engine, its extensions and the data files it reads are all served from this site — there is no query server, and no third party is contacted. Your SQL is executed locally, is not logged anywhere, and is never transmitted; it is written into the page's address bar so you can share or bookmark it, which happens on your device. A CSV you export is generated in your browser, as with every other export below.
 
 ## What stays on your device
 

@@ -19,6 +19,7 @@ This is the **current-state** methodology of Global Energy Map: for every map la
 | LNG voyages | LNG-T3 | 2026-04-01 | 17,592 voyages, 2020–2024 | Yes, 2020–2024 only | m³ of LNG |
 | Gas storage (EU) | GIE AGSI | daily, latest gas day | 20 countries | No — always the latest gas day | % full |
 | Recent imports | UN Comtrade (as reported) | monthly, to 2026-05 | each country's latest 12 months | No — always the latest months | Mt |
+| Trade flows | CEPII BACI, HS 2709 + 271111 | V202601 | top 150 pairs (world) or all of one country's (focused) | Yes, 1995–2024 only | tonnes |
 | Scenario trade | CEPII BACI, HS 2709 + 271111 | V202601 | 53,727 country-pair-years, 1995–2024 | Yes | tonnes |
 | Scenario route shares | EIA / IEA / Argus (Kpler) / GEM, per row | 2026-09-11 | 18 shares + 54 intra-Gulf share-0 pairs | No — static | fraction |
 
@@ -160,6 +161,17 @@ Generated from the data catalog at build time, so it cannot drift from the files
 - **Time:** not affected by the year slider; it always shows the latest months.
 - **Licence:** UN Comtrade terms limit re-dissemination, so the layer is view-only and not downloadable.
 
+### Trade flows (BACI)
+
+- **Source:** the same CEPII BACI table the scenarios use — see [Trade data (BACI)](#trade-data-baci) below for its cleaning, quantity repair and known gaps (Iran suppression, Russia → Belarus). Crude (HS 2709) in the oil view, LNG (HS 271111) in the gas view.
+- **What is drawn:** country-pair great-circle arcs, one exporter → importer pair per line, coloured light (exporter end) → dark (importer end) — the same light→dark convention `LNG voyages` uses, so a flow's direction reads without a legend — and widened by volume (square-root scaled). Oil arcs are warm-toned (pale gold → burnt umber), LNG arcs cool-toned (pale cyan → deep blue).
+- **World view (no country selected):** only the largest **150 pairs** by volume for the selected year + commodity are drawn — every pair is a hairball otherwise. 150 was picked by measuring, across every year 1995–2024, how much of world volume the top-N pairs carry: top 150 holds 82–87 % of crude and 94–100 % of LNG every year (2024: crude 86.6 %, LNG 96.1 %). The legend states the cutoff and its coverage.
+- **Focused on a country:** every one of that country's pairs is drawn instead — not just the ones that make the world top 150 — above a floor of 0.1 % of the country's own total trade (imports + exports) that year + commodity, so a large trader's noise (down to fractions of a tonne) does not draw as a pair. This is what answers "who supplies Japan?" — focus the map on Japan and every real supplier and customer shows, not just whichever happen to also be globally huge.
+- **Tooltip:** exporter → importer, volume in Mt (+ kb/d for crude, using the same 7.33 bbl/t conversion the scenario panels use), each side's share of its own total imports/exports that year, source + as-of.
+- **Anchors:** each side of an arc lands on a fixed lon/lat anchor per country (`src/lib/geo/country-anchors.ts`) — the representative point of its largest Natural Earth polygon, hand-moved for a handful of countries where that point sits nowhere near where energy actually loads or lands (the US Gulf Coast, not the Great Plains; western Russia, not Siberia; Alberta, not the Canadian centroid; similarly Australia, Norway, Chile, Indonesia, Malaysia, France) — plus a capital/settlement point for BACI codes with no 1:110m polygon (Singapore, Bahrain, Malta, Hong Kong, and more).
+- **Time:** 1995–2024 only (BACI's coverage); outside that range the layer is on but empty.
+- **Downloadable:** BACI's catalog entry is CC-derived / Etalab-licensed, so this layer's CSV/GeoJSON export is available (unlike EI reserves or GIE gas storage) — it exports exactly the pairs on screen (the world top 150, or the focused country's set).
+
 ### Country boundaries and basemap
 
 - **Country polygons:** Natural Earth 1:110m admin-0 (public domain), used for the reserves and exposure fills. Small islands and city-states (Singapore, Bahrain, …) have no polygon at this scale; they still appear in scenario tables.
@@ -174,7 +186,7 @@ The slider runs **1990–2024**. Each layer behaves differently:
 - LNG voyages exist only for 2020–2024.
 - US shale regions have EIA data from 2009; earlier years draw outlines only.
 - Refineries, storage, ports and basins have no dates and are the same in every year — the map shows today's facilities on a 1990 background.
-- Scenario trade data (BACI) starts in **1995**; a scenario in 1990–1994 has no trade to put at risk.
+- Scenario trade data (BACI) starts in **1995**; a scenario in 1990–1994 has no trade to put at risk. The Trade flows layer reads the same table and is likewise empty before 1995.
 
 ## Disruption scenarios
 

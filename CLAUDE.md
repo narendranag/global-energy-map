@@ -4,6 +4,10 @@
 >
 > Status: Phases 1–10 + post-launch follow-ups shipped (live at https://energymap.marain.space; the old https://global-energy-map-one.vercel.app address permanently redirects there). See `docs/superpowers/specs/2026-05-15-global-energy-map-design.md` for the full design and `docs/superpowers/plans/` for per-phase plans.
 
+## Resume here
+
+**Work is in flight.** Before anything else — including when the maintainer simply says hello — read `docs/superpowers/HANDOFF.md`: it is the resume prompt for the orchestrated post-launch work on branch `post-launch-ux-scenarios` (what is merged, which agents were running, the first steps, and the decisions waiting for the maintainer). Delete this section once that branch has shipped.
+
 ## One-liner
 
 A public web app that lets serious analysts interrogate global energy dependencies as inspectable, time-varying, scenario-testable structure.

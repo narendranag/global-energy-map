@@ -207,7 +207,17 @@ test.describe("Scenarios", () => {
     page,
   }) => {
     await gotoReady(page, "/?mode=scenarios&scenario=druzhba&commodity=gas&year=2020&layers=reserves");
+    // The querystring still reads `scenario=druzhba` — nothing changed state,
+    // so the store never rewrote the URL, exactly as an unknown `focus=`
+    // behaves. What matters is that the app decoded it as "no scenario": no
+    // selection in the picker and no result table of zeros.
     await expect(scenarioSelect(page)).not.toHaveValue("druzhba");
-    expect(new URL(page.url()).searchParams.get("scenario")).toBeNull();
+    await expect(page.getByTestId("ranked-importers")).toHaveCount(0);
+
+    // Selecting a gas scenario from here still works.
+    await scenarioSelect(page).selectOption("hormuz");
+    await expect(page.getByTestId("ranked-importers").locator("li").first()).toBeVisible({
+      timeout: RESULT_TIMEOUT,
+    });
   });
 });

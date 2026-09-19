@@ -58,6 +58,8 @@ aws s3 cp data/raw/<dir>/<file> s3://global-energy-map-raw/<dir>/<file> --endpoi
 
 After restoring, `uv run python -m scripts.build_all` rebuilds `public/data/` from scratch. Verify against the manifest's sha256 if a build output looks unexpected.
 
+Also archived (2026-09-19): `eia_steo/dpr-data.xlsx`, the Drilling Productivity Report workbook whose `RegionCounties` sheet defines the shale regions — EIA discontinued the DPR, so the file may disappear — and, beside it, the Census `cb_2023_us_county_20m.zip` it is dissolved over. The Census zip is still fetchable; it is there so the outlines rebuild from one place.
+
 Deliberately **not** archived, because they are still publicly fetchable: BACI (CEPII), LNG-T3 (Zenodo, md5-pinned in the source pin), NETL (live ArcGIS), OSM (live Overpass), and GEM's `goit-ggit-pipeline-routes` repo (GitHub). Archiving those would be a stale copy to maintain, not insurance.
 
 ## Per-source procedure
@@ -163,7 +165,7 @@ uv run python -m scripts.build_all --only build_shale_regions && uv run python -
 - Bump `EIA_STEO.release` / `as_of` to the STEO release date (top of https://www.eia.gov/outlooks/steo/).
 - **Bump `history_through_year` in January.** STEO puts forecasts in the same series as history; the transform keeps years up to that pin and fails if a series stops short of it. A September 2026 release forecasts 2026, so the pin is 2025.
 - One API request fetches all ten series. The DEMO_KEY fallback allows only a few calls an hour, and exploratory calls count against it — register a key.
-- The DPR county list and Census counties are static (`EIA_DPR_COUNTIES`, `CENSUS_COUNTIES`); refetch only if EIA publishes a STEO county list, which would replace the DPR one.
+- The DPR county list and Census counties are static (`EIA_DPR_COUNTIES`, `CENSUS_COUNTIES`); refetch only if EIA publishes a STEO county list, which would replace the DPR one. Both are archived in R2 under `eia_steo/` (see above) — the DPR workbook belongs to a discontinued product.
 
 ### NETL GOGI (ad hoc, live layers)
 

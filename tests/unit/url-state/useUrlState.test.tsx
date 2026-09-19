@@ -29,7 +29,7 @@ const LAYERS: LayerState = {
   shale_regions: false,
   recent_imports: false,
 };
-const DEFAULTS: AppState = { mode: "infrastructure", year: 2020, commodity: "oil", scenario: null, layers: LAYERS };
+const DEFAULTS: AppState = { mode: "infrastructure", year: 2020, commodity: "oil", scenario: null, focus: null, layers: LAYERS };
 
 beforeEach(() => {
   vi.useFakeTimers();

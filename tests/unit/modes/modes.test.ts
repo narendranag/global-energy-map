@@ -74,8 +74,13 @@ describe("applyMode", () => {
     year: 2008,
     commodity: "oil",
     scenario: null,
+    focus: "SAU",
     layers: { ...DEFAULT_APP_STATE.layers, storage: true, ports: true },
   };
+
+  it("keeps the focused country: a mode is a lens, not a new selection", () => {
+    for (const mode of MODES) expect(applyMode(custom, mode).focus).toBe("SAU");
+  });
 
   it("Infrastructure: preset layers, keeps year and commodity, clears the scenario", () => {
     const s = applyMode({ ...custom, mode: "scenarios", commodity: "gas", scenario: "hormuz" }, "infrastructure");
@@ -84,6 +89,7 @@ describe("applyMode", () => {
       year: 2008,
       commodity: "gas",
       scenario: null,
+      focus: "SAU",
       layers: MODE_LAYERS.infrastructure,
     });
   });
@@ -160,6 +166,7 @@ describe("URL precedence", () => {
       year: 2010,
       commodity: "oil",
       scenario: "druzhba",
+      focus: null,
       layers: { ...MODE_LAYERS.flows, gas_pipelines: false, lng_terminals: false, lng_voyages: false, pipelines: true },
     });
   });

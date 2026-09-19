@@ -4,6 +4,7 @@ import { clampYear } from "@/lib/time/range";
 import type { LayerState } from "@/components/layers/LayerPanel";
 import { normalizeView, type MapView } from "@/lib/state/view";
 import { DEFAULT_MODE, modeBaseState, parseMode, type Mode } from "@/lib/modes";
+import { parseIso3 } from "@/lib/geo/iso3";
 
 export interface AppState {
   /** Phase 9 IA mode (URL `mode`). Missing/unknown → Infrastructure. */
@@ -11,6 +12,12 @@ export interface AppState {
   readonly year: number;
   readonly commodity: Commodity;
   readonly scenario: ScenarioId | null;
+  /**
+   * Selected country (ISO3), or null. A *selection*, not a filter: it outlines
+   * one country and tells the panels/flows/search which country to talk about.
+   * Modes deliberately leave it alone (see `applyMode`).
+   */
+  readonly focus: string | null;
   readonly layers: LayerState;
 }
 
@@ -39,6 +46,9 @@ export function encodeAppState(state: AppState): string {
   params.set("year", String(state.year));
   params.set("commodity", state.commodity);
   if (state.scenario !== null) params.set("scenario", state.scenario);
+  // Written only when set, so every link shared before `focus` existed — and
+  // every link shared with nothing selected — is byte-for-byte what it was.
+  if (state.focus !== null) params.set("focus", state.focus);
   const enabled = LAYER_KEYS.filter((k) => state.layers[k]);
   params.set("layers", enabled.join(","));
   return params.toString();
@@ -83,6 +93,10 @@ export function decodeAppState(
     scenario = known ? known.id : null;
   }
 
+  // A `focus` we cannot draw is no focus at all: an unknown or malformed code
+  // decodes to null rather than leaving a phantom selection in the URL.
+  const focus = params.has("focus") ? parseIso3(params.get("focus")) : defaults.focus;
+
   const rawLayers = params.get("layers");
   let layers = defaults.layers;
   if (rawLayers !== null) {
@@ -94,7 +108,7 @@ export function decodeAppState(
     layers = next;
   }
 
-  return { mode, year, commodity, scenario, layers };
+  return { mode, year, commodity, scenario, focus, layers };
 }
 
 /**

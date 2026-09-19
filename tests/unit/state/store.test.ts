@@ -26,7 +26,7 @@ const LAYERS: LayerState = {
   recent_imports: false,
 };
 
-const DEFAULTS: AppState = { mode: "infrastructure", year: 2020, commodity: "oil", scenario: null, layers: LAYERS };
+const DEFAULTS: AppState = { mode: "infrastructure", year: 2020, commodity: "oil", scenario: null, focus: null, layers: LAYERS };
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -100,6 +100,75 @@ describe("patch semantics", () => {
     store.setView({ lon: 200.123, lat: 89, zoom: 12 });
     expect(store.getView()).toEqual({ lon: -159.88, lat: 85.05, zoom: 8 });
     expect(store.getApp()).toBe(app);
+  });
+});
+
+describe("focus", () => {
+  it("decodes from the querystring and counts as a change", () => {
+    const store = createAppStore({ defaults: DEFAULTS, search: "?focus=JPN" });
+    expect(store.getApp().focus).toBe("JPN");
+    const listener = vi.fn();
+    store.subscribe(listener);
+    store.patch({ focus: "JPN" });
+    expect(listener).not.toHaveBeenCalled();
+    store.patch({ focus: "DEU" });
+    expect(listener).toHaveBeenCalledTimes(1);
+    store.patch({ focus: null });
+    expect(listener).toHaveBeenCalledTimes(2);
+    expect(store.getApp().focus).toBeNull();
+  });
+
+  it("reaches the URL only while set", () => {
+    const writeSearch = vi.fn();
+    const store = createAppStore({ defaults: DEFAULTS, writeSearch });
+    store.patch({ focus: "JPN" });
+    store.flush();
+    expect(new URLSearchParams(writeSearch.mock.calls[0]?.[0] as string).get("focus")).toBe("JPN");
+    store.patch({ focus: null });
+    store.flush();
+    expect(new URLSearchParams(writeSearch.mock.calls[1]?.[0] as string).has("focus")).toBe(false);
+  });
+});
+
+describe("camera commands", () => {
+  const FIT = { kind: "fitBounds", bounds: [129, 31, 146, 46] } as const;
+
+  it("delivers a request to every subscriber, and stops after unsubscribe", () => {
+    const store = createAppStore({ defaults: DEFAULTS });
+    const a = vi.fn();
+    const b = vi.fn();
+    const offA = store.subscribeCamera(a);
+    store.subscribeCamera(b);
+    store.requestCamera(FIT);
+    expect(a).toHaveBeenCalledWith(FIT);
+    expect(b).toHaveBeenCalledWith(FIT);
+    offA();
+    store.requestCamera({ kind: "flyTo", lon: 10, lat: 20, zoom: 5 });
+    expect(a).toHaveBeenCalledTimes(1);
+    expect(b).toHaveBeenCalledTimes(2);
+  });
+
+  it("holds a request posted before the map subscribed, and delivers it once", () => {
+    const store = createAppStore({ defaults: DEFAULTS });
+    store.requestCamera(FIT);
+    const late = vi.fn();
+    store.subscribeCamera(late);
+    expect(late).toHaveBeenCalledWith(FIT);
+    const later = vi.fn();
+    store.subscribeCamera(later);
+    expect(later).not.toHaveBeenCalled();
+  });
+
+  it("is not state: it never touches the view, the snapshot or the URL", () => {
+    const writeSearch = vi.fn();
+    const store = createAppStore({ defaults: DEFAULTS, writeSearch });
+    const app = store.getApp();
+    store.subscribeCamera(vi.fn());
+    store.requestCamera(FIT);
+    vi.advanceTimersByTime(URL_WRITE_DEBOUNCE_MS * 2);
+    expect(store.getApp()).toBe(app);
+    expect(store.getView()).toEqual(DEFAULT_VIEW);
+    expect(writeSearch).not.toHaveBeenCalled();
   });
 });
 

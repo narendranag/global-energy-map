@@ -6,11 +6,24 @@ import type { Layer, PickingInfo } from "@deck.gl/core";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { basemapStyle, fallbackStyle, firstSymbolLayerId } from "./style";
 import { peekAppStore } from "@/lib/state/store";
+import {
+  FIT_MAX_ZOOM,
+  prefersReducedMotion,
+  resolvePadding,
+  type CameraPadding,
+  type CameraRequest,
+} from "@/lib/state/camera";
 import { DEFAULT_VIEW, MAX_ZOOM, MIN_ZOOM } from "@/lib/state/view";
 
 export interface MapShellProps {
   readonly layers: readonly Layer[];
   readonly getTooltip?: (info: PickingInfo) => string | null;
+  /**
+   * A click anywhere on the map. deck reports the topmost picked object;
+   * `info.layer === null` means nothing was hit (empty sea). The caller
+   * decides what a pick means — MapShell knows nothing about focus.
+   */
+  readonly onPick?: (info: PickingInfo) => void;
 }
 
 /**
@@ -21,6 +34,57 @@ const PICKING_RADIUS = 4;
 
 /** Accessible name of the map canvas (MapLibre's keyboard handler: arrows pan, +/− zoom). */
 export const MAP_LABEL = "Map — arrow keys pan, plus and minus zoom";
+
+/** How long a camera command takes when motion is allowed. */
+const CAMERA_DURATION_MS = 900;
+
+/**
+ * Padding must leave room to actually fit something: MapLibre cannot honour a
+ * left+right padding wider than the map. Oversized padding is scaled down
+ * proportionally rather than dropped, so a fit stays as clear of the panels as
+ * the viewport allows (a phone gets almost none; a desktop gets all of it).
+ */
+function fitPadding(padding: CameraPadding, width: number, height: number): CameraPadding {
+  const shrink = (a: number, b: number, extent: number) => {
+    const room = extent * 0.8;
+    const total = a + b;
+    return total <= room || total === 0 ? ([a, b] as const) : ([(a / total) * room, (b / total) * room] as const);
+  };
+  const [left, right] = shrink(padding.left, padding.right, width);
+  const [top, bottom] = shrink(padding.top, padding.bottom, height);
+  return { left, right, top, bottom };
+}
+
+/** Run one camera command against the map, honouring `prefers-reduced-motion`. */
+function applyCamera(map: maplibregl.Map, command: CameraRequest): void {
+  const duration = prefersReducedMotion() ? 0 : CAMERA_DURATION_MS;
+  if (command.kind === "flyTo") {
+    const target = {
+      center: [command.lon, command.lat] as [number, number],
+      ...(command.zoom === undefined ? {} : { zoom: command.zoom }),
+    };
+    if (duration === 0) map.jumpTo(target);
+    else map.flyTo({ ...target, duration });
+    return;
+  }
+  const [west, south, east, north] = command.bounds;
+  const canvas = map.getCanvas();
+  map.fitBounds(
+    [
+      [west, south],
+      [east, north],
+    ],
+    {
+      padding: fitPadding(
+        resolvePadding(command.padding),
+        canvas.clientWidth,
+        canvas.clientHeight,
+      ),
+      maxZoom: command.maxZoom ?? FIT_MAX_ZOOM,
+      duration,
+    },
+  );
+}
 
 /** Where deck layers go in the MapLibre layer stack, once the style is loaded. */
 interface LabelAnchor {
@@ -57,7 +121,7 @@ function anchorBeneathLabels(layers: readonly Layer[], beforeId: string | undefi
  * WebGL2 context through `MapboxOverlay({ interleaved: true })`. One canvas,
  * one camera, one set of zoom limits — no view-state sync to drift (R12, R23).
  */
-export function MapShell({ layers, getTooltip }: MapShellProps) {
+export function MapShell({ layers, getTooltip, onPick }: MapShellProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<MapboxOverlay | null>(null);
   // null until the style has loaded: deck layers can only be inserted into a
@@ -117,7 +181,17 @@ export function MapShell({ layers, getTooltip }: MapShellProps) {
     map.addControl(overlay);
     overlayRef.current = overlay;
 
+    // The camera seam: anything in the app can ask the map to move without
+    // holding this handle (`useCamera` → store.requestCamera). A request
+    // posted before this subscription — `?focus=JPN` fitting on load — is
+    // held by the store and delivered here.
+    const unsubscribeCamera = peekAppStore()?.subscribeCamera((command) => {
+      if (map.isStyleLoaded() || map.loaded()) applyCamera(map, command);
+      else void map.once("load", () => { applyCamera(map, command); });
+    });
+
     return () => {
+      unsubscribeCamera?.();
       overlayRef.current = null;
       map.remove(); // removes the overlay control and finalizes its Deck
     };
@@ -128,8 +202,11 @@ export function MapShell({ layers, getTooltip }: MapShellProps) {
       layers: labelAnchor ? anchorBeneathLabels(layers, labelAnchor.beforeId) : [],
       // exactOptionalPropertyTypes: use null (not undefined) to satisfy DeckProps.getTooltip type
       getTooltip: getTooltip ? makeDeckTooltip(getTooltip) : null,
+      // deck calls this for every click, picked or not, so a click on empty
+      // sea arrives too (with `info.layer === null`).
+      onClick: onPick ?? null,
     });
-  }, [layers, getTooltip, labelAnchor]);
+  }, [layers, getTooltip, onPick, labelAnchor]);
 
   return (
     <div className="relative h-full w-full">

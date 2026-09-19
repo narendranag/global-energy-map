@@ -1,8 +1,10 @@
 "use client";
 import { useCallback, useEffect, useRef, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import type { PickingInfo } from "@deck.gl/core";
 import { MapShell } from "@/components/map/MapShell";
 import { LayerPanel, type LayerState } from "@/components/layers/LayerPanel";
+import { countryFromPick } from "@/components/layers/CountryPickLayer";
 import { formatTooltip } from "@/components/layers/tooltips";
 import { needsAssets, useMapLayers } from "@/components/layers/useMapLayers";
 import { Chevron } from "@/components/ui/Chevron";
@@ -25,6 +27,7 @@ import {
   type Mode,
 } from "@/lib/modes";
 import type { Commodity, ScenarioId } from "@/lib/scenarios/types";
+import { panelPadding, useCamera } from "@/lib/state";
 import { useUrlState } from "@/lib/url-state/useUrlState";
 import { RESERVES_LATEST_YEAR, YEAR_MAX, YEAR_MIN } from "@/lib/time/range";
 
@@ -33,7 +36,7 @@ const SCENARIO_PICKER = "select, input, button, [tabindex]:not([tabindex='-1'])"
 
 function HomeInner() {
   const [state, setState] = useUrlState(DEFAULT_APP_STATE);
-  const { mode, year, commodity, scenario: scenarioId, layers } = state;
+  const { mode, year, commodity, scenario: scenarioId, focus, layers } = state;
 
   const setYear = useCallback((y: number) => { setState({ year: y }); }, [setState]);
   const setCommodity = useCallback((c: Commodity) => { setState({ commodity: c }); }, [setState]);
@@ -45,6 +48,39 @@ function HomeInner() {
     (next: LayerState) => { setState({ layers: next }); },
     [setState],
   );
+
+  // --- country selection --------------------------------------------------
+  // Clicking a country selects it; clicking the selected country again, or
+  // empty sea, or Escape, clears it. A click on a point or line above a
+  // country is a click on *that* and leaves the selection alone —
+  // `countryFromPick` decides by layer id, not by the object's shape.
+  const setFocus = useCallback(
+    (iso3: string | null) => { setState({ focus: iso3 }); },
+    [setState],
+  );
+  const onPick = useCallback(
+    (info: PickingInfo) => {
+      const iso3 = countryFromPick(info);
+      if (iso3 !== null) {
+        setFocus(iso3 === focus ? null : iso3);
+        return;
+      }
+      if (info.layer == null) setFocus(null);
+    },
+    [focus, setFocus],
+  );
+
+  useEffect(() => {
+    if (focus === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      // Escape inside a popup (the share panel, the intro card) closes that one.
+      if (document.activeElement?.closest('[role="dialog"]')) return;
+      setFocus(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => { window.removeEventListener("keydown", onKey); };
+  }, [focus, setFocus]);
 
   // --- modes ------------------------------------------------------------------
   const scenarioSlotRef = useRef<HTMLDivElement>(null);
@@ -92,6 +128,7 @@ function HomeInner() {
     commodity,
     scenario,
     assets,
+    focus,
   });
 
   // Loading indicator + e2e ready signal: visible layers still loading, plus
@@ -107,6 +144,22 @@ function HomeInner() {
     layers.reserves && year > RESERVES_LATEST_YEAR
       ? `Reserves: ${RESERVES_LATEST_YEAR.toString()} value (latest in EI Statistical Review)`
       : undefined;
+
+  // A shared `?focus=XXX` link frames its country — unless the link also
+  // carries a camera (`lon`/`lat`/`z`), which always wins: an explicit view is
+  // what the sharer chose to show. Load only; a later selection (a click, and
+  // in S1–S4 a search hit or a ranked row) moves the camera only if it asks.
+  const camera = useCamera();
+  const searchParams = useSearchParams();
+  const initialFitDone = useRef(false);
+  useEffect(() => {
+    if (initialFitDone.current) return;
+    initialFitDone.current = true;
+    if (focus === null || ["lon", "lat", "z"].some((k) => searchParams.has(k))) return;
+    void camera.fitCountry(focus, { padding: panelPadding({ right: showScenarioPanel }) });
+    // Mount only: the initial URL is read once, on purpose.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const getTooltip = useCallback(
     (info: PickingInfo) => formatTooltip(info.layer?.id, info.object, tooltipContext),
@@ -193,7 +246,7 @@ function HomeInner() {
         />
         <MapFooter />
         <div className="absolute inset-0 z-0">
-          <MapShell layers={deckLayers} getTooltip={getTooltip} />
+          <MapShell layers={deckLayers} getTooltip={getTooltip} onPick={onPick} />
         </div>
       </div>
     </main>

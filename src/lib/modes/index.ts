@@ -96,12 +96,13 @@ export const TRADE_LAST_YEAR = 2024;
 /** Default year on first load: the last year with a live reserves value. */
 export const DEFAULT_YEAR = 2020;
 
-/** The app's default state: Infrastructure mode, oil, 2020, no scenario. */
+/** The app's default state: Infrastructure mode, oil, 2020, no scenario, nothing focused. */
 export const DEFAULT_APP_STATE: AppState = {
   mode: DEFAULT_MODE,
   year: DEFAULT_YEAR,
   commodity: "oil",
   scenario: null,
+  focus: null,
   layers: MODE_LAYERS[DEFAULT_MODE],
 };
 
@@ -117,6 +118,11 @@ export function layersOpenByDefault(mode: Mode): boolean {
  *  - Scenarios: year → latest BACI year if before BACI coverage (1995).
  * Leaving Scenarios clears the active scenario (the tab is where disruptions
  * live); entering it keeps any scenario already chosen.
+ *
+ * `focus` is deliberately *not* touched. A mode is a way of looking at the
+ * map; the focused country is what you are looking at. Dropping the selection
+ * on every tab click would make "see this country's flows" a two-step gesture
+ * and would silently rewrite a shared `?mode=flows&focus=JPN` link.
  */
 export function applyMode(state: AppState, mode: Mode): AppState {
   const layers = MODE_LAYERS[mode];
@@ -168,7 +174,13 @@ function question(
   id: string,
   label: string,
   mode: Mode,
-  settings: { year: number; commodity: AppState["commodity"]; scenario?: ScenarioId; layers?: LayerState },
+  settings: {
+    year: number;
+    commodity: AppState["commodity"];
+    scenario?: ScenarioId;
+    layers?: LayerState;
+    focus?: string;
+  },
 ): ExampleQuestion {
   const base = applyMode(DEFAULT_APP_STATE, mode);
   return {
@@ -179,6 +191,7 @@ function question(
       year: settings.year,
       commodity: settings.commodity,
       scenario: settings.scenario ?? null,
+      focus: settings.focus ?? null,
       layers: settings.layers ?? base.layers,
     },
   };

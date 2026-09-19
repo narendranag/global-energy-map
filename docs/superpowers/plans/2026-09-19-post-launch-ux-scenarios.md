@@ -81,5 +81,6 @@ Merge order inside 2b (least → most shared-file contact): S5, S8, S6, S2, S4, 
 |---|---|---|
 | F1–F4 | pending | |
 | R1–R4, RV | pending | |
-| S0–S8 | pending | |
+| S0–S7 | pending | |
+| S8 | done | Scheduled refresh infrastructure (95e930d, ff28265) |
 | T1–T6 | pending | |

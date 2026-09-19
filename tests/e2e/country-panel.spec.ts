@@ -68,13 +68,20 @@ test.describe("country panel", () => {
     const rows = page.getByTestId("country-exposure-rows");
     await expect(rows).toBeVisible({ timeout: SECTION_TIMEOUT });
     // Every oil scenario the registry holds for 2024, so adding one does not
-    // silently stop appearing here; Hormuz first, as Japan's largest exposure.
+    // silently stop appearing here.
     await expect(rows.getByRole("button")).toHaveCount(
       SCENARIOS.filter((s) => s.commodities.includes("oil") && isScenarioActive(s, 2024)).length,
     );
-    await expect(rows.getByRole("button").first()).toContainText("Close Strait of Hormuz");
+    // Ranked by share, descending — which scenario tops the list is data, not
+    // something to pin here.
+    const shares = await rows.getByRole("button").allInnerTexts();
+    const pcts = shares.map((t) => Number(/([\d.]+)%/.exec(t)?.[1] ?? "NaN"));
+    expect(pcts.every(Number.isFinite)).toBe(true);
+    expect([...pcts].sort((a, b) => b - a)).toEqual(pcts);
 
-    await rows.getByRole("button").first().click();
+    const hormuz = rows.getByRole("button").filter({ hasText: "Close Strait of Hormuz" });
+    await expect(hormuz).toHaveCount(1);
+    await hormuz.click();
     await expect
       .poll(() => new URL(page.url()).searchParams.get("scenario"), { timeout: 15_000 })
       .toBe("hormuz");

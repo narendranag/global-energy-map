@@ -29,7 +29,7 @@ vi.mock("@duckdb/duckdb-wasm", () => ({
   },
 }));
 
-import { __resetDuckDBForTests, getDuckDB } from "@/lib/duckdb/bootstrap";
+import { __resetDuckDBForTests, extensionVersionMismatch, getDuckDB } from "@/lib/duckdb/bootstrap";
 import { DUCKDB_FILES, selfHostedBundles } from "@/lib/duckdb/bundles";
 
 class FakeWorker {
@@ -122,13 +122,26 @@ describe("bootstrap extension repository", () => {
     expect(queries.some((q) => /SET GLOBAL custom_extension_repository = '.*\/duckdb\/extensions'/.test(q))).toBe(true);
   });
 
-  it("keeps the default repository (and warns) on a core version mismatch", async () => {
+  it("keeps the repository same-origin and fails loudly on a core version mismatch", async () => {
+    // Regression guard: returning early here used to leave DuckDB's built-in
+    // default (extensions.duckdb.org), so a version bump silently reopened a
+    // third-party request path. /query is the only route that boots DuckDB.
     instantiate.mockResolvedValue(undefined);
     coreVersion = "v9.9.9";
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
     await getDuckDB();
-    expect(queries.some((q) => q.includes("custom_extension_repository"))).toBe(false);
-    expect(warn).toHaveBeenCalled();
-    warn.mockRestore();
+    expect(
+      queries.some((q) => /SET GLOBAL custom_extension_repository = '.*\/duckdb\/extensions'/.test(q)),
+    ).toBe(true);
+    expect(queries.some((q) => q.includes("extensions.duckdb.org"))).toBe(false);
+    expect(error).toHaveBeenCalled();
+    expect(extensionVersionMismatch()).toMatch(/v9\.9\.9/);
+    error.mockRestore();
+  });
+
+  it("reports no mismatch when the versions agree", async () => {
+    instantiate.mockResolvedValue(undefined);
+    await getDuckDB();
+    expect(extensionVersionMismatch()).toBeNull();
   });
 });

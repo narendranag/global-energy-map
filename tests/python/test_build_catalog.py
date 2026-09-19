@@ -101,6 +101,18 @@ def test_citations_sidecar_is_current():
     assert len(on_disk["scenario_shares"]) == 72  # 18 hand-set + 54 intra-Gulf share-0 pairs
 
 
+def test_table_schema_sidecar_is_current():
+    """The /query console's schema sidebar; re-run build_catalog if this fails."""
+    on_disk = json.loads(bc.SCHEMAS_OUT.read_text())
+    assert on_disk == bc.build_table_schemas()
+    # Every shipped parquet is a queryable table, and only parquet is.
+    paths = {e["path"] for e in bc.REGISTRY if e["path"].endswith(".parquet")}
+    assert set(on_disk["tables"]) == paths
+    # Types are the SQL names the console prints beside each column.
+    types = {c["type"] for cols in on_disk["tables"].values() for c in cols}
+    assert types <= set(bc._SQL_TYPES.values()), types
+
+
 def test_coverage_spans_follow_filters_and_grain(tmp_path):
     import pandas as pd
     import pytest

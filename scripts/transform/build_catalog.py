@@ -677,6 +677,7 @@ def build_catalog(public: Path = PUBLIC) -> dict[str, Any]:
 
 CITATION_CFF = Path("CITATION.cff")
 CITATIONS_OUT = Path("src/lib/export/citations.generated.json")
+SCHEMAS_OUT = Path("src/lib/query/schema.generated.json")
 DISRUPTION_ROUTE = PUBLIC / "data" / "disruption_route.parquet"
 _CFF_SCALARS = ("title", "version", "date-released", "url", "repository-code", "license", "doi")
 
@@ -760,6 +761,45 @@ def build_citations(cff: Path = CITATION_CFF, routes: Path = DISRUPTION_ROUTE) -
     }
 
 
+# Arrow spells the shipped types its own way; the console is a SQL prompt, so
+# show the name DuckDB will use for the column. Anything unmapped falls
+# through as Arrow prints it rather than being guessed at.
+_SQL_TYPES = {
+    "large_string": "VARCHAR",
+    "string": "VARCHAR",
+    "int64": "BIGINT",
+    "int32": "INTEGER",
+    "int16": "SMALLINT",
+    "int8": "TINYINT",
+    "double": "DOUBLE",
+    "float": "FLOAT",
+    "bool": "BOOLEAN",
+    "date32[day]": "DATE",
+}
+
+
+def build_table_schemas(public: Path = PUBLIC) -> dict[str, Any]:
+    """Column names and SQL types per shipped Parquet file.
+
+    The /query console lists them in its schema sidebar. Reading a Parquet
+    footer in the browser just to name columns would cost a fetch per file,
+    so the schema is baked in here, from the same files the catalog hashes.
+    """
+    tables: dict[str, list[dict[str, str]]] = {}
+    for spec in REGISTRY:
+        path = spec["path"]
+        if not path.endswith(".parquet") or path in tables:
+            continue
+        arrow = pq.ParquetFile(_disk_path(path, public)).schema_arrow
+        tables[path] = [
+            {"name": f.name, "type": _SQL_TYPES.get(str(f.type), str(f.type))} for f in arrow
+        ]
+    return {
+        "_generated_by": "scripts/transform/build_catalog.py — do not edit",
+        "tables": dict(sorted(tables.items())),
+    }
+
+
 def main() -> None:
     catalog = build_catalog()
     OUT.write_text(json.dumps(catalog, indent=2, ensure_ascii=False) + "\n")
@@ -771,6 +811,10 @@ def main() -> None:
     CITATIONS_OUT.parent.mkdir(parents=True, exist_ok=True)
     CITATIONS_OUT.write_text(json.dumps(citations, indent=2, ensure_ascii=False) + "\n")
     print(f"wrote {CITATIONS_OUT}  scenario_shares={len(citations['scenario_shares'])}")
+    schemas = build_table_schemas()
+    SCHEMAS_OUT.parent.mkdir(parents=True, exist_ok=True)
+    SCHEMAS_OUT.write_text(json.dumps(schemas, indent=2, ensure_ascii=False) + "\n")
+    print(f"wrote {SCHEMAS_OUT}  tables={len(schemas['tables'])}")
 
 
 if __name__ == "__main__":

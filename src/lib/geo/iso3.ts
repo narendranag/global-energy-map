@@ -1,3 +1,4 @@
+import { countryAnchor } from "./country-anchors";
 /**
  * The ISO3 codes a `focus` selection may name.
  *
@@ -9,9 +10,10 @@
  *     node -e "const fs=require('fs');console.log(JSON.parse(fs.readFileSync('public/data/countries.geojson','utf8')).features.map(f=>f.properties.iso3).sort().join(' '))"
  *
  * Codes in `EXTRA_COUNTRY_NAMES` (Singapore, Bahrain, Malta, … — real
- * countries that appear in trade data but have no 1:110m polygon) are
- * deliberately *not* focusable: a focus must be drawable, and `countryBounds`
- * would have no geometry to compute from.
+ * countries that appear in trade data but have no 1:110m polygon) are *also*
+ * focusable since B1: see `isFocusableCountry`. They have no geometry for
+ * `countryBounds`, so their outline is a ring at the country anchor and their
+ * fit is a flyTo — the list here stays the polygon set, nothing more.
  */
 export const NATURAL_EARTH_ISO3: readonly string[] = [
   "AFG", "AGO", "ALB", "ARE", "ARG", "ARM", "ATA", "ATF", "AUS", "AUT", "AZE", "BDI", "BEL",
@@ -83,8 +85,26 @@ export function isKnownCountry(iso3: string): boolean {
 }
 
 /**
+ * True when `iso3` may be the `focus` selection (B1).
+ *
+ * Wider than {@link isKnownCountry}: the panel's partner rows routinely name
+ * real countries with no 1:110m polygon — Singapore (the region's refining
+ * hub), Bahrain (a Gulf exporter), Hong Kong, Curaçao, Mauritius, Barbados.
+ * Selecting one used to open a panel with no outline, a "Zoom to" that did
+ * nothing, and a `?focus=` the reload threw away. The test is a country
+ * **anchor** instead, which `country-anchors.ts` holds for every Natural
+ * Earth country *and* every BACI-only territory, and deliberately not for
+ * BACI's pseudo-country aggregates (`S19`, `ZA1`, …). A polygon-less
+ * selection outlines as a ring at its anchor and fits by flying to it.
+ */
+export function isFocusableCountry(iso3: string): boolean {
+  return countryAnchor(iso3) !== undefined;
+}
+
+/**
  * Normalise a URL- or user-supplied country code: trimmed and upper-cased, or
- * null when it is not three letters or names no country we hold. Accepting
+ * null when it is not three letters or names no country we can select
+ * (`isFocusableCountry`, which includes the polygon-less ones). Accepting
  * lower case is a one-way convenience for hand-typed links — `encodeAppState`
  * only ever writes the canonical upper-case form.
  */
@@ -96,5 +116,5 @@ export function parseIso3(raw: string | null | undefined): string | null {
   // of Natural Earth's two oddities (SSD, PSE) resolves to it rather than to
   // a phantom selection with no outline (A2).
   const code = polygonIso3(raised);
-  return isKnownCountry(code) ? code : null;
+  return isFocusableCountry(code) ? code : null;
 }

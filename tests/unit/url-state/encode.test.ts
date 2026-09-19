@@ -238,9 +238,16 @@ describe("decodeAppState — focus", () => {
   });
 
   it("drops an unknown or malformed code", () => {
-    for (const qs of ["focus=ZZZ", "focus=JP", "focus=JPNX", "focus=", "focus=SGP"]) {
+    for (const qs of ["focus=ZZZ", "focus=JP", "focus=JPNX", "focus=", "focus=S19"]) {
       expect(decode(qs).focus).toBeNull();
     }
+  });
+
+  // B1: a partner row can name a country with no 1:110m polygon. It is a real
+  // selection — outlined as a ring at its anchor — so the link keeps it.
+  it("keeps a polygon-less but anchored code", () => {
+    expect(decode("focus=SGP").focus).toBe("SGP");
+    expect(decode("focus=BHR").focus).toBe("BHR");
   });
 
   it("survives a mode preset: modes never clear a focus the URL carries", () => {

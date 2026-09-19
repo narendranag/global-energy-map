@@ -1,5 +1,6 @@
-import { GeoJsonLayer } from "@deck.gl/layers";
+import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
 import type { CountryCollection, CountryProps } from "@/lib/geo/countries";
+import { countryAnchor } from "@/lib/geo/country-anchors";
 import {
   FOCUS_HALO_COLOR,
   FOCUS_HALO_MIN_PX,
@@ -32,12 +33,51 @@ export function focusFeatures(
  * country again is how you clear the selection), and it must never take a
  * tooltip from the layer it is drawn over.
  */
+/**
+ * A focus on a country with no 1:110m polygon (Singapore, Bahrain, Hong Kong,
+ * Curaçao, … — see `isFocusableCountry`) is drawn as a cased ring at the
+ * country's anchor instead of an outline. Same two colours and the same
+ * pixel widths, so the selection reads identically; a fixed pixel radius, so
+ * it stays findable at world zoom and never pretends to be an extent.
+ */
+const ANCHOR_RING_RADIUS_PX = 14;
+
+function anchorRingLayers(iso3: string): ScatterplotLayer<{ iso3: string }>[] {
+  const anchor = countryAnchor(iso3);
+  if (anchor === undefined) return [];
+  const common = {
+    data: [{ iso3 }],
+    getPosition: () => [anchor[0], anchor[1]] as [number, number],
+    radiusUnits: "pixels" as const,
+    getRadius: ANCHOR_RING_RADIUS_PX,
+    filled: false,
+    stroked: true,
+    pickable: false,
+  };
+  return [
+    new ScatterplotLayer<{ iso3: string }>({
+      ...common,
+      id: FOCUS_HALO_LAYER_ID,
+      getLineColor: [...FOCUS_HALO_COLOR],
+      lineWidthUnits: "pixels",
+      getLineWidth: FOCUS_HALO_MIN_PX,
+    }),
+    new ScatterplotLayer<{ iso3: string }>({
+      ...common,
+      id: FOCUS_LAYER_ID,
+      getLineColor: [...FOCUS_OUTLINE_COLOR],
+      lineWidthUnits: "pixels",
+      getLineWidth: FOCUS_OUTLINE_MIN_PX,
+    }),
+  ];
+}
+
 export function buildFocusLayer(
   fc: CountryCollection,
   iso3: string | null,
-): GeoJsonLayer<CountryProps>[] {
+): (GeoJsonLayer<CountryProps> | ScatterplotLayer<{ iso3: string }>)[] {
   const focused = focusFeatures(fc, iso3);
-  if (focused === null) return [];
+  if (focused === null) return iso3 === null ? [] : anchorRingLayers(iso3);
   const common = {
     data: focused,
     filled: false,

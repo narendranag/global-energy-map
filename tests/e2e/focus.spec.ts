@@ -106,4 +106,22 @@ test.describe("country focus", () => {
     await page.mouse.click(point.x, point.y);
     await expect.poll(() => focusParam(page), { timeout: 15_000 }).toBeNull();
   });
+
+  // B1: Singapore has no 1:110m polygon but is a top-5 partner of half the
+  // crude table. The selection survives, the panel names it, and the outline
+  // falls back to a ring at the country anchor.
+  test("?focus=SGP survives, names Singapore and draws its anchor ring", async ({ page }) => {
+    const view: MapView = { lon: 103.8, lat: 1.35, zoom: 5 };
+    const before = await (async () => {
+      await gotoReady(page, url("", view));
+      return outlinePixels(page, { lon: 103.82, lat: 1.35 }, view);
+    })();
+
+    await gotoReady(page, url("focus=SGP&", view));
+    expect(focusParam(page)).toBe("SGP");
+    await expect(page.getByTestId("country-panel")).toContainText("Singapore");
+    await expect
+      .poll(() => outlinePixels(page, { lon: 103.82, lat: 1.35 }, view), { timeout: 30_000 })
+      .toBeGreaterThan(before + 20);
+  });
 });

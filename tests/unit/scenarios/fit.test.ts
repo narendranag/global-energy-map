@@ -100,7 +100,7 @@ describe("scenarioFitBounds", () => {
       56.25 + MARK_SPAN_DEG / 2,
       26.57 + MARK_SPAN_DEG / 2,
     ]);
-    const b = scenarioFitBounds({ lon: 56.25, lat: 26.57 }, []);
+    const b = scenarioFitBounds([{ lon: 56.25, lat: 26.57 }], []);
     if (!b) throw new Error("unreachable");
     expect(b[2] - b[0]).toBeCloseTo(SCENARIO_MIN_SPAN_DEG, 6);
   });
@@ -109,11 +109,11 @@ describe("scenarioFitBounds", () => {
     const hormuz = { lon: 56.25, lat: 26.57 };
     const jpn: Bounds = [129, 31, 146, 45];
     const nld: Bounds = [3, 50, 7, 54];
-    const b = scenarioFitBounds(hormuz, [jpn, nld]);
+    const b = scenarioFitBounds([hormuz], [jpn, nld]);
     expect(b).toEqual([3, 23.57, 146, 54]);
   });
 
   it("is null when there is neither a mark nor an importer box", () => {
-    expect(scenarioFitBounds(null, [])).toBeNull();
+    expect(scenarioFitBounds([], [])).toBeNull();
   });
 });

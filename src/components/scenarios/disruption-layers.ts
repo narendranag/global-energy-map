@@ -43,6 +43,14 @@ export const DISRUPTION_MARK_DOT_LAYER_ID = "disruption-mark-dot";
 export const DISRUPTION_CUT_LAYER_ID = "disruption-cut";
 export const DISRUPTION_CUT_CASING_LAYER_ID = "disruption-cut-casing";
 
+/**
+ * T1: the id suffix the *second* scenario of a combined run draws under. deck
+ * requires unique layer ids, and the primary keeps the bare ids above so
+ * every tooltip registration and e2e probe written against a single scenario
+ * still finds exactly what it did.
+ */
+export const SECOND_SCENARIO_SUFFIX = "-2";
+
 /** The one pickable object the mark layers carry. */
 export interface DisruptionMarkDatum extends Record<string, unknown> {
   readonly lon: number;
@@ -182,7 +190,10 @@ export function disruptionMarkDatum(
 export function buildDisruptionLayers(
   def: ScenarioDef,
   options: DisruptionOptions,
+  /** `SECOND_SCENARIO_SUFFIX` for the second scenario of a combined run. */
+  idSuffix = "",
 ): Layer[] {
+  const id = (base: string) => `${base}${idSuffix}`;
   const active = isScenarioActive(def, options.year);
   const color = [...disruptionColor(active)] as [number, number, number, number];
   const layers: Layer[] = [];
@@ -193,14 +204,14 @@ export function buildDisruptionLayers(
     layers.push(
       new GeoJsonLayer<PipelineProps>({
         ...common,
-        id: DISRUPTION_CUT_CASING_LAYER_ID,
+        id: id(DISRUPTION_CUT_CASING_LAYER_ID),
         getLineColor: [...DISRUPTION_HALO_COLOR],
         lineWidthMinPixels: DISRUPTION_CUT_CASING_PX,
         lineWidthMaxPixels: DISRUPTION_CUT_CASING_PX,
       }),
       new GeoJsonLayer<PipelineProps>({
         ...common,
-        id: DISRUPTION_CUT_LAYER_ID,
+        id: id(DISRUPTION_CUT_LAYER_ID),
         getLineColor: color,
         lineWidthMinPixels: DISRUPTION_CUT_LINE_PX,
         lineWidthMaxPixels: DISRUPTION_CUT_LINE_PX,
@@ -219,7 +230,7 @@ export function buildDisruptionLayers(
     // White disc: the glyph must read over water and over a dark exposure fill.
     new ScatterplotLayer<DisruptionMarkDatum>({
       ...pixels,
-      id: DISRUPTION_MARK_HALO_LAYER_ID,
+      id: id(DISRUPTION_MARK_HALO_LAYER_ID),
       data,
       getPosition: position,
       getRadius: DISRUPTION_MARK.haloRadiusPx,
@@ -228,7 +239,7 @@ export function buildDisruptionLayers(
     }),
     new ScatterplotLayer<DisruptionMarkDatum>({
       ...pixels,
-      id: DISRUPTION_MARK_LAYER_ID,
+      id: id(DISRUPTION_MARK_LAYER_ID),
       data,
       getPosition: position,
       getRadius: DISRUPTION_MARK.ringRadiusPx,
@@ -242,7 +253,7 @@ export function buildDisruptionLayers(
     }),
     new ScatterplotLayer<DisruptionMarkDatum>({
       ...pixels,
-      id: DISRUPTION_MARK_DOT_LAYER_ID,
+      id: id(DISRUPTION_MARK_DOT_LAYER_ID),
       data,
       getPosition: position,
       getRadius: DISRUPTION_MARK.dotRadiusPx,

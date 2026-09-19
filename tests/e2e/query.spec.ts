@@ -125,6 +125,9 @@ test.describe("Query console", () => {
     page.context().on("request", (req) => {
       const url = new URL(req.url());
       if (url.protocol !== "http:" && url.protocol !== "https:") return;
+      // `next dev` loads Vercel Analytics' debug script from its CDN; a
+      // deployment serves it first-party, and CI runs the production build.
+      if (url.host === "va.vercel-scripts.com" && !process.env.CI) return;
       if (url.host !== own) foreign.push(`${url.host}${url.pathname}`);
       if (url.pathname.startsWith("/duckdb/")) duckdb.push(url.pathname);
     });

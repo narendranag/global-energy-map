@@ -224,7 +224,7 @@ function HomeInner() {
           state={layers}
           onChange={setLayers}
           scenarioNoun={scenarioId !== null ? importsNoun(commodity) : undefined}
-          defaultOpen={embed ? false : layersOpenByDefault(mode)}
+          defaultOpen={layersOpenByDefault(mode)}
           embedded={embed}
         />
         {showScenarioPanel && (

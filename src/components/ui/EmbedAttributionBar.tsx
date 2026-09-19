@@ -1,6 +1,26 @@
 "use client";
+import { useSyncExternalStore } from "react";
 import { useMapView } from "@/lib/state";
 import { encodeUrlState, type AppState } from "@/lib/url-state/encode";
+
+const noopSubscribe = () => () => undefined;
+
+/**
+ * False during SSR and the first client render (which must match the server
+ * to avoid a hydration mismatch), true from the next render on. A plain
+ * `typeof window !== "undefined"` check in the render body never gets a
+ * second look once that first client render commits — nothing re-renders
+ * this component afterwards — so a value gated on it alone would stay stuck
+ * at its SSR fallback forever. `useSyncExternalStore`'s client/server snapshot
+ * split forces the one extra render this needs, without `setState` in an effect.
+ */
+function useHydrated(): boolean {
+  return useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
+}
 
 /**
  * Replaces the header, intro card, phone banner and `MapFooter` in `?embed=1`
@@ -12,10 +32,10 @@ import { encodeUrlState, type AppState } from "@/lib/url-state/encode";
  */
 export function EmbedAttributionBar({ state }: { readonly state: AppState }) {
   const view = useMapView();
-  const fullMapUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}${window.location.pathname}?${encodeUrlState(state, view)}`
-      : "/";
+  const hydrated = useHydrated();
+  const fullMapUrl = hydrated
+    ? `${window.location.origin}${window.location.pathname}?${encodeUrlState(state, view)}`
+    : "/";
 
   return (
     <div

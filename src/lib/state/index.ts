@@ -1,4 +1,5 @@
 export { useMapView } from "./useMapView";
+export { useAppYear } from "./useAppYear";
 export { useCamera, type Camera } from "./useCamera";
 export {
   DEFAULT_CAMERA_PADDING,

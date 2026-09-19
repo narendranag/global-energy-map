@@ -1,15 +1,27 @@
 "use client";
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo, useState, type ReactNode } from "react";
 import type { Commodity, ScenarioId, ScenarioResult } from "@/lib/scenarios/types";
 import {
   SCENARIOS,
   howComputed,
+  isScenarioActive,
   scenarioDescription,
   sourceGapNote,
   type ScenarioDef,
 } from "@/lib/scenarios/registry";
+import { useAssets } from "@/lib/data/assets";
 import { useCountryNames } from "@/lib/geo/useCountryNames";
 import { EXPOSURE_LEGEND_STOPS, gradientCss } from "@/lib/symbology";
+import { scenarioCameraPadding } from "./fit";
+import {
+  clearScenarioHover,
+  hoveredAssetId,
+  hoveredIso3,
+  setScenarioHover,
+  useScenarioHover,
+  type ScenarioHover,
+} from "./hover";
+import { goToAsset, goToCountry } from "./row-actions";
 import { importsNoun, rankAssetsByCapacityAtRisk, rankImportersByShare } from "./overlay";
 import { useScenarioInputsFor } from "./useScenario";
 import { describeExposure, explainZeroExposure } from "./explain";
@@ -75,6 +87,48 @@ function ShowAllButton({
       className="mt-1 rounded text-[11px] font-medium text-sky-800 underline decoration-dotted underline-offset-2 hover:text-sky-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-700"
     >
       {expanded ? `Show top ${TOP_N.toString()} only` : `Show all ${total.toString()} ${noun}`}
+    </button>
+  );
+}
+
+/**
+ * A ranked row, as a real button (S1): pointing at it highlights the thing on
+ * the map, activating it takes the map there. Pointer and keyboard both
+ * highlight — `onFocus`/`onBlur` alongside the pointer handlers — so tabbing
+ * the list is as informative as hovering it, and the highlight is cleared
+ * only by whoever set it (`clearScenarioHover`), because the next row's enter
+ * can arrive before this row's leave.
+ */
+function RankedRow({
+  hover,
+  active,
+  onActivate,
+  title,
+  children,
+}: {
+  hover: ScenarioHover;
+  /** True while this row's subject is the highlighted one (from either end). */
+  active: boolean;
+  onActivate: () => void;
+  title: string;
+  children: ReactNode;
+}) {
+  const enter = () => { setScenarioHover(hover); };
+  const leave = () => { clearScenarioHover(hover); };
+  return (
+    <button
+      type="button"
+      title={title}
+      onClick={onActivate}
+      onPointerEnter={enter}
+      onPointerLeave={leave}
+      onFocus={enter}
+      onBlur={leave}
+      className={`block w-full rounded px-1 py-0.5 text-left text-xs hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-700 ${
+        active ? "bg-slate-200" : ""
+      }`}
+    >
+      {children}
     </button>
   );
 }
@@ -154,6 +208,22 @@ export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioP
       ? result
       : null;
   const inputs = useScenarioInputsFor(current);
+
+  // S1: the panel ↔ map link. `hover` is shared transient state, not app
+  // state; the coordinates come from the assets read the scenario already
+  // needed, so a ranked asset row can fly the map to the plant itself.
+  const hover = useScenarioHover();
+  const hoverIso3 = hoveredIso3(hover);
+  const hoverAssetId = hoveredAssetId(hover);
+  const assets = useAssets(active !== null);
+  const assetPosition = useMemo(() => {
+    if (assets === null) return null;
+    const m = new Map<string, { lon: number; lat: number }>();
+    for (const a of [...assets.refinery, ...assets.lngImport, ...assets.lngExport]) {
+      m.set(a.asset_id, { lon: a.lon, lat: a.lat });
+    }
+    return m;
+  }, [assets]);
 
   const [sortBy, setSortBy] = useState<ImporterSort>("volume");
   const [allImporters, setAllImporters] = useState(false);
@@ -269,6 +339,13 @@ export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioP
           {scenarioDescription(def, commodity)}
         </p>
       )}
+      {/* A year the scenario does not describe (`activeYears`): say so rather
+          than quote numbers for it. The map mutes the mark to match. */}
+      {def && current && !isScenarioActive(def, current.year) && def.inactiveNote !== undefined && (
+        <p className="mt-2 text-[11px] leading-snug text-amber-800" data-testid="scenario-inactive">
+          {def.inactiveNote}
+        </p>
+      )}
       {def && current && sourceGapNote(def, commodity, current.year) && (
         <p className="mt-2 text-[11px] leading-snug text-amber-800" data-testid="source-gap">
           {sourceGapNote(def, commodity, current.year)}
@@ -337,17 +414,28 @@ export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioP
               ) : (
                 <ol id={importersId} className="space-y-0.5" data-testid="ranked-importers">
                   {importerRows.map((r) => (
-                    <li key={r.iso3} className="flex justify-between gap-2 text-xs">
-                      <span className="min-w-0 truncate">
-                        {nameOf(r.iso3)}{" "}
-                        <span className="font-mono text-[11px] text-slate-600">{r.iso3}</span>
-                      </span>
-                      <span className="shrink-0 text-right">
-                        <span className="font-mono">{pct(r.shareAtRisk)}</span>{" "}
-                        <span className="ml-1.5 inline-block min-w-[4.5rem] font-mono text-[11px] text-slate-600">
-                          {volume(r.atRiskQty)}
+                    <li key={r.iso3}>
+                      <RankedRow
+                        hover={{ kind: "country", iso3: r.iso3 }}
+                        active={hoverIso3 === r.iso3}
+                        title={`Select ${nameOf(r.iso3)} and show it on the map`}
+                        // Activating the row also selects the country, which opens the
+                        // country panel beside this one — so the fit clears both.
+                        onActivate={() => { void goToCountry(r.iso3, scenarioCameraPadding(true)); }}
+                      >
+                        <span className="flex justify-between gap-2">
+                          <span className="min-w-0 truncate">
+                            {nameOf(r.iso3)}{" "}
+                            <span className="font-mono text-[11px] text-slate-600">{r.iso3}</span>
+                          </span>
+                          <span className="shrink-0 text-right">
+                            <span className="font-mono">{pct(r.shareAtRisk)}</span>{" "}
+                            <span className="ml-1.5 inline-block min-w-[4.5rem] font-mono text-[11px] text-slate-600">
+                              {volume(r.atRiskQty)}
+                            </span>
+                          </span>
                         </span>
-                      </span>
+                      </RankedRow>
                     </li>
                   ))}
                 </ol>
@@ -374,34 +462,46 @@ export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioP
                   <ol id={assetsId} className="space-y-0.5" data-testid="ranked-assets">
                     {assetRows.map((a) => {
                       const cov = showLng && a.coverage ? coverageLabel(a.coverage) : null;
+                      const at = assetPosition?.get(a.asset_id);
                       return (
-                        <li key={a.asset_id} className="text-xs">
-                          <div className="flex justify-between gap-2">
-                            <span className="min-w-0 truncate" title={a.name ?? a.asset_id}>
-                              {a.name ?? a.asset_id}{" "}
-                              <span className="font-mono text-[11px] text-slate-600">{a.iso3}</span>
+                        <li key={a.asset_id}>
+                          <RankedRow
+                            hover={{ kind: "asset", assetId: a.asset_id }}
+                            active={hoverAssetId === a.asset_id}
+                            title={
+                              at
+                                ? `Show ${a.name ?? a.asset_id} on the map`
+                                : "No coordinates for this asset"
+                            }
+                            onActivate={() => { if (at) goToAsset(at.lon, at.lat); }}
+                          >
+                            <span className="flex justify-between gap-2">
+                              <span className="min-w-0 truncate">
+                                {a.name ?? a.asset_id}{" "}
+                                <span className="font-mono text-[11px] text-slate-600">{a.iso3}</span>
+                              </span>
+                              <span className="shrink-0 font-mono">{pct(a.shareAtRisk)}</span>
                             </span>
-                            <span className="shrink-0 font-mono">{pct(a.shareAtRisk)}</span>
-                          </div>
-                          <div className="flex justify-between gap-2 text-[11px] text-slate-600">
-                            <span>
-                              {cov && (
-                                <span
-                                  title={cov.title}
-                                  className={`rounded px-1 ${
-                                    a.coverage === "measured"
-                                      ? "bg-sky-100 text-sky-900"
-                                      : "bg-slate-100 text-slate-700"
-                                  }`}
-                                >
-                                  {cov.text}
-                                </span>
-                              )}
+                            <span className="flex justify-between gap-2 text-[11px] text-slate-600">
+                              <span>
+                                {cov && (
+                                  <span
+                                    title={cov.title}
+                                    className={`rounded px-1 ${
+                                      a.coverage === "measured"
+                                        ? "bg-sky-100 text-sky-900"
+                                        : "bg-slate-100 text-slate-700"
+                                    }`}
+                                  >
+                                    {cov.text}
+                                  </span>
+                                )}
+                              </span>
+                              <span className="font-mono">
+                                {formatCapacity(capacityAtRisk(a))} of {formatCapacity(a.capacity)} {assetUnit}
+                              </span>
                             </span>
-                            <span className="font-mono">
-                              {formatCapacity(capacityAtRisk(a))} of {formatCapacity(a.capacity)} {assetUnit}
-                            </span>
-                          </div>
+                          </RankedRow>
                         </li>
                       );
                     })}

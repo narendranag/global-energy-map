@@ -190,10 +190,10 @@ export function CountryPanel({
   const canExport = plan !== null && plan.included.length > 0;
 
   const zoomTo = () => {
-    // Clear both right-hand panels, whichever are open (see camera.ts).
-    const rem = 16;
+    // Clear both right-hand panels, whichever are open (see camera.ts, which
+    // owns every panel width).
     void camera.fitCountry(iso3, {
-      padding: { ...panelPadding({ right: false }), right: (scenarioOpen ? 49 : 23) * rem },
+      padding: panelPadding({ right: scenarioOpen, country: true }),
     });
   };
 

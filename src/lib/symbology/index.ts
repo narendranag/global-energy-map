@@ -108,6 +108,16 @@ export const PALETTE = {
   exposureHigh: "#99000d",
   atRiskLow: "#a3141c",
   atRiskHigh: "#650810",
+  // The disruption mark (S1): where the scenario *happens* — a chokepoint
+  // closure or the cut stretch of a pipeline. A vivid red, one step brighter
+  // than the exposure ramp's dark end, so the cause reads apart from the
+  // consequence it paints on the importers. It is drawn over water as often
+  // as over land, hence its own contrast row in symbology-contrast.test.ts.
+  disruptionMark: "#d21024",
+  // Same mark in a year the scenario does not describe (`activeYears`): the
+  // route is still shown, the claim is not. Desaturated far enough to fall
+  // under the "red is scenario-only" chroma threshold.
+  disruptionMuted: "#9c7a7e",
 } as const;
 
 export type PaletteRole = keyof typeof PALETTE;
@@ -367,6 +377,54 @@ export const FOCUS_HALO_COLOR: Rgba = paletteRgba("focusHalo", 235);
 export const FOCUS_HALO_MIN_PX = 6;
 
 // ---------------------------------------------------------------------------
+// Transient hover highlight (S1: a ranked panel row ↔ the map)
+// ---------------------------------------------------------------------------
+
+/**
+ * Hovering a ranked importer row lights its country up. Deliberately *not* a
+ * second coloured outline: a white wash plus a thin dark edge reads as
+ * "pointing at this" where the focus outline's heavy cased line reads as
+ * "this is selected", and the two can be on screen at once without either
+ * being mistaken for the other. The wash carries most of the signal over the
+ * dark exposure fills (where a dark line would vanish); the edge carries it
+ * on the pale basemap.
+ */
+export const HOVER_FILL: Rgba = paletteRgba("focusHalo", 86);
+export const HOVER_OUTLINE_COLOR: Rgba = paletteRgba("focusOutline", 200);
+export const HOVER_OUTLINE_MIN_PX = 1.5;
+/** Ring drawn around a hovered refinery / LNG terminal row's asset. */
+export const HOVER_RING_RADIUS_PX = 11;
+export const HOVER_RING_WIDTH_PX = 2;
+
+// ---------------------------------------------------------------------------
+// Disruption mark + cut route (S1)
+// ---------------------------------------------------------------------------
+
+export const DISRUPTION_COLOR: Rgba = paletteRgba("disruptionMark", 255);
+export const DISRUPTION_MUTED_COLOR: Rgba = paletteRgba("disruptionMuted", 235);
+/** White casing under every part of the mark, so it reads over water too. */
+export const DISRUPTION_HALO_COLOR: Rgba = paletteRgba("focusHalo", 235);
+/** Translucent white inside the ring, so the ring is a ring and not a blob. */
+export const DISRUPTION_FILL_COLOR: Rgba = paletteRgba("focusHalo", 170);
+
+/** Closure glyph: halo disc, ring, centre dot — all in screen pixels. */
+export const DISRUPTION_MARK = {
+  haloRadiusPx: 14,
+  ringRadiusPx: 10.5,
+  ringWidthPx: 3.5,
+  dotRadiusPx: 3.5,
+} as const;
+
+/** The cut stretch of a pipeline: a heavy white casing under a vivid red line. */
+export const DISRUPTION_CUT_CASING_PX = 6;
+export const DISRUPTION_CUT_LINE_PX = 2.5;
+
+/** The mark's colour for a year the scenario describes (or does not). */
+export function disruptionColor(active: boolean): Rgba {
+  return active ? DISRUPTION_COLOR : DISRUPTION_MUTED_COLOR;
+}
+
+// ---------------------------------------------------------------------------
 // Search result highlight (S4)
 // ---------------------------------------------------------------------------
 
@@ -606,6 +664,13 @@ export interface LegendItem {
 
 export type LayerKey = keyof LayerState;
 
+/**
+ * Mirrors `ScenarioDef["kind"]`. Declared here rather than imported so the
+ * symbology module keeps no dependency on the scenario registry; the two are
+ * tied together by `tests/unit/symbology.test.ts`.
+ */
+export type ScenarioKind = "chokepoint" | "pipeline";
+
 const RESERVES_LEGEND_STOPS: readonly Rgba[] = [0, 0.25, 0.5, 0.75, 1].map((t) => reservesRampColor(t));
 const SHALE_OIL_LEGEND_STOPS: readonly Rgba[] = [0, 0.25, 0.5, 0.75, 1].map((t) => shaleRampColor(t, "oil"));
 const SHALE_GAS_LEGEND_STOPS: readonly Rgba[] = [0, 0.25, 0.5, 0.75, 1].map((t) => shaleRampColor(t, "gas"));
@@ -703,10 +768,34 @@ export const LEGEND_GROUPS: readonly { readonly title: string; readonly keys: re
  * Extra rows shown while a scenario is active. With `layers`, asset rows are
  * limited to layers that can show them (refineries / LNG terminals).
  */
-export function scenarioLegend(importsNoun: string, layers?: LayerState): readonly LegendItem[] {
+export function scenarioLegend(
+  importsNoun: string,
+  layers?: LayerState,
+  /** The active scenario's kind — adds the row for the mark the map draws (S1). */
+  kind?: ScenarioKind,
+): readonly LegendItem[] {
   const assets = layers === undefined || layers.refineries || layers.lng_terminals;
   const lng = layers === undefined || layers.lng_terminals;
   return [
+    ...(kind === undefined
+      ? []
+      : kind === "pipeline"
+        ? [
+            {
+              label: "Cut route (the pipeline this scenario closes)",
+              swatch: { kind: "line", color: DISRUPTION_COLOR, width: DISRUPTION_CUT_LINE_PX } as const,
+            },
+            {
+              label: "Closure point on the route",
+              swatch: { kind: "dot", color: DISRUPTION_COLOR, outline: DISRUPTION_HALO_COLOR, size: 10 } as const,
+            },
+          ]
+        : [
+            {
+              label: "Closed chokepoint",
+              swatch: { kind: "dot", color: DISRUPTION_COLOR, outline: DISRUPTION_HALO_COLOR, size: 10 } as const,
+            },
+          ]),
     {
       label: `Share of ${importsNoun} at risk (0 → 100 %)`,
       swatch: { kind: "gradient", stops: EXPOSURE_LEGEND_STOPS },
@@ -747,13 +836,14 @@ export function legendSections(
   layers: LayerState,
   scenarioNoun?: string,
   zoom?: number,
+  scenarioKind?: ScenarioKind,
 ): LegendSection[] {
   const sections: LegendSection[] = LEGEND_GROUPS.map((g) => ({
     title: g.title,
     items: g.keys.filter((k) => layers[k]).flatMap((k) => rowsFor(k, zoom)),
   })).filter((s) => s.items.length > 0);
   if (scenarioNoun !== undefined) {
-    sections.push({ title: "Scenario", items: scenarioLegend(scenarioNoun, layers) });
+    sections.push({ title: "Scenario", items: scenarioLegend(scenarioNoun, layers, scenarioKind) });
   }
   return sections;
 }

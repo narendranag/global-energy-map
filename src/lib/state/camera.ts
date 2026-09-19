@@ -50,8 +50,15 @@ export const FIT_MAX_ZOOM = 6;
 export const DEFAULT_CAMERA_PADDING: CameraPadding = { top: 32, right: 32, bottom: 32, left: 32 };
 
 /**
- * Panel-aware padding. The left layer panel is `w-72` (18rem) at `left-4`, the
- * scenario panel `min(26rem, 100%)` at `right-4`; the year slider and
+ * Panel-aware padding, and the **only** place a panel's width turns into a
+ * camera inset — three features now fit the map around these panels (S0's
+ * focus fit, S1's scenario fit and its ranked rows, S3's country panel), and
+ * a second copy of the arithmetic would go stale the first time a panel is
+ * resized.
+ *
+ * The left layer panel is `w-72` (18rem) at `left-4`; the scenario panel
+ * `min(26rem, 100%)` at `right-4`; the country panel 21rem, at `right-4`
+ * alone or at `right-[26rem]` beside the scenario panel; the year slider and
  * commodity toggle occupy the bottom ~9rem. Callers say which panels are on
  * screen and get a padding that keeps the target clear of them.
  */
@@ -59,11 +66,15 @@ export function panelPadding(open: {
   readonly left?: boolean;
   readonly right?: boolean;
   readonly bottom?: boolean;
+  /** The country panel (S3), which stacks to the left of the scenario panel. */
+  readonly country?: boolean;
 }): CameraPadding {
   const rem = 16;
+  const scenario = open.right === true;
+  const right = open.country === true ? (scenario ? 49 : 23) : scenario ? 27 : 2;
   return {
     top: 2 * rem,
-    right: open.right === true ? 27 * rem : 2 * rem,
+    right: right * rem,
     bottom: open.bottom === false ? 2 * rem : 9 * rem,
     left: open.left === false ? 2 * rem : 19 * rem,
   };

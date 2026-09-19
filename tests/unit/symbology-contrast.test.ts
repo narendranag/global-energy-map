@@ -12,8 +12,12 @@ import {
   BASIN_LINE,
   COUNTRY_OUTLINE_COLOR,
   COUNTRY_OUTLINE_MIN_PX,
+  DISRUPTION_COLOR,
+  DISRUPTION_HALO_COLOR,
+  DISRUPTION_MUTED_COLOR,
   EXTRACTION_FILL,
   EXTRACTION_LINE,
+  HOVER_OUTLINE_COLOR,
   FOCUS_HALO_COLOR,
   FOCUS_HALO_MIN_PX,
   FOCUS_OUTLINE_COLOR,
@@ -195,6 +199,52 @@ describe("the focus outline reads on every ground it can be drawn over", () => {
   });
 });
 
+describe("the disruption mark and cut route (S1)", () => {
+  // The mark sits on a chokepoint — i.e. over water at least as often as over
+  // land — and on the cut pipeline it is drawn over whatever the route
+  // crosses. Its ring is its edge, so it is held to WCAG 1.4.11's 3:1, on a
+  // white casing that carries it over the dark exposure fills.
+  const mark = over(DISRUPTION_COLOR, LAND);
+  const markOnWater = over(DISRUPTION_COLOR, WATER);
+  const halo = over(DISRUPTION_HALO_COLOR, LAND);
+  const muted = over(DISRUPTION_MUTED_COLOR, LAND);
+
+  it("clears 3:1 on basemap land and on water", () => {
+    note({ pair: "disruption mark / land", contrast: r2(contrast(mark, LAND)), water: r2(contrast(markOnWater, WATER)) });
+    expect(contrast(mark, LAND)).toBeGreaterThanOrEqual(3);
+    expect(contrast(markOnWater, WATER)).toBeGreaterThanOrEqual(3);
+  });
+
+  it("reads against its own white casing", () => {
+    expect(contrast(mark, halo)).toBeGreaterThanOrEqual(3);
+  });
+
+  it("stands apart from the exposure fills it explains", () => {
+    // Cause vs consequence: the mark must not be mistaken for a dark
+    // importer fill under it.
+    const exposureTop = over(exposureColor(1) ?? [0, 0, 0, 0], LAND);
+    note({ pair: "disruption mark / exposure top", dE: r1(deltaE(mark, exposureTop)) });
+    expect(deltaE(mark, exposureTop)).toBeGreaterThanOrEqual(10);
+  });
+
+  it("the muted (inactive-year) mark still reads, and reads as quieter", () => {
+    expect(contrast(muted, LAND)).toBeGreaterThanOrEqual(2);
+    expect(oklch(DISRUPTION_MUTED_COLOR.slice(0, 3) as unknown as Rgb)[1]).toBeLessThan(
+      oklch(DISRUPTION_COLOR.slice(0, 3) as unknown as Rgb)[1],
+    );
+  });
+});
+
+describe("the hover highlight (S1) is distinct from the focus outline", () => {
+  it("its edge reads on the pale basemap", () => {
+    expect(contrast(over(HOVER_OUTLINE_COLOR, LAND), LAND)).toBeGreaterThanOrEqual(3);
+  });
+
+  it("is lighter than the selection it can share the screen with", () => {
+    expect(HOVER_OUTLINE_COLOR[3]).toBeLessThan(FOCUS_OUTLINE_COLOR[3]);
+  });
+});
+
 describe("recent imports (Comtrade) as ground", () => {
   it("pipelines keep contrast on the darkest import fills", () => {
     const oilTop = over(recentImportsRampColor(1, "oil"), LAND);
@@ -271,7 +321,14 @@ describe("hue families", () => {
   });
 
   it("red (hue < 40°, chroma > 0.1) is used only by scenario colours", () => {
-    const scenario = new Set(["exposureLow", "exposureHigh", "atRiskLow", "atRiskHigh"]);
+    const scenario = new Set([
+      "exposureLow",
+      "exposureHigh",
+      "atRiskLow",
+      "atRiskHigh",
+      // S1: the mark that says *where* the scenario happens is scenario red too.
+      "disruptionMark",
+    ]);
     for (const [role, hex] of Object.entries(PALETTE)) {
       const [, c, h] = oklch(hexToRgb(hex));
       const red = c > 0.1 && (h < 40 || h > 350);

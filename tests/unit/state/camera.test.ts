@@ -31,6 +31,16 @@ describe("panelPadding", () => {
     expect(panelPadding({}).bottom).toBeGreaterThan(100);
     expect(panelPadding({ bottom: false }).bottom).toBeLessThan(100);
   });
+
+  it("clears the country panel, and both right-hand panels when they stack", () => {
+    // The country panel docks at right-4 alone and beside the scenario panel
+    // when both are open, so "both" is wider than either.
+    const country = panelPadding({ country: true }).right;
+    const scenario = panelPadding({ right: true }).right;
+    const both = panelPadding({ right: true, country: true }).right;
+    expect(country).toBeGreaterThan(panelPadding({}).right);
+    expect(both).toBeGreaterThan(Math.max(country, scenario));
+  });
 });
 
 describe("prefersReducedMotion", () => {

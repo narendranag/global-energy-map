@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useRef, useState, Suspense } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import type { PickingInfo } from "@deck.gl/core";
 import { MapShell } from "@/components/map/MapShell";
@@ -19,6 +19,10 @@ import { YearSlider } from "@/components/time-slider/YearSlider";
 import { ScenarioPanel } from "@/components/scenarios/ScenarioPanel";
 import { useScenario } from "@/components/scenarios/useScenario";
 import { importsNoun } from "@/components/scenarios/overlay";
+import { useScenarioMapLayers } from "@/components/scenarios/useScenarioMapLayers";
+import { useScenarioCamera } from "@/components/scenarios/useScenarioCamera";
+import { scenarioCameraPadding } from "@/components/scenarios/fit";
+import { setMapHoverCountry } from "@/components/scenarios/hover";
 import { ShareMenu } from "@/components/share/ShareMenu";
 import { EmbedAttributionBar } from "@/components/ui/EmbedAttributionBar";
 import { useAssets } from "@/lib/data/assets";
@@ -143,6 +147,11 @@ function HomeInner() {
   // One assets.parquet read shared by every point layer and the scenario.
   const assets = useAssets(needsAssets(layers, scenarioId !== null));
   const scenario = useScenario(scenarioId, year, commodity, assets);
+  // S1: the disruption mark / cut route and the panel-hover highlight. Not
+  // layer-toggle layers, so they are built beside `useMapLayers` and appended
+  // on top of its stack.
+  const scenarioDef = scenarioId === null ? null : getScenario(scenarioId);
+  const scenarioMap = useScenarioMapLayers({ def: scenarioDef, year, commodity, assets });
   const { deckLayers, pending: layersPending, tooltipContext } = useMapLayers({
     layers,
     year,
@@ -159,7 +168,11 @@ function HomeInner() {
     (scenario?.scenarioId !== scenarioId ||
       scenario.year !== year ||
       scenario.commodity !== commodity);
-  const pending = layersPending + (scenarioPending ? 1 : 0);
+  const pending = layersPending + scenarioMap.pending + (scenarioPending ? 1 : 0);
+  const mapLayers = useMemo(
+    () => [...deckLayers, ...scenarioMap.layers],
+    [deckLayers, scenarioMap.layers],
+  );
 
   const reservesNote =
     layers.reserves && year > RESERVES_LATEST_YEAR
@@ -190,8 +203,26 @@ function HomeInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // S1: picking a scenario frames the disruption and the importers that lose
+  // most, clear of the panels (including S3's country panel when one is
+  // selected). Never on load — the link's view wins.
+  const scenarioPadding = useMemo(() => scenarioCameraPadding(focus !== null), [focus]);
+  useScenarioCamera({
+    scenarioId,
+    mark: scenarioMap.mark,
+    markPending: scenarioMap.pending > 0,
+    result: scenario,
+    padding: scenarioPadding,
+  });
+
   const getTooltip = useCallback(
-    (info: PickingInfo) => formatTooltip(info.layer?.id, info.object, tooltipContext),
+    (info: PickingInfo) => {
+      // The other half of the panel ↔ map link (S1): hovering an exposed
+      // country lights up its row. The hover store compares before it
+      // notifies, so this costs nothing until the country changes.
+      setMapHoverCountry(countryFromPick(info));
+      return formatTooltip(info.layer?.id, info.object, tooltipContext);
+    },
     [tooltipContext],
   );
 
@@ -247,6 +278,7 @@ function HomeInner() {
           state={layers}
           onChange={setLayers}
           scenarioNoun={scenarioId !== null ? importsNoun(commodity) : undefined}
+          scenarioKind={scenarioDef?.kind}
           defaultOpen={layersOpenByDefault(mode)}
           embedded={embed}
         />
@@ -375,7 +407,7 @@ function HomeInner() {
         )}
         {embed ? <EmbedAttributionBar state={state} /> : <MapFooter />}
         <div className="absolute inset-0 z-0">
-          <MapShell layers={deckLayers} getTooltip={getTooltip} onPick={onPick} />
+          <MapShell layers={mapLayers} getTooltip={getTooltip} onPick={onPick} />
         </div>
       </div>
     </main>

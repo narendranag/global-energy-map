@@ -65,6 +65,35 @@ EIA_CASPIAN = (
     "https://www.eia.gov/international/content/analysis/regions_of_interest/caspian_sea/",
     2025,
 )
+EIA_MALACCA = (
+    "EIA, World Oil Transit Chokepoints: Strait of Malacca",
+    "https://www.eia.gov/todayinenergy/detail.php?id=32452",
+    2017,
+)
+BERNAMA_MALACCA = (
+    "Bernama, Strait of Malacca Keeps Top Spot as World's Largest Oil Transit Chokepoint "
+    "(EIA data)",
+    "https://garasi.bernama.com/quick-reads/"
+    "strait-of-malacca-keeps-top-spot-as-worlds-largest-oil-transit-chokepoint",
+    2026,
+)
+EIA_SUEZ_SUMED = (
+    "EIA, The Suez Canal and SUMED Pipeline are critical chokepoints for oil and natural gas trade",
+    "https://www.eia.gov/todayinenergy/detail.php?id=40152",
+    2019,
+)
+CER_PIPELINE_SYSTEM = (
+    "Canada Energy Regulator, Canada's Pipeline System 2021 "
+    "(Crude Oil Pipeline Transportation System)",
+    "https://www.cer-rec.gc.ca/en/data-analysis/facilities-we-regulate/"
+    "canadas-pipeline-system/2021/crude-oil-pipeline-transportation-system.html",
+    2021,
+)
+DOWNS_USCC_2019 = (
+    "Erica Downs, testimony to the U.S.-China Economic and Security Review Commission",
+    "https://www.uscc.gov/sites/default/files/Downs_Testimony...pdf",
+    2019,
+)
 
 
 def _row(
@@ -358,8 +387,350 @@ def _intra_gulf(disruption_id: str, exporters: list[dict]) -> list[dict]:
 INTRA_GULF = _intra_gulf("hormuz", HORMUZ) + _intra_gulf("hormuz_lng", HORMUZ_LNG)
 
 
+# ── R1: chokepoint region definitions (ISO3), verified 2026-09-19 ──────────
+# Codes checked against scripts.common.iso3's source-name dicts (EI/GEM/NETL/
+# LNG-T3), which between them cover every code used below.
+#
+# Direction is the whole model for these chokepoints (unlike Hormuz, where
+# nearly every Gulf cargo must cross the strait regardless of destination):
+# a share only applies to the (exporter, importer-region) pairs whose cargo
+# actually needs this route. Missing pairs default to 0 in the engine, so
+# only "= 1.00" and explicit "= 0.00" carve-outs need a row.
+EUROPE_MED = (
+    "NLD",
+    "GBR",
+    "FRA",
+    "ESP",
+    "ITA",
+    "GRC",
+    "BEL",
+    "DEU",
+    "POL",
+    "LTU",
+    "DNK",
+    "SWE",
+    "IRL",
+    "PRT",
+    "TUR",
+    "BGR",
+    "HRV",
+    "ROU",
+    "FIN",
+    "EST",
+    "LVA",
+    "CYP",
+    "MLT",
+)
+EAST_ASIA = ("CHN", "JPN", "KOR", "TWN", "HKG", "SGP", "MYS", "IDN", "THA", "PHL", "VNM")
+# Malacca-specific: Java-bound cargo (Cilacap/Balongan) reaches Indonesia via
+# the Sunda/Lombok straits, not Malacca (verifier RV, chokepoints.md §4.4).
+EAST_ASIA_MINUS_IDN = tuple(c for c in EAST_ASIA if c != "IDN")
+SOUTH_ASIA = ("IND", "PAK", "BGD", "LKA")
+
+
+def _region_rows(
+    disruption_id: str,
+    exporters: tuple[str, ...],
+    region: tuple[str, ...],
+    share: float,
+    source: str,
+    citation: tuple[str, str, int] | None,
+    note: str,
+) -> list[dict]:
+    """One chokepoint row per (exporter, importer) pair in the region."""
+    return [
+        _row(disruption_id, "chokepoint", exp, imp, share, source, citation, note)
+        for exp in exporters
+        for imp in region
+    ]
+
+
+# ── Strait of Malacca ────────────────────────────────────────────────────────
+_MALACCA_GULF = ("SAU", "ARE", "KWT", "IRQ", "QAT", "BHR", "OMN")
+
+MALACCA = (
+    _region_rows(
+        "malacca",
+        _MALACCA_GULF,
+        EAST_ASIA_MINUS_IDN,
+        1.00,
+        SRC_EIA,
+        EIA_MALACCA,
+        "Structural: the shortest sea route between Persian Gulf suppliers and East Asia, "
+        "with no alternative once past Hormuz (EIA id=32452). Bernama/EIA (1H2025): Saudi "
+        "Arabia, the UAE, Kuwait and Iraq alone were 'nearly 60 percent' of Malacca crude. "
+        "IDN excluded: Cilacap/Balongan-bound cargo reaches Indonesia via the Sunda/Lombok "
+        "straits, not Malacca.",
+    )
+    + _region_rows(
+        "malacca",
+        _MALACCA_GULF,
+        SOUTH_ASIA,
+        0.00,
+        SRC_EIA,
+        EIA_MALACCA,
+        "Structural: Gulf crude to South Asia crosses the Arabian Sea directly and never "
+        "reaches the strait; India is absent from EIA/Bernama's Malacca destination "
+        "breakdown (China 7.9 mb/d, Korea 2.4, Japan 2.1 in 1H2025).",
+    )
+    + _region_rows(
+        "malacca",
+        ("USA",),
+        EAST_ASIA_MINUS_IDN,
+        0.60,
+        SRC_EIA,
+        BERNAMA_MALACCA,
+        "Bernama/EIA (1H2025): 'the United States also sent 0.8 million barrels per day of "
+        "crude oil and condensates from its Atlantic coast through the Strait of Malacca to "
+        "East Asia.' BACI USA->East Asia crude (2024): 67.5 Mt/yr = 1.35 mb/d; "
+        "0.8 / 1.35 = 0.59, rounded to 0.60. Was proposed at 1.00 by the first-pass research "
+        "note; the verifier corrected it against the BACI denominator.",
+    )
+)
+
+MALACCA_LNG = _region_rows(
+    "malacca_lng",
+    ("QAT",),
+    EAST_ASIA_MINUS_IDN,
+    1.00,
+    SRC_EIA,
+    EIA_MALACCA,
+    "EIA id=32452: Malacca 'is also an important transit route for [LNG] from Persian Gulf "
+    "and African suppliers, particularly Qatar, to East Asian countries...The biggest "
+    "importers...are Japan and South Korea.' No Australia row: the verifier found roughly a "
+    "third of Australian LNG loads on the east coast (Gladstone/Curtis Island) and sails the "
+    "Coral/Philippine Sea, never approaching Malacca; the remainder (NW Shelf) routes via "
+    "Lombok/Makassar/Ombai-Wetar, not this strait.",
+)
+
+# ── Suez Canal + SUMED pipeline ──────────────────────────────────────────────
+_SUEZ_GULF = ("SAU", "ARE", "KWT", "QAT", "IRQ", "BHR")
+_SUEZ_IMPORTERS = EUROPE_MED + ("USA",)
+
+SUEZ = _region_rows(
+    "suez",
+    _SUEZ_GULF,
+    _SUEZ_IMPORTERS,
+    1.00,
+    SRC_EIA,
+    EIA_SUEZ_SUMED,
+    "Structural, not the EIA '85% of northbound traffic' composition figure (that describes "
+    "the chokepoint's own traffic mix, crude+products, 2018 — not the fraction of Gulf->"
+    "Europe crude that uses Suez, and the verifier flagged the 0.85 reading as misapplied). "
+    "Per this file's own bypass rule: the Cape of Good Hope is a disruption consequence, not "
+    "a pre-existing bypass, and SUMED is inside this chokepoint's definition, not outside it "
+    "- so the structural share is 1.00. No Iran row: BACI shows ~0 Iranian crude to Europe "
+    "after 2018 sanctions.",
+)
+
+SUEZ_LNG = _region_rows(
+    "suez_lng",
+    ("QAT",),
+    EUROPE_MED,
+    1.00,
+    SRC_EIA,
+    EIA_SUEZ_SUMED,
+    "EIA id=40152: 'Nearly all (98%) of the northbound LNG transit is from Qatar and mainly "
+    "destined for European markets.' This LNG transits both Bab el-Mandeb and Suez on the "
+    "same voyage.",
+)
+
+# ── Bab el-Mandeb Strait ─────────────────────────────────────────────────────
+_BAB_GULF = ("ARE", "KWT", "QAT", "IRQ", "BHR")
+
+BAB_EL_MANDEB = _region_rows(
+    "bab_el_mandeb",
+    _BAB_GULF,
+    EUROPE_MED,
+    1.00,
+    SRC_EIA,
+    EIA_SUEZ_SUMED,
+    "EIA id=40152: 'Petroleum exports from Persian Gulf countries...accounted for 85% of "
+    "Suez Canal northbound traffic' (the same corridor Bab el-Mandeb feeds); the Cape of "
+    "Good Hope is a consequence of disruption, not a pre-existing bypass (see this "
+    "file's Hormuz notes for the same rule).",
+) + _region_rows(
+    "bab_el_mandeb",
+    ("SAU",),
+    EUROPE_MED,
+    0.00,
+    SRC_EIA,
+    ARGUS_YANBU,
+    "Structural: Saudi crude to Europe loads at Yanbu on the Red Sea (reached via the "
+    "East-West/Petroline pipeline), north of Bab el-Mandeb - it never crosses this "
+    "strait, though it still crosses Suez/SUMED (see the 'suez' scenario). Kpler 2025 "
+    "(same figure already used for the Hormuz SAU row): ~0.76 mb/d of Saudi crude moves "
+    "via the Red Sea, i.e. essentially all of Saudi Arabia's Europe-bound crude.",
+)
+
+BAB_EL_MANDEB_LNG = _region_rows(
+    "bab_el_mandeb_lng",
+    ("QAT",),
+    EUROPE_MED,
+    1.00,
+    SRC_EIA,
+    EIA_SUEZ_SUMED,
+    "EIA id=40152: 'Nearly all (98%) of the northbound LNG transit is from Qatar and mainly "
+    "destined for European markets.' This LNG transits both Bab el-Mandeb and Suez on the "
+    "same voyage.",
+)
+
+# ── Turkish Straits (Bosporus + Dardanelles) ─────────────────────────────────
+# Kazakhstan's CPC-blend crude is loaded onto tankers at Novorossiysk alongside
+# Russian Black Sea crude, so it shares the same single sea exit. This is a
+# different question from the existing `cpc` row (KAZ 0.80 of Kazakh
+# *exports*, i.e. how much moves by the CPC pipeline at all): this row asks
+# what fraction of Kazakh crude, once it reaches a tanker, must cross the
+# Turkish Straits to leave the Black Sea - the same 0.80, since essentially
+# all Kazakh crude that reaches Novorossiysk sails through the Straits. No
+# Russia wildcard: BACI has no port-of-loading field, so a RUS-wide share
+# cannot distinguish Black Sea cargo (which transits) from Baltic cargo
+# (Danish Straits) or Pacific/ESPO cargo out of Kozmino (neither) - and the
+# port mix is itself moving month to month in 2026 (Ukrainian strikes on
+# Primorsk/Ust-Luga and the Novorossiysk/CPC terminal cluster).
+TURKISH_STRAITS = [
+    _row(
+        "turkish_straits",
+        "chokepoint",
+        "KAZ",
+        None,
+        0.80,
+        SRC_IEA_PIPELINE,
+        EIA_CASPIAN,
+        "EIA: 'The CPC carries about 80% of Kazakhstan's crude oil export' (the same figure "
+        "and citation as the shipped `cpc` row); essentially all of that Novorossiysk-loaded "
+        "crude then transits the Turkish Straits, since the Black Sea has no other sea exit. "
+        "Turkey's Izmit (Marmara) refinery transits only the Bosporus, while EIA's own series "
+        "is labelled 'Turkish Straits (Dardanelles)' - a nuance this share does not attempt "
+        "to resolve.",
+    ),
+    _row(
+        "turkish_straits",
+        "chokepoint",
+        "KAZ",
+        "BGR",
+        0.00,
+        SRC_IEA_PIPELINE,
+        EIA_CASPIAN,
+        "Structural: Bulgaria (Burgas/Lukoil Neftochim) is a Black Sea importer and never "
+        "sees the Turkish Straits.",
+    ),
+    _row(
+        "turkish_straits",
+        "chokepoint",
+        "KAZ",
+        "ROU",
+        0.00,
+        SRC_IEA_PIPELINE,
+        EIA_CASPIAN,
+        "Structural: Romania (Constanta) is a Black Sea importer and never sees the Turkish "
+        "Straits.",
+    ),
+    _row(
+        "turkish_straits",
+        "chokepoint",
+        "KAZ",
+        "CHN",
+        0.00,
+        SRC_IEA_PIPELINE,
+        EIA_CASPIAN,
+        "Structural: Kazakh crude to China moves by the Kazakhstan-China pipeline "
+        "(Atasu-Alashankou), not by sea, so it never reaches Novorossiysk or the Straits.",
+    ),
+]
+
+# ── Keystone (Canada -> USA) ──────────────────────────────────────────────────
+KEYSTONE = [
+    _row(
+        "keystone",
+        "pipeline",
+        "CAN",
+        "USA",
+        0.14,
+        SRC_IEA_PIPELINE,
+        CER_PIPELINE_SYSTEM,
+        "CER: 'The Keystone Pipeline...transports about 14% of western Canadian crude oil "
+        "exports.' Corroborated: CAPP ('Canadian Oil and Gas Export Infrastructure', Feb "
+        "2026) gives South Bow Keystone US exports at 579 kb/d (2025 Jan-Sep average) against "
+        "BACI CAN->USA 2024 = 4,124 kb/d -> 579 / 4,124 = 0.14.",
+    ),
+]
+
+# ── Enbridge Mainline (Canada -> USA) ────────────────────────────────────────
+ENBRIDGE_MAINLINE = [
+    _row(
+        "enbridge_mainline",
+        "pipeline",
+        "CAN",
+        "USA",
+        0.60,
+        SRC_IEA_PIPELINE,
+        CER_PIPELINE_SYSTEM,
+        "CER: 'The Enbridge Canadian Mainline...transports about 58% of all Canadian crude "
+        "oil exports' (i.e. of all Canadian crude exports, not just to the US). Converted to "
+        "a CAN->USA basis using the CER's own 2020 vintage: BACI CAN total 2020 = 181.71 Mt "
+        "vs CAN->USA 2020 = 175.03 Mt, so 0.58 x (181.71 / 175.03) = 0.602, rounded to 0.60. "
+        "CAPP's 3,062 kb/d 'U.S. Exports, Eastern Canada' figure is not usable as a numerator "
+        "here: it is crude+NGL ex-Gretna including deliveries that stay in Eastern Canada, "
+        "and CAPP's own table total (4,745 kb/d) exceeds all Canadian crude exports in BACI.",
+    ),
+]
+
+# ── ESPO Skovorodino-Mohe spur (Russia -> China, direct pipeline only) ───────
+# The Kozmino seaborne leg is deliberately excluded: ESPO Blend loaded there
+# is sold FOB to Asian buyers generally (Argus: China lifts 65-80% of monthly
+# Kozmino volumes) and cannot be separated in BACI from Urals/other Russian
+# crude reaching China by long-haul tanker since 2022. See the sourceGap on
+# this scenario in registry.ts for the same caveat.
+ESPO_SPUR = [
+    _row(
+        "espo_spur",
+        "pipeline",
+        "RUS",
+        "CHN",
+        0.28,
+        SRC_IEA_PIPELINE,
+        DOWNS_USCC_2019,
+        "Downs (USCC, 2019): the ESPO trunk has 'a capacity of 1.2 million barrels per day of "
+        "which around 630,000 bpd go to Kozmino', leaving ~570 kb/d for the Skovorodino-Mohe "
+        "spur to Daqing; GEM P5174 gives the spur 602 kb/d. 602 / 2,180 kb/d (BACI RUS->CHN "
+        "2024) = 0.28. Design capacity, not metered flow. Kozmino seaborne ESPO Blend is "
+        "deliberately excluded: it is sold FOB to Asian buyers generally and cannot be "
+        "separated in BACI from Urals crude reaching China by long-haul tanker.",
+    ),
+]
+
+
 def all_rows() -> list[dict]:
-    return HORMUZ + HORMUZ_LNG + INTRA_GULF + DRUZHBA + BTC + CPC
+    rows = (
+        HORMUZ
+        + HORMUZ_LNG
+        + INTRA_GULF
+        + DRUZHBA
+        + BTC
+        + CPC
+        + MALACCA
+        + MALACCA_LNG
+        + SUEZ
+        + SUEZ_LNG
+        + BAB_EL_MANDEB
+        + BAB_EL_MANDEB_LNG
+        + TURKISH_STRAITS
+        + KEYSTONE
+        + ENBRIDGE_MAINLINE
+        + ESPO_SPUR
+    )
+    # Blocking fix (verifier RV): the region-expansion loops above must never
+    # emit two rows for the same (disruption_id, exporter, importer) key - the
+    # M1/M2 collision the chokepoints verification caught, where a Map-based
+    # engine lookup would silently let the last-written row win.
+    seen: set[tuple[str, str, str | None]] = set()
+    for r in rows:
+        key = (r["disruption_id"], r["exporter_iso3"], r["importer_iso3"])
+        if key in seen:
+            raise ValueError(f"duplicate disruption_route key: {key}")
+        seen.add(key)
+    return rows
 
 
 def main() -> None:

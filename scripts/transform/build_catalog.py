@@ -83,7 +83,9 @@ NETL_SNAPSHOT = pins.NETL.as_of
 LNG_T3_URL = pins.LNG_T3.landing_url
 LNG_T3_SOURCE = pins.LNG_T3.name
 EIA_LICENSE = "US Government work, public domain (17 USC §105)"
-EIA_ATTRIBUTION = "Data: US Energy Information Administration (STEO); county shapes: US Census Bureau"
+EIA_ATTRIBUTION = (
+    "Data: US Energy Information Administration (STEO); county shapes: US Census Bureau"
+)
 LICENSE_DATA_URL = "https://github.com/narendranag/global-energy-map/blob/main/LICENSE-DATA.md"
 
 # Files that are view-only as-is but have a downloadable open subset
@@ -404,6 +406,16 @@ REGISTRY: list[dict[str, Any]] = [
             "scenario:druzhba",
             "scenario:btc",
             "scenario:cpc",
+            "scenario:malacca",
+            "scenario:malacca-lng",
+            "scenario:suez",
+            "scenario:suez-lng",
+            "scenario:bab_el_mandeb",
+            "scenario:bab_el_mandeb-lng",
+            "scenario:turkish_straits",
+            "scenario:keystone",
+            "scenario:enbridge_mainline",
+            "scenario:espo_spur",
         ],
         # Etalab Open Licence 2.0 permits redistribution with attribution;
         # made downloadable 2026-09-10 (user decision, Phase 10).
@@ -420,13 +432,23 @@ REGISTRY: list[dict[str, Any]] = [
         "source_name": "EIA / IEA / Argus Media (Kpler) / GEM — see source_* columns",
         "source_url": "https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz",
         "license": "Hand-set shares derived from public reports; per-row citations",
-        "as_of": "2026-09-11",
+        "as_of": "2026-09-19",
         "layers": [
             "scenario:hormuz",
             "scenario:hormuz-lng",
             "scenario:druzhba",
             "scenario:btc",
             "scenario:cpc",
+            "scenario:malacca",
+            "scenario:malacca-lng",
+            "scenario:suez",
+            "scenario:suez-lng",
+            "scenario:bab_el_mandeb",
+            "scenario:bab_el_mandeb-lng",
+            "scenario:turkish_straits",
+            "scenario:keystone",
+            "scenario:enbridge_mainline",
+            "scenario:espo_spur",
         ],
         "redistributable": True,
     },

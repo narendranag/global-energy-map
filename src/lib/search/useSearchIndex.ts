@@ -68,8 +68,3 @@ export function useSearchIndex(enabled: boolean): SearchIndexState {
 
   return { items, loading: enabled && items === null };
 }
-
-/** Test hook: forget the module-level cache between specs. */
-export function resetSearchIndexForTests(): void {
-  cached = null;
-}

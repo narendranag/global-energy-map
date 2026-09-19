@@ -64,7 +64,8 @@ test.describe("Scenario context", () => {
     // ScenarioPanel (and its Context child) is mounted regardless of the
     // phone/embed chip's own CSS collapse, so this proves the block itself
     // never enters the DOM under embed rather than merely being hidden by
-    // an ancestor.
+    // an ancestor. `.first()` because T1 added a second (scenario2) select
+    // alongside the primary one, both inside the same slot.
     await expect(page.locator("[data-testid='scenario-slot'] select").first()).toBeAttached();
     await expect(page.getByTestId("scenario-context")).toHaveCount(0);
   });

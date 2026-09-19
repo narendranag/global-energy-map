@@ -59,7 +59,9 @@ for _imp in EAST_ASIA_MINUS_IDN:
 
 _SUEZ_GULF = ("SAU", "ARE", "KWT", "QAT", "IRQ", "BHR")
 for _exp in _SUEZ_GULF:
-    for _imp in (*EUROPE_MED, "USA"):
+    # No USA row (final review #6): a hole beats a contested number, see the
+    # header comment on _SUEZ_IMPORTERS in build_disruption_routing.py.
+    for _imp in EUROPE_MED:
         EXPECTED_SHARES[("suez", _exp, _imp)] = 1.00
 for _imp in EUROPE_MED:
     EXPECTED_SHARES[("suez_lng", "QAT", _imp)] = 1.00
@@ -76,6 +78,11 @@ EXPECTED_SHARES[("turkish_straits", "KAZ", None)] = 0.80
 EXPECTED_SHARES[("turkish_straits", "KAZ", "BGR")] = 0.00
 EXPECTED_SHARES[("turkish_straits", "KAZ", "ROU")] = 0.00
 EXPECTED_SHARES[("turkish_straits", "KAZ", "CHN")] = 0.00
+# Final review #7: landlocked/overland buyers of Kazakh crude that
+# demonstrably avoid the Straits.
+EXPECTED_SHARES[("turkish_straits", "KAZ", "DEU")] = 0.00
+EXPECTED_SHARES[("turkish_straits", "KAZ", "UZB")] = 0.00
+EXPECTED_SHARES[("turkish_straits", "KAZ", "KGZ")] = 0.00
 
 EXPECTED_SHARES[("keystone", "CAN", "USA")] = 0.14
 EXPECTED_SHARES[("enbridge_mainline", "CAN", "USA")] = 0.60

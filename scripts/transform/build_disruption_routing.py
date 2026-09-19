@@ -65,6 +65,11 @@ EIA_CASPIAN = (
     "https://www.eia.gov/international/content/analysis/regions_of_interest/caspian_sea/",
     2025,
 )
+KAZ_DEU_DRUZHBA = (
+    "Reuters, 'Russia to halt Kazakhstan's oil flows to Germany via Druzhba, sources say'",
+    "https://www.reuters.com/business/energy/russia-halt-kazakhstans-oil-flows-germany-via-druzhba-sources-say-2026-04-21",
+    2026,
+)
 EIA_MALACCA = (
     "EIA, World Oil Transit Chokepoints: Strait of Malacca",
     "https://www.eia.gov/todayinenergy/detail.php?id=32452",
@@ -505,7 +510,17 @@ MALACCA_LNG = _region_rows(
 
 # ── Suez Canal + SUMED pipeline ──────────────────────────────────────────────
 _SUEZ_GULF = ("SAU", "ARE", "KWT", "QAT", "IRQ", "BHR")
-_SUEZ_IMPORTERS = EUROPE_MED + ("USA",)
+# No USA row (orchestrator decision, final review #6, 2026-09-19): the
+# previous exporter-wide wildcard implied Gulf->USA Gulf Coast VLCCs sail via
+# Suez/SUMED, ranking USA as the top Suez-exposed importer (30.3 Mt, ~9% of
+# US crude imports) on no cited share. Gulf->US Gulf Coast crude routinely
+# sails around the Cape of Good Hope (the longer all-water route avoids the
+# canal's size limits and SUMED's own capacity constraints for VLCCs), and no
+# EIA/IEA document was found splitting Gulf->USA crude between the Suez/SUMED
+# route and the Cape. A hole beats a contested number: USA is left out of
+# this scenario's importer set until a cited share exists (docs/methodology.md
+# "known omissions"); a maintainer may restore it with a source.
+_SUEZ_IMPORTERS = EUROPE_MED
 
 SUEZ = _region_rows(
     "suez",
@@ -520,7 +535,12 @@ SUEZ = _region_rows(
     "Per this file's own bypass rule: the Cape of Good Hope is a disruption consequence, not "
     "a pre-existing bypass, and SUMED is inside this chokepoint's definition, not outside it "
     "- so the structural share is 1.00. No Iran row: BACI shows ~0 Iranian crude to Europe "
-    "after 2018 sanctions.",
+    "after 2018 sanctions. No USA row: Gulf->US Gulf Coast crude routinely sails the Cape of "
+    "Good Hope rather than Suez/SUMED, and no cited share exists to split it - see this "
+    "file's header comment. Coverage gap: Red Sea littoral importers themselves (Egypt, "
+    "Jordan, Israel, Sudan) are not in the EUROPE_MED importer set this row uses, so their "
+    "own Suez-transiting imports are out of scope for this scenario, not modelled as zero "
+    "exposure.",
 )
 
 SUEZ_LNG = _region_rows(
@@ -545,10 +565,16 @@ BAB_EL_MANDEB = _region_rows(
     1.00,
     SRC_EIA,
     EIA_SUEZ_SUMED,
-    "EIA id=40152: 'Petroleum exports from Persian Gulf countries...accounted for 85% of "
-    "Suez Canal northbound traffic' (the same corridor Bab el-Mandeb feeds); the Cape of "
-    "Good Hope is a consequence of disruption, not a pre-existing bypass (see this "
-    "file's Hormuz notes for the same rule).",
+    "Structural, not the EIA '85% of northbound traffic' composition figure used on the "
+    "'suez' scenario (that figure describes the chokepoint's own traffic mix, crude+"
+    "products, 2018 - not the fraction of Gulf->Europe crude that uses this route, and "
+    "the verifier flagged it as misapplied there; it is not used here either). Per this "
+    "file's own bypass rule: the Cape of Good Hope is a disruption consequence, not a "
+    "pre-existing bypass, so Gulf crude bound for Europe that transits the Red Sea at "
+    "all necessarily crosses Bab el-Mandeb - the structural share is 1.00. Coverage gap: "
+    "Red Sea littoral importers themselves (Egypt, Jordan, Israel, Sudan) are not in the "
+    "EUROPE_MED importer set this row uses, so their own Bab el-Mandeb-transiting imports "
+    "are out of scope for this scenario, not modelled as zero exposure.",
 ) + _region_rows(
     "bab_el_mandeb",
     ("SAU",),
@@ -636,6 +662,57 @@ TURKISH_STRAITS = [
         EIA_CASPIAN,
         "Structural: Kazakh crude to China moves by the Kazakhstan-China pipeline "
         "(Atasu-Alashankou), not by sea, so it never reaches Novorossiysk or the Straits.",
+    ),
+    # Final review #7 (2026-09-19): Germany's KEBCO crude runs overland via the
+    # Uzen-Atyrau-Samara pipeline into Transneft's Druzhba system (northern
+    # spur, via Poland) to the PCK Schwedt refinery - never loaded onto a
+    # tanker, so it never reaches Novorossiysk or the Straits. Austria,
+    # Czechia, Switzerland etc. are deliberately NOT zeroed here even though
+    # they also receive Kazakh-blend crude inland: their volumes arrive via
+    # the TAL pipeline from Trieste, fed by CPC-blend crude that DOES sail
+    # from Novorossiysk through the Bosporus/Dardanelles first.
+    _row(
+        "turkish_straits",
+        "chokepoint",
+        "KAZ",
+        "DEU",
+        0.00,
+        SRC_IEA_PIPELINE,
+        KAZ_DEU_DRUZHBA,
+        "Reuters: Kazakhstan supplies KEBCO (Kazakhstan Export Blend Crude Oil) to Germany's "
+        "PCK Schwedt refinery via the Uzen-Atyrau-Samara pipeline and Transneft's Druzhba "
+        "system (northern spur through Poland to Adamova Zastava) - an entirely overland "
+        "route that never touches a tanker, so this crude never reaches Novorossiysk or the "
+        "Turkish Straits. Do not confuse with Austria/Czechia/Switzerland (below), which "
+        "receive Kazakh-blend crude via the TAL pipeline from Trieste - fed by CPC crude "
+        "that does sail through the Straits.",
+    ),
+    _row(
+        "turkish_straits",
+        "chokepoint",
+        "KAZ",
+        "UZB",
+        0.00,
+        SRC_IEA_PIPELINE,
+        None,
+        "UNSOURCED (structural): Uzbekistan is landlocked and borders Kazakhstan directly; "
+        "no document was found describing Kazakh crude to Uzbekistan moving by any route "
+        "other than overland (pipeline/rail) via Central Asia's own network. BACI 2024 "
+        "KAZ->UZB is a small volume (~0.06 Mt) consistent with a regional overland trade, "
+        "not seaborne CPC-blend crude that would need to reach a Black Sea tanker first.",
+    ),
+    _row(
+        "turkish_straits",
+        "chokepoint",
+        "KAZ",
+        "KGZ",
+        0.00,
+        SRC_IEA_PIPELINE,
+        None,
+        "UNSOURCED (structural): Kyrgyzstan is landlocked and borders Kazakhstan directly; "
+        "the same reasoning as Uzbekistan applies, and BACI 2024 KAZ->KGZ is negligible "
+        "(well under 1,000 tonnes) - consistent with overland regional trade, not seaborne "
+        "crude that would need to reach a Black Sea tanker first.",
     ),
 ]
 

@@ -9,9 +9,9 @@ Built and maintained by [Narendra Nag](https://narendranag.com) as a project of 
 ## What it answers
 
 - **What exists, and since when?** Pipelines, extraction sites and LNG terminals respond to the year slider, where their build year is known.
-- **Who depends on a chokepoint?** Close the Strait of Hormuz (crude or LNG), or cut Druzhba, Baku–Tbilisi–Ceyhan or the CPC pipeline. The map shades each importer by the share of its imports routed through it, and ranks the refineries and LNG terminals most exposed.
-- **Where does LNG actually go?** 17,592 AIS-derived voyages, 2020–2024.
-- **Where did a number come from?** Hover anything for its value, unit, year and source. `/methodology` explains each layer, and `/data` lists every file with its licence and checksum.
+- **Who depends on a chokepoint?** Close the Strait of Hormuz, Malacca, Suez + SUMED or Bab el-Mandeb (each on the oil or gas/LNG axis), the Turkish Straits, or cut Druzhba, Baku–Tbilisi–Ceyhan, CPC, Keystone, the Enbridge Mainline or the ESPO pipeline's Skovorodino-Mohe spur — 11 scenarios, some closable together, at partial severity, and viewable from either side of the cut (who loses supply vs. who loses the outlet). The map shades each importer by the share of its imports routed through it, and ranks the refineries and LNG terminals most exposed.
+- **Where does LNG actually go?** 17,592 AIS-derived voyages, 2020–2024. Country-to-country crude and LNG trade flows draw as arcs, and a live EU gas-storage layer and a UN Comtrade "recent imports" layer extend a few of the numbers past BACI's own most recent year.
+- **Where did a number come from?** Hover anything for its value, unit, year and source. `/methodology` explains each layer, `/data` lists every file with its licence and checksum, and `/query` is a SQL console over the same files for anyone who wants to ask their own question.
 
 What it deliberately doesn't do: price responses, rerouting, strategic stocks, or daily flows. Scenario results are exposure accounting, not a market model.
 
@@ -27,15 +27,18 @@ What it deliberately doesn't do: price responses, rerouting, strategic stocks, o
 
 | Layer | Count | Source (licence) |
 |---|---|---|
-| Proved reserves, oil and gas, by country | 1990–2020 (frozen after) | Energy Institute Statistical Review (view only) |
-| Oil and gas extraction sites | 5,008 | Global Energy Monitor (CC BY 4.0) |
+| Proved reserves, oil and gas, by country | 1990–2020 (frozen after); production through 2025 | Energy Institute Statistical Review (view only) |
+| Oil and gas extraction sites | 7,055 | Global Energy Monitor (CC BY 4.0) |
 | Oil, NGL and gas pipelines | 3,957 (build year known for 64 % oil, 74 % gas) | Global Energy Monitor (CC BY 4.0) |
-| Refineries | 1,163 (capacity known for 350) | NETL GOGI (public domain) + OpenStreetMap (ODbL) |
-| LNG terminals | 312 | LNG-T3, Zhou, C. 2026 (CC BY 4.0) + GEM |
+| Refineries | 1,164 (capacity known for 350) | NETL GOGI (public domain) + OpenStreetMap (ODbL) |
+| LNG terminals | 314 | LNG-T3, Zhou, C. 2026 (CC BY 4.0) + GEM |
 | LNG voyages, 2020–2024 | 17,592 | LNG-T3 (CC BY 4.0) |
 | Petroleum basins · storage hubs · ports | 1,046 · 7,733 · 3,694 | NETL GOGI (public domain) |
+| US shale-region production (Permian, Bakken, Eagle Ford, Haynesville, Appalachia), 2009–2025 | 170 country/region-years | EIA Short-Term Energy Outlook (public domain) |
+| EU gas storage + LNG send-out, daily, 2020– | 188,767 rows, 22 countries | GIE AGSI / ALSI (view only) |
+| Recent monthly crude + LNG imports, 2025–2026 | 8,839 rows | UN Comtrade (view only) |
 | Bilateral crude (HS 2709) and LNG (HS 271111) trade, 1995–2024 | 53,727 country-pair-years | CEPII BACI (Etalab Open Licence 2.0) |
-| Scenario route shares | 18, each with a citation (plus 54 intra-Gulf pairs set to 0) | EIA / IEA and operator reports |
+| Scenario route shares, 11 scenarios (15 oil/gas route-share sets) | 522 rows, each with a citation (plus 54 intra-Gulf Hormuz pairs and 3 Turkish-Straits pairs set to 0) | EIA / IEA and operator reports |
 
 Known limits that matter:
 - reserves stop at 2020;
@@ -70,10 +73,10 @@ uv run python -m pytest tests/python          # transforms, schemas, data integr
 pnpm build && CI=1 pnpm test:e2e              # Playwright against a production build (~15 min)
 ```
 
-**Stack:** Next.js 16, React 19, TypeScript strict; deck.gl 9 inside MapLibre (OpenFreeMap basemap); Parquet read in the browser by hyparquet (DuckDB-WASM stays self-hosted for an upcoming query console but is off the load path). There is no backend: data files are served as static assets with immutable, content-versioned caching. The build-time pipeline is Python (pandas, pyarrow, geopandas, duckdb). CI runs lint, typecheck, unit, Python and e2e tests (including an axe accessibility scan), plus a post-deploy smoke test.
+**Stack:** Next.js 16, React 19, TypeScript strict; deck.gl 9 inside MapLibre (OpenFreeMap basemap); Parquet read in the browser by hyparquet. DuckDB-WASM is self-hosted and loaded only on `/query` (a SQL console over the same catalog), never on the map's load path. There is no backend: data files are served as static assets with immutable, content-versioned caching. The build-time pipeline is Python (pandas, pyarrow, geopandas, duckdb). CI runs lint, typecheck, unit, Python and e2e tests (including an axe accessibility scan), plus a post-deploy smoke test.
 
 ## Project status
 
-Phases 1–10 are complete: layers, scenarios, a correctness pass, consolidation, the product redesign, and launch hardening. Post-launch (2026-09-11): intra-Gulf Hormuz trade is no longer counted as exposed, LNG attribution uses only terminals in service that year, the map reads Parquet directly in the page (cold load ≈ 1.2 s at 40 Mb/s, down from ≈ 4.9 s), the storage layer drops EPA records that are not bulk storage, and the scenario panel flags BACI gaps for Iran (2019+) and Russia → Belarus (2022+). The history is in [`docs/history.md`](docs/history.md), and the roadmap and review in [`docs/superpowers/specs/`](docs/superpowers/specs/). Candidate next steps (coal, tanker AIS, per-basin production, pipelines as vector tiles, a query console) are in [`docs/data-sources.md`](docs/data-sources.md).
+Phases 1–10 are complete: layers, scenarios, a correctness pass, consolidation, the product redesign, and launch hardening. Since then: a data-freshness upgrade added live EU gas storage, UN Comtrade recent imports and US shale-region production, and refreshed EI/GOGET/OSM/NETL/BACI to their latest releases; a post-launch UX pass added the `/query` SQL console, country-click profile panel, header search, trade-flow arcs, embed mode, and five more disruption scenarios (Malacca, Suez + SUMED, Bab el-Mandeb, Turkish Straits, Keystone/Enbridge/ESPO), plus partial-severity closures, two scenarios combined at once, and an exporter-side view of any scenario. Earlier post-launch work (2026-09-11): intra-Gulf Hormuz trade is no longer counted as exposed, LNG attribution uses only terminals in service that year, the map reads Parquet directly in the page (cold load ≈ 1.2 s at 40 Mb/s, down from ≈ 4.9 s), the storage layer drops EPA records that are not bulk storage, and the scenario panel flags BACI gaps for Iran (2019+) and Russia → Belarus (2022+). The history is in [`docs/history.md`](docs/history.md), and the roadmap and review in [`docs/superpowers/specs/`](docs/superpowers/specs/). Candidate next steps (coal, tanker AIS, per-basin production, pipelines as vector tiles) are in [`docs/data-sources.md`](docs/data-sources.md).
 
 Found an error in the data or the method? [Open an issue](https://github.com/narendranag/global-energy-map/issues). The map's error panel pre-fills one.

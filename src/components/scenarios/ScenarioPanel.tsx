@@ -789,7 +789,7 @@ export function ScenarioPanel({
         </section>
       )}
 
-      {def && current && <ScenarioContext result={current} />}
+      {def && current && <ScenarioContext result={current} view={view} />}
     </section>
   );
 }

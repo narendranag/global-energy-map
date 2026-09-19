@@ -99,7 +99,7 @@ describe("scenario share citations", () => {
     // 72 from the original 4 scenarios (18 hand-set + 54 share-0 intra-Gulf
     // Hormuz pairs) plus S6's region-expanded chokepoints and new pipeline
     // scenarios — see tests/python/test_disruption_routing.py for the count.
-    expect(SCENARIO_SHARES).toHaveLength(525);
+    expect(SCENARIO_SHARES).toHaveLength(522);
     // Share-0 rows are no longer Hormuz-only: direction-dependent chokepoints
     // (Malacca/Suez/Bab el-Mandeb/Turkish Straits) carry explicit 0 pairs too.
     const zeroShareScenarios = new Set(

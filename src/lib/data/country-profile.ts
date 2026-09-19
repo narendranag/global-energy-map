@@ -17,6 +17,7 @@ import type { GasStorageData } from "./gas-storage";
 import type { RecentImport, RecentImportsData } from "./recent-imports";
 import { sourceLine } from "./sources";
 import { RESERVES_METRIC } from "./reserves";
+import { dataIso3, polygonIso3 } from "@/lib/geo/iso3";
 import { YEAR_MAX, YEAR_MIN } from "@/lib/time/range";
 import { SCENARIOS, isScenarioActive, type ScenarioDef } from "@/lib/scenarios/registry";
 import type { Commodity, ScenarioId, ScenarioResult } from "@/lib/scenarios/types";
@@ -310,12 +311,17 @@ function partnerRows(
     .filter(([, qty]) => qty > 0)
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .slice(0, limit)
-    .map(([iso3, qty]) => ({
-      iso3,
-      name: names?.get(iso3) ?? iso3,
-      qty,
-      share: grandTotal > 0 ? qty / grandTotal : 0,
-    }));
+    .map(([dataCode, qty]) => {
+      // Rows are clickable: hand back the polygon code so the selection they
+      // set has an outline and survives a reload (A2).
+      const iso3 = polygonIso3(dataCode);
+      return {
+        iso3,
+        name: names?.get(iso3) ?? names?.get(dataCode) ?? iso3,
+        qty,
+        share: grandTotal > 0 ? qty / grandTotal : 0,
+      };
+    });
 }
 
 /** How many partners each side of the trade lists before "and the rest". */
@@ -467,12 +473,17 @@ export function buildCountryProfile(
   commodity: Commodity,
 ): CountryProfile {
   const name = inputs.names?.get(iso3) ?? iso3;
+  // `iso3` is the polygon/focus code; every parquet we ship spells South Sudan
+  // SSD and Palestine PSE where Natural Earth says SDS / PSX (A2). One
+  // translation here covers the series, trade, exposure, asset, storage and
+  // Comtrade lookups below — all of which read the data's spelling.
+  const code = dataIso3(iso3);
 
   const reservesMetric = RESERVES_METRIC[commodity];
   const reserves =
     inputs.series === null
       ? null
-      : toTimeSeries(seriesByYear(inputs.series, iso3, reservesMetric), {
+      : toTimeSeries(seriesByYear(inputs.series, code, reservesMetric), {
           label: METRIC_LABEL[reservesMetric] ?? reservesMetric,
           unit: METRIC_UNIT[reservesMetric] ?? "",
           from: YEAR_MIN,
@@ -485,7 +496,7 @@ export function buildCountryProfile(
   const production =
     inputs.series === null
       ? null
-      : toTimeSeries(seriesByYear(inputs.series, iso3, PRODUCTION_METRIC), {
+      : toTimeSeries(seriesByYear(inputs.series, code, PRODUCTION_METRIC), {
           label: METRIC_LABEL[PRODUCTION_METRIC] ?? PRODUCTION_METRIC,
           unit: METRIC_UNIT[PRODUCTION_METRIC] ?? "",
           from: YEAR_MIN,
@@ -496,24 +507,24 @@ export function buildCountryProfile(
         });
 
   const trade =
-    inputs.trade === null ? null : buildTrade(inputs.trade, iso3, year, commodity, inputs.names);
+    inputs.trade === null ? null : buildTrade(inputs.trade, code, year, commodity, inputs.names);
 
   const exposure =
-    inputs.exposure === null ? [] : buildExposure(inputs.exposure, iso3, commodity, year);
+    inputs.exposure === null ? [] : buildExposure(inputs.exposure, code, commodity, year);
 
   const infrastructure: CountryInfrastructure[] = [];
   if (inputs.assets !== null) {
     const a = inputs.assets;
     const parts = [
-      summarise(a.lngImport, iso3, "lng_import", "LNG import terminals", "lng_terminals"),
-      summarise(a.lngExport, iso3, "lng_export", "LNG export terminals", "lng_terminals"),
-      summarise(a.refinery, iso3, "refinery", "Refineries", "refineries"),
-      summarise(a.extraction, iso3, "extraction_site", "Extraction sites", "extraction"),
+      summarise(a.lngImport, code, "lng_import", "LNG import terminals", "lng_terminals"),
+      summarise(a.lngExport, code, "lng_export", "LNG export terminals", "lng_terminals"),
+      summarise(a.refinery, code, "refinery", "Refineries", "refineries"),
+      summarise(a.extraction, code, "extraction_site", "Extraction sites", "extraction"),
     ];
     for (const p of parts) if (p !== null) infrastructure.push(p);
   }
 
-  const storagePct = inputs.gasStorage?.values.get(iso3);
+  const storagePct = inputs.gasStorage?.values.get(code);
   const gasStorage =
     inputs.gasStorage && storagePct !== undefined
       ? {
@@ -523,7 +534,7 @@ export function buildCountryProfile(
         }
       : null;
 
-  const recent = inputs.recentImports?.byIso3.get(iso3);
+  const recent = inputs.recentImports?.byIso3.get(code);
   const recentImports =
     recent === undefined
       ? null

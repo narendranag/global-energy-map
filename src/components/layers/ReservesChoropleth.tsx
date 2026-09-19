@@ -1,6 +1,7 @@
 import { GeoJsonLayer } from "@deck.gl/layers";
 import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import type { CountryCollection, CountryProps } from "@/lib/geo/countries";
+import { dataIso3 } from "@/lib/geo/iso3";
 import type { ReservesData } from "@/lib/data/reserves";
 import { sourceLine } from "@/lib/data/sources";
 import { RESERVES_LATEST_YEAR } from "@/lib/time/range";
@@ -39,7 +40,7 @@ export function reservesFeatures(
         ...f,
         properties: {
           ...f.properties,
-          value: data.values.get(f.properties.iso3) ?? null,
+          value: data.values.get(dataIso3(f.properties.iso3)) ?? null,
           commodity: data.commodity,
           data_year: data.dataYear,
         },

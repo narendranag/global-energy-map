@@ -65,7 +65,7 @@ test.describe("Scenario context", () => {
     // phone/embed chip's own CSS collapse, so this proves the block itself
     // never enters the DOM under embed rather than merely being hidden by
     // an ancestor.
-    await expect(page.locator("[data-testid='scenario-slot'] select")).toBeAttached();
+    await expect(page.locator("[data-testid='scenario-slot'] select").first()).toBeAttached();
     await expect(page.getByTestId("scenario-context")).toHaveCount(0);
   });
 });

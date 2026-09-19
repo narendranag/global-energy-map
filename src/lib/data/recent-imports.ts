@@ -16,6 +16,14 @@ import { readParquet } from "./parquet";
  * reconciles both sides of every flow, annually; this is one side, monthly,
  * as reported. Some of the world's largest importers — China, Taiwan — do not
  * report monthly to Comtrade at all, and show as no data.
+ *
+ * Comtrade publishes no zero rows, so a month with no reported import of the
+ * selected commodity looks the same as a month the country never filed at
+ * all. A month counts as *reported* if the country filed either HS code that
+ * month (crude 2709 or LNG 271111) — filing one proves it was live, even if
+ * the other took no cargo. Sporadic LNG importers that file crude every month
+ * (USA, COL, KAZ, DNK) would otherwise show 11 of 12 months and be drawn as
+ * incomplete.
  */
 
 export const RECENT_IMPORTS_WINDOW = 12;
@@ -31,8 +39,17 @@ export interface RecentImport {
   /** First and last month of the window, "YYYY-MM". */
   readonly from: string;
   readonly through: string;
-  /** Months in the window with any reported import (≤ 12). */
+  /**
+   * Months in the window the country filed *anything* to Comtrade — crude
+   * (HS 2709) or LNG (HS 271111), whichever code, not just the one selected
+   * (≤ 12). Comtrade publishes no zero rows, so a reporter that took no
+   * cargo of the selected commodity in a month is indistinguishable from a
+   * non-reporter *unless* it filed the other code that month; filing either
+   * proves the reporter was live that month. `isComplete` is judged on this.
+   */
   readonly monthsReported: number;
+  /** Months in the window with a reported import of the *selected* commodity (≤ monthsReported). */
+  readonly monthsWithImports: number;
   /** BACI imports in `baciYear`, million tonnes; null if BACI has none. */
   readonly baciMt: number | null;
 }
@@ -80,8 +97,9 @@ export function toRecentImports(
   baci: readonly BaciRow[],
 ): RecentImportsData {
   const hs = HS[commodity];
+  const reportCodes: readonly string[] = Object.values(HS);
 
-  // importer → month index → kg
+  // importer → month index → kg, selected commodity only.
   const monthly = new Map<string, Map<number, number>>();
   for (const r of comtrade) {
     if (r.hs_code !== hs || r.qty === null || !(r.qty > 0)) continue;
@@ -89,6 +107,19 @@ export function toRecentImports(
     if (!byMonth) monthly.set(r.importer_iso3, (byMonth = new Map<number, number>()));
     const m = monthIndex(r.month);
     byMonth.set(m, (byMonth.get(m) ?? 0) + r.qty);
+  }
+
+  // importer → set of month indices the country filed *either* HS code.
+  // A row for the other code proves the reporter was live that month, even
+  // when it took no cargo of the selected commodity (Comtrade has no zero
+  // rows, so absence alone can't distinguish "reported nothing" from
+  // "did not report").
+  const reported = new Map<string, Set<number>>();
+  for (const r of comtrade) {
+    if (!reportCodes.includes(r.hs_code) || r.qty === null) continue;
+    let months = reported.get(r.importer_iso3);
+    if (!months) reported.set(r.importer_iso3, (months = new Set<number>()));
+    months.add(monthIndex(r.month));
   }
 
   let baciYear = 0;
@@ -102,23 +133,34 @@ export function toRecentImports(
   const byIso3 = new Map<string, RecentImport>();
   let max = 0;
   for (const [iso3, byMonth] of monthly) {
-    const last = Math.max(...byMonth.keys());
+    const reportedMonths = reported.get(iso3);
+    // The window is anchored on the reporter's own last *reported* month
+    // across both codes, not the last month it happened to import the
+    // selected commodity: a sporadic importer's last cargo can predate its
+    // last filing, and anchoring on cargo alone would shift the window
+    // earlier than the data actually reaches and under-count filings that
+    // had no cargo of this commodity.
+    const last =
+      reportedMonths && reportedMonths.size > 0 ? Math.max(...reportedMonths) : Math.max(...byMonth.keys());
     const first = last - RECENT_IMPORTS_WINDOW + 1;
     let kg = 0;
-    let months = 0;
+    let monthsWithImports = 0;
+    let monthsReported = 0;
     for (let m = first; m <= last; m++) {
       const v = byMonth.get(m);
       if (v !== undefined) {
         kg += v;
-        months += 1;
+        monthsWithImports += 1;
       }
+      if (reportedMonths?.has(m)) monthsReported += 1;
     }
     const t = baciT.get(iso3);
     const rec: RecentImport = {
       mt: kg / 1e9,
       from: monthLabel(first),
       through: monthLabel(last),
-      monthsReported: months,
+      monthsReported,
+      monthsWithImports,
       baciMt: t === undefined ? null : t / 1e6,
     };
     byIso3.set(iso3, rec);

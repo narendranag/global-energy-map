@@ -22,7 +22,7 @@
 
 | ID | What | Files | Worker |
 |---|---|---|---|
-| F1 | **Comtrade completeness.** A month counts as *reported* if the reporter filed **either** HS code that month (Comtrade has no zero rows, so a sporadic LNG importer with no cargo in a month is indistinguishable from a non-reporter today; 25 LNG importers incl. USA are mis-flagged). `monthsReported` → months reported; add `monthsWithImports` for the tooltip. If a reporter files only one code, fall back to today's behaviour. Tests first. | `src/lib/data/recent-imports.ts`, `src/components/layers/RecentImportsChoropleth.tsx` (tooltip wording only), `tests/unit/data/recent-imports.test.ts`, `docs/methodology.md` (the paragraph describing the rule) | Sonnet |
+| F1 | **Comtrade completeness.** A month counts as *reported* if the reporter filed **either** HS code that month (Comtrade has no zero rows, so a sporadic LNG importer with no cargo in a month is indistinguishable from a non-reporter today; measured after the fix: 6 LNG and 9 crude importers incl. USA were mis-flagged — the orchestrator's first estimate of 25 counted every incomplete LNG importer, most of which really are missing filings). `monthsReported` → months reported; add `monthsWithImports` for the tooltip. If a reporter files only one code, fall back to today's behaviour. Tests first. | `src/lib/data/recent-imports.ts`, `src/components/layers/RecentImportsChoropleth.tsx` (tooltip wording only), `tests/unit/data/recent-imports.test.ts`, `docs/methodology.md` (the paragraph describing the rule) | Sonnet |
 | F2 | `engine.ts` uses `LNG_T3_FIRST_YEAR`/`LNG_T3_LAST_YEAR` instead of literal 2020/2024 (move the constants to `types.ts` if the import would be circular). | `src/lib/scenarios/engine.ts` (+ `types.ts`/`registry.ts` only for the move) | Haiku |
 | F3 | **Intro card yields to deep links.** Do not auto-show when the initial URL carries any explicit state param (`scenario`, `layers`, `year`, `commodity`, `lon/lat/z`); a bare `/` or `?mode=` only still shows it. Keep the reopen affordance. Adjust e2e that relies on the card. | `src/components/ui/IntroCard.tsx`, affected `tests/e2e/*.spec.ts` | Haiku |
 | F4 | Importer ranking defaults to **Volume**; Share stays one click away. | `src/components/scenarios/ScenarioPanel.tsx` (default only), e2e expectations | Haiku |
@@ -79,7 +79,7 @@ Merge order inside 2b (least → most shared-file contact): S5, S8, S6, S2, S4, 
 
 | ID | Status | Notes |
 |---|---|---|
-| F1–F4 | pending | |
+| F1–F4 | done 2026-09-19 | F1 incomplete importers: oil 37 → 28, gas 27 → 21 |
 | R1–R4, RV | pending | |
 | S0–S8 | pending | |
 | T1–T6 | pending | |

@@ -268,6 +268,13 @@ function HomeInner() {
             </div>
           </>
         )}
+        {/*
+          Embed rule (S7): the country panel does not render under `?embed=1`
+          at all. It is a deep-read surface — five sections, two lists of
+          buttons and a download — and an embed frame is where a reader looks
+          at *the map*; the focused country is still outlined, and "open full
+          map" leads to the panel.
+        */}
         {focus !== null && !embed && (
           <>
             <button
@@ -285,12 +292,6 @@ function HomeInner() {
               Country
             </button>
             {/*
-              Embed rule (S7): the country panel does not render under
-              `?embed=1` at all. It is a deep-read surface — five sections, two
-              lists of buttons and a download — and an embed frame is where a
-              reader looks at *the map*; the focused country is still outlined,
-              and "open full map" leads to the panel.
-
               The country panel's slot. It sits left of the scenario panel's
               26rem column when one is open, so a researcher can read a
               country and the scenario that threatens it at the same time;

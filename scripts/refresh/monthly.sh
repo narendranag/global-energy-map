@@ -277,7 +277,12 @@ if [[ $DRY_RUN -eq 0 ]]; then
 
   # Every tracked file the build touched, staged or not (status --porcelain
   # covers both modified-tracked and new-untracked paths).
-  mapfile -t CHANGED_FILES < <(git -C "$WORKTREE_DIR" status --porcelain=v1 | sed -E 's/^.{3}//')
+  # data/raw/ is excluded: it was swapped for a symlink above, which git sees
+  # as its tracked .gitkeep files deleted. No mapfile: /bin/bash is 3.2.
+  CHANGED_FILES=()
+  while IFS= read -r line; do
+    [[ -n "$line" ]] && CHANGED_FILES+=("$line")
+  done < <(git -C "$WORKTREE_DIR" status --porcelain=v1 | sed -E 's/^.{3}//' | grep -v '^data/raw' || true)
 
   if [[ ${#CHANGED_FILES[@]} -eq 0 ]]; then
     log "Build is byte-identical to origin/main; nothing to refresh this month."

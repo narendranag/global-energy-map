@@ -48,6 +48,7 @@ const DEFAULTS: AppState = {
   year: 2020,
   commodity: "oil",
   scenario: null,
+  focus: null,
   layers: ALL_ON,
 };
 
@@ -58,6 +59,7 @@ describe("encodeAppState", () => {
       year: 2015,
       commodity: "gas",
       scenario: "hormuz",
+      focus: null,
       layers: { ...ALL_ON, basins: false, ports: false },
     });
     const params = new URLSearchParams(qs);
@@ -78,6 +80,7 @@ describe("decodeAppState", () => {
       year: 2015,
       commodity: "gas",
       scenario: "hormuz",
+      focus: null,
       layers: { ...ALL_ON, basins: false, ports: false, gas_pipelines: false },
     };
     const qs = encodeAppState(original);
@@ -143,6 +146,7 @@ describe("decodeAppState", () => {
       year: 2023,
       commodity: "gas",
       scenario: "hormuz",
+      focus: null,
       layers: { ...ALL_ON, lng_voyages: true },
     };
     const qs = encodeAppState(state);
@@ -187,6 +191,7 @@ describe("decodeAppState — mode", () => {
       year: 2015,
       commodity: "gas",
       scenario: "hormuz",
+      focus: null,
       layers: { ...ALL_OFF, reserves: true, lng_terminals: true },
     });
   });
@@ -207,6 +212,45 @@ describe("decodeAppState — mode", () => {
 
   it("an empty layers param means no layers, even under a mode preset", () => {
     expect(Object.values(decode("mode=flows&layers=").layers).some(Boolean)).toBe(false);
+  });
+});
+
+describe("decodeAppState — focus", () => {
+  const decode = (qs: string) => decodeAppState(new URLSearchParams(qs), DEFAULTS);
+
+  it("is omitted from the querystring when null, so old links are byte-identical", () => {
+    expect(encodeAppState(DEFAULTS)).toBe(
+      "mode=infrastructure&year=2020&commodity=oil&layers=reserves%2Cbasins%2Cextraction%2Cpipelines%2Crefineries%2Cstorage%2Cports%2Cgas_pipelines%2Clng_terminals%2Clng_voyages",
+    );
+    expect(new URLSearchParams(encodeAppState(DEFAULTS)).has("focus")).toBe(false);
+  });
+
+  it("round-trips a focused country", () => {
+    const state: AppState = { ...DEFAULTS, focus: "JPN" };
+    expect(new URLSearchParams(encodeAppState(state)).get("focus")).toBe("JPN");
+    expect(decode(encodeAppState(state))).toEqual(state);
+  });
+
+  it("upper-cases a hand-typed code", () => {
+    expect(decode("focus=jpn").focus).toBe("JPN");
+  });
+
+  it("drops an unknown or malformed code", () => {
+    for (const qs of ["focus=ZZZ", "focus=JP", "focus=JPNX", "focus=", "focus=SGP"]) {
+      expect(decode(qs).focus).toBeNull();
+    }
+  });
+
+  it("survives a mode preset: modes never clear a focus the URL carries", () => {
+    expect(decode("mode=flows&focus=JPN").focus).toBe("JPN");
+    expect(decode("mode=scenarios&focus=JPN").focus).toBe("JPN");
+  });
+
+  it("applyMode keeps the current focus", () => {
+    const focused: AppState = { ...DEFAULTS, focus: "DEU" };
+    for (const mode of ["infrastructure", "flows", "scenarios"] as const) {
+      expect(applyMode(focused, mode).focus).toBe("DEU");
+    }
   });
 });
 

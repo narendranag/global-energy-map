@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+    Global Energy Map scheduled data refresh (monthly).
+
+    Install:
+        cp scripts/refresh/space.marain.energymap.refresh.plist \
+           ~/Library/LaunchAgents/space.marain.energymap.refresh.plist
+        launchctl load ~/Library/LaunchAgents/space.marain.energymap.refresh.plist
+
+    Uninstall:
+        launchctl unload ~/Library/LaunchAgents/space.marain.energymap.refresh.plist
+        rm ~/Library/LaunchAgents/space.marain.energymap.refresh.plist
+
+    Check status:
+        launchctl list | grep space.marain.energymap.refresh
+        tail -f ~/Library/Logs/global-energy-map/refresh.log
+
+    Manually run:
+        launchctl start space.marain.energymap.refresh
+    -->
+
+    <key>Label</key>
+    <string>space.marain.energymap.refresh</string>
+
+    <key>UserName</key>
+    <string>narendranag</string>
+
+    <key>GroupName</key>
+    <string>staff</string>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/narendranag/ai/_projects/global-energy-map</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>/Users/narendranag</string>
+        <key>PATH</key>
+        <string>/Users/narendranag/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
+    <!-- Monthly, on the 5th at 9:30 AM -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Day</key>
+        <integer>5</integer>
+        <key>Hour</key>
+        <integer>9</integer>
+        <key>Minute</key>
+        <integer>30</integer>
+    </dict>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/narendranag/ai/_projects/global-energy-map/scripts/refresh/monthly.sh</string>
+    </array>
+
+    <key>StandardOutPath</key>
+    <string>/Users/narendranag/Library/Logs/global-energy-map/refresh.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/narendranag/Library/Logs/global-energy-map/refresh.err</string>
+
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>

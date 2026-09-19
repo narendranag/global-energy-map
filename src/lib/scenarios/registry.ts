@@ -58,6 +58,11 @@ export const SCENARIOS: readonly ScenarioDef[] = [
       gas: "Strait between the Persian Gulf and the Gulf of Oman. All LNG exported from Qatar and the UAE (Das Island) — roughly 20% of global LNG trade — must transit here; unlike crude, there is no pipeline bypass for LNG cargoes.",
     },
     routeName: "the Strait of Hormuz",
+    // Narrowest point of the strait, between Oman's Musandam peninsula and
+    // Iran's Bandar-e Lengeh coast (EIA's World Oil Transit Chokepoints puts
+    // the shipping lanes here; the inbound and outbound lanes are 2 miles
+    // wide each). Every other chokepoint scenario carries the same field.
+    location: { lon: 56.25, lat: 26.57 },
     sourceGap: {
       fromYear: 2019,
       text: "BACI records little Iranian crude from 2019 (about 4 Mt in 2020–21, near zero in 2023–24) while sanctioned cargoes are relabelled, e.g. as Malaysian. Exposure of Iran's buyers, China above all, is understated.",

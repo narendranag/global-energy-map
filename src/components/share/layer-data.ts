@@ -1,4 +1,6 @@
 import { loadAssets } from "@/lib/data/assets";
+import { loadTradeFlows } from "@/lib/data/trade-flows";
+import type { Commodity } from "@/lib/scenarios/types";
 import {
   loadVoyages,
   positionVoyages,
@@ -15,6 +17,7 @@ import {
   lngTerminalRows,
   pipelineTable,
   shaleRegionTable,
+  tradeFlowTable,
   voyageTable,
   type ExportTable,
   type LayerKey,
@@ -26,7 +29,11 @@ import {
  * (the loaders cache the in-flight promise) — no new network request.
  * Returns null for layers that are never exported (view-only by licence).
  */
-export async function loadLayerTable(key: LayerKey, year: number): Promise<ExportTable | null> {
+export async function loadLayerTable(
+  key: LayerKey,
+  year: number,
+  opts: { readonly commodity?: Commodity; readonly focus?: string | null } = {},
+): Promise<ExportTable | null> {
   switch (key) {
     case "extraction":
       return assetTable((await loadAssets()).extraction, { year, timeAware: true });
@@ -53,6 +60,10 @@ export async function loadLayerTable(key: LayerKey, year: number): Promise<Expor
       const [voyages, a] = await Promise.all([loadVoyages(year), loadAssets()]);
       const coords = terminalCoordinates(lngTerminalRows(a.lngExport, a.lngImport));
       return voyageTable(positionVoyages(voyages, coords), year);
+    }
+    case "trade_flows": {
+      const data = await loadTradeFlows(year, opts.commodity ?? "oil");
+      return tradeFlowTable(data, opts.focus ?? null);
     }
     // View-only by licence: EI asks permission before extensive reproduction,
     // refineries mix in ODbL OSM rows, and GIE publishes on its own terms

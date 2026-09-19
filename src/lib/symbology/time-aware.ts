@@ -27,6 +27,7 @@ export const TIME_AWARE: Readonly<Record<LayerKey, TimeAwareLevel>> = {
   gas_storage: "live",
   shale_regions: "yes",
   recent_imports: "live",
+  trade_flows: "yes",
 };
 
 /**
@@ -49,6 +50,7 @@ export const TIME_AWARE_COVERAGE: Readonly<Record<LayerKey, number | null>> = {
   gas_storage: null,
   shale_regions: null,
   recent_imports: null,
+  trade_flows: null,
 };
 
 /** One-line explanation for a badge tooltip. */
@@ -67,6 +69,7 @@ export const TIME_AWARE_NOTE: Readonly<Record<LayerKey, string>> = {
     "GIE publishes daily; this layer always shows the latest gas day and ignores the year slider.",
   shale_regions: "Annual output 2009 onward (EIA STEO history; forecasts excluded); no data before 2009.",
   recent_imports: "Each country's latest 12 reported months (UN Comtrade); ignores the year slider.",
+  trade_flows: "Country-pair crude/LNG trade (BACI), 1995–2024 only; hidden outside that range.",
 };
 
 /** Short badge text, e.g. "time: 64 %", "time: yes", "static". */
@@ -77,6 +80,7 @@ export function timeAwareLabel(key: LayerKey): string {
   const cov = TIME_AWARE_COVERAGE[key];
   if (level === "partial" && cov !== null) return `time: ${cov.toString()} %`;
   if (key === "lng_voyages") return "time: 2020–24";
+  if (key === "trade_flows") return "time: 1995–2024";
   if (key === "reserves") return "time: to 2020";
   return "time: yes";
 }

@@ -5,6 +5,7 @@ import type { AssetsByKind } from "@/lib/data/assets";
 import { loadGasStorage } from "@/lib/data/gas-storage";
 import { loadRecentImports } from "@/lib/data/recent-imports";
 import { loadReserves } from "@/lib/data/reserves";
+import { loadTradeFlows, tradeFlowsInRange } from "@/lib/data/trade-flows";
 import { SHALE_METRIC, loadShaleRegionData, loadShaleRegionShapes } from "@/lib/data/shale-regions";
 import { useAsync } from "@/lib/data/useAsync";
 import {
@@ -40,6 +41,7 @@ import { buildReservesLayer, reservesFeatures } from "./ReservesChoropleth";
 import { buildShaleRegionsLayer, shaleRegionFeatures } from "./ShaleRegionsLayer";
 import { buildRecentImportsLayer, recentImportsFeatures } from "./RecentImportsChoropleth";
 import { buildSearchHighlightLayer } from "./SearchHighlightLayer";
+import { buildTradeFlowsLayer } from "./TradeFlowsLayer";
 import { buildStorageLayer } from "./StorageLayer";
 import type { TooltipContext } from "./tooltip";
 
@@ -110,6 +112,8 @@ export function useMapLayers({
   const pipelines = useAsync(loadPipelines, layers.pipelines || layers.gas_pipelines ? [] : null);
   const showVoyages = layers.lng_voyages && voyagesInRange(year);
   const voyages = useAsync(loadVoyages, showVoyages ? [year] : null);
+  const showTradeFlows = layers.trade_flows && tradeFlowsInRange(year);
+  const tradeFlows = useAsync(loadTradeFlows, showTradeFlows ? [year, commodity] : null);
 
   // --- scenario styling -----------------------------------------------------
   const overlay = useMemo(() => importerOverlay(scenario, commodity), [scenario, commodity]);
@@ -235,6 +239,13 @@ export function useMapLayers({
         : null,
     [showVoyages, positionedVoyages, voyageImpacts],
   );
+  const tradeFlowsLayer = useMemo(
+    () =>
+      showTradeFlows && tradeFlows.data
+        ? buildTradeFlowsLayer(tradeFlows.data, { commodity, focus })
+        : null,
+    [showTradeFlows, tradeFlows.data, commodity, focus],
+  );
 
   // A search result (S4): drawn last (topmost) so it is never hidden by a mark.
   const searchHighlight = useSearchHighlight();
@@ -245,13 +256,16 @@ export function useMapLayers({
 
   // Z-order (bottom to top): the invisible country pick target, basins, shale
   // regions, recent imports, gas storage, reserves, the focus outline,
-  // extraction, oil pipes, gas pipes, LNG voyage arcs, refineries, storage,
-  // ports, LNG terminals, the search highlight ring. Gas storage sits under
+  // extraction, oil pipes, gas pipes, BACI trade-flow arcs, LNG voyage arcs,
+  // refineries, storage, ports, LNG terminals, the search highlight ring. Gas storage sits under
   // reserves so that with both on, the reserves ramp — the one the year
   // slider drives — stays legible on top. The pick layer is bottom-most so
   // every real layer wins the tooltip and the click above it; the focus
   // outline sits above the fills it frames and below the marks it must not
-  // hide.
+  // hide. Trade flows sit just under the LNG voyage arcs (coarser
+  // country-pair lines under the finer terminal-to-terminal ones), both
+  // below the point layers so a country/terminal glyph always wins the
+  // tooltip over a passing arc.
   const deckLayers = useMemo(
     () =>
       [
@@ -265,6 +279,7 @@ export function useMapLayers({
         extractionLayer,
         oilPipesLayer,
         gasPipesLayer,
+        tradeFlowsLayer,
         voyagesLayer,
         refineriesLayer,
         storageLayer,
@@ -283,6 +298,7 @@ export function useMapLayers({
       extractionLayer,
       oilPipesLayer,
       gasPipesLayer,
+      tradeFlowsLayer,
       voyagesLayer,
       refineriesLayer,
       storageLayer,
@@ -308,6 +324,7 @@ export function useMapLayers({
     layers.ports && assetsPending,
     layers.lng_terminals && assetsPending,
     showVoyages && (!voyages.ready || assetsPending),
+    showTradeFlows && !tradeFlows.ready,
   ].filter(Boolean).length;
 
   const tooltipContext = useMemo<TooltipContext>(

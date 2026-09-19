@@ -214,7 +214,7 @@ LNG-T3 covers **22–41% of GIIGNL's global LNG trade, 2020–2024** — every y
 - **License:** Etalab Open Licence 2.0 (checked 2026-09-10 — reuse and redistribution with attribution; earlier project docs said "academic/research use"). Cite Gaulier & Zignago (2010), CEPII Working Paper 2010-23. `trade_flow.parquet` is downloadable from `/data` under the same licence (maintainer decision, 2026-09-10).
 - **As-of:** 2026-01 release (HS92 1995–2024 series)
 - **Where it lands:** `trade_flow.parquet`
-- **Layers/scenarios using it:** all scenarios — crude routing (HS 2709) and LNG routing (HS 271111)
+- **Layers/scenarios using it:** all scenarios — crude routing (HS 2709) and LNG routing (HS 271111) — plus, since S2 (2026-09-19), the **Trade flows** map layer itself: country-pair arcs, the world's top 150 pairs by volume at world view or every pair touching a focused country
 
 **What we ingest:** Bilateral annual trade flows for two HS codes:
 - **HS 2709** (crude petroleum oils) for oil scenarios — Hormuz, Druzhba, BTC, CPC, Malacca, Suez, Bab el-Mandeb, Turkish Straits, Keystone, Enbridge Mainline, ESPO spur

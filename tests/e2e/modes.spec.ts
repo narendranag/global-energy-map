@@ -26,6 +26,7 @@ const ALL_LAYERS = [
   "gas_pipelines",
   "lng_terminals",
   "lng_voyages",
+  "trade_flows",
 ] as const;
 
 /** Layer panel label per URL key. */
@@ -40,6 +41,7 @@ const LABEL: Record<(typeof ALL_LAYERS)[number], string> = {
   gas_pipelines: "Gas pipelines",
   lng_terminals: "LNG terminals",
   lng_voyages: "LNG voyages",
+  trade_flows: "Trade flows (BACI)",
 };
 
 /** Assert exactly `on` are ticked in the panel (every other layer unticked). */
@@ -66,16 +68,19 @@ test.describe("Modes", () => {
   test("tabs apply their presets and write `mode` to the URL", async ({ page }) => {
     await gotoReady(page, "/?layers=reserves&year=2021");
 
-    // Flows: gas, LNG layers incl. voyages; 2021 is inside 2020–2024 so it stays.
+    // Flows: gas, LNG terminals + gas pipelines + trade flows (BACI); 2021 is
+    // inside BACI's 1995–2024 so it stays (lng_voyages is off by default here
+    // — S2 dropped it from the preset since it and trade_flows draw
+    // overlapping arcs for the same commodity; it stays a manual toggle).
     await selectTab(page, "Flows");
     await expect(page.locator("main")).toHaveAttribute("data-mode", "flows");
     await expect(page.getByRole("button", { name: "Gas" })).toHaveAttribute("aria-pressed", "true");
     await expect(page.locator('input[type="range"]')).toHaveValue("2021");
     await expect(page).toHaveURL(/mode=flows/);
-    expect(param(page, "layers")).toBe("gas_pipelines,lng_terminals,lng_voyages");
+    expect(param(page, "layers")).toBe("gas_pipelines,lng_terminals,trade_flows");
     await expect(page.getByRole("button", { name: /^Layers\s*3 on$/ })).toHaveAttribute("aria-expanded", "false");
     await openLayers(page);
-    await expectLayers(page, ["gas_pipelines", "lng_terminals", "lng_voyages"]);
+    await expectLayers(page, ["gas_pipelines", "lng_terminals", "trade_flows"]);
     await waitForReady(page);
 
     // Scenarios: the picker appears and takes focus; reserves carries the ramp.
@@ -114,7 +119,7 @@ test.describe("Modes", () => {
     await gotoReady(page, "/?mode=flows");
     await expect(page.getByRole("tab", { name: "Flows" })).toHaveAttribute("aria-selected", "true");
     await expect(page.getByRole("button", { name: "Gas" })).toHaveAttribute("aria-pressed", "true");
-    await expectLayers(page, ["gas_pipelines", "lng_terminals", "lng_voyages"]);
+    await expectLayers(page, ["gas_pipelines", "lng_terminals", "trade_flows"]);
 
     await gotoReady(page, "/?mode=flows&year=2015&commodity=oil&layers=reserves");
     await expect(page.getByRole("tab", { name: "Flows" })).toHaveAttribute("aria-selected", "true");
@@ -170,6 +175,9 @@ test.describe("First-run intro card", () => {
     await expect(page.locator('input[type="range"]')).toHaveValue("2023");
     await expect(page.getByRole("button", { name: "Gas" })).toHaveAttribute("aria-pressed", "true");
     await expect(page).toHaveURL(/mode=flows/);
+    // Focused on Qatar so the trade-flows layer shows all of its LNG trade,
+    // not just whichever pairs make the world top 150.
+    await expect(page).toHaveURL(/focus=QAT/);
     await waitForReady(page);
   });
 });

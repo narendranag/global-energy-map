@@ -1,6 +1,6 @@
 # Privacy
 
-**Effective 11 September 2026.** This policy covers the Global Energy Map at [energymap.marain.space](https://energymap.marain.space). The site is built and run by [Narendra Nag](https://narendranag.com) as a project of [Marain](https://marain.space), his operator's practice. Marain's own site has [its own privacy policy](https://marain.space/privacy).
+**Effective 19 September 2026.** This policy covers the Global Energy Map at [energymap.marain.space](https://energymap.marain.space). The site is built and run by [Narendra Nag](https://narendranag.com) as a project of [Marain](https://marain.space), his operator's practice. Marain's own site has [its own privacy policy](https://marain.space/privacy).
 
 ## The short version
 
@@ -39,6 +39,10 @@ All other files, including the energy datasets, the map's code and its fonts, ar
 ## Reporting a problem
 
 If the map hits an error, the error panel offers a **Report an issue** link. It opens a pre-filled GitHub issue containing the error message, the page URL and your browser's user agent. Nothing is sent unless you choose to submit that issue on GitHub, which is then public and covered by [GitHub's privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
+
+## Embedding
+
+The map can be embedded on third-party sites in an `<iframe>` (`?embed=1`). An embedded map behaves exactly as described above — no accounts, no cookies, the same Vercel Web Analytics page-view counting and the same OpenFreeMap tile requests — nothing changes about what is collected because the map is inside someone else's page. That page has its own privacy policy, which is not covered here; if you have concerns about a specific site that embeds the map, contact that site.
 
 ## Links to other sites
 

@@ -61,7 +61,8 @@ test.describe("axe: zero serious/critical violations", () => {
   test.describe("with the intro card", () => {
     test.use({ showIntro: true });
     test("/ (first visit)", async ({ page }) => {
-      await gotoReady(page, "/?layers=reserves");
+      // A bare / still shows the intro card (no explicit state params).
+      await gotoReady(page, "/");
       await expect(page.getByTestId("intro-card")).toBeVisible();
       expect(await seriousViolations(page)).toEqual([]);
     });
@@ -271,8 +272,14 @@ test.describe("text contrast ≥ 4.5:1 with panels over a black map", () => {
   test.use({ showIntro: true });
 
   test("Infrastructure: layers, legend (with a zoom-gated row), year, intro card", async ({ page }) => {
-    await gotoReady(page, "/?layers=reserves,pipelines,refineries,storage&year=2023");
+    // The intro card only shows on a URL with no explicit state, so the card
+    // and the year note (which needs year > 2020) are checked on two loads.
+    await gotoReady(page, "/");
     await expect(page.getByTestId("intro-card")).toBeVisible();
+    expect(await lowContrastText(page)).toEqual([]);
+
+    await gotoReady(page, "/?layers=reserves,pipelines,refineries,storage&year=2023");
+    await expect(page.getByTestId("intro-card")).toHaveCount(0);
     await expect(page.getByTestId("year-note")).toBeVisible();
     expect(await lowContrastText(page)).toEqual([]);
   });

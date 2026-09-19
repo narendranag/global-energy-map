@@ -139,7 +139,8 @@ test.describe("First-run intro card", () => {
   test.use({ showIntro: true });
 
   test("shows on a first visit; Escape dismisses it for good", async ({ page }) => {
-    await gotoReady(page, "/?layers=");
+    // A bare / still shows the intro card (no explicit state params).
+    await gotoReady(page, "/");
     const card = page.getByTestId("intro-card");
     await expect(card).toBeVisible();
     await expect(card.getByRole("heading", { name: "What this map can answer" })).toBeVisible();
@@ -159,7 +160,8 @@ test.describe("First-run intro card", () => {
   });
 
   test("an example question sets the whole view", async ({ page }) => {
-    await gotoReady(page, "/?layers=");
+    // A bare / still shows the intro card (no explicit state params).
+    await gotoReady(page, "/");
     const card = page.getByTestId("intro-card");
     await clickUntil(card.getByTestId("example-qatar-lng-2023"), async () => {
       await expect(card).toHaveCount(0, { timeout: 2_000 });

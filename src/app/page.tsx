@@ -103,7 +103,11 @@ function HomeInner() {
   const focusPickerRef = useRef(false);
   /** Phone (< 768 px) only: the scenario panel is collapsed to its header. */
   const [scenarioOpenOnPhone, setScenarioOpenOnPhone] = useState(false);
-  /** Phone (< 768 px) only: same for the country panel. Opens with the selection. */
+  /**
+   * The country panel is collapsed to its header button. Below 768 px always;
+   * below 1100 px when a scenario panel shares the right-hand side (B4).
+   * Opens with the selection.
+   */
   const [countryOpenOnPhone, setCountryOpenOnPhone] = useState(true);
 
   const selectMode = useCallback(
@@ -291,8 +295,12 @@ function HomeInner() {
             <button
               type="button"
               className={
-                "pointer-events-auto absolute right-4 z-10 flex items-center gap-2 rounded-md border border-slate-200 bg-white/95 px-3 py-2 text-xs font-medium uppercase tracking-wide text-slate-700 shadow-lg md:hidden " +
-                (showScenarioPanel ? "top-16" : "top-4")
+                // z-30: above both panel slots (z-20). Under 1100 px the
+                // scenario panel is open behind the country panel, and a
+                // toggle the scenario panel covers is a toggle nobody can
+                // press (B4).
+                "pointer-events-auto absolute right-4 z-30 flex items-center gap-2 rounded-md border border-slate-200 bg-white/95 px-3 py-2 text-xs font-medium uppercase tracking-wide text-slate-700 shadow-lg " +
+                (showScenarioPanel ? "top-16 min-[1100px]:hidden " : "top-4 md:hidden ")
               }
               aria-expanded={countryOpenOnPhone}
               onClick={() => {
@@ -303,19 +311,32 @@ function HomeInner() {
               Country
             </button>
             {/*
-              The country panel's slot. It sits left of the scenario panel's
-              26rem column when one is open, so a researcher can read a
-              country and the scenario that threatens it at the same time;
-              alone, it takes the right edge itself. Like the scenario slot it
-              ends above the commodity toggle and the year slider and scrolls,
-              and on phones it hangs below its own collapsed header button.
+              The country panel's slot. Side by side with the scenario panel's
+              26rem column — so a researcher can read a country and the
+              scenario that threatens it at the same time — but only from
+              1100 px, because the three columns need 1080 px of room
+              (layer panel to 304 px, country slot starting at width - 768)
+              and below that the country panel rode straight over the layer
+              panel (B4). Under 1100 px with a scenario open it takes the right
+              edge in front of the scenario panel and the reader toggles
+              between them with the collapsed "Country"/"Scenario" buttons,
+              which is exactly what phones have always done. With no scenario
+              panel there is room at every width from 768 px, so the old `md`
+              breakpoint stands. Either way the slot ends above the commodity
+              toggle and the year slider and scrolls.
             */}
             <div
               data-testid="country-slot"
               className={
-                "pointer-events-none absolute bottom-40 top-0 z-20 w-[min(22rem,100%)] overflow-y-auto overscroll-contain max-md:right-0 " +
-                (showScenarioPanel ? "right-[26rem] max-md:top-24 " : "right-0 max-md:top-10 ") +
-                (countryOpenOnPhone ? "" : "max-md:hidden")
+                "pointer-events-none absolute bottom-40 top-0 z-20 w-[min(22rem,100%)] overflow-y-auto overscroll-contain " +
+                (showScenarioPanel
+                  ? "max-[1099px]:right-0 max-[1099px]:top-24 min-[1100px]:right-[26rem] "
+                  : "right-0 max-md:top-10 ") +
+                (countryOpenOnPhone
+                  ? ""
+                  : showScenarioPanel
+                    ? "max-[1099px]:hidden"
+                    : "max-md:hidden")
               }
             >
               <CountryPanel

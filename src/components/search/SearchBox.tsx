@@ -15,6 +15,7 @@ import { searchItems } from "@/lib/search/match";
 import type { SearchItem } from "@/lib/search/types";
 import { useSearchIndex } from "@/lib/search/useSearchIndex";
 import { useCamera } from "@/lib/state";
+import { peekAppStore } from "@/lib/state/store";
 
 const RESULT_LIMIT = 8;
 
@@ -76,6 +77,31 @@ export function SearchBox() {
     window.addEventListener("keydown", onKey);
     return () => {
       window.removeEventListener("keydown", onKey);
+    };
+  }, []);
+
+  // A5: the highlight ring is a leftover marker for a search result — it must
+  // not survive past the moment it stops describing "where you are":
+  // - a country picked by ANY means (not just through this search box — a
+  //   map click on a different country goes through page.tsx/CountryPickLayer,
+  //   never through `selectSearchItem`) makes any point-marker ring stale.
+  // - unmounting the box (should not happen today, since it lives in the
+  //   header for the app's lifetime, but a leaked module-level marker outliving
+  //   its component would be a real bug if that ever changes).
+  useEffect(() => {
+    const store = peekAppStore();
+    if (!store) return;
+    let lastFocus = store.getApp().focus;
+    const unsubscribe = store.subscribe(() => {
+      const focus = store.getApp().focus;
+      if (focus !== lastFocus) {
+        lastFocus = focus;
+        setSearchHighlight(null);
+      }
+    });
+    return () => {
+      unsubscribe();
+      setSearchHighlight(null);
     };
   }, []);
 
@@ -196,9 +222,14 @@ export function SearchBox() {
             if (query.trim() === "") setExpandedOnPhone(false);
           }}
           onChange={(e) => {
-            setQuery(e.target.value);
+            const next = e.target.value;
+            setQuery(next);
             setRawActiveIndex(0);
             setOpen(true);
+            // Cleared "by any means" (A5): Escape already handles that path;
+            // backspacing to empty, cut/paste-to-empty and a programmatic
+            // clear of the input all funnel through this one handler.
+            if (next.trim() === "") setSearchHighlight(null);
           }}
           onKeyDown={onKeyDown}
           className="w-44 rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 placeholder:text-slate-500 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-700 sm:w-56 md:w-64"

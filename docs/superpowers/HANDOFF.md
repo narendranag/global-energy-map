@@ -1,7 +1,7 @@
 # Session handoff — resume prompt
 
 > **When the maintainer says hello, read this file first, then act on "First thing to do".**
-> Last updated: 2026-09-19 (DRAFT — two fix agents still running when this was written; see §2).
+> Last updated: 2026-09-19, end of session. **No agents are running. Every worker branch is merged. The tree is clean.**
 
 You are picking up the orchestration of `docs/superpowers/plans/2026-09-19-post-launch-ux-scenarios.md` on Global Energy Map. Read `CLAUDE.md`, then that plan's **§3 Status** table — it is the ledger of what merged and why.
 
@@ -9,23 +9,21 @@ You are picking up the orchestration of `docs/superpowers/plans/2026-09-19-post-
 
 - Branch **`post-launch-ux-scenarios`** in the main checkout. **Nothing is pushed.** `main` is 5 commits ahead of `origin/main` (the data-freshness work + an R2 archive note) and this branch sits on top of it. **Pushing `main` deploys production — ask the maintainer first, every time.**
 - Merged and reviewed on the branch: Wave 0 fixes; research R1–R4 with independent verification; S0 focus/camera; S1 scenario on the map; S2 BACI trade-flow arcs; S3 country panel; S4 search; S5 engine extensions; S6 seven new scenarios (15 route-share sets across 11 scenarios); S7 embed mode; S8 scheduled-refresh scripts (**not installed**); T1 severity / combine / exporter view; T3 scenario context block; T4 `/query` console; T6 announcement drafts (`docs/announce/`, nothing posted). T5 PMTiles dropped (research said no). **T2 pipeline-gas is HELD** for the maintainer.
-- Last full e2e on the merged branch: 137 passed, 2 failed (one spec locator, fixed in `8695579`; one axe timeout under machine load, passes alone). Unit: 859 Vitest, 306 pytest, lint/typecheck/build clean at that point.
+- **Final state, verified on a quiet machine after the last merge:** full Playwright suite **139 passed, 0 failed** (15.9 min); 923 Vitest; 306 pytest (9 skipped, network); lint, typecheck and `pnpm build` clean; `disruption_route.parquet` 522 rows, rebuild byte-identical.
 - Review ledgers: `docs/superpowers/research/{s5-review-findings,wave2-review-findings,final-review-findings}.md`.
 
-## 2. In flight when this was written
+## 2. Nothing is in flight
 
-Two fix agents for `final-review-findings.md`, each in its own worktree under `.claude/worktrees/` (branches `worktree-agent-*`):
-- **Fixes A (Sonnet)** — findings 1, 2, 5, 6, 7, 8, 10, 13, 16, 17: LNG factor (14.447 is LHV; ~15.64 TWh/Mt GCV), 30-day recency floor on GIE storage (GBR's last day is 2020-12-30), Suez description, **drop USA from Suez**, Turkish Straits share-0 pairs, Bab el-Mandeb note, researcher docs + README, announcement (2026 Hormuz-closure sentence), search perf test.
-- **Fixes B (Opus)** — findings 3, 4, 9, 11, 12, 14, 15, 18–20: exporter-view CSV, combined-scenario camera key, exporter-view labelling, embed chip, country-panel note, `goToAsset` padding, hover leak, `sev`/`view` decoding, stuck-pending guard.
+All three reviews' findings are fixed and merged (`final-review-findings.md` was closed by two fix batches: LNG factor now 15.644 TWh/Mt on a GCV basis; 30-day recency floor on GIE storage; USA dropped from Suez; DEU/UZB/KGZ zeroed on the Turkish Straits; exporter-view CSV; camera key; URL edge cases; docs/README brought in line). Stale agent worktrees under `.claude/worktrees/` can be removed with `git worktree remove` once the maintainer is happy — every branch in them is merged.
 
-If a session ended before they reported: `git worktree list`; in each newest `agent-*` worktree run `git log --oneline post-launch-ux-scenarios..HEAD` and `git status --short`. Commit any uncommitted work as a labelled WIP, then start a fresh agent **inside that worktree** with the original brief (the findings file is the brief) — that is how T1/T3 were recovered.
+If a future session loses running agents: `git worktree list`; in each `agent-*` worktree run `git log --oneline post-launch-ux-scenarios..HEAD` and `git status --short`; commit uncommitted work as a labelled WIP, then start a fresh agent **inside that worktree** with the original brief. That is how T1 and T3 were recovered on 2026-09-19.
 
 ## 3. First thing to do
 
-1. Check §2's two branches; merge each with `git merge --no-ff` (expect small conflicts in `ScenarioPanel.tsx`, `CLAUDE.md`; keep both sides).
-2. Gates: `pnpm lint && pnpm typecheck && pnpm test && pnpm build`; `uv run python -m pytest tests/python -q`; if `public/data/` moved, rerun `uv run python -m scripts.build_all --from build_catalog` and confirm byte-identical.
-3. Full e2e on a quiet machine: `pnpm exec playwright test --global-timeout=3000000`.
-4. Update the plan's status table, then give the maintainer the decision list in §4.
+1. Confirm the state: `git status` (clean), `git log --oneline -3`, branch `post-launch-ux-scenarios`.
+2. Greet the maintainer with a short status and the decision list in §4 — that list is what blocks shipping; no engineering is outstanding.
+3. On their go-ahead: open a PR from `post-launch-ux-scenarios` to `main` (CI runs lint, typecheck, Vitest, build, ruff, pytest and Playwright on ubuntu — watch the scenario-panel specs, which are slow under software WebGL, and `a11y.spec.ts` first-visit, which timed out once under machine load). Merging deploys production.
+4. After deploy: `scripts/smoke/run.sh https://energymap.marain.space`, and add `/query` to that smoke script (not done yet).
 
 ## 4. Decisions waiting for the maintainer
 

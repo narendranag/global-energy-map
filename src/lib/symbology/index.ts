@@ -80,6 +80,13 @@ export const PALETTE = {
   importsGasLow: "#e3ebf4",
   importsGasHigh: "#8ea4d4",
 
+  // Focus (selected country) outline. Deliberately a near-black neutral: the
+  // selection must read on the pale basemap, on every choropleth fill and
+  // over the warm and cool mark families without claiming a hue any of them
+  // owns, and without touching the red the scenario ramp reserves.
+  focusOutline: "#101a24",
+  focusHalo: "#ffffff",
+
   // Scenario — red only.
   exposureLow: "#fcbba1",
   exposureHigh: "#99000d",
@@ -318,6 +325,30 @@ export function recentImportsColor(
   if (!complete) return recentImportsRampColor(0.15, commodity, IMPORTS_INCOMPLETE_ALPHA);
   return recentImportsRampColor(max > 0 && mt > 0 ? Math.sqrt(mt / max) : 0, commodity);
 }
+
+// ---------------------------------------------------------------------------
+// Focus (selected country)
+// ---------------------------------------------------------------------------
+
+/**
+ * Outline of the focused country: a **cased** line — a white halo with a
+ * near-black line on top — drawn above the choropleth fills and below the
+ * point layers, so it frames the ground without hiding the marks on it.
+ *
+ * The casing is not decoration. One colour cannot clear 3:1 on both the pale
+ * basemap and the darkest fill the map can paint (a fully exposed country
+ * under a scenario is near-`#990000`): a dark line vanishes on the latter, a
+ * light one on the former. With a casing, whichever of the two reads is the
+ * one you see, and the pair reads against each other — which is what
+ * `symbology-contrast.test.ts` checks.
+ *
+ * Both are heavier than the basemap's own 0.5 px country borders, so the
+ * selection cannot be mistaken for another administrative line.
+ */
+export const FOCUS_OUTLINE_COLOR: Rgba = paletteRgba("focusOutline", 255);
+export const FOCUS_OUTLINE_MIN_PX = 2.5;
+export const FOCUS_HALO_COLOR: Rgba = paletteRgba("focusHalo", 235);
+export const FOCUS_HALO_MIN_PX = 6;
 
 // ---------------------------------------------------------------------------
 // Basins

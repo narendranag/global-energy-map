@@ -10,8 +10,14 @@
 import { describe, expect, it } from "vitest";
 import {
   BASIN_LINE,
+  COUNTRY_OUTLINE_COLOR,
+  COUNTRY_OUTLINE_MIN_PX,
   EXTRACTION_FILL,
   EXTRACTION_LINE,
+  FOCUS_HALO_COLOR,
+  FOCUS_HALO_MIN_PX,
+  FOCUS_OUTLINE_COLOR,
+  FOCUS_OUTLINE_MIN_PX,
   LNG_TERMINAL_COLOR,
   PALETTE,
   PORT_COLOR,
@@ -132,6 +138,54 @@ describe("US shale regions (EIA) as ground", () => {
     const c = contrast(MARKS.gasPipeline, gasTop);
     note({ pair: "gasPipeline / shale gas top", contrast: r2(c) });
     expect(c).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe("the focus outline reads on every ground it can be drawn over", () => {
+  // A *cased* line: white halo, near-black line on top. One colour cannot
+  // clear 3:1 on both the pale basemap and a fully exposed country's
+  // near-#990000 fill, so the contract is (a) on every ground at least one of
+  // the two reads, and (b) the two read against each other. The outline is
+  // the only thing that says which country is selected, so it is held to
+  // WCAG 1.4.11's full 3:1 — not the 2–2.5:1 the identity marks settle for.
+  const line = over(FOCUS_OUTLINE_COLOR, LAND);
+  const halo = over(FOCUS_HALO_COLOR, LAND);
+  const GROUNDS: readonly (readonly [string, Rgb])[] = [
+    ["basemap land", LAND],
+    ["basemap water", WATER],
+    ["reserves top", RESERVES_TOP],
+    ["muted reserves top (scenario active)", RESERVES_MUTED_TOP],
+    ["shale crude top", over(shaleRampColor(1, "oil"), LAND)],
+    ["shale gas top", over(shaleRampColor(1, "gas"), LAND)],
+    ["recent imports crude top", over(recentImportsRampColor(1, "oil"), LAND)],
+    ["recent imports gas top", over(recentImportsRampColor(1, "gas"), LAND)],
+    ["exposure top (scenario)", over(exposureColor(1) ?? [0, 0, 0, 0], LAND)],
+  ];
+
+  it.each(GROUNDS)("one of halo/line clears 3:1 on %s", (name, ground) => {
+    const c = Math.max(contrast(line, ground), contrast(halo, ground));
+    note({
+      pair: `focus outline / ${name}`,
+      contrast: r2(contrast(line, ground)),
+      halo: r2(contrast(halo, ground)),
+    });
+    expect(c).toBeGreaterThanOrEqual(3);
+  });
+
+  it("the casing reads against its own halo", () => {
+    expect(contrast(line, halo)).toBeGreaterThanOrEqual(3);
+  });
+
+  it("is a neutral, not a hue any family owns", () => {
+    for (const role of ["focusOutline", "focusHalo"] as const) {
+      expect(oklch(hexToRgb(PALETTE[role]))[1]).toBeLessThan(0.05);
+    }
+  });
+
+  it("is clearly heavier than the basemap's own country borders", () => {
+    expect(FOCUS_OUTLINE_MIN_PX).toBeGreaterThanOrEqual(2 * COUNTRY_OUTLINE_MIN_PX);
+    expect(FOCUS_HALO_MIN_PX).toBeGreaterThan(FOCUS_OUTLINE_MIN_PX);
+    expect(contrast(line, LAND)).toBeGreaterThan(contrast(over(COUNTRY_OUTLINE_COLOR, LAND), LAND));
   });
 });
 

@@ -81,5 +81,6 @@ Merge order inside 2b (least → most shared-file contact): S5, S8, S6, S2, S4, 
 |---|---|---|
 | F1–F4 | pending | |
 | R1–R4, RV | pending | |
-| S0–S8 | pending | |
+| S0 | **done** | `AppState.focus` (`focus=`, encoded only when set), country click → focus via an always-present invisible pick layer, cased focus outline, `useCamera()` / `requestCamera` command seam + `countryBounds`. Decisions: modes do not clear focus; antimeridian countries fit to their largest polygon (USA pinned to the lower 48); an explicit `lon/lat/z` beats the load-time fit. `tests/e2e/focus.spec.ts` written, not yet run. See the "Focus and camera" bullet in CLAUDE.md. |
+| S1–S8 | pending | |
 | T1–T6 | pending | |

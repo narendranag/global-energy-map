@@ -301,3 +301,90 @@ describe("scenario CSV", () => {
     expect(shareCitationLine(inbound)).toBe("all exporters -> KWT: 0.9 — EIA (2026)");
   });
 });
+
+/**
+ * Finding 3: the panel gained an exporter view (T1) and the export stayed
+ * importer-side, so a researcher reading a ranking of exporters downloaded a
+ * table of importers with no hint of the mismatch.
+ */
+describe("scenario CSV — exporter view", () => {
+  const EXPORTER_RESULT: ScenarioResult = {
+    ...RESULT,
+    byExporter: [
+      { iso3: "RUS", totalQty: 2000, atRiskQty: 450, shareAtRisk: 0.225 },
+      { iso3: "KAZ", totalQty: 400, atRiskQty: 320, shareAtRisk: 0.8 },
+      { iso3: "S19", totalQty: 0, atRiskQty: 0, shareAtRisk: 0 },
+    ],
+    rankedExporters: [],
+  };
+  const shares: ShareCitation[] = [
+    { disruption_id: "druzhba", kind: "pipeline", exporter_iso3: "RUS", importer_iso3: "POL", share: 0.47, source_title: "IEA report", source_url: "https://iea.example", source_year: 2022, source_note: null },
+  ];
+  const ctx = { viewUrl: "https://x/", exported: "2026-09-19", catalog: CATALOG, shares };
+
+  it("the importer file is byte-identical to the one exported before the view existed", () => {
+    const before = scenarioCsv(EXPORTER_RESULT, ctx);
+    expect(scenarioCsv(EXPORTER_RESULT, { ...ctx, view: "importers" })).toBe(before);
+    expect(scenarioFilename(EXPORTER_RESULT)).toBe(scenarioFilename(EXPORTER_RESULT, "importers"));
+    // …and it is still the importer table, whatever the exporter rows say.
+    expect(scenarioRows(EXPORTER_RESULT).map((r) => r.row_type)).toEqual([
+      "importer",
+      "importer",
+      "refinery",
+    ]);
+  });
+
+  it("emits exporter rows, ranked by share, with zero-export codes dropped", () => {
+    const rows = scenarioRows(EXPORTER_RESULT, new Map([["KAZ", "Kazakhstan"]]), "exporters");
+    expect(rows.map((r) => `${String(r.row_type)}:${String(r.iso3)}`)).toEqual([
+      "exporter:KAZ",
+      "exporter:RUS",
+    ]);
+    expect(rows[0]?.country).toBe("Kazakhstan");
+    expect(rows[0]?.total_qty).toBe(400);
+    expect(rows[0]?.at_risk_qty).toBe(320);
+    expect(rows[0]?.share_at_risk).toBe(0.8);
+    expect(rows[0]?.attribution).toBe("BACI bilateral exports x route share");
+  });
+
+  it("names the view in the header and says what share_at_risk means on this side", () => {
+    const csv = scenarioCsv(EXPORTER_RESULT, { ...ctx, view: "exporters" });
+    expect(csv.split("\n")[0]).toContain("EXPORTER VIEW");
+    expect(csv).toContain("every row is an exporter");
+    expect(csv).toContain("share of that EXPORTER'S EXPORTS at risk");
+    // The route shares and the BACI citation are the same provenance as ever.
+    expect(csv).toContain("RUS -> POL: 0.47");
+    expect(csv).toContain("Gaulier, G., & Zignago, S. (2010)");
+  });
+
+  it("omits the importer-side asset rows and says why", () => {
+    const csv = scenarioCsv(EXPORTER_RESULT, { ...ctx, view: "exporters" });
+    expect(csv).toContain("Refinery rows are omitted");
+    expect(csv).toContain("importer-side by construction");
+    expect(csv).not.toContain("refinery,POL");
+    expect(csv).not.toContain('"Plock, ""Orlen"""');
+  });
+
+  it("marks the file with an _exporters suffix", () => {
+    expect(scenarioFilename(EXPORTER_RESULT, "exporters")).toBe(
+      "global-energy-map_scenario-druzhba_oil_2020_exporters.csv",
+    );
+    expect(scenarioFilename({ ...EXPORTER_RESULT, severity: 0.5 }, "exporters")).toBe(
+      "global-energy-map_scenario-druzhba_oil_2020_sev50_exporters.csv",
+    );
+    expect(scenarioFilename(EXPORTER_RESULT)).toBe(
+      "global-energy-map_scenario-druzhba_oil_2020.csv",
+    );
+  });
+
+  it("still quotes the low end of a combined range, without promising asset rows", () => {
+    const combined: ScenarioResult = { ...EXPORTER_RESULT, scenarioIds: ["druzhba", "btc"] };
+    const csv = scenarioCsv(combined, { ...ctx, view: "exporters" });
+    expect(csv).toContain("LOW END OF THAT RANGE.");
+    expect(csv).not.toContain("including the refinery rows");
+  });
+
+  it("a result with no exporter side yields no rows rather than importer rows", () => {
+    expect(scenarioRows(RESULT, null, "exporters")).toEqual([]);
+  });
+});

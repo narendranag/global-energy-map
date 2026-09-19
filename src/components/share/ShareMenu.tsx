@@ -259,19 +259,29 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
       severity: app.severity,
     });
 
+  const scenarioSide = app?.view ?? "importers";
+
   const onScenarioCsv = async () => {
     if (!scenario) return;
     setBusy("scenario");
     try {
       const names = await loadCountries().then(countryNameMap).catch(() => null);
+      // T1: the file follows the side the panel is listing (finding 3) —
+      // exporting a table of importers while the screen ranks exporters is
+      // the one thing a researcher cannot check from the file itself.
       const csv = scenarioCsv(scenario, {
         viewUrl,
         exported: accessed,
         catalog: BUNDLED_CATALOG,
         countryNames: names,
+        view: scenarioSide,
       });
-      downloadText(scenarioFilename(scenario), csv, "text/csv");
-      setStatus("Scenario table downloaded.");
+      downloadText(scenarioFilename(scenario, scenarioSide), csv, "text/csv");
+      setStatus(
+        scenarioSide === "exporters"
+          ? "Scenario table (exporters) downloaded."
+          : "Scenario table downloaded.",
+      );
     } finally {
       setBusy(null);
     }
@@ -446,7 +456,9 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
         <ul className="mt-1.5 space-y-2 text-xs">
           <li>
             <div className="flex items-center justify-between gap-2">
-              <span className="font-medium text-ink">Scenario table</span>
+              <span className="font-medium text-ink">
+                Scenario table{scenarioSide === "exporters" ? " (exporters)" : ""}
+              </span>
               <button
                 type="button"
                 className={btn}
@@ -464,7 +476,9 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
                 ? "Pick a disruption scenario to export its importer and asset table."
                 : !scenarioReady
                   ? "Computing the scenario…"
-                  : "Derived analysis (BACI imports × cited route shares); the file header cites every input."}
+                  : scenarioSide === "exporters"
+                    ? "Derived analysis, exporter side (BACI exports × cited route shares): one row per exporter, share of its own exports at risk. Importer-side refinery / terminal rows are in the importer view."
+                    : "Derived analysis (BACI imports × cited route shares); the file header cites every input."}
             </p>
           </li>
           {layers.length === 0 && <li className="text-2xs text-ink-subtle">No layers are switched on.</li>}

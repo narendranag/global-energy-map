@@ -12,6 +12,7 @@ import {
   scenarioSelect,
   test,
   waitForReady,
+  yearSlider,
 } from "./helpers";
 
 test.setTimeout(SPEC_TIMEOUT);
@@ -352,7 +353,7 @@ test.describe("Scenarios — severity, combination, exporter view", () => {
       timeout: RESULT_TIMEOUT,
     });
     // Move the year, which forces the store to rewrite the querystring.
-    await page.getByRole("slider", { name: /year/i }).first().focus();
+    await yearSlider(page).focus();
     await page.keyboard.press("ArrowRight");
     await expect
       .poll(() => new URL(page.url()).searchParams.get("year"), { timeout: 10_000 })

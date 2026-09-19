@@ -11,6 +11,7 @@ import {
   scenarioSelect,
   test,
   waitForReady,
+  yearSlider,
 } from "./helpers";
 
 test.setTimeout(SPEC_TIMEOUT);
@@ -75,7 +76,7 @@ test.describe("Modes", () => {
     await selectTab(page, "Flows");
     await expect(page.locator("main")).toHaveAttribute("data-mode", "flows");
     await expect(page.getByRole("button", { name: "Gas" })).toHaveAttribute("aria-pressed", "true");
-    await expect(page.locator('input[type="range"]')).toHaveValue("2021");
+    await expect(yearSlider(page)).toHaveValue("2021");
     await expect(page).toHaveURL(/mode=flows/);
     expect(param(page, "layers")).toBe("gas_pipelines,lng_terminals,trade_flows");
     await expect(page.getByRole("button", { name: /^Layers\s*3 on$/ })).toHaveAttribute("aria-expanded", "false");
@@ -123,7 +124,7 @@ test.describe("Modes", () => {
 
     await gotoReady(page, "/?mode=flows&year=2015&commodity=oil&layers=reserves");
     await expect(page.getByRole("tab", { name: "Flows" })).toHaveAttribute("aria-selected", "true");
-    await expect(page.locator('input[type="range"]')).toHaveValue("2015");
+    await expect(yearSlider(page)).toHaveValue("2015");
     await expect(page.getByRole("button", { name: "Oil" })).toHaveAttribute("aria-pressed", "true");
     await expectLayers(page, ["reserves"]);
   });
@@ -134,7 +135,7 @@ test.describe("Modes", () => {
     await expect(page.getByRole("tab", { name: "Infrastructure" })).toHaveAttribute("aria-selected", "true");
     await expect(page.getByRole("button", { name: /^Layers\s*2 on$/ })).toBeVisible();
     await expectLayers(page, ["basins", "ports"]);
-    await expect(page.locator('input[type="range"]')).toHaveValue("2010");
+    await expect(yearSlider(page)).toHaveValue("2010");
     // Nothing rewrote the shared layer set.
     await expect.poll(() => param(page, "layers")).toBe("basins,ports");
   });
@@ -172,7 +173,7 @@ test.describe("First-run intro card", () => {
       await expect(card).toHaveCount(0, { timeout: 2_000 });
     });
     await expect(page.locator("main")).toHaveAttribute("data-mode", "flows");
-    await expect(page.locator('input[type="range"]')).toHaveValue("2023");
+    await expect(yearSlider(page)).toHaveValue("2023");
     await expect(page.getByRole("button", { name: "Gas" })).toHaveAttribute("aria-pressed", "true");
     await expect(page).toHaveURL(/mode=flows/);
     // Focused on Qatar so the trade-flows layer shows all of its LNG trade,

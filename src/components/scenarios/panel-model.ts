@@ -125,11 +125,25 @@ export function volumeRange(
   return `${n} ${volumeUnit(commodity)}`;
 }
 
-/** True when any row in the list actually spans a range worth printing. */
+/**
+ * True when any row in the list actually prints a range — and a row prints
+ * two of them, a share and a volume.
+ *
+ * It used to test the share alone, so a row whose percentages collapsed to
+ * one figure while its volumes did not ("22.0%  1.2–1.9 Mt") showed a dash
+ * the note never explained (finding 21). The note follows what is printed,
+ * which means asking the same formatters the row uses.
+ */
 export function hasRange(
-  rows: readonly { shareAtRisk: number; shareAtRiskUpper?: number }[],
+  rows: readonly {
+    shareAtRisk: number;
+    shareAtRiskUpper?: number;
+    atRiskQty: number;
+    atRiskQtyUpper?: number;
+  }[],
+  commodity: Commodity,
 ): boolean {
-  return rows.some((r) => pctRange(r).includes("–"));
+  return rows.some((r) => pctRange(r).includes("–") || volumeRange(r, commodity).includes("–"));
 }
 
 /** Capacity at risk (share × capacity) in the asset's own unit (kbpd / mtpa). */

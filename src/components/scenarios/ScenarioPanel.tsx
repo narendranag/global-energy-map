@@ -277,7 +277,7 @@ export function ScenarioPanel({
     [current, names, sortBy, exporterView],
   );
   /** True when two scenarios actually bracket a country's exposure. */
-  const showsRange = hasRange(rankedImporters);
+  const showsRange = hasRange(rankedImporters, commodity);
   /** True when the result really covers more than one scenario. */
   const combined = (current?.scenarioIds?.length ?? 1) > 1;
   const showLng = commodity === "gas";

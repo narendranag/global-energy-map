@@ -40,7 +40,7 @@ test.describe("Query console", () => {
     // The default query is "largest crude importers, 2024" (BACI).
     await expect(page.getByTestId("query-results")).toContainText("importer_iso3");
     await expect(page.getByTestId("query-results")).toContainText("CHN");
-    await expect(page.getByTestId("query-status")).toContainText(/\d+ rows in \d+ ms/);
+    await expect(page.getByTestId("query-status")).toContainText(/\d+ rows in [\d,]+ ms/);
 
     // trade_flow is Etalab-licensed, so the result may leave the browser.
     await expect(page.getByTestId("export-csv")).toBeEnabled();
@@ -140,7 +140,7 @@ test.describe("Query console", () => {
       });
     });
     await expect(page.getByTestId("query-error")).toHaveCount(0);
-    await expect(page.getByTestId("query-status")).toContainText(/\d+ rows in \d+ ms/);
+    await expect(page.getByTestId("query-status")).toContainText(/\d+ rows in [\d,]+ ms/);
   });
 
   test("everything it loads comes from this origin", async ({ page, baseURL }) => {

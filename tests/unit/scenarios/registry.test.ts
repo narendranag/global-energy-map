@@ -49,7 +49,11 @@ describe("scenario registry (Phase 9)", () => {
     // e2e asserts "LNG-T3 voyages" appears exactly once (the footnote).
     expect(gasT3).not.toMatch(/LNG-T3 voyages/);
     // Intra-Gulf pairs and terminals not yet in service are stated rules.
-    expect(oil).toMatch(/inside the Gulf/);
+    // The chokepoint share rule is now truthful for direction-dependent
+    // routes (Malacca/Suez/Bab el-Mandeb) too, not just Hormuz's Gulf
+    // carve-out — see the S6 fix in registry.ts's howComputed.
+    expect(oil).toMatch(/exporter → importer pair/);
+    expect(oil).toMatch(/intra-Gulf trade for Hormuz/);
     expect(gasOld).toMatch(/not yet in service/);
   });
 

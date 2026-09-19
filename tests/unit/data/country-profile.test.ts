@@ -168,7 +168,7 @@ describe("buildExposure", () => {
       ["druzhba", result("druzhba", [{ iso3: "JPN", totalQty: 100, atRiskQty: 1 }])],
       ["btc", result("btc", [{ iso3: "JPN", totalQty: 100, atRiskQty: 99 }])],
     ]);
-    const rows = buildExposure(results, "JPN", "oil", defs);
+    const rows = buildExposure(results, "JPN", "oil", 2024, defs);
     expect(rows.map((r) => r.scenarioId)).toEqual(["hormuz", "druzhba"]);
     expect(rows[0]?.shareAtRisk).toBeCloseTo(0.8);
     expect(rows[0]?.atRiskQty).toBe(80);
@@ -178,13 +178,33 @@ describe("buildExposure", () => {
     const results = new Map<ScenarioId, ScenarioResult>([
       ["hormuz", result("hormuz", [{ iso3: "JPN", totalQty: 0, atRiskQty: 0 }])],
     ]);
-    expect(buildExposure(results, "JPN", "oil", defs)).toEqual([]);
-    expect(buildExposure(results, "ZZZ", "oil", defs)).toEqual([]);
+    expect(buildExposure(results, "JPN", "oil", 2024, defs)).toEqual([]);
+    expect(buildExposure(results, "ZZZ", "oil", 2024, defs)).toEqual([]);
+  });
+
+  it("skips a scenario whose activeYears exclude the year", () => {
+    const windowed: ScenarioDef[] = defs
+      .filter((d) => d.id !== 'btc')
+      .map((d) =>
+        d.id === 'hormuz'
+          ? { ...d, activeYears: { from: 2023, to: 2025 } }
+          : { ...d, activeYears: { to: 2021 } },
+      );
+    const results = new Map<ScenarioId, ScenarioResult>([
+      ["hormuz", result("hormuz", [{ iso3: "JPN", totalQty: 100, atRiskQty: 50 }])],
+      ["druzhba", result("druzhba", [{ iso3: "JPN", totalQty: 100, atRiskQty: 50 }])],
+    ]);
+    expect(buildExposure(results, "JPN", "oil", 2024, windowed).map((r) => r.scenarioId)).toEqual([
+      "hormuz",
+    ]);
+    expect(buildExposure(results, "JPN", "oil", 2020, windowed).map((r) => r.scenarioId)).toEqual([
+      "druzhba",
+    ]);
   });
 
   it("ignores a result computed for the other commodity", () => {
     const gas = { ...result("hormuz", [{ iso3: "JPN", totalQty: 10, atRiskQty: 10 }]), commodity: "gas" as const };
-    expect(buildExposure(new Map([["hormuz", gas]]), "JPN", "oil", defs)).toEqual([]);
+    expect(buildExposure(new Map([["hormuz", gas]]), "JPN", "oil", 2024, defs)).toEqual([]);
   });
 });
 

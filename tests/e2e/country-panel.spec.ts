@@ -4,6 +4,7 @@
 import type { Page } from "@playwright/test";
 import { SPEC_TIMEOUT, expect, gotoReady, project, test } from "./helpers";
 import type { MapView } from "../../src/lib/state/view";
+import { SCENARIOS, isScenarioActive } from "../../src/lib/scenarios/registry";
 
 test.setTimeout(SPEC_TIMEOUT);
 
@@ -66,8 +67,11 @@ test.describe("country panel", () => {
     await gotoReady(page, "/?focus=JPN&year=2024&layers=reserves");
     const rows = page.getByTestId("country-exposure-rows");
     await expect(rows).toBeVisible({ timeout: SECTION_TIMEOUT });
-    // All four oil scenarios; Hormuz first, because Japan is most exposed to it.
-    await expect(rows.getByRole("button")).toHaveCount(4);
+    // Every oil scenario the registry holds for 2024, so adding one does not
+    // silently stop appearing here; Hormuz first, as Japan's largest exposure.
+    await expect(rows.getByRole("button")).toHaveCount(
+      SCENARIOS.filter((s) => s.commodities.includes("oil") && isScenarioActive(s, 2024)).length,
+    );
     await expect(rows.getByRole("button").first()).toContainText("Close Strait of Hormuz");
 
     await rows.getByRole("button").first().click();

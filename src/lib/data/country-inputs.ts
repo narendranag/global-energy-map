@@ -3,7 +3,7 @@ import { readParquet } from "./parquet";
 import { loadScenarioInputs } from "./scenario-inputs";
 import type { CountrySeriesRow, CountryTradeRow } from "./country-profile";
 import { computeScenarioImpact } from "@/lib/scenarios/engine";
-import { SCENARIOS } from "@/lib/scenarios/registry";
+import { SCENARIOS, isScenarioActive } from "@/lib/scenarios/registry";
 import type { Commodity, ScenarioId, ScenarioResult } from "@/lib/scenarios/types";
 
 /**
@@ -47,7 +47,8 @@ export const loadAllTradeFlows = cachedLoader(
  * the user selecting each scenario in turn.
  *
  * Scenarios come from `SCENARIOS`, so one added elsewhere appears here with
- * no change; those that do not apply to the commodity are not run at all.
+ * no change; those that do not apply to the commodity, or whose `activeYears`
+ * exclude the selected year, are not run at all.
  * The engine is called **without** refinery or LNG-terminal rows: the panel
  * only reads `byImporter`, and skipping the asset attribution keeps this to
  * a handful of passes over one year of BACI rows. Cached on (year,
@@ -55,7 +56,9 @@ export const loadAllTradeFlows = cachedLoader(
  */
 export const loadCountryExposure = cachedLoader(
   async (year: number, commodity: Commodity): Promise<ReadonlyMap<ScenarioId, ScenarioResult>> => {
-    const defs = SCENARIOS.filter((s) => s.commodities.includes(commodity));
+    const defs = SCENARIOS.filter(
+      (s) => s.commodities.includes(commodity) && isScenarioActive(s, year),
+    );
     const entries = await Promise.all(
       defs.map(async (def) => {
         const inputs = await loadScenarioInputs(def.id, year, commodity);

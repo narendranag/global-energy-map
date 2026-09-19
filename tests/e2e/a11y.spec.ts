@@ -59,6 +59,22 @@ test.describe("axe: zero serious/critical violations", () => {
     expect(await seriousViolations(page)).toEqual([]);
   });
 
+  test("/query, before and after a result is on screen", async ({ page }) => {
+    await page.goto("/query");
+    await expect(page.getByRole("heading", { level: 1, name: "Query console" })).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+
+    // The result grid is the part most likely to fail: header cells, caption.
+    await clickUntil(
+      page.getByTestId("run-query"),
+      async () => {
+        await expect(page.getByTestId("query-results")).toBeVisible({ timeout: 20_000 });
+      },
+      120_000,
+    );
+    expect(await seriousViolations(page)).toEqual([]);
+  });
+
   for (const [path, name] of [["/terms", "Terms of use"], ["/privacy", "Privacy"]] as const) {
     test(path, async ({ page }) => {
       await page.goto(path);

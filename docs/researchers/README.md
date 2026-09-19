@@ -13,6 +13,7 @@ The map is free, needs no account, and runs entirely in your browser: the Parque
 - **Where did LNG cargoes go in 2020–2024?** AIS-derived voyage arcs from the LNG-T3 dataset — a sample of routes, not a census of trade.
 - **Who is exposed if a route closes?** Five disruption scenarios (Strait of Hormuz for crude, Strait of Hormuz for LNG, Druzhba, Baku–Tbilisi–Ceyhan, Caspian Pipeline Consortium) give, for any year 1995–2024, each importer's share of crude or LNG imports that moved through the route, and attribute that exposure to refineries or LNG import terminals.
 - **What exactly is behind a number?** Every hover shows the source and as-of date; every scenario lists the route shares it used with the document behind each; every view can be cited and most layers exported.
+- **Anything else the data can answer.** The [query console](query-console.md) runs SQL over the same Parquet tables, in your browser, so you are not limited to the questions the interface anticipated.
 
 ## What it cannot answer
 
@@ -30,6 +31,7 @@ The map is free, needs no account, and runs entirely in your browser: the Parque
 |---|---|
 | [Getting started](getting-started.md) | learn the interface: modes, layers, the year control, hovering, the scenario panel, Share / cite, and the URL parameters |
 | [Worked examples](worked-examples.md) | follow five research questions end to end, with exact links, computed numbers and the caveats that apply |
+| [Query console](query-console.md) | run your own SQL over the shipped tables, and know which results you may save as a file |
 | [Scenario method](scenario-method.md) | understand what "% at risk" means, where route shares come from, what the model leaves out, and how to check a result yourself |
 | [Data and coverage](data-and-coverage.md) | know, layer by layer, the source, as-of date, coverage, units, time behaviour and known biases |
 | [Citing and reuse](citing-and-reuse.md) | cite the map, a specific view and the underlying sources; download and verify files; rebuild the data |

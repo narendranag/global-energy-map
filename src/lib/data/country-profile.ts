@@ -18,7 +18,7 @@ import type { RecentImport, RecentImportsData } from "./recent-imports";
 import { sourceLine } from "./sources";
 import { RESERVES_METRIC } from "./reserves";
 import { YEAR_MAX, YEAR_MIN } from "@/lib/time/range";
-import { SCENARIOS, type ScenarioDef } from "@/lib/scenarios/registry";
+import { SCENARIOS, isScenarioActive, type ScenarioDef } from "@/lib/scenarios/registry";
 import type { Commodity, ScenarioId, ScenarioResult } from "@/lib/scenarios/types";
 
 // ---------------------------------------------------------------------------
@@ -386,19 +386,22 @@ function buildTrade(
 
 /**
  * The country's row in every scenario result, most exposed first. Scenarios
- * that do not apply to the commodity are never run, so they are absent here;
- * a scenario the country has no BACI imports under is dropped rather than
- * shown as a confident 0%.
+ * that do not apply to the commodity, or whose `activeYears` exclude the
+ * selected year (Kirkuk-Ceyhan's shutdown, say), are never run and are absent
+ * here; a scenario the country has no BACI imports under is dropped rather
+ * than shown as a confident 0%.
  */
 export function buildExposure(
   results: ReadonlyMap<ScenarioId, ScenarioResult>,
   iso3: string,
   commodity: Commodity,
+  year: number,
   scenarios: readonly ScenarioDef[] = SCENARIOS,
 ): ExposureRow[] {
   const rows: ExposureRow[] = [];
   for (const def of scenarios) {
     if (!def.commodities.includes(commodity)) continue;
+    if (!isScenarioActive(def, year)) continue;
     const result = results.get(def.id);
     if (result?.commodity !== commodity) continue;
     const impact = result.byImporter.find((i) => i.iso3 === iso3);
@@ -496,7 +499,7 @@ export function buildCountryProfile(
     inputs.trade === null ? null : buildTrade(inputs.trade, iso3, year, commodity, inputs.names);
 
   const exposure =
-    inputs.exposure === null ? [] : buildExposure(inputs.exposure, iso3, commodity);
+    inputs.exposure === null ? [] : buildExposure(inputs.exposure, iso3, commodity, year);
 
   const infrastructure: CountryInfrastructure[] = [];
   if (inputs.assets !== null) {

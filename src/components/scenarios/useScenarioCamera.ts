@@ -8,9 +8,12 @@
  *    example question, a country-panel row. Not on a year or commodity
  *    change: those recompute the result, and re-framing under the viewer's
  *    hands while they drag the slider is the opposite of helpful.
- *  - **Not on load when the URL carries an explicit `lon`/`lat`/`z`.** Same
- *    rule S0 set for `focus`: a shared link's view is what the sharer chose
- *    to show, and it wins. `allowInitialFit` carries that decision in.
+ *  - **Never on load.** A link's view is what the sharer chose to show, and
+ *    it wins — the strong form of the rule S0 set for `focus`, where an
+ *    explicit `lon`/`lat`/`z` beats the load-time fit. Re-framing a
+ *    `?scenario=hormuz` link on arrival would also silently rewrite the
+ *    camera in every such link ever shared. The fit is a response to a
+ *    *change* the viewer makes, not to state they arrived with.
  *  - **It waits for the result, then fires once.** Activating a scenario
  *    posts the intent; the fit happens when the exposure for *that* scenario
  *    arrives (and, for a pipeline scenario, when its geometry has placed the
@@ -37,8 +40,6 @@ export interface ScenarioCameraInput {
   /** True while the mark cannot be placed *yet* (a pipeline route still loading). */
   readonly markPending: boolean;
   readonly result: ScenarioResult | null;
-  /** False when the initial URL carried an explicit camera. */
-  readonly allowInitialFit: boolean;
   readonly padding: Partial<CameraPadding>;
 }
 
@@ -47,7 +48,6 @@ export function useScenarioCamera({
   mark,
   markPending,
   result,
-  allowInitialFit,
   padding,
 }: ScenarioCameraInput): void {
   const camera = useCamera();
@@ -64,10 +64,10 @@ export function useScenarioCamera({
       awaiting.current = null;
       return;
     }
-    // The load-time case: an explicit view in the link beats the fit.
-    if (first && !allowInitialFit) return;
+    // The scenario the page loaded with is not a change the viewer made.
+    if (first) return;
     awaiting.current = scenarioId;
-  }, [scenarioId, allowInitialFit]);
+  }, [scenarioId]);
 
   useEffect(() => {
     const want = awaiting.current;

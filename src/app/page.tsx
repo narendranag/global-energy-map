@@ -177,17 +177,13 @@ function HomeInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // S1: activating a scenario frames the disruption and the importers that
-  // lose most — unless the link already said where to look.
-  const explicitView = ["lon", "lat", "z"].some((k) => searchParams.has(k));
-  // Captured on the first render: the *initial* URL is what decides this.
-  const [allowInitialFit] = useState(() => !explicitView && focus === null);
+  // S1: picking a scenario frames the disruption and the importers that lose
+  // most, clear of the panels. Never on load — the link's view wins.
   useScenarioCamera({
     scenarioId,
     mark: scenarioMap.mark,
     markPending: scenarioMap.pending > 0,
     result: scenario,
-    allowInitialFit,
     padding: SCENARIO_CAMERA_PADDING,
   });
 

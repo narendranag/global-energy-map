@@ -151,7 +151,7 @@ export function CountryPanel({
   const headingId = `${uid}-heading`;
   const headingRef = useRef<HTMLHeadingElement>(null);
   const camera = useCamera();
-  const profile = useCountryProfile(iso3, year, commodity);
+  const { profile, errors } = useCountryProfile(iso3, year, commodity);
 
   // Keyboard-initiated selection moves focus here; a map click does not (it
   // would take the pointer user out of the map mid-gesture).
@@ -220,6 +220,27 @@ export function CountryPanel({
           </button>
         )}
       </div>
+
+      {/*
+        A section's loader failing is not an app failure (B7): the panel is a
+        second reader off the map's critical path, so it says what could not
+        be loaded and offers a retry rather than escalating to the global
+        error panel and replacing the map.
+      */}
+      {errors.length > 0 && (
+        <p className={`mt-2 ${NOTE}`} data-testid="country-section-error">
+          Could not load {errors.map((e) => e.section).join(", ")}.{" "}
+          <button
+            type="button"
+            className={LINK}
+            onClick={() => {
+              for (const e of errors) e.retry();
+            }}
+          >
+            Retry
+          </button>
+        </p>
+      )}
 
       {profile === null ? (
         <p className={`mt-2 ${NOTE}`}>Loading…</p>

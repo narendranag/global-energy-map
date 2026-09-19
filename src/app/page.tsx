@@ -34,6 +34,8 @@ import {
   type Mode,
 } from "@/lib/modes";
 import { getScenario } from "@/lib/scenarios/registry";
+import { isCurrentScenarioResult } from "@/lib/scenarios/current";
+import { scenarioSummaryParts } from "@/lib/scenarios/summary";
 import type { Commodity, ScenarioId } from "@/lib/scenarios/types";
 import { activeScenarioIds, normalizeScenarioPair, type ScenarioView } from "@/lib/url-state/encode";
 import { panelPadding, requestInitialFit } from "@/lib/state";
@@ -198,14 +200,18 @@ function HomeInner() {
   // a scenario whose result does not yet match (scenario, year, commodity).
   // T1: the second scenario and the severity are inputs too — without them
   // `data-ready` would flip true while the panel still showed the single-
-  // scenario, full-closure numbers.
+  // scenario, full-closure numbers. The comparison itself is shared with the
+  // panel and ShareMenu (`isCurrentScenarioResult`) and is made against the
+  // ids the loader was *asked* for, not the ones it kept (finding 20).
   const scenarioPending =
     scenarioId !== null &&
-    (scenario?.scenarioId !== scenarioId ||
-      scenario.year !== year ||
-      scenario.commodity !== commodity ||
-      (scenario.scenarioIds?.[1] ?? null) !== scenario2 ||
-      (scenario.severity ?? 1) !== severity);
+    !isCurrentScenarioResult(scenario, {
+      scenario: scenarioId,
+      scenario2,
+      year,
+      commodity,
+      severity,
+    });
   const pending = layersPending + scenarioMap.pending + (scenarioPending ? 1 : 0);
   const mapLayers = useMemo(
     () => [...deckLayers, ...scenarioMap.layers],
@@ -271,8 +277,15 @@ function HomeInner() {
   // `useSearchParams()` tracks the store's own debounced `replaceState`.
   const embed = isEmbed(searchParams);
   const hideControls = embed && embedControlsHidden(searchParams);
-  const activeScenarioLabel = scenarioId !== null ? getScenario(scenarioId).label : null;
-  const scenarioChipSummary = `${activeScenarioLabel ?? "Scenario"} · ${year.toString()} · ${commodity}`;
+  // The chip is the whole scenario panel, collapsed to one line — so it names
+  // everything the panel would: both scenarios, the severity and the side
+  // being listed (finding 11), through the same helper ShareMenu's citation
+  // summary uses.
+  const scenarioChipSummary = [
+    ...scenarioSummaryParts({ scenario: scenarioId, scenario2, severity, view }, "Scenario"),
+    year.toString(),
+    commodity,
+  ].join(" · ");
   // Collapse the phone-only scenario toggle at every width in embed mode
   // (not just under 768 px): an embed frame is often narrower than desktop
   // but not a phone.
@@ -321,6 +334,7 @@ function HomeInner() {
           // the same ramp shades who loses the outlet, so only the noun moves.
           scenarioNoun={scenarioId !== null ? sideNoun(commodity, view) : undefined}
           scenarioKind={scenarioDef?.kind}
+          scenarioView={scenarioId !== null ? view : undefined}
           defaultOpen={layersOpenByDefault(mode)}
           embedded={embed}
         />
@@ -435,7 +449,11 @@ function HomeInner() {
                 onFocus={setFocus}
                 onScenario={setScenarioId}
                 scenarioOpen={showScenarioPanel}
-                scenarioAdjusted={scenarioId !== null && (scenario2 !== null || severity < 1)}
+                scenarioAdjusted={
+                  scenarioId !== null && (scenario2 !== null || severity < 1)
+                    ? { combined: scenario2 !== null, partial: severity < 1 }
+                    : null
+                }
               />
             </div>
           </>

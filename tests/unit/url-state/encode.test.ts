@@ -195,17 +195,55 @@ describe("severity, a second scenario and the exporter view (T1)", () => {
     expect(decodeAppState(new URLSearchParams(qs), DEFAULTS).severity).toBe(0.5);
   });
 
-  it("clamps sev to 5–100 and rounds it", () => {
+  it("honours an in-range sev, including values off the slider's 5 % step", () => {
     const d = (qs: string) => decodeAppState(new URLSearchParams(qs), DEFAULTS).severity;
-    expect(d("sev=0")).toBe(0.05);
-    expect(d("sev=-40")).toBe(0.05);
-    expect(d("sev=400")).toBe(1);
-    expect(d("sev=37.4")).toBe(0.37);
+    // The step is a UI matter: a link may say 37 %, and the slider simply
+    // shows the nearest notch if the viewer drags it afterwards.
+    expect(d("scenario=hormuz&sev=37")).toBe(0.37);
+    expect(d("scenario=hormuz&sev=37.4")).toBe(0.37);
+    expect(d("scenario=hormuz&sev=5")).toBe(0.05);
+    expect(d("scenario=hormuz&sev=100")).toBe(1);
+  });
+
+  it("treats an out-of-range sev as invalid — 100 %, never clamped up to 5 % (finding 18)", () => {
+    const d = (qs: string) => decodeAppState(new URLSearchParams(qs), DEFAULTS).severity;
+    expect(d("scenario=hormuz&sev=0")).toBe(1);
+    expect(d("scenario=hormuz&sev=-40")).toBe(1);
+    expect(d("scenario=hormuz&sev=4")).toBe(1);
+    expect(d("scenario=hormuz&sev=400")).toBe(1);
   });
 
   it("falls back to the default for an unparseable sev rather than inventing 0", () => {
-    expect(decodeAppState(new URLSearchParams("sev=banana"), DEFAULTS).severity).toBe(1);
-    expect(decodeAppState(new URLSearchParams("sev="), DEFAULTS).severity).toBe(1);
+    const d = (qs: string) => decodeAppState(new URLSearchParams(qs), DEFAULTS).severity;
+    expect(d("scenario=hormuz&sev=banana")).toBe(1);
+    expect(d("scenario=hormuz&sev=")).toBe(1);
+  });
+
+  it("drops sev, view and scenario2 when there is no primary scenario (finding 19)", () => {
+    const decoded = decodeAppState(
+      new URLSearchParams("sev=50&view=exporters&scenario2=malacca"),
+      DEFAULTS,
+    );
+    expect(decoded.scenario).toBeNull();
+    expect(decoded.scenario2).toBeNull();
+    expect(decoded.severity).toBe(1);
+    expect(decoded.view).toBe("importers");
+    // …and nothing is written back out, so the dangling params cannot survive
+    // a round trip through the address bar.
+    const params = new URLSearchParams(encodeAppState(decoded));
+    expect(params.has("sev")).toBe(false);
+    expect(params.has("view")).toBe(false);
+    expect(params.has("scenario2")).toBe(false);
+  });
+
+  it("drops sev and view when the primary is dropped by the commodity axis", () => {
+    const decoded = decodeAppState(
+      new URLSearchParams("commodity=gas&scenario=druzhba&sev=50&view=exporters"),
+      DEFAULTS,
+    );
+    expect(decoded.scenario).toBeNull();
+    expect(decoded.severity).toBe(1);
+    expect(decoded.view).toBe("importers");
   });
 
   it("round-trips a second scenario as its own parameter, never scenario=a+b", () => {

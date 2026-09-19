@@ -4,6 +4,7 @@ import { groupIdenticalPairShares, pairLabel } from "@/lib/scenarios/share-group
 import { scenarioIdsOf } from "@/lib/scenarios/shares";
 import type { ScenarioResult } from "@/lib/scenarios/types";
 import { LNG_T3_FIRST_YEAR, LNG_T3_LAST_YEAR } from "@/lib/data/voyages";
+import type { ScenarioView } from "@/lib/url-state/encode";
 import { toCsv, type CsvValue } from "./csv";
 import { apaCitation, sharesFor, UNSOURCED_TITLE, type ShareCitation } from "./citation";
 
@@ -11,6 +12,24 @@ import { apaCitation, sharesFor, UNSOURCED_TITLE, type ShareCitation } from "./c
  * The active scenario as one tidy CSV — importer rows, then refinery (oil) or
  * LNG import-terminal (gas) rows — with a `#` header that states it is derived
  * analysis and cites the trade data and every route share it used.
+ *
+ * T1 added an exporter view to the panel and the map, and the export ignored
+ * it: a researcher reading a ranking of *exporters* on screen downloaded a
+ * table of importers (finding 3). `view` now selects which side is written.
+ *
+ * The importer file is unchanged, byte for byte — pinned by a test, because
+ * every scenario CSV shared so far is an importer file and a column or a
+ * header line that moved would break a script someone already wrote.
+ *
+ * The exporter file carries **no asset rows**. Refineries and LNG import
+ * terminals are importer-side by construction: they answer "which plants lose
+ * feedstock", by splitting an *importer's* at-risk imports across its own
+ * capacity. There is no exporter-side counterpart in the data — we hold no
+ * export terminals or loading berths for crude, and attributing an exporter's
+ * lost sales to the refineries of the countries that were going to buy it
+ * would silently mix the two sides in one file. So the exporter file says, in
+ * its header, that those rows exist in the importer view and why they are not
+ * here, and a reader who wants them switches the panel back.
  */
 
 export const SCENARIO_COLUMNS = [
@@ -40,6 +59,12 @@ export interface ScenarioExportContext {
   readonly countryNames?: ReadonlyMap<string, string> | null;
   /** Route-share citations; defaults to the generated disruption_route rows. */
   readonly shares?: readonly ShareCitation[];
+  /**
+   * T1: which side of the cut the file describes — the side the panel was
+   * listing when the viewer pressed the button. Defaults to importers, which
+   * is what every file exported before T1 was.
+   */
+  readonly view?: ScenarioView;
 }
 
 const round = (n: number, dp: number) => {
@@ -71,10 +96,35 @@ export function shareCitationLine(r: ShareCitation, pairs: readonly ShareCitatio
 export function scenarioRows(
   result: ScenarioResult,
   names?: ReadonlyMap<string, string> | null,
+  view: ScenarioView = "importers",
 ): ScenarioRow[] {
   const gas = result.commodity === "gas";
   const qtyUnit = "tonnes";
   const name = (iso3: string) => names?.get(iso3) ?? null;
+  if (view === "exporters") {
+    // The same impact shape read from the other end: `total_qty` is what the
+    // country exported, `at_risk_qty` the part that moves on the cut route,
+    // `share_at_risk` its share of that country's EXPORTS. Asset rows are
+    // importer-side and deliberately absent (see the file comment).
+    return [...(result.byExporter ?? [])]
+      .filter((e) => e.totalQty > 0)
+      .sort((a, b) => b.shareAtRisk - a.shareAtRisk || b.atRiskQty - a.atRiskQty)
+      .map((e) => ({
+        row_type: "exporter",
+        iso3: e.iso3,
+        country: name(e.iso3),
+        asset_id: null,
+        name: null,
+        capacity: null,
+        capacity_unit: null,
+        total_qty: round(e.totalQty, 1),
+        at_risk_qty: round(e.atRiskQty, 1),
+        share_at_risk: round(e.shareAtRisk, 6),
+        qty_unit: qtyUnit,
+        attribution: "BACI bilateral exports x route share",
+        top_sources: null,
+      }));
+  }
   const importers: ScenarioRow[] = [...result.byImporter]
     .filter((i) => i.totalQty > 0)
     .sort((a, b) => b.shareAtRisk - a.shareAtRisk || b.atRiskQty - a.atRiskQty)
@@ -160,16 +210,27 @@ export function scenarioHeader(result: ScenarioResult, ctx: ScenarioExportContex
     shares: sharesFor(routeKeyFor(id, result.commodity) ?? id, ctx.shares),
   }));
   const shares = perScenario.flatMap((s) => s.shares);
+  const exporterView = (ctx.view ?? "importers") === "exporters";
+  const assetNoun = gas ? "LNG import-terminal" : "Refinery";
   const lines = [
-    `Global Energy Map — scenario table: ${perScenario.map((s) => s.def.label).join(" + ")}, ${gas ? "LNG" : "crude oil"}, ${String(result.year)}`,
-    "DERIVED ANALYSIS, not source data. Importer rows: BACI bilateral imports from each exporter x that exporter's route share;",
-    `share_at_risk = at_risk_qty / total_qty. ${gas ? "LNG import-terminal" : "Refinery"} rows attribute a country's at-risk imports to its ${gas ? "terminals" : "refineries"}${usesVoyages ? " (LNG-T3 voyage shares where covered, else by capacity)" : " by capacity (uniformly when capacity is unknown)"}.`,
+    `Global Energy Map — scenario table: ${perScenario.map((s) => s.def.label).join(" + ")}, ${gas ? "LNG" : "crude oil"}, ${String(result.year)}${exporterView ? ", EXPORTER VIEW" : ""}`,
+    ...(exporterView
+      ? [
+          "DERIVED ANALYSIS, not source data. EXPORTER VIEW: every row is an exporter — who loses the outlet, not who loses the supply.",
+          "total_qty is everything the country exported of this commodity in the year; at_risk_qty is the part that moves on the cut route;",
+          "share_at_risk = at_risk_qty / total_qty, i.e. the share of that EXPORTER'S EXPORTS at risk (not of anyone's imports).",
+          `${assetNoun} rows are omitted: they are importer-side by construction (an importer's at-risk imports split across its own ${gas ? "terminals" : "refineries"}) and have no exporter-side counterpart. Export the importer view for them.`,
+        ]
+      : [
+          "DERIVED ANALYSIS, not source data. Importer rows: BACI bilateral imports from each exporter x that exporter's route share;",
+          `share_at_risk = at_risk_qty / total_qty. ${assetNoun} rows attribute a country's at-risk imports to its ${gas ? "terminals" : "refineries"}${usesVoyages ? " (LNG-T3 voyage shares where covered, else by capacity)" : " by capacity (uniformly when capacity is unknown)"}.`,
+        ]),
     `Quantities in metric tonnes (BACI ${hs}); capacity in the stated unit.`,
     baci
       ? `Trade data: ${baci.attribution ?? baci.source_name}, as of ${baci.as_of}. ${baci.license}. Cite: Gaulier, G., & Zignago, S. (2010). BACI: International Trade Database at the Product-Level. The 1994-2007 Version. CEPII Working Paper 2010-23. ${baci.source_url}`
       : "Trade data: CEPII BACI.",
   ];
-  if (usesVoyages && lngT3) {
+  if (usesVoyages && lngT3 && !exporterView) {
     lines.push(`Terminal shares: ${lngT3.attribution ?? lngT3.source_name}, as of ${lngT3.as_of}. ${lngT3.source_url}`);
   }
   if (severity < 1) {
@@ -179,11 +240,11 @@ export function scenarioHeader(result: ScenarioResult, ctx: ScenarioExportContex
   }
   if (ids.length > 1) {
     lines.push(
-      `${String(ids.length)} routes closed at once (${perScenario.map((s) => s.def.routeName).join(" and ")}). Each route's shares are resolved on their own, then combined. Because we know what fraction of a flow each route carries but not which cargoes, a country's exposure is a range: low = the largest single share (routes in series, the same barrels cut once), high = the shares added and capped at 100% (routes in parallel, different barrels). EVERY at_risk_qty AND share_at_risk BELOW IS THE LOW END OF THAT RANGE, including the ${gas ? "terminal" : "refinery"} rows.`,
+      `${String(ids.length)} routes closed at once (${perScenario.map((s) => s.def.routeName).join(" and ")}). Each route's shares are resolved on their own, then combined. Because we know what fraction of a flow each route carries but not which cargoes, a country's exposure is a range: low = the largest single share (routes in series, the same barrels cut once), high = the shares added and capped at 100% (routes in parallel, different barrels). EVERY at_risk_qty AND share_at_risk BELOW IS THE LOW END OF THAT RANGE${exporterView ? "." : `, including the ${gas ? "terminal" : "refinery"} rows.`}`,
     );
-  } else {
+  } else if (!exporterView) {
     lines.push(
-      `${gas ? "LNG import-terminal" : "Refinery"} rows quote the same single-scenario figure as their country.`,
+      `${assetNoun} rows quote the same single-scenario figure as their country.`,
     );
   }
   lines.push(
@@ -200,11 +261,21 @@ export function scenarioHeader(result: ScenarioResult, ctx: ScenarioExportContex
 }
 
 export function scenarioCsv(result: ScenarioResult, ctx: ScenarioExportContext): string {
-  return toCsv(SCENARIO_COLUMNS, scenarioRows(result, ctx.countryNames), scenarioHeader(result, ctx));
+  return toCsv(
+    SCENARIO_COLUMNS,
+    scenarioRows(result, ctx.countryNames, ctx.view ?? "importers"),
+    scenarioHeader(result, ctx),
+  );
 }
 
-export function scenarioFilename(result: ScenarioResult): string {
+export function scenarioFilename(
+  result: ScenarioResult,
+  view: ScenarioView = "importers",
+): string {
   const ids = scenarioIdsOf(result).join("+");
   const sev = (result.severity ?? 1) < 1 ? `_sev${String(Math.round((result.severity ?? 1) * 100))}` : "";
-  return `global-energy-map_scenario-${ids}_${result.commodity}_${String(result.year)}${sev}.csv`;
+  // Appended last, so an importer file's name is unchanged and two files for
+  // the same view cannot land in a downloads folder as "table (1).csv".
+  const side = view === "exporters" ? "_exporters" : "";
+  return `global-energy-map_scenario-${ids}_${result.commodity}_${String(result.year)}${sev}${side}.csv`;
 }

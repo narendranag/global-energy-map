@@ -7,6 +7,7 @@
  * scenario panel's "Check a country" lookup.
  */
 import type { Commodity, RouteRow, ScenarioResult, TradeFlowRow } from "@/lib/scenarios/types";
+import type { ScenarioView } from "@/lib/url-state/encode";
 import { combineShares, resolveScenarioShare, scenarioIdsOf } from "@/lib/scenarios/shares";
 import { clampSeverity } from "@/lib/scenarios/engine";
 
@@ -170,6 +171,14 @@ export interface DescribeContext {
   readonly nameOf: (iso3: string) => string;
   /** BACI tonnes → display string ("123 kb/d"). */
   readonly formatVolume: (tonnes: number) => string;
+  /**
+   * T1: which side the panel is listing. This lookup always explains a
+   * country's **import** exposure — that is what the explanation is built
+   * from — but one sentence used to assert that the scenario measures
+   * importers and not exporters, which stopped being true when the exporter
+   * view arrived (finding 9). It now points at the ranking instead.
+   */
+  readonly view?: ScenarioView;
 }
 
 function list(items: readonly string[]): string {
@@ -204,9 +213,13 @@ export function describeExposure(e: ExposureExplanation, ctx: DescribeContext): 
         e.importShareAtRisk > 0
           ? ` Its own ${noun} show ${(e.importShareAtRisk * 100).toFixed(1)}% at risk (${ctx.formatVolume(e.importAtRiskQty)}).`
           : "";
+      const measured =
+        ctx.view === "exporters"
+          ? `This check reads its ${noun}; what it stands to lose in sales is the ranking above.`
+          : `The scenario measures importers' exposure, not an exporter's lost sales.`;
       return (
         `${e.importShareAtRisk > 0 ? "" : "0%: "}${name} is an exporter on this route (${how}). ` +
-        `The scenario measures importers' exposure, not an exporter's lost sales.${own}`
+        `${measured}${own}`
       );
     }
     case "no-imports":

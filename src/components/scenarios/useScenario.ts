@@ -11,6 +11,7 @@ import type {
 } from "@/lib/scenarios/types";
 import type { AssetsByKind } from "@/lib/data/assets";
 import { loadScenarioInputs, type ScenarioInputs } from "@/lib/data/scenario-inputs";
+import { requestedIdsOf } from "@/lib/scenarios/current";
 import { useAsync } from "@/lib/data/useAsync";
 
 /** Engine rows from shared asset rows; unknown capacity → 0 (engine spreads uniformly). */
@@ -44,6 +45,10 @@ export function scenarioFromInputs(
   severity = 1,
 ): ScenarioResult {
   const isOil = inputs.commodity === "oil";
+  // What was asked for, carried through the engine untouched: a secondary the
+  // loader dropped for want of route rows is still what the controls say, and
+  // `isCurrentScenarioResult` has to compare against that (finding 20).
+  const requestedScenarioIds = inputs.requestedIds;
   const raw = computeScenarioImpact({
     scenarioId: inputs.scenarioId,
     scenarioIds: inputs.scenarioIds,
@@ -55,7 +60,7 @@ export function scenarioFromInputs(
     ...(isOil ? { refineries: refineryRows(assets) } : { lngImports: lngImportRows(assets) }),
     ...(inputs.lngVoyages.length > 0 ? { lngVoyages: inputs.lngVoyages } : {}),
   });
-  if (!isOil) return raw;
+  if (!isOil) return { ...raw, requestedScenarioIds };
 
   const nameById = new Map(assets.refinery.map((r) => [r.asset_id, r.name]));
   const withName = (i: RefineryImpact): RefineryImpact => {
@@ -66,6 +71,7 @@ export function scenarioFromInputs(
   const byId = new Map(byRefinery.map((i) => [i.asset_id, i]));
   return {
     ...raw,
+    requestedScenarioIds,
     byRefinery,
     rankedRefineries: raw.rankedRefineries.map((i) => byId.get(i.asset_id) ?? i),
   };
@@ -108,7 +114,9 @@ export function useScenario(
 export function useScenarioInputsFor(result: ScenarioResult | null): ScenarioInputs | null {
   // The second scenario is part of the key: with `hormuz + malacca` active,
   // asking for `hormuz`'s inputs alone would list only half the route shares.
-  const secondary = result?.scenarioIds?.[1] ?? "";
+  // It is the *requested* secondary, so the cache key matches the run even
+  // when the loader dropped a row-less secondary (finding 20).
+  const secondary = result === null ? "" : requestedIdsOf(result)[1] ?? "";
   const args =
     result === null
       ? null
@@ -118,7 +126,7 @@ export function useScenarioInputsFor(result: ScenarioResult | null): ScenarioInp
   return data.scenarioId === result.scenarioId &&
     data.year === result.year &&
     data.commodity === result.commodity &&
-    (data.scenarioIds[1] ?? "") === secondary
+    (data.requestedIds[1] ?? "") === secondary
     ? data
     : null;
 }

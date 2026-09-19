@@ -6,6 +6,7 @@ export {
   DEFAULT_CAMERA_PADDING,
   FIT_MAX_ZOOM,
   panelPadding,
+  paddingOffset,
   prefersReducedMotion,
   resolvePadding,
   type Bounds,

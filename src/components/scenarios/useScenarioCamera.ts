@@ -15,9 +15,12 @@
  *    camera in every such link ever shared. The fit is a response to a
  *    *change* the viewer makes, not to state they arrived with.
  *  - **It waits for the result, then fires once.** Activating a scenario
- *    posts the intent; the fit happens when the exposure for *that* scenario
- *    arrives (and, for a pipeline scenario, when its geometry has placed the
- *    mark). Later recomputes of the same scenario never re-fit.
+ *    posts the intent; the fit happens when the exposure for *that scenario
+ *    set* arrives (and, for a pipeline scenario, when its geometry has placed
+ *    the mark). "Set", not "scenario": adding, removing or swapping a second
+ *    scenario is a change of what is closed, and matching only the primary id
+ *    let the previous combination's result satisfy the wait (finding 4).
+ *    Later recomputes of the same set never re-fit.
  *  - **It frames the mark plus the top exposed importers**, padded clear of
  *    the panels, so the countries the panel ranks are not sitting under the
  *    panel that ranks them.
@@ -32,6 +35,7 @@ import type { Bounds, CameraPadding } from "@/lib/state";
 import { useCamera } from "@/lib/state";
 import type { ScenarioId, ScenarioResult } from "@/lib/scenarios/types";
 import { SCENARIO_FIT_MAX_ZOOM, scenarioFitBounds, topExposedIso3 } from "./fit";
+import { INITIAL_GATE, fired, observeKey, scenarioKey, shouldFit, type CameraGate } from "./camera-gate";
 
 export interface ScenarioCameraInput {
   readonly scenarioId: ScenarioId | null;
@@ -62,31 +66,19 @@ export function useScenarioCamera({
 }: ScenarioCameraInput): void {
   const camera = useCamera();
   /** What is closed right now: `null`, "hormuz", or "hormuz+malacca". */
-  const key = scenarioId === null ? null : `${scenarioId}${scenario2 === null ? "" : `+${scenario2}`}`;
-  /** `undefined` until the first render has been seen; then the last key. */
-  const seen = useRef<string | null | undefined>(undefined);
-  /** The scenario whose result we are waiting on before fitting. */
-  const awaiting = useRef<ScenarioId | null>(null);
+  const key = scenarioKey(scenarioId, scenario2);
+  /** The pure gate's memory (see `camera-gate.ts`). */
+  const gate = useRef<CameraGate>(INITIAL_GATE);
 
   useEffect(() => {
-    const first = seen.current === undefined;
-    if (!first && seen.current === key) return;
-    seen.current = key;
-    if (scenarioId === null) {
-      awaiting.current = null;
-      return;
-    }
-    // The scenario the page loaded with is not a change the viewer made.
-    if (first) return;
-    awaiting.current = scenarioId;
-  }, [key, scenarioId]);
+    gate.current = observeKey(gate.current, key);
+  }, [key]);
 
   useEffect(() => {
-    const want = awaiting.current;
-    if (want === null) return;
-    // Still computing this scenario's exposure, or still placing its mark.
-    if (result?.scenarioId !== want || markPending) return;
-    awaiting.current = null;
+    // Still computing *this* scenario set's exposure, or still placing its
+    // mark. The whole set is compared, not the primary id (finding 4).
+    if (result === null || !shouldFit(gate.current, result, markPending)) return;
+    gate.current = fired(gate.current);
 
     // A mutable flag object, as in `useAsync`. Only one await follows, so one
     // check after it covers the whole body.

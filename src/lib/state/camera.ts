@@ -37,6 +37,17 @@ export type CameraRequest =
       readonly lon: number;
       readonly lat: number;
       readonly zoom?: number;
+      /**
+       * Keep the point clear of the panels, exactly as a `fitBounds` does.
+       * A fly-to from a panel used to drop its target dead centre, which on a
+       * desktop is behind the scenario panel that sent it there (finding 14).
+       *
+       * It is applied as a pixel *offset* rather than MapLibre's camera
+       * `padding`: `padding` in a `flyTo`/`jumpTo` is sticky — it becomes the
+       * map's padding for every later interaction — while an offset shifts
+       * this one move and nothing else.
+       */
+      readonly padding?: Partial<CameraPadding>;
     };
 
 /**
@@ -83,6 +94,30 @@ export function panelPadding(open: {
 /** Fill in the sides a caller left out. */
 export function resolvePadding(padding?: Partial<CameraPadding>): CameraPadding {
   return { ...DEFAULT_CAMERA_PADDING, ...padding };
+}
+
+/**
+ * The screen offset that centres a point inside a padded viewport — how a
+ * `flyTo` honours `padding` without setting the map's sticky camera padding.
+ *
+ * A point centred in the box left over after the insets sits
+ * `(left - right) / 2` to the right of the viewport centre and
+ * `(top - bottom) / 2` below it; MapLibre's `offset` moves the target by
+ * that many pixels, so the sign is exactly that. Oversized padding (a phone
+ * with two panels) is clamped to the same 80 % of the extent `fitPadding`
+ * allows, so a fly-to can never push its subject off screen.
+ */
+export function paddingOffset(
+  padding: CameraPadding,
+  width: number,
+  height: number,
+): [x: number, y: number] {
+  const clamp = (n: number, extent: number) =>
+    Math.max(-extent * 0.4, Math.min(extent * 0.4, n));
+  return [
+    clamp((padding.left - padding.right) / 2, width),
+    clamp((padding.top - padding.bottom) / 2, height),
+  ];
 }
 
 /**

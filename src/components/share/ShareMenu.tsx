@@ -5,7 +5,8 @@ import { type KeyboardEvent as ReactKeyboardEvent, type Ref, useCallback, useEff
 import { BUNDLED_CATALOG } from "@/lib/data-catalog/bundled";
 import { loadCountries, countryNameMap } from "@/lib/geo/countries";
 import { voyagesInRange, LNG_T3_FIRST_YEAR, LNG_T3_LAST_YEAR } from "@/lib/data/voyages";
-import { getScenario, severityPct } from "@/lib/scenarios/registry";
+import { isCurrentScenarioResult } from "@/lib/scenarios/current";
+import { scenarioSummaryParts } from "@/lib/scenarios/summary";
 import type { ScenarioResult } from "@/lib/scenarios/types";
 import { peekAppStore } from "@/lib/state/store";
 import { encodeUrlState, type AppState } from "@/lib/url-state/encode";
@@ -216,19 +217,17 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
     return entriesForTags(tags, BUNDLED_CATALOG);
   }, [app, layers, commodity]);
 
-  const scenarioLabel = app?.scenario
-    ? [app.scenario, ...(app.scenario2 ? [app.scenario2] : [])]
-        .map((id) => getScenario(id).label)
-        .join(" + ")
-    : null;
+  // The same naming the embed chip uses (finding 11): scenario, second
+  // scenario, severity, view — one helper so the two cannot drift.
   const summary = [
     String(year),
     commodity === "gas" ? "gas" : "oil",
-    scenarioLabel ?? "no scenario",
-    ...(app?.severity !== undefined && app.severity < 1
-      ? [`${severityPct(app.severity)} of the route cut`]
-      : []),
-    ...(app?.view === "exporters" ? ["exporter view"] : []),
+    ...scenarioSummaryParts({
+      scenario: app?.scenario ?? null,
+      scenario2: app?.scenario2 ?? null,
+      severity: app?.severity ?? 1,
+      view: app?.view ?? "importers",
+    }),
   ].join(" · ");
 
   const citeText =
@@ -244,30 +243,43 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
             sources,
           });
 
-  // The scenario prop can lag the store while the new result computes.
+  // The scenario prop can lag the store while the new result computes. T1:
+  // the second scenario and the severity are part of "this result is the
+  // view", or the CSV would be the previous run's numbers. One shared
+  // comparison with the page and the panel (finding 20).
   const scenarioReady =
-    scenario !== null &&
-    app?.scenario === scenario.scenarioId &&
-    app.year === scenario.year &&
-    app.commodity === scenario.commodity &&
-    // T1: the second scenario and the severity are part of "this result is
-    // the view", or the CSV would be the previous run's numbers.
-    (scenario.scenarioIds?.[1] ?? null) === app.scenario2 &&
-    (scenario.severity ?? 1) === app.severity;
+    app !== null &&
+    isCurrentScenarioResult(scenario, {
+      scenario: app.scenario,
+      scenario2: app.scenario2,
+      year: app.year,
+      commodity: app.commodity,
+      severity: app.severity,
+    });
+
+  const scenarioSide = app?.view ?? "importers";
 
   const onScenarioCsv = async () => {
     if (!scenario) return;
     setBusy("scenario");
     try {
       const names = await loadCountries().then(countryNameMap).catch(() => null);
+      // T1: the file follows the side the panel is listing (finding 3) —
+      // exporting a table of importers while the screen ranks exporters is
+      // the one thing a researcher cannot check from the file itself.
       const csv = scenarioCsv(scenario, {
         viewUrl,
         exported: accessed,
         catalog: BUNDLED_CATALOG,
         countryNames: names,
+        view: scenarioSide,
       });
-      downloadText(scenarioFilename(scenario), csv, "text/csv");
-      setStatus("Scenario table downloaded.");
+      downloadText(scenarioFilename(scenario, scenarioSide), csv, "text/csv");
+      setStatus(
+        scenarioSide === "exporters"
+          ? "Scenario table (exporters) downloaded."
+          : "Scenario table downloaded.",
+      );
     } finally {
       setBusy(null);
     }
@@ -442,7 +454,9 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
         <ul className="mt-1.5 space-y-2 text-xs">
           <li>
             <div className="flex items-center justify-between gap-2">
-              <span className="font-medium text-ink">Scenario table</span>
+              <span className="font-medium text-ink">
+                Scenario table{scenarioSide === "exporters" ? " (exporters)" : ""}
+              </span>
               <button
                 type="button"
                 className={btn}
@@ -460,7 +474,9 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
                 ? "Pick a disruption scenario to export its importer and asset table."
                 : !scenarioReady
                   ? "Computing the scenario…"
-                  : "Derived analysis (BACI imports × cited route shares); the file header cites every input."}
+                  : scenarioSide === "exporters"
+                    ? "Derived analysis, exporter side (BACI exports × cited route shares): one row per exporter, share of its own exports at risk. Importer-side refinery / terminal rows are in the importer view."
+                    : "Derived analysis (BACI imports × cited route shares); the file header cites every input."}
             </p>
           </li>
           {layers.length === 0 && <li className="text-2xs text-ink-subtle">No layers are switched on.</li>}

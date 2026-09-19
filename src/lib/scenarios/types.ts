@@ -169,6 +169,14 @@ export interface ScenarioResult {
    * run reports `[scenarioId]`. Optional for the same reason as `severity`.
    */
   readonly scenarioIds?: readonly ScenarioId[];
+  /**
+   * T1: the scenarios that were *requested*, primary first. Normally equal to
+   * `scenarioIds`, but a secondary whose route rows are empty is dropped from
+   * the run while remaining what the controls (and the URL) say — so this is
+   * what "is this result current?" must compare against (finding 20).
+   * Optional for the same reason as `scenarioIds`.
+   */
+  readonly requestedScenarioIds?: readonly ScenarioId[];
   readonly commodity: Commodity;
   readonly year: number;
   /**

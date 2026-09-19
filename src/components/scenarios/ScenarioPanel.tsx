@@ -1,5 +1,5 @@
 "use client";
-import { useId, useMemo, useState, type ReactNode } from "react";
+import { useId, useMemo, useState } from "react";
 import type { Commodity, ScenarioId, ScenarioResult } from "@/lib/scenarios/types";
 import {
   SCENARIOS,
@@ -11,6 +11,7 @@ import {
   sourceGapNote,
   type ScenarioDef,
 } from "@/lib/scenarios/registry";
+import { isCurrentScenarioResult } from "@/lib/scenarios/current";
 import { useAssets } from "@/lib/data/assets";
 import { useCountryNames } from "@/lib/geo/useCountryNames";
 import { EXPOSURE_LEGEND_STOPS, gradientCss } from "@/lib/symbology";
@@ -20,14 +21,8 @@ import {
   type ScenarioView,
 } from "@/lib/url-state/encode";
 import { scenarioCameraPadding } from "./fit";
-import {
-  clearScenarioHover,
-  hoveredAssetId,
-  hoveredIso3,
-  setScenarioHover,
-  useScenarioHover,
-  type ScenarioHover,
-} from "./hover";
+import { hoveredAssetId, hoveredIso3, useScenarioHover } from "./hover";
+import { RankedRow } from "./RankedRow";
 import { goToAsset, goToCountry } from "./row-actions";
 import { ScenarioContext } from "./ScenarioContext";
 import { rankAssetsByCapacityAtRisk, rankImportersByShare, routeNamesOf, sideNoun } from "./overlay";
@@ -112,48 +107,6 @@ function ShowAllButton({
       className="mt-1 rounded text-[11px] font-medium text-sky-800 underline decoration-dotted underline-offset-2 hover:text-sky-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-700"
     >
       {expanded ? `Show top ${TOP_N.toString()} only` : `Show all ${total.toString()} ${noun}`}
-    </button>
-  );
-}
-
-/**
- * A ranked row, as a real button (S1): pointing at it highlights the thing on
- * the map, activating it takes the map there. Pointer and keyboard both
- * highlight — `onFocus`/`onBlur` alongside the pointer handlers — so tabbing
- * the list is as informative as hovering it, and the highlight is cleared
- * only by whoever set it (`clearScenarioHover`), because the next row's enter
- * can arrive before this row's leave.
- */
-function RankedRow({
-  hover,
-  active,
-  onActivate,
-  title,
-  children,
-}: {
-  hover: ScenarioHover;
-  /** True while this row's subject is the highlighted one (from either end). */
-  active: boolean;
-  onActivate: () => void;
-  title: string;
-  children: ReactNode;
-}) {
-  const enter = () => { setScenarioHover(hover); };
-  const leave = () => { clearScenarioHover(hover); };
-  return (
-    <button
-      type="button"
-      title={title}
-      onClick={onActivate}
-      onPointerEnter={enter}
-      onPointerLeave={leave}
-      onFocus={enter}
-      onBlur={leave}
-      className={`block w-full rounded px-1 py-0.5 text-left text-xs hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-700 ${
-        active ? "bg-slate-200" : ""
-      }`}
-    >
-      {children}
     </button>
   );
 }
@@ -257,11 +210,16 @@ export function ScenarioPanel({
   // numbers under a combined, half-severity heading while the next result
   // computes.
   const current =
-    result !== null &&
-    result.scenarioId === active &&
-    result.commodity === commodity &&
-    (result.scenarioIds?.[1] ?? null) === second &&
-    (result.severity ?? 1) === severity
+    isCurrentScenarioResult(result, {
+      scenario: active,
+      scenario2: second,
+      // The year is the result's own: the panel reads whatever year the
+      // result describes (it prints it), and the page already counts a
+      // year change into `pending`.
+      year: result?.year ?? 0,
+      commodity,
+      severity,
+    })
       ? result
       : null;
   const inputs = useScenarioInputsFor(current);
@@ -319,7 +277,7 @@ export function ScenarioPanel({
     [current, names, sortBy, exporterView],
   );
   /** True when two scenarios actually bracket a country's exposure. */
-  const showsRange = hasRange(rankedImporters);
+  const showsRange = hasRange(rankedImporters, commodity);
   /** True when the result really covers more than one scenario. */
   const combined = (current?.scenarioIds?.length ?? 1) > 1;
   const showLng = commodity === "gas";
@@ -388,6 +346,7 @@ export function ScenarioPanel({
           routeName: routesLabel,
           nameOf,
           formatVolume: volume,
+          view,
         })
       : null;
 
@@ -652,6 +611,20 @@ export function ScenarioPanel({
 
               <div className="mt-3">
                 <h3 className={`mb-1 ${HEADING}`}>{assetLabel}</h3>
+                {/* These rows (and the tint the map gives the same assets)
+                    are importer-side by construction: they split an
+                    *importer's* at-risk imports across its own plants. The
+                    exporter view has no counterpart for them, so they are
+                    captioned rather than silently left looking like part of
+                    the exporter ranking (finding 9). */}
+                {exporterView && (
+                  <p className={`mb-1 ${NOTE}`} data-testid="asset-side-note">
+                    Importer side: the {showLng ? "terminals" : "refineries"} that lose supply,
+                    from the importers&apos; exposure. These rows — and the shaded{" "}
+                    {showLng ? "terminals" : "refineries"} on the map — do not change with the
+                    exporter view.
+                  </p>
+                )}
                 {rankedAssets.length === 0 ? (
                   <p className={NOTE}>No {showLng ? "terminal" : "refinery"} with capacity data is exposed.</p>
                 ) : (
@@ -764,6 +737,15 @@ export function ScenarioPanel({
           <label htmlFor={lookupId} className={`mb-1 block ${HEADING}`}>
             Check a country (why 0%?)
           </label>
+          {/* The lookup reads a country's *imports*, whichever side the list
+              above ranks — say so rather than let it read as the exporter
+              figure it sits under (finding 9). */}
+          {exporterView && (
+            <p className={`mb-1 ${NOTE}`} data-testid="lookup-side-note">
+              Importer side: this explains a country&apos;s exposure as a buyer — the share of its
+              imports at risk — not the share of {noun} ranked above.
+            </p>
+          )}
           <input
             id={lookupId}
             type="text"

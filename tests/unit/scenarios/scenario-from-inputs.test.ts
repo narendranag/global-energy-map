@@ -14,6 +14,7 @@ function inputs(commodity: "oil" | "gas"): ScenarioInputs {
   return {
     scenarioId: "hormuz",
     scenarioIds: ["hormuz"],
+    requestedIds: ["hormuz"],
     year: 2019,
     commodity,
     tradeFlows: [{ year: 2019, importer_iso3: "JPN", exporter_iso3: "SAU", qty: 1000 }],

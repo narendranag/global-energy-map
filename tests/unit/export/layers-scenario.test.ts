@@ -10,8 +10,11 @@ import {
   layerExportStatus,
   pipelineTable,
   scenarioTags,
+  tradeFlowTable,
   type LayerKey,
 } from "@/lib/export/layers";
+import { layerFilename } from "@/lib/export/files";
+import { aggregateTradeFlows } from "@/lib/data/trade-flows";
 import { scenarioCsv, scenarioRows, shareCitationLine } from "@/lib/export/scenario";
 import type { ShareCitation } from "@/lib/export/citation";
 
@@ -106,6 +109,54 @@ describe("layer tables", () => {
     expect(gj.type).toBe("FeatureCollection");
     expect(gj.features).toHaveLength(1);
     expect(gj.metadata.sources[0]?.license).toBe("CC BY 4.0");
+  });
+});
+
+describe("trade-flows export (A3: commodity + hs_code)", () => {
+  const rows = [
+    { year: 2024, hs_code: "2709", exporter_iso3: "SAU", importer_iso3: "CHN", qty: 100 },
+    { year: 2024, hs_code: "271111", exporter_iso3: "QAT", importer_iso3: "JPN", qty: 50 },
+  ];
+
+  it("crude rows carry commodity + hs_code, and the filter names the commodity", () => {
+    const data = aggregateTradeFlows(rows, 2024, "oil");
+    const t = tradeFlowTable(data, null);
+    expect(t.columns).toContain("commodity");
+    expect(t.columns).toContain("hs_code");
+    expect(t.rows[0]?.commodity).toBe("oil");
+    expect(t.rows[0]?.hs_code).toBe("2709");
+    expect(t.filter).toMatch(/crude/i);
+  });
+
+  it("LNG rows carry the LNG hs_code, and the filter names LNG", () => {
+    const data = aggregateTradeFlows(rows, 2024, "gas");
+    const t = tradeFlowTable(data, null);
+    expect(t.rows[0]?.commodity).toBe("gas");
+    expect(t.rows[0]?.hs_code).toBe("271111");
+    expect(t.filter).toMatch(/lng/i);
+  });
+
+  it("the focus filter string also names the commodity", () => {
+    const data = aggregateTradeFlows(rows, 2024, "oil");
+    const t = tradeFlowTable(data, "SAU");
+    expect(t.filter).toMatch(/crude/i);
+  });
+});
+
+describe("layerFilename names the commodity for trade_flows, not other layers", () => {
+  it("trade_flows gets a crude/lng suffix", () => {
+    expect(layerFilename("trade_flows", 2024, "csv", "crude")).toBe(
+      "global-energy-map_trade_flows_crude_2024.csv",
+    );
+    expect(layerFilename("trade_flows", 2024, "csv", "lng")).toBe(
+      "global-energy-map_trade_flows_lng_2024.csv",
+    );
+  });
+
+  it("other layers are unaffected (no suffix arg)", () => {
+    expect(layerFilename("pipelines", 2024, "geojson")).toBe(
+      "global-energy-map_pipelines_2024.geojson",
+    );
   });
 });
 

@@ -28,6 +28,44 @@ test.describe("embed mode", () => {
     await expect(page.locator(".maplibregl-ctrl-attrib")).toBeVisible();
   });
 
+  /**
+   * A6 was reported as an embed FOUC: the chrome painting for a frame because
+   * `useSearchParams()` is empty in the static prerender. It does not happen —
+   * the `<Suspense>` boundary around the map makes Next emit
+   * BAILOUT_TO_CLIENT_SIDE_RENDERING for `/`, so the served HTML carries no
+   * chrome to paint and the first client render already knows `embed=1`. This
+   * guards that property, because it is a side effect of the Suspense
+   * boundary rather than something anyone wrote down: it watches every DOM
+   * mutation and every animation frame from `readystatechange` on, and fails
+   * if the header or intro card is ever in the document.
+   */
+  test("the chrome never enters the DOM, not even for one frame", async ({ page }) => {
+    await page.addInitScript(() => {
+      (window as unknown as { __chromeSeen: number }).__chromeSeen = 0;
+      const check = () => {
+        if (document.querySelector("header") ?? document.querySelector('[data-testid="intro-card"]')) {
+          (window as unknown as { __chromeSeen: number }).__chromeSeen += 1;
+        }
+      };
+      document.addEventListener("readystatechange", () => {
+        new MutationObserver(check).observe(document.documentElement, {
+          childList: true,
+          subtree: true,
+        });
+        check();
+      });
+      const raf = () => {
+        check();
+        requestAnimationFrame(raf);
+      };
+      requestAnimationFrame(raf);
+    });
+    await gotoReady(page, "/?embed=1&layers=reserves&year=2020");
+    expect(
+      await page.evaluate(() => (window as unknown as { __chromeSeen: number }).__chromeSeen),
+    ).toBe(0);
+  });
+
   test("the year slider and commodity toggle still work in plain embed mode", async ({ page }) => {
     await gotoReady(page, "/?embed=1");
     await expect(page.locator('input[type="range"]')).toBeVisible();

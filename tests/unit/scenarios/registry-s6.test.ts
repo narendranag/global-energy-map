@@ -36,10 +36,13 @@ describe("isScenarioActive", () => {
 });
 
 describe("routeKeyFor / scenarioTags — generalized LNG-variant naming (S6)", () => {
-  it("maps every scenario's gas axis to a `_lng` disruption id, no special cases", () => {
+  it("maps a gas-capable scenario's gas axis to a `_lng` disruption id, no special cases", () => {
     for (const s of SCENARIOS) {
-      expect(routeKeyFor(s.id, "oil")).toBe(s.id);
-      expect(routeKeyFor(s.id, "gas")).toBe(`${s.id}_lng`);
+      expect(routeKeyFor(s.id, "oil")).toBe(s.commodities.includes("oil") ? s.id : null);
+      // A1: an oil-only scenario has no `_lng` rows, so it has no gas key.
+      expect(routeKeyFor(s.id, "gas")).toBe(
+        s.commodities.includes("gas") ? `${s.id}_lng` : null,
+      );
     }
   });
 

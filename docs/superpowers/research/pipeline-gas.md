@@ -920,6 +920,8 @@ look only if a TurkStream scenario is actually built.
 
 ## Addendum — corrections received after the report (2026-09-19)
 
+> **Superseded in part — read the Verification section below first.** The verifier found three of this addendum's provenances fabricated or misattributed: no source says Gassco "restated 54.8 → 55.6" (Reuters simply gives 55.6 for 2022); the Lowy Institute piece contains no Turkmen volume; Al-Attiyah's 32.9 bcm is *all* non-Russian pipeline gas; the Adriatic LNG citation cannot support pipeline entry points. The Enagás Medgaz/MEG split and the Gassco four-country shares were confirmed.
+
 A sub-researcher on scenarios 5–9 reported after the main text was written. Where this conflicts with Q3, this wins.
 
 - **Medgaz / MEG 2021 split is sourced** (replaces the "~0.5, low confidence" row): DZA→ESP 2021 Medgaz **0.574** (Almería 88,688 GWh ÷ 154,565), MEG/GME **0.426** (Tarifa 65,877 GWh); 2023 Medgaz 1.000 / GME 0.000. Source: Enagás, *Boletín Estadístico del Gas – Diciembre 2021*, §2.1, full-year column — https://www.enagas.es/content/dam/enagas/es/ficheros/gestion-tecnica-sistema/energy-data/publicaciones/boletin-estadistico-del-gas/Boletin-Estadistico-Gas-diciembre-2021.pdf. The two entry points sum to Sedigas' "Argelia GN 2021 = 154.6 TWh" (https://www.sedigas.es/informeanual/2023/el-gas-en-espana/aprovisionamientos). Keep Spain in GWh: no source gives Enagás's GCV factor. Medgaz capacity: state the range 8.0 → 10.5–10.7 bcm/y (EIA id=56580; Elcano).
@@ -929,3 +931,218 @@ A sub-researcher on scenarios 5–9 reported after the main text was written. Wh
 - **Power of Siberia:** carry the share of China's pipeline imports as a range 0.325–0.34 (IEEFA 22.5 ÷ 69.2 vs CGEP), not a point. The Far Eastern Route is contracted for 2027, so PoS-1 = 1.00 of RUS→CHN pipeline gas through 2024.
 
 None of the addendum's figures has been through the independent verification pass that the chokepoint and oil-pipeline notes received.
+
+---
+
+## Verification (independent, 2026-09-19)
+
+Every figure, quote and licence reading above was re-checked against the primary source by a verifier who did not
+write the note. BACI was re-extracted from the pinned CEPII zip; the Eurostat API was queried live; the EI
+workbook was read from the repo; every Q3 URL was re-opened; the three prerequisites were checked against the
+repo. Method notes are inline in the table.
+
+**Headline: Q1 is confirmed to the tonne, and Q3's *numbers* survive far better than the two sibling notes did —
+but Q2's central recommendation has a hole the note does not know about. Eurostat has the same hub-re-export
+defect the note holds against BACI, and for three of the countries the marquee scenario exists to rank
+(Austria, Moldova, Poland) it has no usable partner detail at all.**
+
+### Verdict table
+
+Grouped by section. "corrected value" is blank where CONFIRMED.
+
+#### Q2.0–Q2.2 — the Eurostat licence claim (priority 1)
+
+| claim | verdict | what the source says | corrected value |
+|---|---|---|---|
+| `nrg_ti_gas` data is redistributable with attribution | **CONFIRMED** (on evidence the note does not cite) | data.europa.eu — the EU's own open-data portal — tags every `nrg_ti_gas` distribution `{"id": "CC_BY_4_0", "label": "Creative Commons Attribution 4.0 International", "resource": "http://spdx.org/licenses/CC-BY-4.0"}`. This, not the copyright-notice page, is the citable basis. | — |
+| "the general principle is the **CC BY 4.0** international licence" | **MISAPPLIED** | The copyright notice scopes CC BY 4.0 to *editorial content*: *"The copyright for the **editorial content of this website**, which is owned by the EU, is licensed under the Creative Commons Attribution 4.0 International licence."* The grant that actually covers the data is the next paragraph: *"Reuse of statistical data, metadata, publications, and other dissemination tools published on this website for commercial or non-commercial purposes is authorised provided the source is acknowledged. The reuse policy of the European Commission is implemented by the Decision of 12 December 2011."* (https://ec.europa.eu/eurostat/web/main/help/copyright-notice) | Cite Commission Decision 2011/833/EU + the data.europa.eu CC-BY-4.0 tag. Do **not** cite the editorial-content sentence. |
+| Quote: *"There is no special procedure or requirement for a written licence. Just download the material and use it, unless the material is listed in the exceptions above."* | **CONFIRMED verbatim / MISAPPLIED in context** | Verbatim. But it sits under the heading *"How to re-use Eurostat material for **commercial** purposes"* — it is the commercial-path instruction, not the general grant the note presents it as. | Quote it with its heading. |
+| Quote: *"Reuse of statistical data … authorised provided the source is acknowledged"* + the translations/modifications rider | **CONFIRMED verbatim** | Both exact. Rider: *"When reuse involves translations of publications or modifications to the data or text, this must be stated clearly to the end user of the information. A disclaimer regarding the non-responsibility of Eurostat shall be included."* | — |
+| Citation form `Source: [DOI], [access date]` | **CONFIRMED verbatim** | *"Source: [digital object identifier (DOI) number of the Eurostat dataset], [access date]"*, plus a separate form for customised versions: *"Source: [Eurostat dataset datacode link], [access date]"* — **the second one is ours**, since we ship a derived extract. | Use the *customised-version* form, not the DOI form. |
+| Third-party data inside energy statistics? | **CONFIRMED — no exception bites** | The notice's only relevant carve-out is *"Data identified as belonging to sources other than Eurostat"*, immediately defused: *"All data published on Eurostat's website can be regarded as belonging to Eurostat for the purpose of their reuse, with the exceptions stated below, or if it is explicitly stated otherwise."* The SDMX dataflow metadata for `ESTAT:NRG_TI_GAS(1.0)` carries **no** dataset-level licence override (fetched; 5,026 bytes, no `licen`/`copyright`/`CC` string). | — |
+| Does the grant cover derived files we host? | **CONFIRMED, with a condition the note omits** | Yes — but only if the modification is disclosed. `G3000 − G3200` is a modification, so the rider above is mandatory: state the transformation *and* carry the Eurostat non-responsibility disclaimer on `/methodology` and in the file's catalog entry. | Add the disclaimer requirement to the sizing table. |
+| "One ambiguity, currently moot" — non-EU commercial carve-out | **CONFIRMED, and the note under-reads it** | Carve-out verbatim as quoted. The notice then adds a sentence the note omits: *"Examples are data for the United States of America, Japan or China. In such cases, the user will need to eliminate these data from the tables before reusing them commercially."* "Eliminate these data **from the tables**" reads naturally onto partner-dimension rows, so the answer is probably "yes, it reaches partners". Non-commercial today, so still moot — but the note's "genuinely unclear" is closer to "probably bites". | — |
+| Bruegel: Q2 verdict *"Bruegel is CC BY-**ND** (cite, never transform)"* | **WRONG**, and contradicts the note's own Q2.1 table ("Yes, per the dataset page") | Both quotes are verbatim, but they govern different objects. The ND policy governs *"Bruegel publications"*; the dataset page's own **Data Policy** governs *"Bruegel datasets"* and grants *"freely use our data in its unchanged form **or after any transformation** for any purpose and can freely distribute it, provided that proper attribution is made"*. There is no conflict to resolve — the Data Policy governs. | Strike the ND verdict line. Keep "confirm in writing": the Data Policy is a bespoke grant with no named licence, version or date. |
+| Bruegel dataset "frozen at 2026-07-02 / *will no longer be updated*" | **MISAPPLIED** | The dataset is **live** — *"Latest update: 10 September 2026"*, DOI 10.64153/WVKK8731, still tagged active. Only the **legacy bulk ZIP** is frozen; the page says the Download Data button is *"temporarily"* maintained *"for the legacy dataset (running until 2 July 2026)"*. The phrase *"will no longer be updated"* is not on the page — it is in `README_updates_discontinued_2026_07.txt` **inside** the ZIP. | "A layer built on it would be dead on arrival" → the risk is that live data now comes only from per-graph download buttons with **no stable bulk URL**. Strengthens, not weakens, the archive-to-R2 recommendation. |
+| Bruegel `route_data` named columns | **CONFIRMED, one column name WRONG** | ZIP downloaded today (401,438 bytes, 9 files). Header has `Nord Stream_*`, `Ukraine Gas Transit_*`, `"Yamal (BY,PL)_*"` exactly — but TurkStream is `turkstream20 … turkstream26`, lowercase, no min/max. File is **weekly wide-format**, not daily. README flags a 2021 week-number shift and 10.3 vs 11 kWh/m³ for Norway. | Fix the column name and the "Daily" cell in the Q2.1 table. |
+| ENTSOG: "its two governing documents contradict each other" | **MISAPPLIED** (bottom line survives, reasoning does not) | All three quoted articles are verbatim, in the TP T&C PDF https://transparency.entsog.eu/pdf/TRA0394_20161115_ENTSOG_TP_Privacy_TC_of_Use_Rev_3.pdf. But TP Art. 2.2 says the TP *"is governed by specific conditions of use contained and laid down in the present Terms and Conditions of Use"*, and the main site's lead paragraph defers: *"For the use of any data published on the ENTSOG Transparency Platform, please refer to the dedicated Privacy Policy and terms of use."* Main-site Art. 4.2 does not reach TP data. The note's "which the TP terms say they *complete*" is a misreading — "completing" is in the **main site's** Art. 2.3. | The correct ground is that the TP T&C contains **no redistribution grant**: Art. 3 reserves all rights, Art. 5.1 permits only *"download, store and use"* + quote with attribution. Display-only / ask-in-writing is still right. The genuine tension is internal: Art. 5.6 (anti-bulk) vs Art. 5.7 (API blessed). The "60-second query cap" is not in the T&C. |
+| JODI: *"All such rights are reserved"*; no partner dimension | **CONFIRMED** | Verbatim under "Intellectual Property". The terms page contains no grant language of any kind. JODI Gas schema is product × flow × country × month; no counterparty field. | — |
+| IEA quotes; Q2 verdict *"IEA is paid"* | quotes **CONFIRMED verbatim**; verdict **WRONG** | Both the 5-data-point cap and *"You must not share, or enable others to access, any Non-CC Material"* are exact. But IEA Gas Trade Flows is free of charge — the note's own Q2.2 says so. | "IEA is licence-blocked, not price-blocked." |
+| EI licence quoted from a third-party mirror (open question #7) | **CONFIRMED on an official EI URL — caveat can be narrowed** | Both sentences are verbatim in https://www.energyinst.org/__data/assets/pdf_file/0007/1658077/Statistical-Review-of-World-Energy.pdf (official, **2025/74th** edition). The 2026 full edition is still email-gated; the official 2026 *summary* has a reworded and **broader** notice — *"For extensive reproduction of **Review data**, permission must be obtained"* — with no S&P clause (it lives in the full edition's back matter). The workbook footer *"Source: Includes data from FGE NexantECA, S&P Global Energy"* is present verbatim in the repo's 2026 file. | Cite the official 2025 URL; narrow open question #7 to "the 2026 full edition's S&P clause". |
+
+#### Q2 — the Eurostat data claims (priority 2)
+
+All queries against `https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/nrg_ti_gas`, keyless JSON-stat,
+`siec=G3000`/`G3200`, `unit=MIO_M3`, on 2026-09-19 (dataset `updated: 2026-06-24T11:00:00+0200`).
+
+| claim | verdict | what the source says | corrected value |
+|---|---|---|---|
+| DE←RU 2021 = 55,443 MIO_M³ = 55.4 bcm | **CONFIRMED** | `55443.282` | — |
+| Germany 2021 in full: Total 84.8 · RU 55.4 · NO 16.2 · NSP 13.2 | **CONFIRMED exactly** | TOTAL `84808.4`, RU `55443.282`, NO `16159.5`, NSP `13205.6`; the three sum to the total to the decimal. Germany reports **no other partner** in 2021. | — |
+| TR←RU 2021/22/23 = 26.3 / 21.6 / 21.3 | **CONFIRMED** on G3000 | `26342.61 / 21574.73 / 21340.41` (2024 `21571.78`) | — |
+| …but presented as a **pipeline** figure | **MISAPPLIED** | Türkiye imports Russian **LNG** from 2022: G3200 = `0 / 193.41 / 789.67 / 496.75`. On the note's own `G3000 − G3200` rule the pipeline series is **26.34 / 21.38 / 20.55 / 21.08**. The headline table compares G3000 against BACI HS 271121, which is gaseous-state only. | TR←RU pipeline 2023 = **20.55**, not 21.3. Apply `G3000 − G3200` in the headline table too. |
+| HU←RU 2023 = 6.41 bcm | **CONFIRMED** | `6413.0` (G3200 = 0) | — |
+| IT←RU 2021 = 29.2 vs BACI 28.2 | **CONFIRMED both sides** | Eurostat `29170.696`; BACI RUS→ITA 2021 re-extracted = 20,704,400 t = 28.17 bcm | — |
+| SK←RU 2023 = 2.88; 2021 = 3.5 | **CONFIRMED** | `2877.0` / `3536.0` | — |
+| `siec` G3000 = Natural gas, G3200 = LNG; pipeline = G3000 − G3200 | **CONFIRMED** | Labels exactly as claimed. Identity check reproduced exactly: ES 2024 DZ G3000 `11669.922` − G3200 `2251.352` = `9418.570`; ES←US G3000 = G3200 = `5060.908`, difference 0. | — |
+| `unit` ∈ {MIO_M3, TJ_GCV}; annual **1990–2024**; monthly **2008-01 → 2026-08** | **CONFIRMED** | 35 annual periods 1990…2024. `nrg_ti_gasm` returns 224 periods, 2008-01…2026-08. | — |
+| "44 reporters … **plus** EU-27 and euro-area aggregates" | **WRONG (minor)** | `geo` has exactly 44 entries and the aggregates are **inside** it: EU27_2020, EA20, EA21. So **41 reporters + 3 aggregates**. All named countries confirmed present: TR, UA, MD, RS, BA, MK, GE, NO, and GB **as `UK`**. | 41 reporters. |
+| "166 partners" | **CONFIRMED** | 167 `partner` codes including `TOTAL` ⇒ 166 partners. | — |
+| Dataset label *"Imports of natural gas by partner country - monthly data"* for `nrg_ti_gas` | **WRONG (minor)** | `nrg_ti_gas` label is *"Imports of natural gas by partner country"*. The "- monthly data" label belongs to `nrg_ti_gasm`. | — |
+| **Trap: confidential `:c` cells** | **CONFIRMED CLEAN — does not bite** | Full `siec=G3000, unit=MIO_M3, time=2021+2023` slice pulled for all geo × partner: **13,912 values, 0 status flags**, empty `status` object. No `:c`, no `:u`. Suppression here takes the form of a `NSP` bucket or an aggregate partner, never a flag. | — |
+| **Trap: partner = "not specified"** | **CONFIRMED and much worse than the note says** | NSP is not a residual for these reporters, it is the whole record. **Austria 2021 and 2023 report 100% NSP** (TOTAL 4,754.7 and 7,117.6, no country partners at all). Slovakia carries NSP 1,595 (2021) / 1,624 (2023) against a 4.5–5.1 total. | See the three broken Q3 rows below. |
+| **Trap: aggregate partners** | **NEW — not mentioned in the note** | The `partner` dimension contains continent buckets (`EUR_OTH`, `ASI_NME_OTH`, `AFR_OTH`, `AME_OTH`, `EX_SU_OTH`, `ASI_OTH`) that reporters use instead of countries. **Poland 2023** is reported almost entirely this way: EUR_OTH 7,287.4, NSP 3,760.3, ASI_NME_OTH 2,591.6, of a 15,887.2 total. Summing partner rows without excluding these double-counts against TOTAL. | An ingest must whitelist ISO-2 partner codes and route the rest to an "unattributed" bucket. |
+| **Trap: Germany's suppression of partner detail** | **CONFIRMED** | 2021: only RU, NO, NSP — the Netherlands, historically one of Germany's largest suppliers, is absent. 2023 is the opposite shape (see below). | — |
+| **"Eurostat … reports net imports"** (§Q3.3 caveat, line 494) | **WRONG as a general statement** | There is a separate exports table, `nrg_te_gas` *"Exports of natural gas by partner country"*. Germany reports **0.0** exports in 2021 and 2023 and an import figure that plainly excludes transit (84.8 bcm vs BNetzA's 1,652 TWh ≈ 156 bcm). But the Netherlands reports imports 30.9 / exports 16.7 (2021) and Belgium 21.3 / 2.8 — gross on both sides. **The import concept is reporter-specific, so `totalQty` denominators are not on a common basis across reporters.** | Say "Germany's series excludes transit; other reporters' do not". |
+| **"Eurostat … gets right exactly what BACI gets wrong"** / NSP is *"precisely the hub problem BACI silently mislabels as a Belgian export"* | **WRONG for the years that matter** | Germany 2023, pipeline basis: TOTAL 65.1 · NO 29.6 · **NL 17.65** · **BE 14.92** · NSP 3.0 · RU 0.0. Belgium and the Netherlands produce nowhere near 32 bcm of exportable gas between them — these are regasified LNG and Norwegian gas re-declared at the German border, i.e. **exactly the origin-laundering the note documents in BACI** (BACI BEL→DEU 2023 = 20.1 bcm; Eurostat 14.9 bcm — the same phenomenon, the same order of magnitude). DE←BE and DE←NL were both `0.0` in 2019, so this is a post-2022 re-sourcing artefact, not a long-standing convention. France, Belgium and the Netherlands all appear in each other's partner lists in both directions. | **Eurostat has the same hub problem as BACI.** It is smaller and partly honest (NSP), not absent. The note must say so; the go/no-go currently rests on the opposite claim. |
+| "Eurostat `geo=PL, partner=NO` gives [Baltic Pipe]" (§Q3.7) | **WRONG** | `PL←NO` G3000 = **0.0** in 2022, 2023 **and** 2024. Poland does not attribute Baltic Pipe volumes to Norway in this dataset. | Baltic Pipe remains UNSOURCED. Remove the Eurostat fix. |
+| Eurostat DE←NO 2021 = 16.2 vs Gassco 55.6 | **CONFIRMED** | `16159.5` | — |
+
+#### Q1 — BACI HS 271121 (priority 3)
+
+Re-extracted independently from the pinned `BACI_HS92_V202601` zip using `_YEAR_ENTRIES` / `_fetch_year_csv` /
+`filter_products` and the repo's own `country_codes_V202601.csv`. Per-year row counts reproduced **identically** to
+the note's Q1.1 table (495/329/340/342/341/368/386/385/423/345).
+
+| claim | verdict | what the source says | corrected value |
+|---|---|---|---|
+| RUS→DEU zero rows in **every** year 2015–2024 | **CONFIRMED** | Checked all ten years, not just the two required. Zero rows, not null-`q`. Germany 2021 = NOR 55.34, BEL 1.88, ITA 0.42, CZE 0.02, IRL 0.02, HUN 0.01, + trace; total 57.7 bcm; no RUS row, no NLD row. | — |
+| BEL→FRA 2023 = 24,486,030 t / 33.3 bcm / 18.74 bn USD / 765 USD/t | **CONFIRMED to the tonne** | `q = 24,486,029.6`, `v = 18,737,657.544` k USD, 33.31 bcm, 765 USD/t | — |
+| RUS→TUR zero rows 2022 | **CONFIRMED** (and all ten years) | Türkiye 2022 = AZE 6.807 bcm + KAZ 0.011 bcm only | — |
+| NOR→DEU 2023 = 39,550,070 t / 24.43 bn / 618 USD/t | **CONFIRMED exactly** | `39,550,070 t`, `24,433,077.57` k USD | — |
+| Russia is present as an exporter (so this is a missing-*counterparty* defect) | **CONFIRMED** | RUS 2021: 23 rows, 56,388,020 t = 76.72 bcm (reproduces the note's 76.7), 27.74 bn USD. Top 5: ITA 28.17, SVK 9.15, CZE 8.63, HUN 5.87, CHN 5.35 bcm. | — |
+| EI `Gas - Trade movements` rows 42–43: Russia pipeline exports / of which Europe | **CONFIRMED** | 2019 220.7/191.3 · 2020 197.4/167.4 · 2021 201.3/167.7 · 2022 125.0/85.6 · 2023 91.0/45.7 · 2024 111.3/51.6 — every figure in the note's two ratio tables reproduces. | — |
+| EI row 77 China pipeline imports of which Russia: 7.6 / 14.6 / 21.5 / 29.5 / 36.7 | **CONFIRMED** | 7.584 / 14.575 / 21.512 / 29.452 / 36.721 | — |
+| EI row 78 Other CIS→China: 41.7 / 40.5 / 37.9 / 38.3 / 36.7 | **CONFIRMED** | 41.747 / 40.521 / 37.872 / 38.255 / 36.668 | — |
+| EI `Gas Prices ` row 45 2023: TTF 12.87, Henry Hub 2.53, "5.1× spread" | **CONFIRMED** | `12.865138` / `2.528480`; ratio **5.088** | — |
+| EI `Gas trade 2025 - pipeline` has **378 rows** | **WRONG (minor)** | The sheet is **36 rows × 23 columns**. Everything else about it is exact: EU is one row; importer rows are Canada/Mexico/US/Argentina/Brazil/Other S.&C.America/EU/Non-EU Europe/Belarus/Kazakhstan/Russian Federation/Other CIS/UAE/Other Middle East/South Africa/Other Africa/Australia/China/Malaysia/Singapore/Thailand plus region subtotals; footnote verbatim *"*intra-region trade is excluded. For example, trade between countries within other europe is excluded."* | 36 rows. |
+
+**Q1 verdict stands, unqualified.** Nothing in it needs correcting.
+
+#### Q3 + Addendum (priority 4)
+
+Every URL in Q3.0–Q3.9 and the Addendum was re-opened. Nothing is dead; four URLs bot-block `curl` and were
+verified via Tavily or an authorised republication ([T1] CSD, [T2] Reuters, [N2] congress.gov, [T3] S&P).
+Capacity-vs-throughput and bookings-vs-flows discipline is **clean throughout** — [T5] is labelled "contracted, not
+flowed", the Yamal booking link is labelled "booked capacity, not flow", [N7] refuses to annualise a daily rate,
+and every nameplate (35/33.5 TransMed, 8 GreenStream, 11.5/13.5 GME, 8→10.7 Medgaz, 38 PoS, 55 CAGP, 33 Yamal) is
+presented as capacity. This is the note's strongest quality.
+
+Only the rows that are **not** plain CONFIRMED are listed.
+
+| claim | verdict | what the source says | corrected value |
+|---|---|---|---|
+| Q3.1 "the whole **2019–2024** contract"; "1.7 bcm over **six years**" | **WRONG** (twice) | [U1], [U2] and [U3] are unanimous: the agreement was signed in 2019 and covered **2020–2024** — 65 bcm in 2020, then 40 bcm/y 2021–24. | **2020–2024**; **five years**. |
+| Q3.1 `RUS \| HUN \| 2023 \| ~0.08` derived as "6 bcm total [T2] − >5.5 bcm via TurkStream [T3]" | **MISAPPLIED — the most serious Q3 error** | [T3] says *"total Russian gas exports to Hungary in 2023 exceeding 5.5 Bcm"* — an **all-routes total**, which is how the note itself uses the same source in Q3.2. Using it as a TurkStream volume makes numerator and denominator the same quantity. | Derive from [T4]: 6.0 − 5.6 = 0.4 bcm ⇒ **~0.07**. Source the 6 bcm total to CSD/per Concordiam (4.5 bcm contract + *"at least another 1.5 bcm"*), not to the single ambiguous Reuters clause. |
+| Q3.1 `RUS \| ITA \| 2023 \| 1.00` (CGEP 3–4 bcm via Ukraine, Eurostat IT←RU 2.93) | **MISAPPLIED** | The route figure **exceeds** the destination total, so the implied share is >1.0 — the same non-divisibility the note diagnoses for Germany in Q3.3 and Slovakia in Q3.0, unflagged here. And CGEP's 3–4 bcm is the **Jul 2022–Jun 2023 rolling window**, entered as a 2023 value against the note's own explicit instruction in [U6]. | Mark the basis mismatch. Eurostat pipeline basis gives IT←RU 2023 = **2.84 bcm = 6.3%** of Italy's pipeline imports. |
+| Q3.1 `RUS \| AUT \| 2023 \| 1.00` | **WRONG on the recommended dataset** | **Eurostat AT←RU = 0.0 in both 2021 and 2023** — Austria reports 100% `NSP`. The row's evidence (CGEP ~5 bcm, Rystad 5.7 bcm) is also the rolling window, and 5/5.7 = 0.88, not 1.00. | Austria is **unrepresentable** on the destination basis. Drop the row or carry it as UNSOURCED. |
+| Q3.1 `RUS \| MDA \| 2023 \| 1.00` at 1.9 bcm | **MISAPPLIED (basis)** | **Eurostat MD←RU 2023 = 0.0707 bcm**, 11.3% of Moldova's 0.63 bcm pipeline imports. The 1.9–2.2 bcm figures are entry-point volumes, most of which went to Transnistria, not to declared Moldovan imports. | On the destination basis Moldova is ~0.07 bcm, not 1.9. A 27× gap. |
+| Q3.1 `RUS \| SVK \| 2023 \| 1.00` | **CONFIRMED but under-caveated** | Sound on route-exclusivity, but its evidence (12.67 / 13.5 bcm) is entry-point while the schema is destination-family (2.88 bcm). Q3.0's own warning applies and isn't restated. | Restate the Q3.0 caveat on this row. |
+| Q3.2 `RUS \| MKD \| 2023 \| 1.00` | **UNSOURCED** (note claims sourced) | [T1] establishes only that *"less than 3% of the gas is delivered to North Macedonia"*. It nowhere says North Macedonia's Russian gas is 100% TurkStream. (Eurostat MK←RU 2023 = 0.356 bcm = 100% of MK's pipeline imports — consistent, but that is a *supplier* share, not a *route* share.) | Mark UNSOURCED. |
+| Q3.2 `RUS \| GRC \| 2023 \| 1.00` | **MISAPPLIED** | The volume is sourced; the 1.00 rests on an uncited claim that Trans-Balkan had reversed. [T1] in fact records Gazprom holding Trans-Balkan capacity bookings **until 2030**, which cuts the other way. Separately, Greece imports Russian **LNG**: Eurostat EL←RU 2023 G3000 2,111 − G3200 777 = **1.33 bcm by pipe**, against [T1]'s 2.7 bcm — a 2× gap on the same year. | Mark the 1.00 UNSOURCED and reconcile 2.7 vs 1.33 before using either. |
+| Q3.2 [T5] Enerdata 6/22 = 0.27 | **CONFIRMED, date missing** | The article is dated **5 December 2025** and describes contracts extended into 2026; the note applies it to a 2022/2023 row with no date. | Date the source; label it a 2025 contractual snapshot. |
+| Q3.3 [N3] Brookings "two-thirds of Germany's total imports in 2021" | quote **CONFIRMED**, source figure **WRONG** | ⅔ × 1,652 TWh ≈ 104 bcm against NS1's actual 59.2 bcm. The true figure is 59.2 ÷ (1,652/10.55) = **37.8%**. The note flags it as "in tension"; it is arithmetically falsified by [N1] + [N5]. | Sharpen the flag. The note's decision not to adopt it was right. |
+| Q3.3 the 0.73 estimate and its caveat | **CONFIRMED, arithmetic exact** | 1,652 × 0.52 = 859.04 TWh ⇒ 81.43 bcm; 59.2/81.43 = **0.727**; 59.2/55.4 = **1.069 > 1**, so the note's "using Eurostat as the denominator would give a share above 1.0" is exactly right. | — |
+| Q3.4 "the pipeline itself stopped on 12 May 2022 **on the EuRoPol GAZ sanctions**" | **WRONG (attribution of the date)** | No source conflict exists: the sanctions decree took effect **11 May** ([Y2]); Gazprom's announcement that it would stop using the Polish section came **12 May** ([Y1]). Both the table row and the prose attach 12 May to the sanctions. | "Sanctions on EuRoPol GAZ imposed 11 May 2022 [Y2]; Gazprom announced it would no longer use the Polish section on 12 May [Y1]." |
+| Q3.1 [U5] Bruegel Table 1 reproduced without its footnote | **MISAPPLIED (omission)** | Table verbatim (409/193/140/112; 1,080/472/140/115; 3,856/3,751/3,250/2,072; 11/5/4/5%) and both derived shares recompute (27.5%, 50.0%). But Bruegel's note reads *"* = first eight months of year"* — **the 2024 column is Jan–Aug only**. | Carry the footnote; do not use the 2024 column as a full year. |
+| Q3.1 [U1] "Poland 8.5 bcm (5.5%)" | **WRONG (source's own error, faithfully copied)** | 8.5/148 = **5.74%**. The other four reconcile (73.4 / 11.15 / 8.51 / 1.15). | *sic* it. |
+| Q3.5 [A2] 11.5 bcm/y GME vs [A4] 13.5 bcm/y GME | **WRONG — an unreconciled conflict** | Both quotes verbatim; the conflict is real and the note never notices it. Both are capacity, neither is throughput. | State GME as **~12 bcm/y (sources give 11.5–13.5)**. |
+| Q3.5 [A2] and [A11] cited as two sources | **MISAPPLIED (minor)** | Identical URL, cited twice under two ids. It is a 2021 article used to support a 2023 row (independently true per [A3], but the citation doesn't reach 2023 alone). | Merge the ids. |
+| Q3.5 GreenStream *"far below its 8–11 bcm capacity"* | **UNSOURCED (the 11)** | [A7] sources the 8 bcm/y. Nothing in range sources 11. | Drop the 11 or cite it. |
+| Q3.5 [A7] MEES used for a 2022/2023 row | **CONFIRMED, date caveat** | Quote verbatim, but the article is about **2025** (Libya's 22-year low), dated 2026-01-16. Fine for the structural "single-route, single-destination" claim; say so. | — |
+| Q3.8 "Power of Siberia 2 is `proposed` in GEM (P5409, P0734)" and the whole Q3.10 id table | **CONFIRMED** | Every one of 21 spot-checked pids re-read from `data/raw/gem_gas_infra/ggit_map_2026-02-20.geojson`: statuses, names and endpoints match the note exactly, including P0753 `mothballed` `stopyear 2022`, P0769 `idle`, P0806 `cancelled`, and the note's flag that GEM gives Europipe I (P0689) `startcountryorarea = United Kingdom`. | — |
+| Q3.9 [C1] "China total pipeline imports, 2023 ~66.07 bcm" | **MISAPPLIED** | Quote verbatim, but the source says *"estimated to be around"* — an S&P **forecast published 22 Dec 2023**. The outturn per IEEFA is **69.2 bcm**. Also 34.09/64.8 (IEEFA's 2022 actual) = **0.526**, not the 0.54 the source prints. | Label 66.07 a forecast. |
+| **Addendum** Enagás Medgaz/MEG 2021 split 0.574/0.426 | **CONFIRMED — the strongest row in the note** | Boletín dic-2021 §2.1 *Conexiones Internacionales*, Saldos Netos, **unit GWh**, Ene–Dic 2021: Almería **88,688**, Tarifa **65,877**, sum **154,565**; 0.57379 / 0.42621. Contamination check passed: the same PDF's *Origen de suministros* lists *"Argelia GN 154.565 GWh"* and *"Argelia GNL 23.425"* as **separate** rows, so Almería + Tarifa is Algerian **pipeline** gas exactly — no LNG at either point. Tarifa is 0 in December (MEG closed 1 Nov). Triple-sourced: Sedigas "Argelia GN 2021 = 154,6 TWh"; S&P independently "Medgaz just under 8 Bcm, GME just under 6 Bcm" in 2021. | — |
+| **Addendum** "Norway→Germany 2022 is 55.6, **not 54.8** — Gassco restated it … (Reuters, 10 Jan 2024)" | **WRONG — the restatement narrative is fabricated** | The Reuters story of that date says: *"Deliveries to Germany rose in 2023 to an all-time high of 56.2 billion m3 **from 55.6 billion m3 a year earlier**, helped by a new connection to Denmark."* 55.6 **is** the as-reported 2022 figure; **"54.8" appears in no source**. Gassco's own note has the Denmark offtake opening autumn 2021, so 2022 already included it. | Delete the restatement story. 55.6 stands as originally published; the 2023 *rise* to 56.2 is what Denmark explains. **The four 2022 shares are unaffected and exact**: 55.6+27.9+17.8+15.6 = 116.9 precisely ⇒ 0.4756 / 0.2387 / 0.1523 / 0.1334, sum 1.000. 2023 also closes exactly: 56.2+24.1+13.8+15.0 = 109.1. |
+| **Addendum** Terna Fig. 44 shares 0.41 / 0.51 TransMed, 0.05 / **0.07** GreenStream | **3 of 4 CONFIRMED, 1 WRONG** | Fig. 44 = *"Approvvigionamento gas italiano 2019–2023 [Gm3/anno]"*, entry-point **throughput** (Mazara del Vallo = TransMed, Gela = GreenStream, Tarvisio, Passo Gries, Melendugno, GNL, national production) — correctly not capacity. 2023 pins exactly against §8.6 prose (pipeline 45.0 Gm³): 23+2.6+2.8+6.6+10 = 45.0. TransMed 24/58.1 = **0.413**; 23/45.0 = **0.511**. GreenStream 3/58.1 = **0.052**; 2.6/45.0 = **0.058**. | GreenStream 2023 = **0.06**, not 0.07. Also note the "share of pipeline imports" is the researcher's derivation, not Terna's. |
+| **Addendum** "TransMed and GreenStream pair shares of 1.00 confirmed by enumeration of entry points (Adriatic LNG, *Dati Operativi 2023*)" | **MISAPPLIED** | An LNG terminal's own operating-data release cannot enumerate Italy's **pipeline** entry points. The enumeration that actually supports the 1.00 shares is Terna Fig. 44. | Drop the Adriatic LNG citation; cite Terna. |
+| **Addendum** "TKM→CHN 2022 = 35 of 64.8 = 0.54 (**Lowy Institute, 13 Dec 2023**)" | **WRONG — misattributed** | The Lowy article ("Power of Siberia 2: Moving beyond a pipe dream?") is dated **6 October 2023** and contains **no 35 bcm, no 64.8, and no Turkmen volume at all**. | The 35 bcm is Reuters 24 May 2023 / GEM; the 64.8 is IEEFA. Re-cite both; drop Lowy. |
+| **Addendum** "Al-Attiyah Foundation 32.9 bcm" as a TKM→CHN 2023 estimate | **MISAPPLIED** | Actual text: *"non-Russian pipeline gas, **primarily sourced from Turkmenistan**, has been relatively stable at 32.9 BCM/year"* — i.e. TKM + KAZ + UZB + Myanmar, with no single year pinned. Net of KAZ 5.857 it bounds TKM at ~27. | It is an **upper bound**, not an estimate. (The Addendum's *conclusion* — TKM 2023 is UNSOURCED — remains correct.) |
+| **Addendum** PoS share range **0.325–0.34** | **CONFIRMED, with a denominator caveat** | IEEFA verbatim: *"from 64.8 bcm in 2022 to 69.2 bcm … imports from Russia increased to 22.5 bcm"*. 22.5/69.2 = **0.3251**; CGEP's *"34 percent"* is verbatim and 0.34 × 66.07 = 22.46, self-consistent. But the two endpoints use **different denominators** (IEEFA 69.2 outturn vs S&P 66.07 forecast); on one denominator the spread is only 0.325–0.328. | Say which denominator each endpoint uses. |
+| **Addendum** KAZ→CHN 2023 = 5.857 bcm (Astana Times) | **CONFIRMED** | Verbatim; 5.07 × 1.155 = 5.856 | — |
+| Q3.8 22.7 (CGEP/OSW) vs 21.5 (EI) vs 22.5 (IEEFA) | **CONFIRMED** | All three verbatim in their sources. The note's "pick one and state it" is the right call. | — |
+
+#### Prerequisites (priority 5)
+
+| claim | verdict | what the repo says |
+|---|---|---|
+| `disruption_route` has **no `year` column** | **CONFIRMED** | `public/data/disruption_route.parquet`, 525 rows, schema exactly: `disruption_id, kind, exporter_iso3, importer_iso3, share, source, source_title, source_url, source_year, source_note`. |
+| Nord Stream / NS2 / Yamal–Europe / Soyuz absent from the shipped sidecar | **CONFIRMED** | `public/data/pipelines.geojson`: 3,957 features, 3,957 unique ids; **P0753, P0752, P0769, P0761, P0806 all absent**; P0768, P0765, P2055, P0453 present. |
+| …but present in `data/raw/gem_pipeline_routes/` | **CONFIRMED** | `data/raw/gem_pipeline_routes/gas-pipelines/{P0752,P0753,P0761,P0769,P0806}.geojson` all exist. |
+| Cause is `STATUS_MAP` | **CONFIRMED** | `scripts/transform/build_pipelines.py:69` — `STATUS_MAP = {"operating": "operating", "construction": "in-construction"}`, applied at line 130. |
+| Engine is destination-family: exposure = Σ (importer's imports from exporter × share) ÷ importer's total | **CONFIRMED** | `src/lib/scenarios/engine.ts:112–132` — `shareAtRisk = totalQty > 0 ? atRiskQty / totalQty : 0`, `totalQty` keyed by importer. |
+
+### Entry-point vs destination: one basis, and what it costs
+
+**Recommendation: destination.** It is the only basis the engine can express without a rewrite — `totalQty` is the
+importer's own declared total, so a numerator on an entry-point basis produces shares above 1.0, which the note
+already demonstrates twice (Nord Stream ÷ Eurostat DE, and Italy 2023 in Q3.1). Mixing bases silently is the exact
+failure this note was written to prevent.
+
+But the note's open question #1 mis-states what destination costs. It says the destination basis "makes a 'cut
+Ukraine transit' scenario rank **Austria (5.7 bcm)** above Slovakia (3.2 bcm)". On the recommended dataset it does
+no such thing:
+
+| importer | Eurostat 2023 ←RU, pipeline (bcm) | total pipeline imports (bcm) | supplier share | what the transit headlines say |
+|---|---:|---:|---:|---|
+| Slovakia | **2.88** | 4.50 | 63.9% | 12.67 bcm entered; 4.3 bcm consumed |
+| Italy | **2.84** | 45.26 | 6.3% | 3–4 bcm via Ukraine (rolling window) |
+| Hungary | 6.41 (mostly TurkStream) | 8.21 | 78.1% | ~0.4 bcm via Ukraine |
+| Czechia | 0.55 | 6.81 | 8.1% | — |
+| **Austria** | **0.00** | 7.12 | **0.0%** | ~5 bcm via Ukraine — the single most transit-dependent EU state |
+| **Moldova** | **0.07** | 0.63 | 11.3% | ~2.0 bcm |
+
+So the honest destination-basis Ukraine-transit scenario for 2023 is **Slovakia and Italy, roughly equal in
+absolute volume and 10× apart in supplier share, with Austria and Moldova showing zero or near-zero exposure
+because their own statistical offices do not attribute origin.** That is defensible and it is *interesting* — the
+Slovakia/Italy contrast is exactly the kind of structural point the site exists to make — but it is not the story
+a reader arriving from the transit headlines expects, and Austria's absence will read as a bug unless the panel
+says why. Open question #1 should be re-asked with these numbers, and `/methodology` must carry an explicit
+"reporters that do not attribute origin" note naming Austria and Poland.
+
+### Go / no-go for a first European pipeline-gas scenario
+
+**Conditional GO — narrower than the note's, and not on the note's stated grounds.**
+
+The licence clears (better evidence than the note cites), the data clears where reporters attribute origin, Q1 is
+watertight, and the three prerequisites are exactly as described. What does **not** clear is the claim that
+Eurostat escapes BACI's hub defect — it does not — and the note's go/no-go rests on that claim. Ship anyway, but
+only for pairs where the exporter is a *producer* and the importer attributes it. Concretely:
+
+**Rows I would stand behind today**, `scenario = ukraine_transit`, year-aware, destination basis, Eurostat
+`G3000 − G3200` as the trade matrix:
+
+| exporter | importer | year | share | basis |
+|---|---|---|---|---|
+| RUS | SVK | 2021 | 1.00 | no non-Ukrainian Russian route to Slovakia before 2025 [U1]; Eurostat SK←RU 3.54 bcm |
+| RUS | SVK | 2023 | 1.00 | as above; Eurostat 2.88 bcm = 63.9% of Slovak pipeline imports |
+| RUS | CZE | 2021 | 1.00 | Waidhaus is fed from the Slovak entry; Eurostat CZ←RU 8.72 bcm = 100% of Czech pipeline imports |
+| RUS | HUN | 2023 | 0.07 | [T4] 6.0 − 5.6 = 0.4 bcm ÷ Eurostat 6.41 — **corrected from the note's 0.08**, and still low confidence |
+| RUS | ITA | 2023 | UNSOURCED | route volume exceeds the destination total; needs a within-year corridor split |
+| RUS | AUT | any | **omit** | Eurostat AT←RU = 0; Austria reports 100% "not specified" |
+| RUS | MDA | any | **omit** | Eurostat MD←RU 2023 = 0.07 bcm; the 1.9–2.2 bcm figures are entry-point/Transnistria |
+| RUS | POL | any | **omit** | Poland 2023 reports only continent aggregates; no Norway, no Russia |
+
+Plus, as separate scenarios once the year column lands, the two rows that are **fully verified and clean**:
+**DZA→ESP Medgaz 0.574 / MEG 0.426 for 2021 and 1.00 / 0.00 for 2023** (Enagás primary, triple-corroborated), and
+**NOR→{DEU+DNK, GBR, FRA, BEL} 2022 = 0.476 / 0.239 / 0.152 / 0.133** (Gassco, sums exact — with the restatement
+story deleted).
+
+**NO-GO, unchanged and reinforced:** Power of Siberia, Central Asia–China, Canada→US. Two of the three Addendum
+citations for the Turkmenistan figures are misattributed, which is independent evidence that this material is not
+ready.
+
+**Four things to fix in the note before it drives a feature**, in order:
+
+1. Retract *"Eurostat … gets right exactly what BACI gets wrong"* and the NSP-vs-hub sentence. Eurostat's
+   Germany-2023 matrix is 50% Belgian and Dutch re-exports. The defect is smaller and partly honest, not absent.
+2. Delete the Gassco "54.8 → 55.6 restatement" and the Lowy and Al-Attiyah attributions. These are the three
+   places the note asserts provenance a source does not carry.
+3. Fix `RUS|HUN|2023` (the [T3] double-count), `RUS|AUT|2023` and `RUS|MDA|2023` (unrepresentable on the
+   recommended dataset), and the PL←NO "Eurostat gives it" claim.
+4. Apply `G3000 − G3200` in the headline Q2.0 table, and add partner-code whitelisting (NSP + continent
+   aggregates) to the ingest sizing.
+
+**Verdict count: 59 CONFIRMED · 11 WRONG · 13 MISAPPLIED · 1 UNSOURCED-but-claimed-sourced · 1 UNVERIFIED
+(low-risk: [Y3] OIES Insight 70, a capacity restatement carrying no share).** No claim in the note was
+UNVERIFIABLE — every source was reachable.

@@ -295,12 +295,39 @@ export function howComputed(
  * both an oil and a gas axis (Hormuz, Malacca, Suez, Bab el-Mandeb) stores its
  * LNG shares under `${scenarioId}_lng`: the crude bypasses these routes have
  * (Fujairah for Hormuz, Yanbu for Suez/Bab el-Mandeb) carry no LNG, so the two
- * axes need independent rows, not a shared one. A scenario with no `_lng`
- * rows in the parquet (Turkish Straits, Keystone, Enbridge, ESPO — all
- * oil-only) is never asked for the gas axis in the first place.
+ * axes need independent rows, not a shared one.
+ *
+ * A scenario that does not model `commodity` at all (Druzhba, BTC, CPC,
+ * Turkish Straits, Keystone, Enbridge, ESPO on the gas axis) has **no** route
+ * key: `null`. It used to return `${id}_lng` for those too, which named a
+ * `disruption_id` that does not exist in the parquet — the loader then
+ * returned no rows and the engine reported a confident 0 % (A1). Callers must
+ * treat null as "this scenario says nothing about this commodity".
  */
-export function routeKeyFor(scenarioId: ScenarioId, commodity: Commodity): string {
+export function routeKeyFor(scenarioId: ScenarioId, commodity: Commodity): string | null {
+  const def = SCENARIOS.find((s) => s.id === scenarioId);
+  if (def !== undefined && !def.commodities.includes(commodity)) return null;
   return commodity === "gas" ? `${scenarioId}_lng` : scenarioId;
+}
+
+/**
+ * The scenario to keep when the commodity axis is `commodity`: `id` itself
+ * when the scenario models that commodity, else null.
+ *
+ * A scenario the commodity does not model has no route rows at all, so the
+ * pairing can only render a confident 0 % — an empty result that reads like an
+ * answer (A1). Both the commodity toggle and `decodeAppState` clear it rather
+ * than showing that, so a hand-typed `?scenario=druzhba&commodity=gas` and a
+ * click on "Gas" behave the same way.
+ */
+export function scenarioForCommodity(
+  id: ScenarioId | null,
+  commodity: Commodity,
+): ScenarioId | null {
+  if (id === null) return null;
+  const def = SCENARIOS.find((s) => s.id === id);
+  if (def === undefined) return null;
+  return def.commodities.includes(commodity) ? id : null;
 }
 
 export function getScenario(id: ScenarioId): ScenarioDef {

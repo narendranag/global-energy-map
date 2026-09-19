@@ -1,6 +1,7 @@
 import { GeoJsonLayer } from "@deck.gl/layers";
 import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import type { CountryCollection, CountryProps } from "@/lib/geo/countries";
+import { dataIso3 } from "@/lib/geo/iso3";
 import type { GasStorageData } from "@/lib/data/gas-storage";
 import { sourceLine } from "@/lib/data/sources";
 import {
@@ -40,7 +41,7 @@ export function gasStorageFeatures(
         ...f,
         properties: {
           ...f.properties,
-          full_pct: data.values.get(f.properties.iso3) ?? null,
+          full_pct: data.values.get(dataIso3(f.properties.iso3)) ?? null,
           gas_day: data.gasDay,
         },
       }),

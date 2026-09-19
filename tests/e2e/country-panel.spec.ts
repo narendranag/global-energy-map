@@ -55,7 +55,7 @@ test.describe("country panel", () => {
     const reserves = page.getByTestId("country-reserves");
     await expect(reserves).toBeVisible({ timeout: SECTION_TIMEOUT });
     await expect(reserves).toContainText("Proved oil reserves");
-    await expect(reserves).toContainText("Crude production");
+    await expect(reserves).toContainText("Oil production (total liquids)");
     // Two sparklines, each an image with a spoken description of the shape.
     const charts = reserves.getByRole("img");
     await expect(charts).toHaveCount(2);

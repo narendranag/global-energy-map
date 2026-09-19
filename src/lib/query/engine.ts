@@ -22,6 +22,12 @@ import { createViewSql, findTable, findTableByPath, queryTables, type QueryTable
 export type ConsoleValue = string | number | boolean | null;
 
 export interface ConsoleResult {
+  /** The SQL text that produced this result — snapshotted at RUN time so a
+   * later edit to the (live) editor never lets the CSV header describe rows
+   * it didn't produce. */
+  readonly sql: string;
+  /** The row-limit selected at RUN time, for the same reason. */
+  readonly limit: number;
   readonly columns: readonly string[];
   readonly rows: readonly Record<string, ConsoleValue>[];
   /** True when the query returned more rows than the cap and they were cut. */
@@ -53,9 +59,12 @@ async function parseReferences(
     const tree: unknown = typeof row?.tree === "string" ? JSON.parse(row.tree) : row?.tree;
     return referencesFromSerializedSql(tree, tables.map((t) => t.name));
   } catch (err: unknown) {
-    // No parse tree means no proof of what the query reads: refuse export,
-    // but still let the query run and report its own error.
-    return { tables: [], files: [], unresolved: [describe(err)] };
+    // The json_serialize_sql call itself failed to even return a JSON
+    // payload (as opposed to DuckDB reporting `error: true` inside one, which
+    // `referencesFromSerializedSql` already turns into an unresolved+refused
+    // result). We have no proof this is a single SELECT, so — per the same
+    // rule as everything else here — it must not be run either.
+    return { tables: [], files: [], unresolved: [describe(err)], executable: false };
   }
 }
 
@@ -63,23 +72,44 @@ function describe(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
-/** Register the parquet files and create the views a query needs. */
+/**
+ * Why the statement must not even be executed, or `null` when it may be.
+ * `references.executable` is false exactly when DuckDB's own
+ * `json_serialize_sql` could not represent the text as a single SELECT
+ * statement — multiple statements, or a non-SELECT one (CREATE/COPY/ATTACH/
+ * INSTALL/LOAD/PRAGMA/SET, a top-level PIVOT statement, …). A single SELECT
+ * whose *content* the walker cannot fully vouch for (an unmodeled table
+ * function, an unmodeled table-ref kind, a qualified catalog, a CTE shadowing
+ * a real table) is still safe to run — only export stays refused for those,
+ * decided separately by `exportGate` reading the same `unresolved` list.
+ */
+export function executionRefusal(references: SqlReferences): string | null {
+  if (references.executable) return null;
+  return "One SELECT statement at a time — CREATE/COPY/ATTACH… are not run here.";
+}
+
+/**
+ * Register the parquet files and create the views a query needs, from the
+ * tables/files the parse tree actually resolved. A query whose content is
+ * unresolved (e.g. `SELECT * FROM range(10)`, or a PIVOT clause) registers
+ * only what it did resolve — which may be nothing, if it reads no catalogued
+ * file at all — rather than every parquet in the catalog: an unresolved
+ * reference already means the export gate refuses it, so there is no reader
+ * left who benefits from the extra ~3.6 MB of prefetch, and a query that
+ * really did need an unresolved table simply reports its own "table not
+ * found", same as any other SQL mistake.
+ */
 async function prepareTables(
   conn: AsyncDuckDBConnection,
   refs: SqlReferences,
   all: readonly QueryTable[],
 ): Promise<QueryTable[]> {
-  // Without a trusted parse, we cannot tell which tables are needed; register
-  // every one (3.6 MB of parquet in total) so the query still runs.
-  const needed =
-    refs.unresolved.length > 0
-      ? [...all]
-      : [
-          ...new Set([
-            ...refs.tables.flatMap((n) => findTable(n, all) ?? []),
-            ...refs.files.flatMap((p) => findTableByPath(p, all) ?? []),
-          ]),
-        ];
+  const needed = [
+    ...new Set([
+      ...refs.tables.flatMap((n) => findTable(n, all) ?? []),
+      ...refs.files.flatMap((p) => findTableByPath(p, all) ?? []),
+    ]),
+  ];
   const db = await getDuckDB();
   const bytes = new Map(
     needed.filter((t) => needsPrefetch(t.path)).map((t) => [t.path, fetchDataBytes(t.path)]),
@@ -108,6 +138,8 @@ export async function runConsoleQuery(sql: string, opts: RunOptions): Promise<Co
   const started = performance.now();
   try {
     const references = await parseReferences(conn, statement, all);
+    const refusal = executionRefusal(references);
+    if (refusal !== null) throw new Error(refusal);
     const prepared = await prepareTables(conn, references, all);
 
     // One row past the cap, so "truncated" is a fact rather than a guess.
@@ -116,14 +148,19 @@ export async function runConsoleQuery(sql: string, opts: RunOptions): Promise<Co
     try {
       arrow = (await conn.query(capped)) as unknown as Table;
     } catch {
-      // Not wrappable (a statement that is not a SELECT, say). Run it as
-      // written so the user sees their own result — or their own error.
+      // Not wrappable in a LIMIT subquery, even though it IS a single SELECT
+      // (references.executable already ruled out anything else above — this
+      // is e.g. a SELECT DuckDB's grammar does not allow inside a subquery).
+      // Run it as written so the user sees their own result, or their own
+      // error, never a raw non-SELECT statement.
       arrow = (await conn.query(statement)) as unknown as Table;
     }
     const columns = arrow.schema.fields.map((f) => f.name);
     const fetched = normalizeRows(arrow.toArray() as Record<string, unknown>[], columns);
     const truncated = fetched.length > opts.limit;
     return {
+      sql,
+      limit: opts.limit,
       columns,
       rows: fetched.slice(0, opts.limit).map(displayable),
       truncated,

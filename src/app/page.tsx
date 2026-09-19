@@ -6,6 +6,7 @@ import { MapShell } from "@/components/map/MapShell";
 import { LayerPanel, type LayerState } from "@/components/layers/LayerPanel";
 import { countryFromPick } from "@/components/layers/CountryPickLayer";
 import { CountryPanel } from "@/components/country/CountryPanel";
+import { setFocusIntent } from "@/components/country/focus-intent";
 import { formatTooltip } from "@/components/layers/tooltips";
 import { needsAssets, useMapLayers } from "@/components/layers/useMapLayers";
 import { Chevron } from "@/components/ui/Chevron";
@@ -32,9 +33,9 @@ import {
   type ExampleQuestion,
   type Mode,
 } from "@/lib/modes";
-import { getScenario } from "@/lib/scenarios/registry";
+import { getScenario, scenarioForCommodity } from "@/lib/scenarios/registry";
 import type { Commodity, ScenarioId } from "@/lib/scenarios/types";
-import { panelPadding, useCamera } from "@/lib/state";
+import { panelPadding, requestInitialFit } from "@/lib/state";
 import { embedControlsHidden, isEmbed } from "@/lib/url-state/embed";
 import { useUrlState } from "@/lib/url-state/useUrlState";
 import { RESERVES_LATEST_YEAR, YEAR_MAX, YEAR_MIN } from "@/lib/time/range";
@@ -47,7 +48,14 @@ function HomeInner() {
   const { mode, year, commodity, scenario: scenarioId, focus, layers } = state;
 
   const setYear = useCallback((y: number) => { setState({ year: y }); }, [setState]);
-  const setCommodity = useCallback((c: Commodity) => { setState({ commodity: c }); }, [setState]);
+  // Flipping the axis clears a scenario the new commodity does not model: it
+  // has no route rows there and would render a confident 0 % (A1).
+  const setCommodity = useCallback(
+    (c: Commodity) => {
+      setState({ commodity: c, scenario: scenarioForCommodity(scenarioId, c) });
+    },
+    [setState, scenarioId],
+  );
   const setScenarioId = useCallback(
     (id: ScenarioId | null) => { setState({ scenario: id }); },
     [setState],
@@ -68,6 +76,9 @@ function HomeInner() {
   );
   const onPick = useCallback(
     (info: PickingInfo) => {
+      // Declare the intent even though "pointer" is the default: it clears an
+      // earlier keyboard declaration that no `[iso3]` effect consumed (B6).
+      setFocusIntent("pointer");
       const iso3 = countryFromPick(info);
       if (iso3 !== null) {
         setFocus(iso3 === focus ? null : iso3);
@@ -96,7 +107,11 @@ function HomeInner() {
   const focusPickerRef = useRef(false);
   /** Phone (< 768 px) only: the scenario panel is collapsed to its header. */
   const [scenarioOpenOnPhone, setScenarioOpenOnPhone] = useState(false);
-  /** Phone (< 768 px) only: same for the country panel. Opens with the selection. */
+  /**
+   * The country panel is collapsed to its header button. Below 768 px always;
+   * below 1100 px when a scenario panel shares the right-hand side (B4).
+   * Opens with the selection.
+   */
   const [countryOpenOnPhone, setCountryOpenOnPhone] = useState(true);
 
   const selectMode = useCallback(
@@ -168,14 +183,22 @@ function HomeInner() {
   // carries a camera (`lon`/`lat`/`z`), which always wins: an explicit view is
   // what the sharer chose to show. Load only; a later selection (a click, and
   // in S1–S4 a search hit or a ranked row) moves the camera only if it asks.
-  const camera = useCamera();
   const searchParams = useSearchParams();
   const initialFitDone = useRef(false);
   useEffect(() => {
     if (initialFitDone.current) return;
     initialFitDone.current = true;
     if (focus === null || ["lon", "lat", "z"].some((k) => searchParams.has(k))) return;
-    void camera.fitCountry(focus, { padding: panelPadding({ right: showScenarioPanel }) });
+    // With the trade-flow layer on, the fit takes in the country's largest
+    // partners too — a focus in Flows is a question about the arcs, and
+    // framing the country alone pushes all of them off screen (polish 1).
+    void requestInitialFit({
+      focus,
+      year,
+      commodity,
+      tradeFlows: layers.trade_flows,
+      padding: panelPadding({ right: showScenarioPanel }),
+    });
     // Mount only: the initial URL is read once, on purpose.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -312,8 +335,12 @@ function HomeInner() {
             <button
               type="button"
               className={
-                "pointer-events-auto absolute right-4 z-10 flex items-center gap-2 rounded-md border border-slate-200 bg-white/95 px-3 py-2 text-xs font-medium uppercase tracking-wide text-slate-700 shadow-lg md:hidden " +
-                (showScenarioPanel ? "top-16" : "top-4")
+                // z-30: above both panel slots (z-20). Under 1100 px the
+                // scenario panel is open behind the country panel, and a
+                // toggle the scenario panel covers is a toggle nobody can
+                // press (B4).
+                "pointer-events-auto absolute right-4 z-30 flex items-center gap-2 rounded-md border border-slate-200 bg-white/95 px-3 py-2 text-xs font-medium uppercase tracking-wide text-slate-700 shadow-lg " +
+                (showScenarioPanel ? "top-16 min-[1100px]:hidden " : "top-4 md:hidden ")
               }
               aria-expanded={countryOpenOnPhone}
               onClick={() => {
@@ -324,19 +351,32 @@ function HomeInner() {
               Country
             </button>
             {/*
-              The country panel's slot. It sits left of the scenario panel's
-              26rem column when one is open, so a researcher can read a
-              country and the scenario that threatens it at the same time;
-              alone, it takes the right edge itself. Like the scenario slot it
-              ends above the commodity toggle and the year slider and scrolls,
-              and on phones it hangs below its own collapsed header button.
+              The country panel's slot. Side by side with the scenario panel's
+              26rem column — so a researcher can read a country and the
+              scenario that threatens it at the same time — but only from
+              1100 px, because the three columns need 1080 px of room
+              (layer panel to 304 px, country slot starting at width - 768)
+              and below that the country panel rode straight over the layer
+              panel (B4). Under 1100 px with a scenario open it takes the right
+              edge in front of the scenario panel and the reader toggles
+              between them with the collapsed "Country"/"Scenario" buttons,
+              which is exactly what phones have always done. With no scenario
+              panel there is room at every width from 768 px, so the old `md`
+              breakpoint stands. Either way the slot ends above the commodity
+              toggle and the year slider and scrolls.
             */}
             <div
               data-testid="country-slot"
               className={
-                "pointer-events-none absolute bottom-40 top-0 z-20 w-[min(22rem,100%)] overflow-y-auto overscroll-contain max-md:right-0 " +
-                (showScenarioPanel ? "right-[26rem] max-md:top-24 " : "right-0 max-md:top-10 ") +
-                (countryOpenOnPhone ? "" : "max-md:hidden")
+                "pointer-events-none absolute bottom-40 top-0 z-20 w-[min(22rem,100%)] overflow-y-auto overscroll-contain " +
+                (showScenarioPanel
+                  ? "max-[1099px]:right-0 max-[1099px]:top-24 min-[1100px]:right-[26rem] "
+                  : "right-0 max-md:top-10 ") +
+                (countryOpenOnPhone
+                  ? ""
+                  : showScenarioPanel
+                    ? "max-[1099px]:hidden"
+                    : "max-md:hidden")
               }
             >
               <CountryPanel

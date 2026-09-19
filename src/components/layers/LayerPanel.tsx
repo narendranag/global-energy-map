@@ -5,6 +5,9 @@ import type { ScenarioKind } from "@/lib/symbology";
 import { Chevron } from "@/components/ui/Chevron";
 import { LAYER_LABELS } from "@/lib/export/layers";
 import { STALE_AFTER_MONTHS, formatVintage, isStale, layerVintages, staleNote } from "@/lib/data/vintage";
+import { TRADE_FIRST_YEAR, TRADE_LAST_YEAR } from "@/lib/data/trade-flows";
+import { useAppYear } from "@/lib/state";
+import { tradeFlowsHasNoData } from "./TradeFlowsLayer";
 import { useToday } from "./useToday";
 import { Legend } from "./Legend";
 
@@ -83,6 +86,27 @@ const BADGE_CLASS: Record<"yes" | "partial" | "no" | "live", string> = {
 const VINTAGES = layerVintages(LAYER_LABELS);
 const VINTAGE_BY_KEY = new Map(VINTAGES.map((v) => [v.key, v]));
 
+/**
+ * A8: with the trade-flows toggle on but the active year outside BACI's
+ * 1995–2024 coverage, the layer draws nothing — this says why, instead of an
+ * empty map reading as a bug. `tradeFlowsHasNoData` is exported by the layer
+ * itself (`TradeFlowsLayer.tsx`) precisely so this and the layer agree on
+ * what "no data" means; before this it was computed and never read anywhere.
+ */
+function TradeFlowsNoDataBadge({ enabled, year }: { enabled: boolean; year: number | null }) {
+  if (!enabled || year === null || !tradeFlowsHasNoData(year)) return null;
+  const note = `BACI has no crude/LNG trade data before ${String(TRADE_FIRST_YEAR)} or after ${String(TRADE_LAST_YEAR)}.`;
+  return (
+    <span
+      title={note}
+      data-testid="trade-flows-no-data"
+      className="shrink-0 whitespace-nowrap rounded border border-amber-600 bg-amber-50 px-1 text-[11px] leading-4 text-amber-900"
+    >
+      no data<span className="sr-only">: {note}</span>
+    </span>
+  );
+}
+
 /** "old" beside a layer whose data ended more than STALE_AFTER_MONTHS ago. */
 function StaleBadge({ layer, today }: { layer: keyof LayerState; today: string | null }) {
   const v = VINTAGE_BY_KEY.get(layer);
@@ -121,6 +145,8 @@ export function LayerPanel({
   const activeCount = Object.values(state).filter(Boolean).length;
   // Null until mounted: staleness is judged against the reader's today.
   const today = useToday();
+  // Null before the store is adopted / on the server — same "no year yet" case.
+  const year = useAppYear();
 
   return (
     <section
@@ -189,6 +215,9 @@ export function LayerPanel({
                   {r.label}
                 </label>
                 <StaleBadge layer={r.key} today={today} />
+                {r.key === "trade_flows" && (
+                  <TradeFlowsNoDataBadge enabled={state.trade_flows} year={year} />
+                )}
                 <span
                   title={TIME_AWARE_NOTE[r.key]}
                   data-testid={`time-badge-${r.key}`}

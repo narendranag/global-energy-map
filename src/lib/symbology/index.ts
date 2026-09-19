@@ -608,10 +608,38 @@ export function tradeFlowTargetColor(
 
 export const TRADE_FLOW_WIDTH = { minPixels: 0.5, maxPixels: 6 } as const;
 
-/** Square-root width against the largest pair drawn, so the top pair does not swamp the rest. */
-export function tradeFlowWidth(qty: number, maxQty: number): number {
+/**
+ * Arc widths are in pixels, so they do not shrink as you zoom in — but the
+ * arcs all converge on one country anchor, and by the time a focused country
+ * fills the screen a hundred 6 px ribbons have fused into a solid wedge
+ * (Wave 2 polish 1). The cap tapers from `maxPixels` at world zoom to
+ * `closeMaxPixels` at street zoom, where the arcs are a bundle of threads
+ * leaving the country rather than a shape.
+ */
+export const TRADE_FLOW_WIDTH_TAPER = { fromZoom: 3, toZoom: 6, closeMaxPixels: 2 } as const;
+
+/** The width cap in pixels at `zoom`. */
+export function tradeFlowMaxWidth(zoom: number): number {
+  const { fromZoom, toZoom, closeMaxPixels } = TRADE_FLOW_WIDTH_TAPER;
+  const wide = TRADE_FLOW_WIDTH.maxPixels;
+  if (!Number.isFinite(zoom) || zoom <= fromZoom) return wide;
+  if (zoom >= toZoom) return closeMaxPixels;
+  const t = (zoom - fromZoom) / (toZoom - fromZoom);
+  return wide + (closeMaxPixels - wide) * t;
+}
+
+/**
+ * Square-root width against the largest pair drawn, so the top pair does not
+ * swamp the rest, capped at `maxPixels` (zoom-dependent — see
+ * {@link tradeFlowMaxWidth}).
+ */
+export function tradeFlowWidth(
+  qty: number,
+  maxQty: number,
+  maxPixels: number = TRADE_FLOW_WIDTH.maxPixels,
+): number {
   if (!(maxQty > 0) || !(qty > 0)) return TRADE_FLOW_WIDTH.minPixels;
-  return Math.max(TRADE_FLOW_WIDTH.minPixels, Math.sqrt(qty / maxQty) * TRADE_FLOW_WIDTH.maxPixels);
+  return Math.max(TRADE_FLOW_WIDTH.minPixels, Math.sqrt(qty / maxQty) * maxPixels);
 }
 
 // ---------------------------------------------------------------------------

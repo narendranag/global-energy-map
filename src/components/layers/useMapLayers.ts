@@ -242,9 +242,9 @@ export function useMapLayers({
   const tradeFlowsLayer = useMemo(
     () =>
       showTradeFlows && tradeFlows.data
-        ? buildTradeFlowsLayer(tradeFlows.data, { commodity, focus })
+        ? buildTradeFlowsLayer(tradeFlows.data, { commodity, focus, zoom })
         : null,
-    [showTradeFlows, tradeFlows.data, commodity, focus],
+    [showTradeFlows, tradeFlows.data, commodity, focus, zoom],
   );
 
   // A search result (S4): drawn last (topmost) so it is never hidden by a mark.
@@ -309,10 +309,18 @@ export function useMapLayers({
   );
 
   const assetsPending = assets === null;
+  // countries.geojson is always *loaded* (the pick layer and the focus outline
+  // are built from it), but it only counts towards `data-ready` when something
+  // the reader can see depends on it: a choropleth fill — which is also where
+  // the scenario exposure overlay paints — or a focus outline to draw. Gating
+  // readiness on it unconditionally (A4) made every mode wait on a 464 KB
+  // fetch that an infrastructure-only view never shows.
+  const countriesVisible =
+    layers.reserves || layers.gas_storage || layers.recent_imports || focus !== null;
   const pending = [
     layers.basins && !basins.ready,
     layers.shale_regions && (!shaleShapes.ready || !shaleData.ready),
-    !countries.ready,
+    countriesVisible && !countries.ready,
     layers.reserves && !reserves.ready,
     layers.gas_storage && !gasStorage.ready,
     layers.recent_imports && !recentImports.ready,

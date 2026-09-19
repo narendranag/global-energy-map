@@ -40,7 +40,7 @@ test.describe("Query console", () => {
     // The default query is "largest crude importers, 2024" (BACI).
     await expect(page.getByTestId("query-results")).toContainText("importer_iso3");
     await expect(page.getByTestId("query-results")).toContainText("CHN");
-    await expect(page.getByTestId("query-status")).toContainText(/\d+ rows in \d+ ms/);
+    await expect(page.getByTestId("query-status")).toContainText(/\d+ rows in [\d,]+ ms/);
 
     // trade_flow is Etalab-licensed, so the result may leave the browser.
     await expect(page.getByTestId("export-csv")).toBeEnabled();
@@ -115,6 +115,32 @@ test.describe("Query console", () => {
       await expect(page.getByTestId("query-status")).toContainText("1 row", { timeout: 20_000 });
     });
     await expect(page.getByTestId("query-error")).toHaveCount(0);
+  });
+
+  test("a non-SELECT statement is refused, and the default query still runs after", async ({
+    page,
+  }) => {
+    await open(page);
+    await page.getByTestId("query-editor").fill("CREATE TABLE trade_flow AS SELECT 1");
+    await run(page, async () => {
+      await expect(page.getByTestId("query-error")).toContainText(
+        "One SELECT statement at a time",
+        { timeout: 20_000 },
+      );
+    });
+    await expect(page.getByTestId("query-error")).toContainText(/CREATE\/COPY\/ATTACH/);
+    await expect(page.getByTestId("query-results")).toHaveCount(0);
+    await expect(page.getByTestId("app-error")).toHaveCount(0);
+
+    // Proves the CREATE never ran: trade_flow still holds real BACI rows.
+    await page.getByTestId("query-editor").fill("SELECT importer_iso3 FROM trade_flow LIMIT 5");
+    await run(page, async () => {
+      await expect(page.getByTestId("query-results")).toContainText("importer_iso3", {
+        timeout: 20_000,
+      });
+    });
+    await expect(page.getByTestId("query-error")).toHaveCount(0);
+    await expect(page.getByTestId("query-status")).toContainText(/\d+ rows in [\d,]+ ms/);
   });
 
   test("everything it loads comes from this origin", async ({ page, baseURL }) => {

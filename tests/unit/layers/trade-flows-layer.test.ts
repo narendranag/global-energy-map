@@ -2,6 +2,12 @@ import { describe, expect, it } from "vitest";
 import { buildTradeFlowsLayer, formatTradeFlowTooltip, TRADE_FLOWS_LAYER_ID } from "@/components/layers/TradeFlowsLayer";
 import { aggregateTradeFlows, TOP_N_PAIRS } from "@/lib/data/trade-flows";
 import { NATURAL_EARTH_ISO3 } from "@/lib/geo/iso3";
+import {
+  TRADE_FLOW_WIDTH,
+  TRADE_FLOW_WIDTH_TAPER,
+  tradeFlowMaxWidth,
+  tradeFlowWidth,
+} from "@/lib/symbology";
 import type { TooltipContext } from "@/components/layers/tooltip";
 
 function call(accessor: unknown, row: unknown): unknown {
@@ -34,7 +40,7 @@ describe("buildTradeFlowsLayer", () => {
       return row(e, m, 1000 - i);
     });
     const data = aggregateTradeFlows(rows, 2024, "oil");
-    const layer = buildTradeFlowsLayer(data, { commodity: "oil", focus: null });
+    const layer = buildTradeFlowsLayer(data, { commodity: "oil", focus: null, zoom: 1 });
     expect(layer.id).toBe(TRADE_FLOWS_LAYER_ID);
     expect(dataOf(layer)).toHaveLength(TOP_N_PAIRS);
   });
@@ -48,7 +54,7 @@ describe("buildTradeFlowsLayer", () => {
       row("QAT", "JPN", 500),
     ];
     const data = aggregateTradeFlows(rows, 2024, "oil");
-    const layer = buildTradeFlowsLayer(data, { commodity: "oil", focus: "QAT" });
+    const layer = buildTradeFlowsLayer(data, { commodity: "oil", focus: "QAT", zoom: 1 });
     const rowsOut = dataOf(layer) as { exporter_iso3: string; importer_iso3: string }[];
     expect(rowsOut).toHaveLength(1);
     expect(rowsOut[0]).toMatchObject({ exporter_iso3: "QAT", importer_iso3: "JPN" });
@@ -56,7 +62,7 @@ describe("buildTradeFlowsLayer", () => {
 
   it("positions arcs at the exporter/importer anchors and scales width by volume", () => {
     const data = aggregateTradeFlows([row("SAU", "CHN", 1000), row("RUS", "IND", 100)], 2024, "oil");
-    const layer = buildTradeFlowsLayer(data, { commodity: "oil", focus: null });
+    const layer = buildTradeFlowsLayer(data, { commodity: "oil", focus: null, zoom: 1 });
     const rows = dataOf(layer);
     const big = rows.find((r) => (r as { exporter_iso3: string }).exporter_iso3 === "SAU");
     const small = rows.find((r) => (r as { exporter_iso3: string }).exporter_iso3 === "RUS");
@@ -90,8 +96,10 @@ describe("formatTradeFlowTooltip", () => {
     expect(t).toContain("SAU → CHN");
     expect(t).toContain("5.00 Mt");
     expect(t).toMatch(/kb\/d/);
-    expect(t).toContain("CHN's total imports: 25.0%");
-    expect(t).toContain("SAU's total exports: 40.0%");
+    // A7/A8: BACI has 1,317 rows with no quantity (of 53,727) — the share is
+    // of *quantified* trade, not all reported trade, and the tooltip says so.
+    expect(t).toContain("CHN's quantified imports: 25.0%");
+    expect(t).toContain("SAU's quantified exports: 40.0%");
     expect(t).toMatch(/^Source: .+\(as of \d{4}-\d{2}-\d{2}\)$/m);
   });
 
@@ -100,5 +108,32 @@ describe("formatTradeFlowTooltip", () => {
     const t = formatTradeFlowTooltip(arc, ctx) ?? "";
     expect(t).not.toMatch(/kb\/d/);
     expect(t).toContain("LNG trade");
+  });
+});
+
+// Wave 2 polish 1: arc widths are in pixels, so zooming in leaves a hundred
+// 6 px ribbons converging on one country anchor as a solid wedge. The cap
+// tapers with zoom instead.
+describe("tradeFlowMaxWidth", () => {
+  it("is the full width at world zoom and the close width from zoom 6", () => {
+    expect(tradeFlowMaxWidth(0)).toBe(TRADE_FLOW_WIDTH.maxPixels);
+    expect(tradeFlowMaxWidth(TRADE_FLOW_WIDTH_TAPER.fromZoom)).toBe(TRADE_FLOW_WIDTH.maxPixels);
+    expect(tradeFlowMaxWidth(TRADE_FLOW_WIDTH_TAPER.toZoom)).toBe(
+      TRADE_FLOW_WIDTH_TAPER.closeMaxPixels,
+    );
+    expect(tradeFlowMaxWidth(12)).toBe(TRADE_FLOW_WIDTH_TAPER.closeMaxPixels);
+  });
+
+  it("decreases monotonically across the taper", () => {
+    const widths = [3, 3.5, 4, 4.5, 5, 5.5, 6].map(tradeFlowMaxWidth);
+    for (let i = 1; i < widths.length; i++) {
+      expect(widths[i]).toBeLessThan(widths[i - 1] ?? Infinity);
+    }
+  });
+
+  it("caps the width the layer asks for, and keeps the floor", () => {
+    const cap = tradeFlowMaxWidth(6);
+    expect(tradeFlowWidth(100, 100, cap)).toBeLessThanOrEqual(cap);
+    expect(tradeFlowWidth(0, 100, cap)).toBe(TRADE_FLOW_WIDTH.minPixels);
   });
 });

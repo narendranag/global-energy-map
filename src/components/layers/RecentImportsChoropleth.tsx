@@ -1,6 +1,7 @@
 import { GeoJsonLayer } from "@deck.gl/layers";
 import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import type { CountryCollection, CountryProps } from "@/lib/geo/countries";
+import { dataIso3 } from "@/lib/geo/iso3";
 import {
   divergesFromBaci,
   isComplete,
@@ -37,7 +38,7 @@ export function recentImportsFeatures(
         properties: {
           ...f.properties,
           commodity: data.commodity,
-          recent: data.byIso3.get(f.properties.iso3) ?? null,
+          recent: data.byIso3.get(dataIso3(f.properties.iso3)) ?? null,
           baci_year: data.baciYear,
         },
       }),

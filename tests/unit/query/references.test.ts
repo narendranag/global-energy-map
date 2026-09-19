@@ -24,7 +24,7 @@ const refs = (name: string) => {
 
 describe("tables a query reads", () => {
   it("reads a plain FROM", () => {
-    expect(refs("simple")).toEqual({ tables: ["trade_flow"], files: [], unresolved: [] });
+    expect(refs("simple")).toEqual({ tables: ["trade_flow"], files: [], unresolved: [], executable: true });
   });
 
   it("reads both sides of a JOIN", () => {
@@ -44,16 +44,16 @@ describe("tables a query reads", () => {
   });
 
   it("counts the table a CTE reads, not the CTE's own name", () => {
-    expect(refs("cte")).toEqual({ tables: ["trade_flow"], files: [], unresolved: [] });
+    expect(refs("cte")).toEqual({ tables: ["trade_flow"], files: [], unresolved: [], executable: true });
   });
 
   it("does not treat a recursive CTE's self-reference as a table", () => {
-    expect(refs("recursive_cte")).toEqual({ tables: [], files: [], unresolved: [] });
+    expect(refs("recursive_cte")).toEqual({ tables: [], files: [], unresolved: [], executable: true });
   });
 
   it("treats a VALUES list and a bare constant as reading nothing", () => {
-    expect(refs("values_list")).toEqual({ tables: [], files: [], unresolved: [] });
-    expect(refs("constant_only")).toEqual({ tables: [], files: [], unresolved: [] });
+    expect(refs("values_list")).toEqual({ tables: [], files: [], unresolved: [], executable: true });
+    expect(refs("constant_only")).toEqual({ tables: [], files: [], unresolved: [], executable: true });
   });
 
   it("accepts the default catalog and schema spelled out", () => {
@@ -67,6 +67,7 @@ describe("read_parquet() counts as reading that file", () => {
       tables: [],
       files: ["/data/assets.parquet"],
       unresolved: [],
+      executable: true,
     });
   });
 
@@ -129,5 +130,44 @@ describe("anything it cannot prove is refused", () => {
       ],
     };
     expect(referencesFromSerializedSql(tree, KNOWN).unresolved.join(" ")).toMatch(/PIVOT/);
+  });
+});
+
+describe("executable: whether the engine may even run the statement", () => {
+  // Anything DuckDB's own json_serialize_sql refuses to represent is not a
+  // single SELECT — the B3 fix: these must never reach conn.query() as-is.
+  const notExecutable = [
+    "create_table_as",
+    "create_view",
+    "copy_to",
+    "attach",
+    "install_extension",
+    "load_extension",
+    "pragma",
+    "set_var",
+    "two_statements",
+    "multi_statement_select_then_ddl",
+    "pivot_top_level_statement",
+    "non_select",
+    "syntax_error",
+  ];
+  it.each(notExecutable)("%s is not executable", (name) => {
+    const r = refs(name);
+    expect(r.executable).toBe(false);
+    expect(r.unresolved.length).toBeGreaterThan(0);
+  });
+
+  // A single SELECT whose content the walker cannot fully vouch for is still
+  // safe to run — only export is refused (exportGate reads `unresolved`).
+  const executableButUnresolvedForExport = ["table_function_range", "pivot_clause", "read_csv"];
+  it.each(executableButUnresolvedForExport)("%s is executable but unresolved", (name) => {
+    const r = refs(name);
+    expect(r.executable).toBe(true);
+    expect(r.unresolved.length).toBeGreaterThan(0);
+  });
+
+  it("a fully resolved SELECT is executable with nothing unresolved", () => {
+    const r = refs("simple");
+    expect(r).toEqual({ tables: ["trade_flow"], files: [], unresolved: [], executable: true });
   });
 });

@@ -3,6 +3,11 @@
  *
  * - Fields containing a comma, double quote, CR/LF, or leading/trailing
  *   whitespace are quoted; embedded quotes are doubled.
+ * - A *string* field opening with `=`, `+`, `-`, `@`, a tab or a CR is
+ *   formula-injection-prone in Excel/Sheets/LibreOffice (the query console
+ *   exports arbitrary user-typed strings); it gets a leading `'` so it opens
+ *   as literal text. Never applied to numbers — a negative number typed as
+ *   `number` stays plain and unquoted.
  * - null / undefined / non-finite numbers → empty field.
  * - Optional leading `# ` comment lines carry the citation header (pandas:
  *   `read_csv(path, comment="#")`; R: `read.csv(path, comment.char = "#")`).
@@ -12,14 +17,18 @@
 
 export type CsvValue = string | number | boolean | null | undefined;
 
+/** Characters a spreadsheet treats as "this cell is a formula" when leading. */
+const FORMULA_TRIGGER = /^[=+\-@\t\r]/;
+
 export function csvField(value: CsvValue): string {
   if (value === null || value === undefined) return "";
   if (typeof value === "number") return Number.isFinite(value) ? String(value) : "";
   if (typeof value === "boolean") return value ? "true" : "false";
-  if (/[",\r\n]/.test(value) || value !== value.trim()) {
-    return `"${value.replace(/"/g, '""')}"`;
+  const guarded = FORMULA_TRIGGER.test(value) ? `'${value}` : value;
+  if (/[",\r\n]/.test(guarded) || guarded !== guarded.trim()) {
+    return `"${guarded.replace(/"/g, '""')}"`;
   }
-  return value;
+  return guarded;
 }
 
 /** Comment lines: each input line (split on newlines) becomes `# …`. */

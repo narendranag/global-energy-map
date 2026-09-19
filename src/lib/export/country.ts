@@ -1,5 +1,6 @@
 import type { Catalog, CatalogEntry } from "@/lib/data-catalog/types";
 import type { CountryProfile } from "@/lib/data/country-profile";
+import { SCENARIOS } from "@/lib/scenarios/registry";
 import { toCsv, type CsvValue } from "./csv";
 import { apaCitation, entriesForTags, sourceCitationLine } from "./citation";
 
@@ -40,6 +41,19 @@ export const COUNTRY_CSV_COLUMNS = [
 
 export type CountryCsvRow = Record<(typeof COUNTRY_CSV_COLUMNS)[number], CsvValue>;
 
+/**
+ * B8: every scenario's route-share tag, derived from `SCENARIOS` so a new
+ * scenario is covered for free (the panel's own exposure numbers already
+ * iterate `SCENARIOS` the same way — see CLAUDE.md's country-panel note).
+ * The `-lng` tag variant only exists for a scenario whose `commodities`
+ * include gas (`scenarioTags` in `layers.ts` assumes every scenario has one,
+ * which is the separate A1 bug — this list does not repeat that mistake).
+ */
+const EXPOSURE_SCENARIO_TAGS: readonly string[] = SCENARIOS.flatMap((s) => [
+  `scenario:${s.id}`,
+  ...(s.commodities.includes("gas") ? [`scenario:${s.id}-lng`] : []),
+]);
+
 /** Catalog `layers` tags behind each section of the panel. */
 export const COUNTRY_SECTION_TAGS: Readonly<Record<string, readonly string[]>> = {
   reserves: ["reserves"],
@@ -47,7 +61,7 @@ export const COUNTRY_SECTION_TAGS: Readonly<Record<string, readonly string[]>> =
   production: ["production"],
   trade: ["trade"],
   // Exposure is BACI x the cited route shares: both sources must clear the bar.
-  exposure: ["trade", "scenario:hormuz", "scenario:hormuz-lng", "scenario:druzhba", "scenario:btc", "scenario:cpc"],
+  exposure: ["trade", ...EXPOSURE_SCENARIO_TAGS],
   "LNG terminals": ["lng_terminals"],
   "extraction sites": ["extraction"],
   refineries: ["refineries"],

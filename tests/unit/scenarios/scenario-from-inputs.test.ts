@@ -13,10 +13,23 @@ const assets = groupAssets([
 function inputs(commodity: "oil" | "gas"): ScenarioInputs {
   return {
     scenarioId: "hormuz",
+    scenarioIds: ["hormuz"],
     year: 2019,
     commodity,
     tradeFlows: [{ year: 2019, importer_iso3: "JPN", exporter_iso3: "SAU", qty: 1000 }],
-    routes: [{ disruption_id: "hormuz", kind: "chokepoint", exporter_iso3: "SAU", importer_iso3: null, share: 0.5 }],
+    routes: [
+      {
+        disruption_id: "hormuz",
+        kind: "chokepoint",
+        exporter_iso3: "SAU",
+        importer_iso3: null,
+        share: 0.5,
+        source_title: "",
+        source_url: "",
+        source_year: null,
+        source_note: "",
+      },
+    ],
     lngVoyages: [],
   };
 }

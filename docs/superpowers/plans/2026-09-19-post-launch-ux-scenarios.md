@@ -81,5 +81,6 @@ Merge order inside 2b (least → most shared-file contact): S5, S8, S6, S2, S4, 
 |---|---|---|
 | F1–F4 | pending | |
 | R1–R4, RV | pending | |
-| S0–S8 | pending | |
+| S5 | done | Engine only, no UI. `severity` (clamped 0–1), `byExporter`/`rankedExporters`, `scenarioIds` combined as a range (lower = max, upper = min(1, Σ); asset views quote the lower bound), importer-wide wildcard (`InboundDisruptionRouteRow`; pair > max(exporter-wide, importer-wide)). `howComputed` takes options and is unchanged when they are inert. Pre-S5 results pinned by `tests/unit/scenarios/regression-fixture.test.ts`. |
+| S0–S4, S6–S8 | pending | |
 | T1–T6 | pending | |

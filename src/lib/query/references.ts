@@ -53,6 +53,10 @@ function str(v: unknown): string | undefined {
   return typeof v === "string" ? v : undefined;
 }
 
+function arr(v: unknown): unknown[] {
+  return Array.isArray(v) ? (v as unknown[]) : [];
+}
+
 /**
  * A table-reference node, as opposed to an expression. DuckDB tags every
  * expression with `class`; table refs carry `type` + `alias` + `sample`.
@@ -92,12 +96,11 @@ export function referencesFromSerializedSql(
   if (parsed.error !== false) {
     return blocked(str(parsed.error_message) ?? "DuckDB could not parse this query.");
   }
-  const statements = parsed.statements;
-  if (!Array.isArray(statements) || statements.length !== 1) {
-    const n = Array.isArray(statements) ? statements.length : 0;
-    return blocked(`Export needs exactly one statement; DuckDB parsed ${String(n)}.`);
+  const statements = arr(parsed.statements);
+  if (statements.length !== 1) {
+    return blocked(`Export needs exactly one statement; DuckDB parsed ${String(statements.length)}.`);
   }
-  const statement = statements[0];
+  const statement: unknown = statements[0];
   if (
     !isObject(statement) ||
     !isObject(statement.node) ||
@@ -116,8 +119,8 @@ export function referencesFromSerializedSql(
     if (!isObject(value)) return;
 
     // `WITH x AS (…)`: remember x so a reference to it is not read as a file.
-    if (isObject(value.cte_map) && Array.isArray(value.cte_map.map)) {
-      for (const cte of value.cte_map.map) {
+    if (isObject(value.cte_map)) {
+      for (const cte of arr(value.cte_map.map)) {
         if (isObject(cte)) {
           const key = str(cte.key);
           if (key !== undefined) ctes.add(key.toLowerCase());
@@ -161,8 +164,7 @@ export function referencesFromSerializedSql(
       refuse(`Export cannot check what ${name === "" ? "this table function" : `${name}()`} reads.`);
       return;
     }
-    const children = Array.isArray(fn?.children) ? fn.children : [];
-    const first = children[0];
+    const first: unknown = arr(fn?.children)[0];
     const literal =
       isObject(first) && isObject(first.value) && str(first.value.value) !== undefined
         ? str(first.value.value)

@@ -16,7 +16,7 @@ import SCHEMAS from "./schema.generated.json";
 
 export interface TableColumn {
   readonly name: string;
-  /** Parquet logical type, as pyarrow prints it (e.g. "string", "int64"). */
+  /** The SQL type DuckDB gives the column (e.g. "VARCHAR", "BIGINT", "DATE"). */
   readonly type: string;
 }
 
@@ -97,7 +97,7 @@ export function findTableByPath(
 }
 
 /**
- * `CREATE OR REPLACE VIEW "x" AS SELECT * FROM read_parquet('/data/x.parquet')`.
+ * `CREATE OR REPLACE VIEW "trade_flow" AS SELECT * FROM read_parquet('/data/trade_flow.parquet')`.
  *
  * The logical path is the name `files.ts` registers the bytes under, so the
  * view reads the already-fetched buffer rather than the network.

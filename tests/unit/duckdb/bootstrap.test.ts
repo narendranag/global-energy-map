@@ -107,11 +107,17 @@ describe("self-hosted parquet extension", () => {
     const { DUCKDB_CORE_VERSION } = await import("@/lib/duckdb/bundles");
     const script = (await import("../../../scripts/copy-duckdb.mjs")) as {
       DUCKDB_CORE_VERSION: string;
-      PARQUET_EXTENSIONS: { platform: string; sha256: string }[];
+      DUCKDB_EXTENSIONS: { name: string; platform: string; sha256: string }[];
     };
     expect(script.DUCKDB_CORE_VERSION).toBe(DUCKDB_CORE_VERSION);
-    expect(script.PARQUET_EXTENSIONS.map((e) => e.platform).sort()).toEqual(["wasm_eh", "wasm_mvp"]);
-    for (const e of script.PARQUET_EXTENSIONS) expect(e.sha256).toMatch(/^[0-9a-f]{64}$/);
+    // parquet reads the data; json backs json_serialize_sql(), which the
+    // /query export gate needs — neither may be fetched from a third party.
+    for (const name of ["parquet", "json"]) {
+      expect(
+        script.DUCKDB_EXTENSIONS.filter((e) => e.name === name).map((e) => e.platform).sort(),
+      ).toEqual(["wasm_eh", "wasm_mvp"]);
+    }
+    for (const e of script.DUCKDB_EXTENSIONS) expect(e.sha256).toMatch(/^[0-9a-f]{64}$/);
   });
 });
 

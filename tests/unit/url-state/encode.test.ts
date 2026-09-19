@@ -313,3 +313,22 @@ describe("encodeUrlState", () => {
     expect(decodeView(params, DEFAULT_VIEW)).toEqual(v);
   });
 });
+
+describe("decodeAppState: scenario must model the commodity (A1)", () => {
+  const decodeQs = (qs: string) => decodeAppState(new URLSearchParams(qs), DEFAULTS);
+
+  it("drops a scenario the commodity does not support", () => {
+    // `druzhba` is oil-only; on the gas axis there are no `druzhba_lng` route
+    // rows at all, so the pair could only ever render a confident 0 %.
+    expect(decodeQs("scenario=druzhba&commodity=gas").scenario).toBeNull();
+    expect(decodeQs("scenario=btc&commodity=gas").scenario).toBeNull();
+    expect(decodeQs("scenario=keystone&commodity=gas").scenario).toBeNull();
+  });
+
+  it("keeps a scenario that does model the commodity", () => {
+    expect(decodeQs("scenario=hormuz&commodity=gas").scenario).toBe("hormuz");
+    expect(decodeQs("scenario=malacca&commodity=gas").scenario).toBe("malacca");
+    expect(decodeQs("scenario=druzhba&commodity=oil").scenario).toBe("druzhba");
+    expect(decodeQs("scenario=druzhba").scenario).toBe("druzhba");
+  });
+});

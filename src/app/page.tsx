@@ -28,7 +28,7 @@ import {
   type ExampleQuestion,
   type Mode,
 } from "@/lib/modes";
-import { getScenario } from "@/lib/scenarios/registry";
+import { getScenario, scenarioForCommodity } from "@/lib/scenarios/registry";
 import type { Commodity, ScenarioId } from "@/lib/scenarios/types";
 import { panelPadding, useCamera } from "@/lib/state";
 import { embedControlsHidden, isEmbed } from "@/lib/url-state/embed";
@@ -43,7 +43,14 @@ function HomeInner() {
   const { mode, year, commodity, scenario: scenarioId, focus, layers } = state;
 
   const setYear = useCallback((y: number) => { setState({ year: y }); }, [setState]);
-  const setCommodity = useCallback((c: Commodity) => { setState({ commodity: c }); }, [setState]);
+  // Flipping the axis clears a scenario the new commodity does not model: it
+  // has no route rows there and would render a confident 0 % (A1).
+  const setCommodity = useCallback(
+    (c: Commodity) => {
+      setState({ commodity: c, scenario: scenarioForCommodity(scenarioId, c) });
+    },
+    [setState, scenarioId],
+  );
   const setScenarioId = useCallback(
     (id: ScenarioId | null) => { setState({ scenario: id }); },
     [setState],

@@ -1,5 +1,5 @@
 import type { Commodity, ScenarioId } from "@/lib/scenarios/types";
-import { SCENARIOS } from "@/lib/scenarios/registry";
+import { SCENARIOS, scenarioForCommodity } from "@/lib/scenarios/registry";
 import { clampYear } from "@/lib/time/range";
 import type { LayerState } from "@/components/layers/LayerPanel";
 import { normalizeView, type MapView } from "@/lib/state/view";
@@ -93,6 +93,9 @@ export function decodeAppState(
     const known = SCENARIOS.find((s) => s.id === rawScenario);
     scenario = known ? known.id : null;
   }
+  // A scenario the commodity axis does not model has no route rows, so it can
+  // only render a confident 0 %. Drop it, as the commodity toggle does (A1).
+  scenario = scenarioForCommodity(scenario, commodity);
 
   // A `focus` we cannot draw is no focus at all: an unknown or malformed code
   // decodes to null rather than leaving a phantom selection in the URL.

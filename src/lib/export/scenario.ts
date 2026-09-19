@@ -140,7 +140,13 @@ export function scenarioHeader(result: ScenarioResult, ctx: ScenarioExportContex
   const baci = ctx.catalog.entries.find((e) => e.id === "baci_2709");
   const lngT3 = ctx.catalog.entries.find((e) => e.id === "lng_t3_voyages");
   const usesVoyages = gas && result.year >= LNG_T3_FIRST_YEAR && result.year <= LNG_T3_LAST_YEAR;
-  const shares = sharesFor(routeKeyFor(result.scenarioId, result.commodity), ctx.shares);
+  // routeKeyFor is null when the scenario does not model this commodity (only
+  // reachable from a hand-typed URL). Cite the scenario's own rows rather than
+  // a `_lng` id that has none (A1).
+  const shares = sharesFor(
+    routeKeyFor(result.scenarioId, result.commodity) ?? result.scenarioId,
+    ctx.shares,
+  );
   const lines = [
     `Global Energy Map — scenario table: ${def.label}, ${gas ? "LNG" : "crude oil"}, ${String(result.year)}`,
     "DERIVED ANALYSIS, not source data. Importer rows: BACI bilateral imports from each exporter x that exporter's route share;",

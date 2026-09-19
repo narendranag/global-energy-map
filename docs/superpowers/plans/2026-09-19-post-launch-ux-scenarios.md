@@ -89,4 +89,5 @@ Merge order inside 2b (least → most shared-file contact): S5, S8, S6, S2, S4, 
 | S0 | merged 2026-09-19 | API: `AppState.focus`, `useCamera().fitCountry/request`, `panelPadding`, `countryFromPick`, `buildFocusLayer`, `countryBounds`. Modes keep focus; a click selects but does not move the camera; cased (halo + line) outline because no single colour clears 3:1 on both Positron land and full-exposure red |
 | S1–S4, S6, S7 | in progress | |
 | T5 | dropped | per R4 |
-| T1–T4, T6 | pending | |
+| T4 | done 2026-09-19 | `/query`: DuckDB-WASM lazy on that route only; tables generated from the catalog + a build-time schema sidecar; export gated on every FROM/JOIN/`read_parquet()` table being `downloadable`, decided from `json_serialize_sql()`'s parse tree; `?q=` base64url via `replaceState`; 6 verified example queries. Closed the `extensions.duckdb.org` fallback (the repository is now always same-origin, a version mismatch fails loudly) and self-hosted the `json` extension, without which the gate refused everything |
+| T1–T3, T6 | pending | |

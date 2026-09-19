@@ -56,6 +56,12 @@ export function Header({ mode, onModeChange, pending, actions }: HeaderProps) {
         >
           Data
         </Link>
+        <Link
+          href="/query"
+          className="text-sky-800 underline-offset-2 hover:text-sky-950 hover:underline"
+        >
+          Query
+        </Link>
       </nav>
     </header>
   );

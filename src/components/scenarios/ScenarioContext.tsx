@@ -124,7 +124,7 @@ export function ScenarioContext({ result }: ScenarioContextProps) {
                 ))}
               </ul>
               <p className={`mt-1 ${NOTE}`}>
-                LNG mass → energy: 1 Mt ≈ {TWH_PER_MT_LNG.toFixed(3)} TWh (52 MJ/t HHV, IGU{" "}
+                LNG mass → energy: 1 Mt ≈ {TWH_PER_MT_LNG.toFixed(3)} TWh (52 GJ/t HHV, IGU{" "}
                 <em>Natural Gas Conversion Guide</em>, 2012). Storage is a stock serving all of a
                 country&apos;s gas demand, not just LNG from this route — &quot;days of cover&quot; is a
                 scale comparison against the at-risk volume, not a forecast of how long storage would

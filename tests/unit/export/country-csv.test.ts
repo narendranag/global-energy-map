@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import catalogJson from "../../../public/data/catalog.json";
 import type { Catalog } from "@/lib/data-catalog/types";
 import {
+  COUNTRY_SECTION_TAGS,
   countryCsv,
   countryCsvFilename,
   countryCsvPlan,
@@ -14,6 +15,7 @@ import {
   type CountrySeriesRow,
   type CountryTradeRow,
 } from "@/lib/data/country-profile";
+import { SCENARIOS } from "@/lib/scenarios/registry";
 import type { ScenarioId, ScenarioResult } from "@/lib/scenarios/types";
 
 const CATALOG = catalogJson as unknown as Catalog;
@@ -122,6 +124,30 @@ describe("sectionLicence (the shipped catalog)", () => {
 
   it("leaves out a section with no catalogued source", () => {
     expect(sectionLicence("made up", CATALOG)).toMatchObject({ included: false });
+  });
+});
+
+describe("B8: the exposure tag list is derived from SCENARIOS, not hardcoded", () => {
+  it("has one tag per scenario, plus an -lng tag only for gas-capable scenarios", () => {
+    const exposureTags = COUNTRY_SECTION_TAGS.exposure ?? [];
+    expect(exposureTags[0]).toBe("trade");
+    for (const s of SCENARIOS) {
+      expect(exposureTags, s.id).toContain(`scenario:${s.id}`);
+      if (s.commodities.includes("gas")) {
+        expect(exposureTags, s.id).toContain(`scenario:${s.id}-lng`);
+      } else {
+        expect(exposureTags, s.id).not.toContain(`scenario:${s.id}-lng`);
+      }
+    }
+    // Guards against a stale hardcoded list silently passing: every real
+    // scenario adds at least one tag, so the list must be at least this long.
+    expect(exposureTags.length).toBeGreaterThanOrEqual(SCENARIOS.length + 1);
+  });
+
+  it("a scenario with no gas variant (e.g. druzhba) is covered without an -lng tag", () => {
+    const exposureTags = COUNTRY_SECTION_TAGS.exposure ?? [];
+    expect(exposureTags).toContain("scenario:druzhba");
+    expect(exposureTags).not.toContain("scenario:druzhba-lng");
   });
 });
 

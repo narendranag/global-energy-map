@@ -112,8 +112,12 @@ export const formatTradeFlowTooltip: TooltipFormatter<TradeFlowArc> = (o, ctx) =
   return joinLines(
     `${noun}: ${o.exporter_iso3} → ${o.importer_iso3}`,
     `Volume: ${mt.toFixed(2)} Mt${kbpd !== null ? ` (≈ ${kbpd.toFixed(0)} kb/d)` : ""}, ${String(ctx.year)}`,
-    `Share of ${o.importer_iso3}'s total imports: ${pct(o.importerSharePct / 100)}`,
-    `Share of ${o.exporter_iso3}'s total exports: ${pct(o.exporterSharePct / 100)}`,
+    // A7: BACI carries rows with no quantity (1,317 of 53,727, checked
+    // 2026-09-19); those never enter `exporterTotals`/`importerTotals`
+    // (aggregateTradeFlows filters `qty === null`), so this is a share of
+    // *quantified* trade, not of every reported flow.
+    `Share of ${o.importer_iso3}'s quantified imports: ${pct(o.importerSharePct / 100)}`,
+    `Share of ${o.exporter_iso3}'s quantified exports: ${pct(o.exporterSharePct / 100)}`,
     sourceLine("trade"),
   );
 };

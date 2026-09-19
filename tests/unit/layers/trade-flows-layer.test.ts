@@ -90,8 +90,10 @@ describe("formatTradeFlowTooltip", () => {
     expect(t).toContain("SAU → CHN");
     expect(t).toContain("5.00 Mt");
     expect(t).toMatch(/kb\/d/);
-    expect(t).toContain("CHN's total imports: 25.0%");
-    expect(t).toContain("SAU's total exports: 40.0%");
+    // A7/A8: BACI has 1,317 rows with no quantity (of 53,727) — the share is
+    // of *quantified* trade, not all reported trade, and the tooltip says so.
+    expect(t).toContain("CHN's quantified imports: 25.0%");
+    expect(t).toContain("SAU's quantified exports: 40.0%");
     expect(t).toMatch(/^Source: .+\(as of \d{4}-\d{2}-\d{2}\)$/m);
   });
 

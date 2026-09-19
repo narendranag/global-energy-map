@@ -8,6 +8,7 @@ import {
   topPairs,
   focusPairs,
   TOP_N_PAIRS,
+  HS,
   type TradeFlowsData,
 } from "@/lib/data/trade-flows";
 import type { PositionedVoyage } from "@/lib/data/voyages";
@@ -288,6 +289,8 @@ export function voyageTable(voyages: readonly PositionedVoyage[], year: number):
 }
 
 const TRADE_FLOW_COLUMNS = [
+  "commodity",
+  "hs_code",
   "exporter_iso3",
   "importer_iso3",
   "qty_tonnes",
@@ -299,6 +302,9 @@ const TRADE_FLOW_COLUMNS = [
   "importer_lat",
 ] as const;
 
+/** A3: names the commodity in the filter string and drives the export filename. */
+export const TRADE_FLOW_COMMODITY_LABEL: Record<Commodity, string> = { oil: "crude", gas: "lng" };
+
 /**
  * BACI pairs as the map draws them: the world top-N (`focus === null`) or, with
  * a country focused, every pair touching it above the small floor
@@ -308,18 +314,21 @@ const TRADE_FLOW_COLUMNS = [
  * 2026-09-19 (every BACI code has an anchor).
  */
 export function tradeFlowTable(data: TradeFlowsData, focus: string | null): ExportTable {
+  const commodityLabel = TRADE_FLOW_COMMODITY_LABEL[data.commodity];
   let basePairs: readonly { exporter_iso3: string; importer_iso3: string; qty: number }[];
   let filter: string;
   if (focus === null) {
     const { pairs, coverage } = topPairs(data, TOP_N_PAIRS);
     basePairs = pairs;
-    filter = `top ${String(TOP_N_PAIRS)} pairs by volume (${(coverage * 100).toFixed(1)}% of world volume shown)`;
+    filter = `${commodityLabel}: top ${String(TOP_N_PAIRS)} pairs by volume (${(coverage * 100).toFixed(1)}% of world volume shown)`;
   } else {
     basePairs = focusPairs(data, focus);
-    filter = `every pair involving ${focus} above 0.1% of its trade`;
+    filter = `${commodityLabel}: every pair involving ${focus} above 0.1% of its trade`;
   }
 
   const rows: Record<string, CsvValue>[] = positionPairs(basePairs).map((p) => ({
+    commodity: data.commodity,
+    hs_code: HS[data.commodity],
     exporter_iso3: p.exporter_iso3,
     importer_iso3: p.importer_iso3,
     qty_tonnes: p.qty,

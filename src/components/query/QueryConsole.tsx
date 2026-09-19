@@ -84,17 +84,19 @@ export function QueryConsole() {
     const exported = todayIso();
     downloadText(
       queryCsvFilename(exported),
+      // The sql + limit that produced `result.rows` — not the live editor
+      // state, which may have been typed over since the run (B2).
       queryCsv(result.columns, result.rows, {
-        sql,
+        sql: result.sql,
         viewUrl: window.location.href,
         exported,
         tables: gate.tables,
         truncated: result.truncated,
-        rowLimit: limit,
+        rowLimit: result.limit,
       }),
       "text/csv",
     );
-  }, [result, gate, sql, limit]);
+  }, [result, gate]);
 
   return (
     <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">

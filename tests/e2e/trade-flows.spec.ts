@@ -52,12 +52,30 @@ test.describe("Trade flows (BACI)", () => {
     expect(errors).toEqual([]);
   });
 
-  test("before BACI's 1995 start, the layer is on but draws nothing — no error", async ({ page }) => {
+  test("before BACI's 1995 start, the layer is on but draws nothing — and says so (A8)", async ({
+    page,
+  }) => {
     const errors = collectConsoleErrors(page);
     await gotoReady(page, "/?layers=trade_flows&commodity=oil&year=1990");
     await expect(page.getByLabel("Trade flows (BACI)", { exact: true })).toBeChecked();
     expect(await countArcPixels(page, isWarmArc)).toBe(0);
+    // A silent empty map reads as a bug; the panel names the gap instead.
+    await expect(page.getByTestId("trade-flows-no-data")).toContainText("no data");
+    await expect(page.getByTestId("trade-flows-no-data")).toHaveAttribute(
+      "title",
+      /no crude\/LNG trade data before 1995/,
+    );
     expect(errors).toEqual([]);
+  });
+
+  test("the no-data badge only shows while the layer itself is on", async ({ page }) => {
+    await gotoReady(page, "/?layers=&commodity=oil&year=1990");
+    await expect(page.getByTestId("trade-flows-no-data")).toHaveCount(0);
+  });
+
+  test("inside BACI's range, the no-data badge does not show", async ({ page }) => {
+    await gotoReady(page, "/?layers=trade_flows&commodity=oil&year=2024");
+    await expect(page.getByTestId("trade-flows-no-data")).toHaveCount(0);
   });
 
   test("world view draws arcs along the largest pairs (pixel probe)", async ({ page }) => {

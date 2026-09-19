@@ -44,15 +44,27 @@ const nextConfig: NextConfig = {
       ...cacheRules("/data/:path*"),
       ...cacheRules("/duckdb/:path*"),
       // S7 (embed mode): nothing here ever set X-Frame-Options or a CSP
-      // frame-ancestors directive, so a third-party <iframe> already worked —
-      // this makes that explicit rather than relying on the absence of a
-      // header. `/` is a public, read-only map (no accounts, no forms), so
-      // `frame-ancestors *` is acceptable; every other route keeps the
-      // platform default.
+      // frame-ancestors directive, so a third-party <iframe> could already
+      // embed *any* route, not just the one designed for it (A9). `/` is the
+      // public, read-only map (no accounts, no forms) — the one page meant to
+      // be framed — so it keeps `frame-ancestors *`. Every other page-y route
+      // gets `frame-ancestors 'none'` explicitly, rather than leaving them to
+      // whatever the platform's unstated default is.
+      //
+      // These sources are exact paths, not `/data/:path*` (a Next `:path*` is
+      // an *optional* catch-all — it also matches the bare `/data` page — so
+      // reusing it here would layer a second header rule onto every
+      // `/data/*.parquet` / `/data/*.geojson` download too). Scoping to the
+      // literal page path keeps this off the static file responses the cache
+      // rules above already own.
       {
         source: "/",
         headers: [{ key: "Content-Security-Policy", value: "frame-ancestors *" }],
       },
+      ...["/query", "/data", "/methodology", "/terms", "/privacy"].map((source) => ({
+        source,
+        headers: [{ key: "Content-Security-Policy", value: "frame-ancestors 'none'" }],
+      })),
     ]);
   },
 };

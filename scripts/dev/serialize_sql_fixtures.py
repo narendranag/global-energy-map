@@ -52,6 +52,31 @@ CASES: dict[str, str] = {
     "two_statements": "SELECT 1; SELECT 2",
     "non_select": "CREATE TABLE x AS SELECT 1",
     "syntax_error": "SELECT FROM WHERE",
+    # B3: statement shapes that must never execute, not just never export.
+    "create_table_as": "CREATE TABLE trade_flow AS SELECT 1",
+    "create_view": "CREATE VIEW v AS SELECT 1",
+    "copy_to": "COPY (SELECT 1) TO '/tmp/x.csv'",
+    "attach": "ATTACH 'foo.db' AS foo",
+    "install_extension": "INSTALL httpfs",
+    "load_extension": "LOAD httpfs",
+    "pragma": "PRAGMA table_info('trade_flow')",
+    "set_var": "SET memory_limit='1GB'",
+    "multi_statement_select_then_ddl": "SELECT 1; CREATE TABLE x AS SELECT 1",
+    # The standalone PIVOT *statement* shorthand is, like CREATE/COPY/ATTACH,
+    # not itself a SELECT and json_serialize_sql refuses to represent it.
+    "pivot_top_level_statement": (
+        "PIVOT (SELECT * FROM (VALUES ('a', 1), ('b', 2)) t(k, v)) ON k USING sum(v)"
+    ),
+    # Single SELECT, but content the walker cannot fully resolve for export —
+    # these must stay *runnable*; only export is refused (see engine.ts).
+    "table_function_range": "SELECT * FROM range(10)",
+    # The PIVOT *clause* inside a SELECT (not the standalone PIVOT statement,
+    # which json_serialize_sql refuses like any other non-SELECT statement) —
+    # a real SELECT_NODE whose from_table is a PIVOT ref this walker does not
+    # model, so it stays runnable but unresolved for export.
+    "pivot_clause": (
+        "SELECT * FROM (VALUES ('a', 1), ('b', 2)) t(k, v) PIVOT (sum(v) FOR k IN ('a', 'b'))"
+    ),
 }
 
 

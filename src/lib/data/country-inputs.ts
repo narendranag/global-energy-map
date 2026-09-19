@@ -42,6 +42,47 @@ export const loadAllTradeFlows = cachedLoader(
 );
 
 /**
+ * B12: `cachedLoader`'s cache (`cache.ts`) is an unbounded `Map` — fine for
+ * loaders keyed by a fixed path, but `loadCountryExposure` is keyed by
+ * (year, commodity), so a long map-viewing session that scrubs the year
+ * slider across many years builds up one entry per year × commodity visited,
+ * each holding a full `ScenarioResult` per scenario, forever. A capacity-
+ * bounded cache costs nothing (recomputing a scenario for a year the user
+ * left is cheap — this only ever saves the *current* scrub from recomputing)
+ * and removes the unbounded-growth risk outright.
+ */
+function lruLoader<A extends readonly (string | number)[], T>(
+  capacity: number,
+  load: (...args: A) => Promise<T>,
+): (...args: A) => Promise<T> {
+  // Map preserves insertion order, so the first key is always the
+  // least-recently-used one — re-inserting a key on a hit moves it to the end.
+  const cache = new Map<string, Promise<T>>();
+  return (...args: A) => {
+    const key = JSON.stringify(args);
+    const existing = cache.get(key);
+    if (existing !== undefined) {
+      cache.delete(key);
+      cache.set(key, existing);
+      return existing;
+    }
+    const p = load(...args).catch((err: unknown) => {
+      cache.delete(key);
+      throw err;
+    });
+    cache.set(key, p);
+    if (cache.size > capacity) {
+      const oldest = cache.keys().next().value;
+      if (oldest !== undefined) cache.delete(oldest);
+    }
+    return p;
+  };
+}
+
+/** Exported for the LRU-eviction unit test only; not part of the loader API. */
+export const _lruLoaderForTests = lruLoader;
+
+/**
  * Every registered scenario's engine result for one (year, commodity), keyed
  * by scenario id — so the panel can say what a country is exposed to without
  * the user selecting each scenario in turn.
@@ -52,9 +93,11 @@ export const loadAllTradeFlows = cachedLoader(
  * The engine is called **without** refinery or LNG-terminal rows: the panel
  * only reads `byImporter`, and skipping the asset attribution keeps this to
  * a handful of passes over one year of BACI rows. Cached on (year,
- * commodity), so switching the focused country re-runs nothing.
+ * commodity) — capped at 8 entries (B12) so scrubbing the year slider across
+ * a long session cannot grow this without bound.
  */
-export const loadCountryExposure = cachedLoader(
+export const loadCountryExposure = lruLoader(
+  8,
   async (year: number, commodity: Commodity): Promise<ReadonlyMap<ScenarioId, ScenarioResult>> => {
     const defs = SCENARIOS.filter(
       (s) => s.commodities.includes(commodity) && isScenarioActive(s, year),

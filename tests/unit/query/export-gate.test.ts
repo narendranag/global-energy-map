@@ -55,13 +55,13 @@ describe("export is allowed only when every table read is downloadable", () => {
   });
 
   it("refuses a name the catalogue does not know", () => {
-    const g = exportGate({ tables: ["made_up"], files: [], unresolved: [] }, TABLES);
+    const g = exportGate({ tables: ["made_up"], files: [], unresolved: [], executable: true }, TABLES);
     expect(g.allowed).toBe(false);
     if (!g.allowed) expect(g.reason).toMatch(/made_up/);
   });
 
   it("refuses a file path the catalogue does not know", () => {
-    const g = exportGate({ tables: [], files: ["/etc/passwd"], unresolved: [] }, TABLES);
+    const g = exportGate({ tables: [], files: ["/etc/passwd"], unresolved: [], executable: true }, TABLES);
     expect(g.allowed).toBe(false);
     if (!g.allowed) expect(g.reason).toMatch(/passwd/);
   });

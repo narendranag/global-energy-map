@@ -5,8 +5,20 @@
  * Pure — no map handle, no React. `useScenarioCamera` decides *when* to move;
  * this decides *where*. Unit-tested in `tests/unit/scenarios/fit.test.ts`.
  */
-import type { Bounds } from "@/lib/state";
+import { panelPadding, type Bounds, type CameraPadding } from "@/lib/state";
 import { MAX_LAT } from "@/lib/state/view";
+
+/**
+ * The padding every camera move made from the scenario panel uses — the
+ * scenario fit, a ranked importer row, a ranked asset row. One constant so
+ * the three cannot drift: whatever is framed has to clear the left layer
+ * panel and the right scenario panel, which is the whole point (the most
+ * exposed importers used to land underneath the panel ranking them).
+ */
+export const SCENARIO_CAMERA_PADDING: Partial<CameraPadding> = panelPadding({
+  left: true,
+  right: true,
+});
 
 /**
  * How many exposed importers the fit tries to hold. Eight is enough to frame
@@ -44,8 +56,8 @@ interface Exposed {
  * because a 100 %-exposed importer of 40 kt is not what the scenario is
  * about, and framing it would push the countries that matter off screen.
  */
-export function topExposedIso3<T extends Exposed>(
-  importers: readonly T[],
+export function topExposedIso3(
+  importers: readonly Exposed[],
   n = TOP_EXPOSED_FOR_FIT,
 ): string[] {
   return [...importers]

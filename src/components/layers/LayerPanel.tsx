@@ -1,6 +1,7 @@
 "use client";
 import { useId, useState } from "react";
 import { TIME_AWARE, TIME_AWARE_NOTE, timeAwareLabel } from "@/lib/symbology/time-aware";
+import type { ScenarioKind } from "@/lib/symbology";
 import { Chevron } from "@/components/ui/Chevron";
 import { LAYER_LABELS } from "@/lib/export/layers";
 import { STALE_AFTER_MONTHS, formatVintage, isStale, layerVintages, staleNote } from "@/lib/data/vintage";
@@ -28,6 +29,8 @@ export interface LayerPanelProps {
   readonly onChange: (next: LayerState) => void;
   /** Imports noun while a scenario is active — adds the exposure ramp to the legend. */
   readonly scenarioNoun?: string | undefined;
+  /** The active scenario's kind — adds the disruption mark's legend row (S1). */
+  readonly scenarioKind?: ScenarioKind | undefined;
   /**
    * Whether the "Layers" disclosure starts expanded (Infrastructure: yes;
    * Flows / Scenarios: no). Remount with a new `key` to re-apply on a mode
@@ -102,6 +105,7 @@ export function LayerPanel({
   state,
   onChange,
   scenarioNoun,
+  scenarioKind,
   defaultOpen = true,
   embedded = false,
 }: LayerPanelProps) {
@@ -199,7 +203,7 @@ export function LayerPanel({
         </div>
         <div className="mt-3 border-t border-slate-200 pt-2">
           <h2 className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-600">Legend</h2>
-          <Legend layers={state} scenarioNoun={scenarioNoun} />
+          <Legend layers={state} scenarioNoun={scenarioNoun} scenarioKind={scenarioKind} />
         </div>
         <div className="mt-3 border-t border-slate-200 pt-2">
           <button

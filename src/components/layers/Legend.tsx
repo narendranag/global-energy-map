@@ -11,6 +11,7 @@ import {
   rgbaCss,
   type LegendItem,
   type Rgba,
+  type ScenarioKind,
   type Swatch,
 } from "@/lib/symbology";
 import type { LayerState } from "./LayerPanel";
@@ -19,6 +20,8 @@ export interface LegendProps {
   readonly layers: LayerState;
   /** Imports noun ("crude imports" / "LNG imports") while a scenario is active. */
   readonly scenarioNoun?: string | undefined;
+  /** The active scenario's kind — adds the disruption mark's row (S1). */
+  readonly scenarioKind?: ScenarioKind | undefined;
   /**
    * "inline" (default) renders bare rows for embedding in another panel;
    * "card" wraps them in their own quiet card for a free-standing placement.
@@ -115,8 +118,13 @@ function SwatchIcon({ swatch }: { readonly swatch: Swatch }): ReactNode {
 }
 
 /** Legend rows for the visible layers (+ the scenario rows), flattened, in section order. */
-export function legendItems(layers: LayerState, scenarioNoun?: string, zoom?: number): LegendItem[] {
-  return legendSections(layers, scenarioNoun, zoom).flatMap((s) => s.items);
+export function legendItems(
+  layers: LayerState,
+  scenarioNoun?: string,
+  zoom?: number,
+  scenarioKind?: ScenarioKind,
+): LegendItem[] {
+  return legendSections(layers, scenarioNoun, zoom, scenarioKind).flatMap((s) => s.items);
 }
 
 function Row({ item }: { readonly item: LegendItem }) {
@@ -149,10 +157,10 @@ function useHydrated(): boolean {
   );
 }
 
-export function Legend({ layers, scenarioNoun, variant = "inline" }: LegendProps) {
+export function Legend({ layers, scenarioNoun, scenarioKind, variant = "inline" }: LegendProps) {
   const { zoom } = useMapView();
   const hydrated = useHydrated();
-  const sections = legendSections(layers, scenarioNoun, hydrated ? zoom : undefined);
+  const sections = legendSections(layers, scenarioNoun, hydrated ? zoom : undefined, scenarioKind);
   const card =
     variant === "card"
       ? "rounded-lg border border-panel-border bg-panel p-3 shadow-sm backdrop-blur"

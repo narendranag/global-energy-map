@@ -1,4 +1,8 @@
 import type { LayerKey } from "@/lib/symbology";
+import {
+  DISRUPTION_MARK_LAYER_ID,
+  formatDisruptionTooltip,
+} from "@/components/scenarios/disruption-layers";
 import { BASINS_LAYER_ID, formatBasinTooltip } from "./BasinPolygonsLayer";
 import { EXTRACTION_LAYER_ID, formatExtractionTooltip } from "./ExtractionPoints";
 import { GAS_STORAGE_LAYER_ID, formatGasStorageTooltip } from "./GasStorageChoropleth";
@@ -48,9 +52,17 @@ const FORMATTERS: Readonly<Record<LayerKey, TooltipFormatter<never>>> = {
   recent_imports: formatRecentImportsTooltip,
 };
 
-const BY_DECK_ID: ReadonlyMap<string, TooltipFormatter<never>> = new Map(
-  (Object.keys(DECK_LAYER_IDS) as LayerKey[]).map((k) => [DECK_LAYER_IDS[k], FORMATTERS[k]]),
-);
+const BY_DECK_ID: ReadonlyMap<string, TooltipFormatter<never>> = new Map<
+  string,
+  TooltipFormatter<never>
+>([
+  ...(Object.keys(DECK_LAYER_IDS) as LayerKey[]).map(
+    (k) => [DECK_LAYER_IDS[k], FORMATTERS[k]] as const,
+  ),
+  // Not a layer toggle: the disruption mark exists because a scenario is
+  // active (S1), so it has no `LayerKey` and is registered on its own id.
+  [DISRUPTION_MARK_LAYER_ID, formatDisruptionTooltip],
+]);
 
 /** Tooltip text for a hovered object on deck layer `layerId`, or null. */
 export function formatTooltip(

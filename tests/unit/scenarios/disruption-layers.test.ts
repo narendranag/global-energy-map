@@ -14,7 +14,6 @@ import {
 import type { PipelineCollection, PipelineProps } from "@/components/layers/PipelinesLayer";
 import type { ScenarioDef } from "@/lib/scenarios/registry";
 import { DISRUPTION_COLOR, DISRUPTION_MUTED_COLOR } from "@/lib/symbology";
-import type { ScenarioId } from "@/lib/scenarios/types";
 
 function props(pipeline_id: string, start_year: number | null): PipelineProps {
   return {
@@ -51,7 +50,7 @@ const PIPELINES: PipelineCollection = {
 };
 
 const CHOKEPOINT: ScenarioDef = {
-  id: "hormuz" as ScenarioId,
+  id: "hormuz",
   label: "Close Test Strait",
   kind: "chokepoint",
   commodities: ["oil"],
@@ -61,7 +60,7 @@ const CHOKEPOINT: ScenarioDef = {
 };
 
 const PIPELINE_SCENARIO: ScenarioDef = {
-  id: "druzhba" as ScenarioId,
+  id: "druzhba",
   label: "Cut Test Pipeline",
   kind: "pipeline",
   commodities: ["oil"],
@@ -190,10 +189,12 @@ describe("buildDisruptionLayers", () => {
       activeYears: { from: 2014 },
       inactiveNote: "Not yet in service.",
     };
-    const colourOf = (year: number) =>
-      buildDisruptionLayers(def, { commodity: "oil", year, pipelines: null }).find(
+    const colourOf = (year: number) => {
+      const dot = buildDisruptionLayers(def, { commodity: "oil", year, pipelines: null }).find(
         (l) => l.id === DISRUPTION_MARK_DOT_LAYER_ID,
-      )?.props.getFillColor;
+      );
+      return (dot?.props as { getFillColor?: unknown } | undefined)?.getFillColor;
+    };
     expect(colourOf(2016)).toEqual([...DISRUPTION_COLOR]);
     expect(colourOf(2010)).toEqual([...DISRUPTION_MUTED_COLOR]);
   });

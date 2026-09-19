@@ -65,6 +65,29 @@ export function clampSeverityPct(pct: number): number {
 }
 
 /**
+ * A `sev=` parameter as a severity fraction, or null when the URL does not
+ * say anything we are willing to act on.
+ *
+ * Out-of-range is **invalid, not clamped** (findings 18/19). `sev=0` is a
+ * hand-typed "nothing is cut", and rounding it *up* to the 5 % floor invents
+ * a closure the link never asked for — the same objection that already sent
+ * `sev=banana` to the default. A bad parameter of any shape therefore decodes
+ * exactly like a missing one: the default, 100 %.
+ *
+ * Non-multiples of 5 are accepted (`sev=37` → 37 %). The step is the
+ * slider's business, not the URL's: a link can say 37 %, the slider will
+ * simply show the nearest notch if the viewer then drags it. Fractions are
+ * rounded to the integer percent the querystring format carries.
+ */
+export function parseSeverityPct(raw: string | null): number | null {
+  if (raw === null || raw.trim() === "") return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return null;
+  const pct = Math.round(n);
+  return pct >= SEVERITY_MIN_PCT && pct <= 100 ? pct : null;
+}
+
+/**
  * The scenario pair a commodity axis can actually render. A scenario with no
  * route rows for the axis can only produce a confident 0 % (A1), so it is
  * dropped — and a second scenario without a primary, or equal to it, is not a
@@ -121,8 +144,13 @@ export function encodeAppState(state: AppState): string {
   if (state.scenario !== null && state.scenario2 !== null) {
     params.set("scenario2", state.scenario2);
   }
-  if (state.severity < 1) params.set("sev", String(clampSeverityPct(state.severity * 100)));
-  if (state.view !== "importers") params.set("view", state.view);
+  // Severity and the view are modifiers of a scenario: with no `scenario`
+  // there is nothing for them to modify, and a dangling `sev=`/`view=` would
+  // be re-emitted for ever by the debounced `replaceState` (finding 19).
+  if (state.scenario !== null && state.severity < 1) {
+    params.set("sev", String(clampSeverityPct(state.severity * 100)));
+  }
+  if (state.scenario !== null && state.view !== "importers") params.set("view", state.view);
   // Written only when set, so every link shared before `focus` existed — and
   // every link shared with nothing selected — is byte-for-byte what it was.
   if (state.focus !== null) params.set("focus", state.focus);
@@ -180,23 +208,23 @@ export function decodeAppState(
   // and drop the second with it, or when it merely repeats the primary.
   ({ scenario, scenario2 } = normalizeScenarioPair(scenario, scenario2, commodity));
 
-  const rawSeverity = params.get("sev");
-  let severity = defaults.severity;
-  if (rawSeverity !== null) {
-    const n = Number(rawSeverity);
-    // An unparseable `sev` falls back to the default rather than to 0: a bad
-    // parameter must neither invent a closure nor silently erase one.
-    severity =
-      rawSeverity.trim() !== "" && Number.isFinite(n)
-        ? clampSeverityPct(n) / 100
-        : defaults.severity;
-  }
+  // An out-of-range, unparseable or empty `sev` falls back to the default
+  // rather than clamping: a bad parameter must neither invent a closure nor
+  // silently erase one (findings 18/19). Only 5–100 is honoured.
+  const severityPctValue = parseSeverityPct(params.get("sev"));
 
   const rawView = params.get("view");
-  const view: ScenarioView =
+  const viewValue: ScenarioView =
     rawView !== null && (SCENARIO_VIEWS as readonly string[]).includes(rawView)
       ? (rawView as ScenarioView)
       : defaults.view;
+
+  // Both are scenario modifiers: with no scenario left after `A1`, they are
+  // dropped — decoded as the defaults, so `encodeAppState` never writes them
+  // back out (finding 19).
+  const severity =
+    scenario === null || severityPctValue === null ? defaults.severity : severityPctValue / 100;
+  const view: ScenarioView = scenario === null ? defaults.view : viewValue;
 
   // A `focus` we cannot draw is no focus at all: an unknown or malformed code
   // decodes to null rather than leaving a phantom selection in the URL.

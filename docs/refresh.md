@@ -226,3 +226,80 @@ Record every data change here, newest first: date, source and release, files aff
 - New file `assets_open.parquet` (36,191 rows): `assets.parquet` minus its 88 OpenStreetMap rows, offered for download on `/data`.
 - Source pins consolidated into `scripts/common/sources.py`; every existing data file rebuilt byte-identical.
 - Catalog metadata only: CEPII BACI licence corrected to Etalab Open Licence 2.0 (was "academic/research use"); NETL entries carry an attribution line; EI licence wording aligned with EI's terms.
+
+## Scheduled refresh
+
+Automated monthly refresh of free data sources via `launchd`. The script (`scripts/refresh/monthly.sh`) ingests GIE AGSI/ALSI, UN Comtrade, and EIA STEO, rebuilds `public/data/`, and opens a PR — never pushes `main`.
+
+### What it automates
+
+- **GIE AGSI + ALSI:** EU gas storage and LNG send-out (daily, live layers)
+- **UN Comtrade:** Crude + LNG imports (monthly, backfills)
+- **EIA STEO:** US shale-region production (annual, monthly releases)
+
+Each ingest runs as documented in the per-source sections above; the script reads API keys from `~/.config/secrets.env` and fails clearly if they are missing.
+
+### What it deliberately does NOT automate
+
+- **Annual pin bumps:** EI Statistical Review (`history_through_year` in January; reserves frozen check), BACI release + download URL, GEM GOGET/GGIT tracker releases (form-gated).
+- **PR merging:** the script opens a PR and stops. A human reviews the data diff, runs spot checks, and merges.
+- **Pushing main:** the refresh branch never reaches `main` through git. The maintainer merges and deploys manually via `vercel --prod`.
+
+### Install and run
+
+1. Copy the plist template to `~/Library/LaunchAgents/`:
+   ```bash
+   cp scripts/refresh/space.marain.energymap.refresh.plist \
+      ~/Library/LaunchAgents/space.marain.energymap.refresh.plist
+   ```
+
+2. Install with `launchctl`:
+   ```bash
+   launchctl load ~/Library/LaunchAgents/space.marain.energymap.refresh.plist
+   ```
+
+3. The job runs monthly on the 5th at 9:30 AM local time. To run it manually:
+   ```bash
+   launchctl start space.marain.energymap.refresh
+   # or directly:
+   scripts/refresh/monthly.sh
+   ```
+
+4. To uninstall:
+   ```bash
+   launchctl unload ~/Library/LaunchAgents/space.marain.energymap.refresh.plist
+   rm ~/Library/LaunchAgents/space.marain.energymap.refresh.plist
+   ```
+
+### Logs and status
+
+The script logs to `~/Library/Logs/global-energy-map/`:
+- `refresh.log` — stdout (normal execution)
+- `refresh.err` — stderr (errors)
+- `refresh-status.json` — last run status (ok/failed, timestamp, step)
+
+Dry-run mode (check steps without network/git writes):
+```bash
+scripts/refresh/monthly.sh --dry-run
+```
+
+Health check (for monitoring; exits non-zero if last run failed or is >40 days old):
+```bash
+scripts/refresh/healthcheck.sh
+```
+
+### Pin bumps (manual steps)
+
+When a new release arrives for an annual source, edit `scripts/common/sources.py`:
+
+- **EIA STEO:** After each EIA release (monthly), bump `EIA_STEO.release` and `as_of`. In January, bump `history_through_year` to the new year.
+- **EI Statistical Review:** After each annual release (~June), bump `EI.release`, `as_of`, and `download_url`. Check whether reserves were updated (still 2020 as of the 2026 edition); if so, update `test_reserves_end_2020_and_non_negative` in `tests/python/test_source_liveness.py`.
+- **BACI:** After the annual release (~January), bump `BACI.release`, `as_of`, and re-derive the constants in `scripts/ingest/baci.py` from the new archive's central directory.
+- **GEM GOGET/GGIT:** When a new tracker release is announced, download the tracker file, update `GEM_GOGET`/`GEM_GGIT` pin with the Wayback URL or GitHub tarball release, and bump `release` and `as_of`.
+
+After updating pins, run:
+```bash
+uv run python -m scripts.build_all [--ingest]  # optionally re-download
+```
+
+Then follow the "Checks after a refresh" section above.

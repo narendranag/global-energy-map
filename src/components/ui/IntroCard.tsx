@@ -127,6 +127,11 @@ export function IntroCard({ onPick }: IntroCardProps) {
           <span className="font-medium text-slate-900">Pick a disruption</span> in Scenarios to see
           which importers, refineries and LNG terminals are exposed.
         </li>
+        <li>
+          <span className="font-medium text-slate-900">Search</span> for a country, pipeline or
+          terminal; select a country for its trade, suppliers and exposure — or write SQL against
+          the same files on the Query page.
+        </li>
       </ul>
       <p className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
         Try a question

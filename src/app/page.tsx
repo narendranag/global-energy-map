@@ -31,7 +31,7 @@ import {
 } from "@/lib/modes";
 import { getScenario, scenarioForCommodity } from "@/lib/scenarios/registry";
 import type { Commodity, ScenarioId } from "@/lib/scenarios/types";
-import { panelPadding, useCamera } from "@/lib/state";
+import { panelPadding, requestInitialFit } from "@/lib/state";
 import { embedControlsHidden, isEmbed } from "@/lib/url-state/embed";
 import { useUrlState } from "@/lib/url-state/useUrlState";
 import { RESERVES_LATEST_YEAR, YEAR_MAX, YEAR_MIN } from "@/lib/time/range";
@@ -170,14 +170,22 @@ function HomeInner() {
   // carries a camera (`lon`/`lat`/`z`), which always wins: an explicit view is
   // what the sharer chose to show. Load only; a later selection (a click, and
   // in S1–S4 a search hit or a ranked row) moves the camera only if it asks.
-  const camera = useCamera();
   const searchParams = useSearchParams();
   const initialFitDone = useRef(false);
   useEffect(() => {
     if (initialFitDone.current) return;
     initialFitDone.current = true;
     if (focus === null || ["lon", "lat", "z"].some((k) => searchParams.has(k))) return;
-    void camera.fitCountry(focus, { padding: panelPadding({ right: showScenarioPanel }) });
+    // With the trade-flow layer on, the fit takes in the country's largest
+    // partners too — a focus in Flows is a question about the arcs, and
+    // framing the country alone pushes all of them off screen (polish 1).
+    void requestInitialFit({
+      focus,
+      year,
+      commodity,
+      tradeFlows: layers.trade_flows,
+      padding: panelPadding({ right: showScenarioPanel }),
+    });
     // Mount only: the initial URL is read once, on purpose.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

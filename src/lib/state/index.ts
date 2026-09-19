@@ -1,5 +1,6 @@
 export { useMapView } from "./useMapView";
 export { useCamera, type Camera } from "./useCamera";
+export { requestInitialFit } from "./initial-fit";
 export {
   DEFAULT_CAMERA_PADDING,
   FIT_MAX_ZOOM,

@@ -242,9 +242,9 @@ export function useMapLayers({
   const tradeFlowsLayer = useMemo(
     () =>
       showTradeFlows && tradeFlows.data
-        ? buildTradeFlowsLayer(tradeFlows.data, { commodity, focus })
+        ? buildTradeFlowsLayer(tradeFlows.data, { commodity, focus, zoom })
         : null,
-    [showTradeFlows, tradeFlows.data, commodity, focus],
+    [showTradeFlows, tradeFlows.data, commodity, focus, zoom],
   );
 
   // A search result (S4): drawn last (topmost) so it is never hidden by a mark.

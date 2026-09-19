@@ -16,6 +16,7 @@ import { formatVolume, pct } from "@/components/scenarios/panel-model";
 import { Sparkline } from "./Sparkline";
 import { isKeyboardClick, setFocusIntent, takeFocusIntent } from "./focus-intent";
 import { useCountryProfile } from "./useCountryProfile";
+import { exposureBaselineNote, type ScenarioAdjustment } from "./exposure-note";
 
 const CATALOG = catalogJson as unknown as Catalog;
 
@@ -39,13 +40,14 @@ export interface CountryPanelProps {
   /** True when the scenario panel is sharing the right-hand side. */
   readonly scenarioOpen: boolean;
   /**
-   * T1: true when the scenario panel is showing a partial closure or two
-   * scenarios at once. The exposure rows below are deliberately unchanged —
-   * one scenario each, full closure, so the list stays comparable across
-   * scenarios — but two different numbers for the same country on the same
-   * screen must never silently disagree, so the section says which is which.
+   * T1: how the scenario panel's headline differs from the rows below. Those
+   * rows are deliberately unchanged — one scenario each, full closure, so the
+   * list stays comparable across scenarios — but two different numbers for
+   * the same country on the same screen must never silently disagree, and
+   * *which way* they differ depends on which adjustment is active
+   * (`exposure-note.ts`, finding 12). Absent = a plain full closure.
    */
-  readonly scenarioAdjusted?: boolean;
+  readonly scenarioAdjusted?: ScenarioAdjustment | null;
 }
 
 function Section({
@@ -179,7 +181,7 @@ export function CountryPanel({
   onFocus,
   onScenario,
   scenarioOpen,
-  scenarioAdjusted = false,
+  scenarioAdjusted = null,
 }: CountryPanelProps) {
   const uid = useId();
   const headingId = `${uid}-heading`;
@@ -194,6 +196,13 @@ export function CountryPanel({
   }, [iso3]);
 
   const noun = commodity === "gas" ? "LNG" : "crude";
+  // Which way the scenario panel's headline differs from the rows below
+  // depends on the adjustment: a combination raises it, a partial closure
+  // lowers it, and both together can go either way (finding 12).
+  const baselineNote =
+    scenarioAdjusted === null || profile === null
+      ? null
+      : exposureBaselineNote(scenarioAdjusted, profile.name);
   const trade = profile?.trade ?? null;
   const plan = profile === null ? null : countryCsvPlan(profile, CATALOG);
   const canExport = plan !== null && plan.included.length > 0;
@@ -363,11 +372,9 @@ export function CountryPanel({
                 Share of {profile.name}&apos;s {noun} imports that moves on each route. Select one
                 to see it on the map.
               </p>
-              {scenarioAdjusted && (
+              {baselineNote !== null && (
                 <p className={`mb-1 ${NOTE}`} data-testid="country-exposure-baseline">
-                  One route at a time, fully closed — the comparable baseline. The scenario panel
-                  is showing a partial or combined closure, so its figure for {profile.name} will
-                  be lower or wider than the matching row here.
+                  {baselineNote}
                 </p>
               )}
               <ol className="space-y-0.5" data-testid="country-exposure-rows">

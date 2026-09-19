@@ -448,7 +448,11 @@ function HomeInner() {
                 onFocus={setFocus}
                 onScenario={setScenarioId}
                 scenarioOpen={showScenarioPanel}
-                scenarioAdjusted={scenarioId !== null && (scenario2 !== null || severity < 1)}
+                scenarioAdjusted={
+                  scenarioId !== null && (scenario2 !== null || severity < 1)
+                    ? { combined: scenario2 !== null, partial: severity < 1 }
+                    : null
+                }
               />
             </div>
           </>

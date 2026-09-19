@@ -18,8 +18,22 @@ export interface SqlReferences {
   readonly tables: readonly string[];
   /** File paths read through `read_parquet()` / `parquet_scan()`. */
   readonly files: readonly string[];
-  /** Non-empty when the parse tree could not be proven safe to reason about. */
+  /** Non-empty when the parse tree could not be proven safe to reason about
+   * (this also covers statement shapes that fail `executable` below — a
+   * refusal reason is always recorded either way). */
   readonly unresolved: readonly string[];
+  /**
+   * True when the statement text is exactly one SELECT-shaped statement
+   * (`json_serialize_sql` represented it at all — DuckDB itself refuses to
+   * serialize anything else, including CREATE/COPY/ATTACH/INSTALL/LOAD/
+   * PRAGMA/SET, a top-level PIVOT statement, and multi-statement text).
+   * `false` means the query engine must refuse to *run* it, not just export
+   * it. `true` alongside a non-empty `unresolved` means the statement is a
+   * single SELECT whose *content* the walker cannot fully vouch for (an
+   * unmodeled table-function or table-ref kind, a qualified catalog, a CTE
+   * shadowing a real table) — safe to run, only export stays refused.
+   */
+  readonly executable: boolean;
 }
 
 /** Table-ref node types this walker understands. Anything else is unresolved. */
@@ -185,9 +199,10 @@ export function referencesFromSerializedSql(
   }
   for (const cte of ctes) tables.delete(cte);
 
-  return { tables: [...tables].sort(), files: [...files].sort(), unresolved };
+  return { tables: [...tables].sort(), files: [...files].sort(), unresolved, executable: true };
 }
 
+/** A statement-shape refusal: not a single SELECT, so it must not be run either. */
 function blocked(why: string): SqlReferences {
-  return { tables: [], files: [], unresolved: [why] };
+  return { tables: [], files: [], unresolved: [why], executable: false };
 }

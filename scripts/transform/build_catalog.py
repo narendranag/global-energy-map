@@ -40,7 +40,10 @@ the entry's ``SourcePin`` in scripts/common/sources.py.
 
 It also writes ``src/lib/export/citations.generated.json`` (site citation from
 CITATION.cff + scenario route-share citations from disruption_route.parquet),
-which /methodology, /data and the Share menu import — see ``build_citations``.
+which /methodology, /data and the Share menu import — see ``build_citations``,
+and ``src/lib/query/schema.generated.json`` (each shipped Parquet file's
+columns and SQL types), which the /query console's schema sidebar renders
+without having to fetch a Parquet footer per file — see ``build_table_schemas``.
 
 ``generated_at`` is deterministic so that rebuilding unchanged inputs leaves
 catalog.json byte-identical (``scripts.build_all`` run twice → clean git tree):
@@ -83,7 +86,9 @@ NETL_SNAPSHOT = pins.NETL.as_of
 LNG_T3_URL = pins.LNG_T3.landing_url
 LNG_T3_SOURCE = pins.LNG_T3.name
 EIA_LICENSE = "US Government work, public domain (17 USC §105)"
-EIA_ATTRIBUTION = "Data: US Energy Information Administration (STEO); county shapes: US Census Bureau"
+EIA_ATTRIBUTION = (
+    "Data: US Energy Information Administration (STEO); county shapes: US Census Bureau"
+)
 LICENSE_DATA_URL = "https://github.com/narendranag/global-energy-map/blob/main/LICENSE-DATA.md"
 
 # Files that are view-only as-is but have a downloadable open subset

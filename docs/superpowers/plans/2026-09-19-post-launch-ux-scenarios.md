@@ -84,4 +84,5 @@ Merge order inside 2b (least → most shared-file contact): S5, S8, S6, S2, S4, 
 | R1–R3, RV | running | |
 | S0–S8 | pending | |
 | T5 | dropped | per R4 |
-| T1–T4, T6 | pending | |
+| T4 | done 2026-09-19 | `/query`: DuckDB-WASM lazy on that route only; tables generated from the catalog + a build-time schema sidecar; export gated on every FROM/JOIN/`read_parquet()` table being `downloadable`, decided from `json_serialize_sql()`'s parse tree; `?q=` base64url via `replaceState`; 6 verified example queries. Closed the `extensions.duckdb.org` fallback (the repository is now always same-origin, a version mismatch fails loudly) and self-hosted the `json` extension, without which the gate refused everything |
+| T1–T3, T6 | pending | |

@@ -157,4 +157,4 @@ Of the 1,895 lines on the 1995 map, **1,139 (60 %) have no start year** and are 
 
 ## Adapting these examples
 
-Change `year`, `scenario` or `commodity` in any link above. Before relying on a number, run through the checks in [Scenario method → How to sanity-check a result](scenario-method.md#how-to-sanity-check-a-result), and cite the view with **Share / cite** ([Citing and reuse](citing-and-reuse.md)).
+Change `year`, `scenario` or `commodity` in any link above. Examples 1, 2 and 5 can also be recomputed as SQL in the [query console](query-console.md), which ships each of them as a starting point — a way to check these numbers without taking the panel's word for them. Before relying on a number, run through the checks in [Scenario method → How to sanity-check a result](scenario-method.md#how-to-sanity-check-a-result), and cite the view with **Share / cite** ([Citing and reuse](citing-and-reuse.md)).

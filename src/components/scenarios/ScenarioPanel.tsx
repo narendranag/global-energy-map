@@ -155,7 +155,7 @@ export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioP
       : null;
   const inputs = useScenarioInputsFor(current);
 
-  const [sortBy, setSortBy] = useState<ImporterSort>("share");
+  const [sortBy, setSortBy] = useState<ImporterSort>("volume");
   const [allImporters, setAllImporters] = useState(false);
   const [allAssets, setAllAssets] = useState(false);
   const [lookup, setLookup] = useState("");

@@ -730,6 +730,15 @@ def all_rows() -> list[dict]:
         if key in seen:
             raise ValueError(f"duplicate disruption_route key: {key}")
         seen.add(key)
+        # S5 review finding 5: a share outside [0, 1] is nonsense on its own
+        # (a route cannot carry 140% of a flow), and it used to break the
+        # combined-scenario range in the browser - combineShares returned
+        # lower = 1.4 above upper = min(1, 1.4) = 1, an inverted "range" the
+        # panel would have printed as fact. The engine now clamps defensively;
+        # this asserts the data never needs it.
+        share = r["share"]
+        if not (0.0 <= float(share) <= 1.0):
+            raise ValueError(f"share out of range for {key}: {share}")
     return rows
 
 

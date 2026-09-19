@@ -106,6 +106,87 @@ describe("combined scenarios through the engine", () => {
     expect(deu?.atRiskQtyUpper).toBeCloseTo(35, 9);
   });
 
+  /**
+   * Review finding 7: nothing exercised more than two scenarios, or the same
+   * scenario twice. The bounds rule is not pairwise — it is max over the set
+   * and the capped sum of the set — and `scenarioIdsOf` dedupes, so a
+   * scenario chosen twice must read as one closure rather than doubling it.
+   */
+  it("three scenarios: max over the set, and the sum capped at the whole flow", () => {
+    const r = computeScenarioImpact({
+      scenarioId: "druzhba",
+      scenarioIds: ["druzhba", "btc", "hormuz"],
+      commodity: "oil",
+      year: 2024,
+      tradeFlows: [{ year: 2024, importer_iso3: "DEU", exporter_iso3: "RUS", qty: 100 }],
+      routes: [
+        ...ROUTES,
+        { disruption_id: "hormuz", kind: "chokepoint", exporter_iso3: "RUS", importer_iso3: "DEU", share: 0.2 },
+      ],
+    });
+    const deu = r.byImporter.find((i) => i.iso3 === "DEU");
+    expect(r.scenarioIds).toEqual(["druzhba", "btc", "hormuz"]);
+    expect(deu?.atRiskQty).toBeCloseTo(40, 9); // max(0.4, 0.3, 0.2)
+    expect(deu?.atRiskQtyUpper).toBeCloseTo(90, 9); // 0.4 + 0.3 + 0.2
+  });
+
+  it("three scenarios whose shares sum past 1 still cap at the whole flow", () => {
+    const r = computeScenarioImpact({
+      scenarioId: "druzhba",
+      scenarioIds: ["druzhba", "btc", "hormuz"],
+      commodity: "oil",
+      year: 2024,
+      tradeFlows: [{ year: 2024, importer_iso3: "DEU", exporter_iso3: "RUS", qty: 100 }],
+      routes: [
+        { disruption_id: "druzhba", kind: "pipeline", exporter_iso3: "RUS", importer_iso3: "DEU", share: 0.5 },
+        { disruption_id: "btc", kind: "pipeline", exporter_iso3: "RUS", importer_iso3: "DEU", share: 0.4 },
+        { disruption_id: "hormuz", kind: "chokepoint", exporter_iso3: "RUS", importer_iso3: "DEU", share: 0.4 },
+      ],
+    });
+    const deu = r.byImporter.find((i) => i.iso3 === "DEU");
+    expect(deu?.atRiskQty).toBeCloseTo(50, 9);
+    expect(deu?.atRiskQtyUpper).toBeCloseTo(100, 9); // min(1, 1.3), not 130
+  });
+
+  it("a scenario listed twice is one closure, not two", () => {
+    const once = run(["druzhba", "btc"]);
+    const twice = computeScenarioImpact({
+      scenarioId: "druzhba",
+      scenarioIds: ["druzhba", "btc", "druzhba"],
+      commodity: "oil",
+      year: 2024,
+      tradeFlows: TRADE,
+      routes: ROUTES,
+    });
+    expect(twice.scenarioIds).toEqual(["druzhba", "btc"]);
+    expect(twice.byImporter).toEqual(once.byImporter);
+  });
+
+  it("the same scenario alone, twice over, equals a single run", () => {
+    const twice = computeScenarioImpact({
+      scenarioId: "druzhba",
+      scenarioIds: ["druzhba", "druzhba"],
+      commodity: "oil",
+      year: 2024,
+      tradeFlows: TRADE,
+      routes: ROUTES,
+    });
+    const deu = twice.byImporter.find((i) => i.iso3 === "DEU");
+    expect(twice.scenarioIds).toEqual(["druzhba"]);
+    expect(deu?.atRiskQty).toBeCloseTo(40, 9);
+    expect(deu?.atRiskQtyUpper).toBeCloseTo(40, 9); // not 0.8 × 100
+  });
+
+  it("clamps a share outside [0, 1] so the bounds cannot invert (finding 5)", () => {
+    // Defence in depth: build_disruption_routing.py now refuses such a row.
+    expect(combineShares([() => 1.4, () => 0.2])("X", "Y")).toEqual({ lower: 1, upper: 1 });
+    expect(combineShares([() => -0.5, () => 0.2])("X", "Y")).toEqual({ lower: 0.2, upper: 0.2 });
+    expect(combineShares([() => Number.NaN, () => 0.2])("X", "Y")).toEqual({
+      lower: 0.2,
+      upper: 0.2,
+    });
+  });
+
   it("a single-scenario run has upper === lower and matches the plain call", () => {
     const combined = run(["druzhba"]);
     const plain = computeScenarioImpact({

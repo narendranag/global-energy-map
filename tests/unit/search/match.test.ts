@@ -135,9 +135,15 @@ describe("searchItems performance", () => {
     }
     // A handful of keystrokes of a realistic query, timed together.
     const keystrokes = ["f", "fa", "fac", "faci", "facility number 1"];
-    const start = performance.now();
-    for (const q of keystrokes) searchItems(items, q);
-    const elapsed = performance.now() - start;
+    // Best of five: a wall-clock bound on one run fails whenever the machine
+    // is busy (it did, under a parallel e2e run); the fastest run measures the
+    // code rather than the scheduler.
+    let elapsed = Infinity;
+    for (let run = 0; run < 5; run++) {
+      const start = performance.now();
+      for (const q of keystrokes) searchItems(items, q);
+      elapsed = Math.min(elapsed, performance.now() - start);
+    }
     // Generous: real hardware should be well under 10 ms per keystroke: this
     // budgets 5x that across all keystrokes combined to absorb CI jitter.
     expect(elapsed).toBeLessThan(250);

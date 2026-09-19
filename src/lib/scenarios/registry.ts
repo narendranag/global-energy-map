@@ -120,6 +120,10 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     },
     routeName: "the Strait of Malacca",
     location: { lon: 103.6, lat: 1.16 },
+    sourceGap: {
+      fromYear: 2019,
+      text: "EIA/Bernama put Iranian crude transiting Malacca at about 1.6 million b/d in 1H2025, headed largely to China - the largest single exporter this scenario omits. BACI shows near-zero Iranian crude to China (China does not declare it), so Iran's exposure here is a known omission, same as on Hormuz.",
+    },
   },
   {
     id: "suez",
@@ -127,7 +131,7 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     kind: "chokepoint",
     commodities: ["oil", "gas"],
     description:
-      "Suez Canal and the parallel SUMED pipeline: Egypt's only route (short of the Cape of Good Hope) between the Red Sea and the Mediterranean, carrying Persian Gulf crude and Qatari LNG to Europe and the US East Coast. About 4.85 million b/d of crude transited in 1H2025 (EIA); Gulf crude bound for East or South Asia never enters the Red Sea.",
+      "Suez Canal and the parallel SUMED pipeline: Egypt's only route (short of the Cape of Good Hope) between the Red Sea and the Mediterranean, carrying Persian Gulf crude and Qatari LNG to Europe and the US East Coast. About 4.85 million b/d of crude and petroleum products transited in 1H2025 (EIA STEO, Global Energy Security Data, Table 5 - the crude-only fraction of that figure is lower and is not separately published); Gulf crude bound for East or South Asia never enters the Red Sea.",
     descriptionByCommodity: {
       gas: "Suez Canal and the parallel SUMED pipeline: the route for Qatari LNG bound for Europe. EIA: 'nearly all (98%) of the northbound LNG transit is from Qatar and mainly destined for European markets.'",
     },
@@ -140,7 +144,7 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     kind: "chokepoint",
     commodities: ["oil", "gas"],
     description:
-      "Strait between Yemen and the Horn of Africa, the southern gateway to the Red Sea for Gulf crude and Qatari LNG bound for Europe. About 3.9-4.5 million b/d of crude and products transited in 1H2025, down from a pre-Houthi-attack peak near 9 million b/d in 2023 (EIA). Saudi crude loaded at Yanbu, north of the strait via the East-West pipeline, does not transit it - it is exposed to Suez instead.",
+      "Strait between Yemen and the Horn of Africa, the southern gateway to the Red Sea for Gulf crude and Qatari LNG bound for Europe. About 3.9-4.5 million b/d of crude and products transited in 1H2025, down from a pre-Houthi-attack full-year-2023 peak of about 8.7 million b/d (EIA/Vortexa, via SAFETY4SEA). Saudi crude loaded at Yanbu, north of the strait via the East-West pipeline, does not transit it - it is exposed to Suez instead.",
     descriptionByCommodity: {
       gas: "Strait between Yemen and the Horn of Africa: Qatari LNG bound for Europe transits here; LNG bound for East or South Asia sails the other direction, through Hormuz and Malacca.",
     },
@@ -165,7 +169,14 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     description:
       "TC Energy / South Bow's Keystone pipeline carries Western Canadian crude to US Midwest and Gulf Coast refineries - about 14% of Canada's crude oil exports to the US (Canada Energy Regulator).",
     routeName: "the Keystone pipeline",
-    pipelineIds: ["P0024"],
+    // Final review #13: P0024 (Hardisty, AB -> Patoka, IL) is only the base
+    // pipeline. P5136 (Steele City, NE -> Cushing, OK) and P5156 (Cushing,
+    // OK -> Nederland/Port Arthur, TX) are operating TC Energy legs of the
+    // same Keystone system that actually reach the Gulf Coast refineries the
+    // description names - confirmed by geometry (P5136's endpoints sit at
+    // Steele City and Cushing; P5156's at Cushing and the Texas Gulf Coast)
+    // and by `status: operating` / `operator: TC Energy` in pipelines.geojson.
+    pipelineIds: ["P0024", "P5136", "P5156"],
   },
   {
     id: "enbridge_mainline",
@@ -175,8 +186,15 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     description:
       "Enbridge's Mainline system (Lines 1-4, 6, 65 and others) is the dominant route for Canadian crude into the US, carrying about 58% of all Canadian crude oil exports (Canada Energy Regulator).",
     routeName: "the Enbridge Mainline",
-    // Verifier: exclude P3871 (Line 93, the US-leg of Line 3) - it is
-    // mislabelled CAN in pipelines.geojson and double-counts P1991.
+    // Verifier: P3871 ("Line 93") and P1991 ("Line 3") are two fragments of
+    // the same physical corridor, not two separate pipelines - by geometry,
+    // P3871 runs entirely inside Canada (lon -111..-98, lat 49.0-52.6,
+    // Alberta/Saskatchewan/Manitoba down to the border) while P1991 runs
+    // entirely inside the US (lon -97..-92, lat 46.6-48.8, Minnesota to
+    // Superior, WI), even though P1991's own start/end_country_iso3
+    // (CAN -> USA) name the whole route, not just this fragment. Highlighting
+    // both would draw and attribute the same crude twice; P1991 is kept
+    // because its geometry is the segment that actually crosses into the US.
     pipelineIds: ["P0008", "P0010", "P0011", "P0013", "P0016", "P1991"],
   },
   {

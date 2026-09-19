@@ -68,12 +68,12 @@ function ScenarioSharesTable() {
             const pairs = rows.length > 1 ? rows.map(pairLabel) : null;
             const unsourced = r.source_title === UNSOURCED_TITLE;
             return (
-              <tr key={`${r.disruption_id}-${r.exporter_iso3}-${r.importer_iso3 ?? "all"}`} className="align-top">
+              <tr key={`${r.disruption_id}-${pairLabel(r)}`} className="align-top">
                 <td className="border-t border-panel-border py-2 pr-4 whitespace-nowrap">
                   {scenarioLabelForDisruption(r.disruption_id)}
                 </td>
                 <td className="border-t border-panel-border py-2 pr-4 whitespace-nowrap font-mono text-xs text-ink">
-                  {pairs ? `${pairs.length.toString()} pairs` : `${r.exporter_iso3} → ${r.importer_iso3 ?? "all"}`}
+                  {pairs ? `${pairs.length.toString()} pairs` : pairLabel(r)}
                 </td>
                 <td className="border-t border-panel-border py-2 pr-4 text-right whitespace-nowrap font-mono tabular-nums text-ink">
                   {pct(r.share)}

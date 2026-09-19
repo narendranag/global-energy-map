@@ -15,7 +15,7 @@ import {
 } from "@/lib/export/layers";
 import { layerFilename } from "@/lib/export/files";
 import { aggregateTradeFlows } from "@/lib/data/trade-flows";
-import { scenarioCsv, scenarioRows, shareCitationLine } from "@/lib/export/scenario";
+import { scenarioCsv, scenarioFilename, scenarioRows, shareCitationLine } from "@/lib/export/scenario";
 import type { ShareCitation } from "@/lib/export/citation";
 
 const CATALOG = catalogJson as unknown as Catalog;
@@ -231,5 +231,46 @@ describe("scenario CSV", () => {
     expect(csv).toContain("#   ARE -> all importers: 1 — IEA (2026) https://iea.example");
     expect(csv).toContain("#   2 pairs (ARE -> KWT, QAT -> KWT): 0 — IEA (2026) https://iea.example");
     expect(csv).not.toContain("0.65"); // the crude share does not apply to LNG
+  });
+
+  /**
+   * Review finding 3: the header ignored `severity` and `scenarioIds`, so a
+   * half-closure of two routes exported under a full-closure, single-scenario
+   * caption — the numbers in the file were not the numbers the caption
+   * described.
+   */
+  it("states the severity when it is not a full closure", () => {
+    const shares: ShareCitation[] = [
+      { disruption_id: "druzhba", kind: "pipeline", exporter_iso3: "RUS", importer_iso3: "POL", share: 0.47, source_title: "IEA report", source_url: "https://iea.example", source_year: 2022, source_note: null },
+    ];
+    const half: ScenarioResult = { ...RESULT, severity: 0.5 };
+    const csv = scenarioCsv(half, { viewUrl: "https://x/", exported: "2026-09-19", catalog: CATALOG, shares });
+    expect(csv).toContain("Severity: 50% of what the route carries is cut");
+    expect(csv).toContain("Total imports (total_qty) are untouched");
+    expect(scenarioFilename(half)).toContain("_sev50");
+    // A full closure says nothing about severity — old exports are unchanged.
+    expect(scenarioCsv(RESULT, { viewUrl: "https://x/", exported: "2026-09-19", catalog: CATALOG, shares })).not.toContain("Severity:");
+  });
+
+  it("lists every scenario, its own share rows, and says the figures are the low end", () => {
+    const shares: ShareCitation[] = [
+      { disruption_id: "druzhba", kind: "pipeline", exporter_iso3: "RUS", importer_iso3: "POL", share: 0.47, source_title: "IEA report", source_url: "https://iea.example", source_year: 2022, source_note: null },
+      { disruption_id: "btc", kind: "pipeline", exporter_iso3: "AZE", importer_iso3: null, share: 0.83, source_title: "BP", source_url: "https://bp.example", source_year: 2024, source_note: null },
+    ];
+    const combined: ScenarioResult = { ...RESULT, scenarioIds: ["druzhba", "btc"] };
+    const csv = scenarioCsv(combined, { viewUrl: "https://x/", exported: "2026-09-19", catalog: CATALOG, shares });
+    expect(csv.split("\n")[0]).toContain("Cut Druzhba pipeline + Cut Baku-Tbilisi-Ceyhan");
+    expect(csv).toContain("2 routes closed at once");
+    expect(csv).toContain("LOW END OF THAT RANGE");
+    expect(csv).toContain("#   Cut Druzhba pipeline:");
+    expect(csv).toContain("#   Cut Baku-Tbilisi-Ceyhan:");
+    expect(csv).toContain("RUS -> POL: 0.47");
+    expect(csv).toContain("AZE -> all importers: 0.83");
+    expect(scenarioFilename(combined)).toContain("scenario-druzhba+btc");
+  });
+
+  it("prints an inbound (importer-wide) row as a wildcard, never as null", () => {
+    const inbound: ShareCitation = { disruption_id: "hormuz", kind: "chokepoint", exporter_iso3: null, importer_iso3: "KWT", share: 0.9, source_title: "EIA", source_url: null, source_year: 2026, source_note: null };
+    expect(shareCitationLine(inbound)).toBe("all exporters -> KWT: 0.9 — EIA (2026)");
   });
 });

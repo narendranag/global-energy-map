@@ -1,6 +1,7 @@
 import type { Catalog } from "@/lib/data-catalog/types";
-import { getScenario, routeKeyFor } from "@/lib/scenarios/registry";
-import { groupIdenticalPairShares } from "@/lib/scenarios/share-groups";
+import { getScenario, routeKeyFor, severityPct } from "@/lib/scenarios/registry";
+import { groupIdenticalPairShares, pairLabel } from "@/lib/scenarios/share-groups";
+import { scenarioIdsOf } from "@/lib/scenarios/shares";
 import type { ScenarioResult } from "@/lib/scenarios/types";
 import { LNG_T3_FIRST_YEAR, LNG_T3_LAST_YEAR } from "@/lib/data/voyages";
 import { toCsv, type CsvValue } from "./csv";
@@ -51,10 +52,17 @@ function topSources(list: readonly { iso3: string; qty: number }[]): string {
 }
 
 export function shareCitationLine(r: ShareCitation, pairs: readonly ShareCitation[] = [r]): string {
+  // Review finding 1: an inbound row has no exporter, and "null -> KWT" in a
+  // citation line is worse than useless. `pairLabel` is the canonical
+  // wildcard spelling; the CSV keeps its ASCII arrow (a header line that is
+  // read in a terminal and a spreadsheet alike).
+  const ascii = (p: ShareCitation) => pairLabel(p).replace("→", " -> ");
   const route =
     pairs.length > 1
-      ? `${String(pairs.length)} pairs (${pairs.map((p) => `${p.exporter_iso3} -> ${p.importer_iso3 ?? "*"}`).join(", ")})`
-      : `${r.exporter_iso3} -> ${r.importer_iso3 ?? "all importers"}`;
+      ? `${String(pairs.length)} pairs (${pairs.map(ascii).join(", ")})`
+      : r.exporter_iso3 === null
+        ? `all exporters -> ${r.importer_iso3 ?? "*"}`
+        : `${r.exporter_iso3} -> ${r.importer_iso3 ?? "all importers"}`;
   const src = r.source_title === UNSOURCED_TITLE ? UNSOURCED_TITLE : `${r.source_title} (${String(r.source_year)})`;
   const url = r.source_url ? ` ${r.source_url}` : "";
   return `${route}: ${String(r.share)} — ${src}${url}`;
@@ -134,21 +142,26 @@ export function scenarioRows(
 }
 
 export function scenarioHeader(result: ScenarioResult, ctx: ScenarioExportContext): string[] {
-  const def = getScenario(result.scenarioId);
   const gas = result.commodity === "gas";
   const hs = gas ? "HS 271111 (LNG)" : "HS 2709 (crude)";
   const baci = ctx.catalog.entries.find((e) => e.id === "baci_2709");
   const lngT3 = ctx.catalog.entries.find((e) => e.id === "lng_t3_voyages");
   const usesVoyages = gas && result.year >= LNG_T3_FIRST_YEAR && result.year <= LNG_T3_LAST_YEAR;
-  // routeKeyFor is null when the scenario does not model this commodity (only
-  // reachable from a hand-typed URL). Cite the scenario's own rows rather than
-  // a `_lng` id that has none (A1).
-  const shares = sharesFor(
-    routeKeyFor(result.scenarioId, result.commodity) ?? result.scenarioId,
-    ctx.shares,
-  );
+  const ids = scenarioIdsOf(result);
+  const severity = result.severity ?? 1;
+  // One entry per scenario: its label and its own route-share rows. A CSV
+  // quoting one scenario's shares under a two-scenario number would not say
+  // where that number came from.
+  const perScenario = ids.map((id) => ({
+    def: getScenario(id),
+    // routeKeyFor is null when the scenario does not model this commodity
+    // (only reachable from a hand-typed URL). Cite the scenario's own rows
+    // rather than a `_lng` id that has none (A1).
+    shares: sharesFor(routeKeyFor(id, result.commodity) ?? id, ctx.shares),
+  }));
+  const shares = perScenario.flatMap((s) => s.shares);
   const lines = [
-    `Global Energy Map — scenario table: ${def.label}, ${gas ? "LNG" : "crude oil"}, ${String(result.year)}`,
+    `Global Energy Map — scenario table: ${perScenario.map((s) => s.def.label).join(" + ")}, ${gas ? "LNG" : "crude oil"}, ${String(result.year)}`,
     "DERIVED ANALYSIS, not source data. Importer rows: BACI bilateral imports from each exporter x that exporter's route share;",
     `share_at_risk = at_risk_qty / total_qty. ${gas ? "LNG import-terminal" : "Refinery"} rows attribute a country's at-risk imports to its ${gas ? "terminals" : "refineries"}${usesVoyages ? " (LNG-T3 voyage shares where covered, else by capacity)" : " by capacity (uniformly when capacity is unknown)"}.`,
     `Quantities in metric tonnes (BACI ${hs}); capacity in the stated unit.`,
@@ -159,8 +172,29 @@ export function scenarioHeader(result: ScenarioResult, ctx: ScenarioExportContex
   if (usesVoyages && lngT3) {
     lines.push(`Terminal shares: ${lngT3.attribution ?? lngT3.source_name}, as of ${lngT3.as_of}. ${lngT3.source_url}`);
   }
-  lines.push(`Route shares (disruption_route.parquet, ${String(shares.length)} rows; static across years):`);
-  for (const { rows } of groupIdenticalPairShares(shares)) lines.push(`  ${shareCitationLine(rows[0], rows)}`);
+  if (severity < 1) {
+    lines.push(
+      `Severity: ${severityPct(severity)} of what the route carries is cut — every route share below is multiplied by ${severityPct(severity)} before it is applied. Total imports (total_qty) are untouched.`,
+    );
+  }
+  if (ids.length > 1) {
+    lines.push(
+      `${String(ids.length)} routes closed at once (${perScenario.map((s) => s.def.routeName).join(" and ")}). Each route's shares are resolved on their own, then combined. Because we know what fraction of a flow each route carries but not which cargoes, a country's exposure is a range: low = the largest single share (routes in series, the same barrels cut once), high = the shares added and capped at 100% (routes in parallel, different barrels). EVERY at_risk_qty AND share_at_risk BELOW IS THE LOW END OF THAT RANGE, including the ${gas ? "terminal" : "refinery"} rows.`,
+    );
+  } else {
+    lines.push(
+      `${gas ? "LNG import-terminal" : "Refinery"} rows quote the same single-scenario figure as their country.`,
+    );
+  }
+  lines.push(
+    `Route shares (disruption_route.parquet, ${String(shares.length)} rows; static across years):`,
+  );
+  for (const { def: sdef, shares: rows } of perScenario) {
+    if (ids.length > 1) lines.push(`  ${sdef.label}:`);
+    for (const g of groupIdenticalPairShares(rows)) {
+      lines.push(`  ${ids.length > 1 ? "  " : ""}${shareCitationLine(g.rows[0], g.rows)}`);
+    }
+  }
   lines.push(`View: ${ctx.viewUrl}`, `Exported: ${ctx.exported}`, `Cite this site: ${apaCitation(undefined, { viewUrl: ctx.viewUrl, accessed: ctx.exported })}`);
   return lines;
 }
@@ -170,5 +204,7 @@ export function scenarioCsv(result: ScenarioResult, ctx: ScenarioExportContext):
 }
 
 export function scenarioFilename(result: ScenarioResult): string {
-  return `global-energy-map_scenario-${result.scenarioId}_${result.commodity}_${String(result.year)}.csv`;
+  const ids = scenarioIdsOf(result).join("+");
+  const sev = (result.severity ?? 1) < 1 ? `_sev${String(Math.round((result.severity ?? 1) * 100))}` : "";
+  return `global-energy-map_scenario-${ids}_${result.commodity}_${String(result.year)}${sev}.csv`;
 }

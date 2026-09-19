@@ -1,5 +1,5 @@
 "use client";
-import { useId, useMemo, useState, type ReactNode } from "react";
+import { useId, useMemo, useState } from "react";
 import type { Commodity, ScenarioId, ScenarioResult } from "@/lib/scenarios/types";
 import {
   SCENARIOS,
@@ -21,14 +21,8 @@ import {
   type ScenarioView,
 } from "@/lib/url-state/encode";
 import { scenarioCameraPadding } from "./fit";
-import {
-  clearScenarioHover,
-  hoveredAssetId,
-  hoveredIso3,
-  setScenarioHover,
-  useScenarioHover,
-  type ScenarioHover,
-} from "./hover";
+import { hoveredAssetId, hoveredIso3, useScenarioHover } from "./hover";
+import { RankedRow } from "./RankedRow";
 import { goToAsset, goToCountry } from "./row-actions";
 import { ScenarioContext } from "./ScenarioContext";
 import { rankAssetsByCapacityAtRisk, rankImportersByShare, routeNamesOf, sideNoun } from "./overlay";
@@ -113,48 +107,6 @@ function ShowAllButton({
       className="mt-1 rounded text-[11px] font-medium text-sky-800 underline decoration-dotted underline-offset-2 hover:text-sky-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-700"
     >
       {expanded ? `Show top ${TOP_N.toString()} only` : `Show all ${total.toString()} ${noun}`}
-    </button>
-  );
-}
-
-/**
- * A ranked row, as a real button (S1): pointing at it highlights the thing on
- * the map, activating it takes the map there. Pointer and keyboard both
- * highlight — `onFocus`/`onBlur` alongside the pointer handlers — so tabbing
- * the list is as informative as hovering it, and the highlight is cleared
- * only by whoever set it (`clearScenarioHover`), because the next row's enter
- * can arrive before this row's leave.
- */
-function RankedRow({
-  hover,
-  active,
-  onActivate,
-  title,
-  children,
-}: {
-  hover: ScenarioHover;
-  /** True while this row's subject is the highlighted one (from either end). */
-  active: boolean;
-  onActivate: () => void;
-  title: string;
-  children: ReactNode;
-}) {
-  const enter = () => { setScenarioHover(hover); };
-  const leave = () => { clearScenarioHover(hover); };
-  return (
-    <button
-      type="button"
-      title={title}
-      onClick={onActivate}
-      onPointerEnter={enter}
-      onPointerLeave={leave}
-      onFocus={enter}
-      onBlur={leave}
-      className={`block w-full rounded px-1 py-0.5 text-left text-xs hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-700 ${
-        active ? "bg-slate-200" : ""
-      }`}
-    >
-      {children}
     </button>
   );
 }

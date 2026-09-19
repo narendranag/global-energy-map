@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Mode } from "@/lib/modes";
+import { SearchBox } from "@/components/search/SearchBox";
 import { ModeTabs } from "./ModeTabs";
 
 export interface HeaderProps {
@@ -42,6 +43,7 @@ export function Header({ mode, onModeChange, pending, actions }: HeaderProps) {
           )}
         </div>
       </div>
+      <SearchBox />
       <nav aria-label="Site" className="ml-auto flex items-center gap-3 text-xs">
         {actions}
         <Link

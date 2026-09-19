@@ -87,6 +87,12 @@ export const PALETTE = {
   focusOutline: "#101a24",
   focusHalo: "#ffffff",
 
+  // Search result highlight (S4) — a violet ring, the one hue family nothing
+  // else on the map owns (oil warm, gas cool, reserves olive, port slate,
+  // scenario exposure red), so a found result never reads as any of them.
+  searchHighlight: "#7c3aed",
+  searchHighlightHalo: "#ffffff",
+
   // Scenario — red only.
   exposureLow: "#fcbba1",
   exposureHigh: "#99000d",
@@ -349,6 +355,22 @@ export const FOCUS_OUTLINE_COLOR: Rgba = paletteRgba("focusOutline", 255);
 export const FOCUS_OUTLINE_MIN_PX = 2.5;
 export const FOCUS_HALO_COLOR: Rgba = paletteRgba("focusHalo", 235);
 export const FOCUS_HALO_MIN_PX = 6;
+
+// ---------------------------------------------------------------------------
+// Search result highlight (S4)
+// ---------------------------------------------------------------------------
+
+/**
+ * A cased ring (white halo + violet line), same reasoning as the focus
+ * outline: one colour cannot clear 3:1 on both the pale basemap and the
+ * darkest scenario fill. Not part of `LEGEND` — it is transient UI, not a
+ * data layer a reader toggles.
+ */
+export const SEARCH_HIGHLIGHT_COLOR: Rgba = paletteRgba("searchHighlight", 255);
+export const SEARCH_HIGHLIGHT_HALO_COLOR: Rgba = paletteRgba("searchHighlightHalo", 235);
+export const SEARCH_HIGHLIGHT_LINE_MIN_PX = 3;
+export const SEARCH_HIGHLIGHT_HALO_LINE_MIN_PX = 6;
+export const SEARCH_HIGHLIGHT_RADIUS = { minPixels: 14, maxPixels: 26 } as const;
 
 // ---------------------------------------------------------------------------
 // Basins

@@ -14,6 +14,7 @@ import {
   voyagesInRange,
 } from "@/lib/data/voyages";
 import { loadCountries } from "@/lib/geo/countries";
+import { useSearchHighlight } from "@/lib/search/highlight";
 import type { Commodity, ScenarioResult } from "@/lib/scenarios/types";
 import { reservesDataYear } from "@/lib/time/range";
 import { useMapView } from "@/lib/state";
@@ -38,6 +39,7 @@ import { buildGasStorageLayer, gasStorageFeatures } from "./GasStorageChoropleth
 import { buildReservesLayer, reservesFeatures } from "./ReservesChoropleth";
 import { buildShaleRegionsLayer, shaleRegionFeatures } from "./ShaleRegionsLayer";
 import { buildRecentImportsLayer, recentImportsFeatures } from "./RecentImportsChoropleth";
+import { buildSearchHighlightLayer } from "./SearchHighlightLayer";
 import { buildStorageLayer } from "./StorageLayer";
 import type { TooltipContext } from "./tooltip";
 
@@ -234,14 +236,22 @@ export function useMapLayers({
     [showVoyages, positionedVoyages, voyageImpacts],
   );
 
+  // A search result (S4): drawn last (topmost) so it is never hidden by a mark.
+  const searchHighlight = useSearchHighlight();
+  const searchHighlightLayers = useMemo(
+    () => buildSearchHighlightLayer(searchHighlight),
+    [searchHighlight],
+  );
+
   // Z-order (bottom to top): the invisible country pick target, basins, shale
   // regions, recent imports, gas storage, reserves, the focus outline,
   // extraction, oil pipes, gas pipes, LNG voyage arcs, refineries, storage,
-  // ports, LNG terminals. Gas storage sits under reserves so that with both
-  // on, the reserves ramp — the one the year slider drives — stays legible on
-  // top. The pick layer is bottom-most so every real layer wins the tooltip
-  // and the click above it; the focus outline sits above the fills it frames
-  // and below the marks it must not hide.
+  // ports, LNG terminals, the search highlight ring. Gas storage sits under
+  // reserves so that with both on, the reserves ramp — the one the year
+  // slider drives — stays legible on top. The pick layer is bottom-most so
+  // every real layer wins the tooltip and the click above it; the focus
+  // outline sits above the fills it frames and below the marks it must not
+  // hide.
   const deckLayers = useMemo(
     () =>
       [
@@ -260,6 +270,7 @@ export function useMapLayers({
         storageLayer,
         portsLayer,
         lngTerminalsLayer,
+        ...searchHighlightLayers,
       ].filter((l): l is NonNullable<typeof l> => l !== null) as Layer[],
     [
       countryPickLayer,
@@ -277,6 +288,7 @@ export function useMapLayers({
       storageLayer,
       portsLayer,
       lngTerminalsLayer,
+      searchHighlightLayers,
     ],
   );
 

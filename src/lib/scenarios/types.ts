@@ -118,6 +118,9 @@ export interface ExporterImpact {
   readonly totalQty: number;
   readonly atRiskQty: number;
   readonly shareAtRisk: number;
+  /** S5: the other end of the combined-scenario range; see ImporterImpact. */
+  readonly atRiskQtyUpper?: number;
+  readonly shareAtRiskUpper?: number;
 }
 
 export interface ImporterImpact {
@@ -125,6 +128,15 @@ export interface ImporterImpact {
   readonly totalQty: number;
   readonly atRiskQty: number;
   readonly shareAtRisk: number;
+  /**
+   * S5: with two or more scenarios combined, `atRiskQty` is the lower bound of
+   * the range (the routes might carry the same barrels) and this is the upper
+   * (they might carry different ones) — see `combineShares` in shares.ts. For
+   * a single scenario the two are equal, and headline figures always quote the
+   * lower one. Optional so pre-S5 results still typecheck.
+   */
+  readonly atRiskQtyUpper?: number;
+  readonly shareAtRiskUpper?: number;
 }
 
 export interface RefineryImpact {
@@ -139,7 +151,13 @@ export interface RefineryImpact {
 }
 
 export interface ScenarioResult {
+  /** The primary scenario — the first of `scenarioIds`. */
   readonly scenarioId: ScenarioId;
+  /**
+   * S5: every scenario this result combines, primary first. A single-scenario
+   * run reports `[scenarioId]`. Optional for the same reason as `severity`.
+   */
+  readonly scenarioIds?: readonly ScenarioId[];
   readonly commodity: Commodity;
   readonly year: number;
   /**

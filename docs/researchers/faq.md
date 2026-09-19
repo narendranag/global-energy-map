@@ -12,7 +12,7 @@ The share of an importer's crude (or LNG) imports in the selected year, by tonne
 
 ### Why do reserves stop in 2020?
 
-The Energy Institute's *Statistical Review* (2025 edition) refreshed production to 2024 but has not published country proved reserves after 2020. For 2021–2024 the map shows the 2020 value and flags it beside the year control. Crude production in the tooltips does run to 2024.
+The Energy Institute's *Statistical Review* (2025 edition) refreshed production to 2024 but has not published country proved reserves after 2020. For 2021–2024 the map shows the 2020 value and flags it beside the year control. Oil production does run later — and note that EI's production series is **total liquids** (crude, shale oil, oil sands, condensates and NGLs), not crude alone, which is why the country panel calls it "Oil production (total liquids)".
 
 ### Why is there no coal (or power, or refined products)?
 

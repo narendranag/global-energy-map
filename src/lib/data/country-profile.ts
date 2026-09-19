@@ -178,12 +178,22 @@ export interface CountryProfile {
 // Series helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * The EI metric key. Its name is a misnomer the parquet is stuck with: the
+ * sheet it comes from is "Oil Production - barrels", which EI defines as
+ * **total liquids** — crude oil, shale oil, oil sands, condensates *and*
+ * NGLs. (USA 2024: 20,276 kb/d here against roughly 13,200 kb/d of crude and
+ * condensate.) Labelling it "Crude production" overstated crude by half in
+ * the United States' case (B9). Renaming the key would be a data migration
+ * and a break for every `?q=` query console link, so the key stays and the
+ * label tells the truth.
+ */
 const PRODUCTION_METRIC = "production_crude_kbpd";
 
 const METRIC_LABEL: Record<string, string> = {
   proved_reserves_oil_bbn_bbl: "Proved oil reserves",
   proved_reserves_gas_tcm: "Proved gas reserves",
-  production_crude_kbpd: "Crude production",
+  production_crude_kbpd: "Oil production (total liquids)",
 };
 
 const METRIC_UNIT: Record<string, string> = {
@@ -493,8 +503,10 @@ export function buildCountryProfile(
           staleLabel: "the Energy Institute has not refreshed reserves since",
         });
 
+  // Oil only: EI publishes no gas-production series here, and showing a
+  // liquids figure under a gas heading invited it to be read as one (B9).
   const production =
-    inputs.series === null
+    inputs.series === null || commodity !== "oil"
       ? null
       : toTimeSeries(seriesByYear(inputs.series, code, PRODUCTION_METRIC), {
           label: METRIC_LABEL[PRODUCTION_METRIC] ?? PRODUCTION_METRIC,

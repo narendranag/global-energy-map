@@ -36,7 +36,8 @@ Generated from the data catalog at build time, so it cannot drift from the files
 ### Reserves (country choropleth)
 
 - **Source:** Energy Institute, *Statistical Review of World Energy* 2026 (75th edition) — "Oil: Proved reserves history" and "Gas: Proved reserves history" sheets. File `country_year_series.parquet`.
-- **Coverage:** proved oil reserves (billion barrels) and proved gas reserves (trillion cubic metres), country-year, **1990–2020**. The same file carries crude production (kb/d) 1990–2025, used in tooltips.
+- **Coverage:** proved oil reserves (billion barrels) and proved gas reserves (trillion cubic metres), country-year, **1990–2020**. The same file carries oil production (kb/d) 1990–2025, shown in the country panel on the oil axis.
+- **"Oil production" is total liquids, not crude.** It comes from EI's "Oil Production - barrels" sheet, which counts crude oil, shale oil, oil sands, condensates **and NGLs** — USA 2024 reads 20,276 kb/d here against roughly 13,200 kb/d of crude and condensate. The metric key in the parquet is still `production_crude_kbpd`, which is a misnomer we have not renamed because doing so would break every saved query-console link; read the key as "oil production", not "crude".
 - **Reserves stop in 2020.** The reserves tables have not been updated past 2020; the 2026 edition extends production to 2025 but still ends reserves in 2020. For 2021–2024 the choropleth shows the **2020 value** and says so on the map ("Reserves: 2020 value"). No post-2020 change in the map is a real change in reserves.
 - **Colour scale:** logarithmic, so both Venezuela-scale and small producers are distinguishable. Countries with no reserves row in the source get a neutral no-data tint, not the bottom of the ramp.
 - **Gaps:** country aggregates only (no field, basin or sub-national split); EI's regional "Other …" residuals are not attributed to any country.

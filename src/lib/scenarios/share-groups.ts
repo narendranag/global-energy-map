@@ -1,6 +1,7 @@
 /** The fields a cited route share needs for grouping (engine rows + citation). */
 export interface GroupableShare {
-  readonly exporter_iso3: string;
+  /** null = the importer-wide wildcard (S5); see InboundDisruptionRouteRow. */
+  readonly exporter_iso3: string | null;
   readonly importer_iso3: string | null;
   readonly share: number;
   readonly source_title?: string | null;
@@ -15,10 +16,11 @@ export interface ShareGroup<R extends GroupableShare> {
 }
 
 /**
- * Collapse pair rows (importer set) that carry the same share and the same
+ * Collapse pair rows (both sides set) that carry the same share and the same
  * citation into one group, so the 42 share-0 intra-Gulf Hormuz pairs list as
- * one entry rather than 42. Exporter-wide rows are never merged. Groups keep
- * the order of their first row.
+ * one entry rather than 42. A wildcard row — exporter-wide or importer-wide —
+ * is a statement about a whole country rather than one pair, so it always
+ * stands alone. Groups keep the order of their first row.
  */
 export function groupIdenticalPairShares<R extends GroupableShare>(
   rows: readonly R[],
@@ -26,7 +28,7 @@ export function groupIdenticalPairShares<R extends GroupableShare>(
   const groups: [R, ...R[]][] = [];
   const byKey = new Map<string, [R, ...R[]]>();
   for (const r of rows) {
-    if (r.importer_iso3 === null) {
+    if (r.importer_iso3 === null || r.exporter_iso3 === null) {
       groups.push([r]);
       continue;
     }
@@ -49,7 +51,7 @@ export function groupIdenticalPairShares<R extends GroupableShare>(
   return groups.map((g) => ({ rows: g }));
 }
 
-/** "IRN→IRQ" */
+/** "IRN→IRQ", "IRN→*" (exporter-wide), "*→KWT" (importer-wide). */
 export function pairLabel(r: Pick<GroupableShare, "exporter_iso3" | "importer_iso3">): string {
-  return `${r.exporter_iso3}→${r.importer_iso3 ?? "*"}`;
+  return `${r.exporter_iso3 ?? "*"}→${r.importer_iso3 ?? "*"}`;
 }

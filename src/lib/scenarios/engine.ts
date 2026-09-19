@@ -1,6 +1,6 @@
 import type {
   Commodity,
-  DisruptionRouteRow,
+  RouteRow,
   ExporterImpact,
   ImporterImpact,
   LngImportRow,
@@ -10,6 +10,7 @@ import type {
   ScenarioResult,
   TradeFlowRow,
 } from "./types";
+import { resolveScenarioShare } from "./shares";
 import { computeRefineryImpacts } from "./refinery";
 import { computeLngImportImpacts } from "./lng";
 import { computeLngImportImpactsFromVoyages } from "./lng-t3";
@@ -23,7 +24,7 @@ export interface ScenarioInput {
   readonly commodity: Commodity;
   readonly year: number;
   readonly tradeFlows: readonly TradeFlowRow[];
-  readonly routes: readonly DisruptionRouteRow[];
+  readonly routes: readonly RouteRow[];
   readonly refineries?: readonly RefineryRow[];
   readonly lngImports?: readonly LngImportRow[];
   /** Phase 6: LNG-T3 voyages, already pre-filtered by active year. */
@@ -51,23 +52,12 @@ export function computeScenarioImpact(input: ScenarioInput): ScenarioResult {
    * multiplied share, so they scale with it for free.
    */
   const severity = clampSeverity(input.severity);
-  // Filter routes to this scenario only
+  // Resolve each scenario's own rows first (pair beats wildcards, see
+  // shares.ts), then combine across scenarios.
   const scenarioRoutes = input.routes.filter((r) => r.disruption_id === input.scenarioId);
-
-  // Two share lookups: per-pair (exporter, importer) and per-exporter (importer=null wildcard)
-  const sharePerPair = new Map<string, number>();
-  const sharePerExporter = new Map<string, number>();
-  for (const r of scenarioRoutes) {
-    if (r.importer_iso3 === null) {
-      sharePerExporter.set(r.exporter_iso3, r.share);
-    } else {
-      sharePerPair.set(`${r.exporter_iso3}→${r.importer_iso3}`, r.share);
-    }
-  }
-  const lookupShare = (exporter: string, importer: string): number => {
-    const share = sharePerPair.get(`${exporter}→${importer}`) ?? sharePerExporter.get(exporter) ?? 0;
-    return share * severity;
-  };
+  const resolved = resolveScenarioShare(scenarioRoutes);
+  const lookupShare = (exporter: string, importer: string): number =>
+    resolved(exporter, importer) * severity;
 
   // Per-importer and per-exporter pass + remember flow rows for refinery view.
   // Both sides read the same rows and the same `lookupShare`, so the two views

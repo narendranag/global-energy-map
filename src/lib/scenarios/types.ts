@@ -19,6 +19,28 @@ export interface DisruptionRouteRow {
   readonly share: number;
 }
 
+/**
+ * S5: the mirror wildcard — `exporter_iso3 = null` means "whatever this
+ * country imports", which is how inbound exposure is expressed (the Gulf
+ * states' own imports must cross Hormuz too, and no exporter-side row can say
+ * that). `importer_iso3` is necessarily set: a row naming neither side
+ * describes no route.
+ *
+ * It is a separate interface rather than a widening of `DisruptionRouteRow`
+ * so that every existing consumer of that type keeps a non-null
+ * `exporter_iso3`; code that must handle both takes `RouteRow`.
+ */
+export interface InboundDisruptionRouteRow {
+  readonly disruption_id: ScenarioId;
+  readonly kind: "chokepoint" | "pipeline";
+  readonly exporter_iso3: null;
+  readonly importer_iso3: string;
+  readonly share: number;
+}
+
+/** Any `disruption_route` row the engine accepts. */
+export type RouteRow = DisruptionRouteRow | InboundDisruptionRouteRow;
+
 export interface RefineryRow {
   readonly asset_id: string;
   readonly country_iso3: string;

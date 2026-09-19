@@ -96,7 +96,14 @@ export function combineShares(lookups: readonly ShareLookup[]): BoundsLookup {
     let lower = 0;
     let sum = 0;
     for (const lookup of lookups) {
-      const s = lookup(e, i);
+      // Clamp each share to [0, 1] before combining (review finding 5). A row
+      // outside that range is a data error — `build_disruption_routing.py`
+      // now asserts against it — but if one ever arrives, the two bounds must
+      // still bracket each other: an unclamped share of 1.4 gave
+      // lower = 1.4 > upper = min(1, 1.4) = 1, an inverted "range" every
+      // reader downstream would have printed as fact.
+      const raw = lookup(e, i);
+      const s = Number.isFinite(raw) ? Math.min(1, Math.max(0, raw)) : 0;
       if (s > lower) lower = s;
       sum += s;
     }

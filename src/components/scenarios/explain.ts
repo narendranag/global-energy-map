@@ -6,7 +6,9 @@
  * Exported for the country tooltip (Track B / later pass) as well as the
  * scenario panel's "Check a country" lookup.
  */
-import type { Commodity, DisruptionRouteRow, ScenarioResult, TradeFlowRow } from "@/lib/scenarios/types";
+import type { Commodity, RouteRow, ScenarioResult, TradeFlowRow } from "@/lib/scenarios/types";
+import { combineShares, resolveScenarioShare, scenarioIdsOf } from "@/lib/scenarios/shares";
+import { clampSeverity } from "@/lib/scenarios/engine";
 
 export interface SupplierQty {
   readonly iso3: string;
@@ -72,7 +74,7 @@ export type ExposureExplanation =
 
 export interface ExplainInputs {
   readonly tradeFlows: readonly TradeFlowRow[];
-  readonly routes: readonly DisruptionRouteRow[];
+  readonly routes: readonly RouteRow[];
 }
 
 /**
@@ -87,14 +89,19 @@ export function explainZeroExposure(
   inputs: ExplainInputs,
 ): ExposureExplanation {
   const year = result.year;
-  const routes = inputs.routes.filter((r) => r.disruption_id === result.scenarioId);
-  const pair = new Map<string, number>();
-  const wide = new Map<string, number>();
-  for (const r of routes) {
-    if (r.importer_iso3 === null) wide.set(r.exporter_iso3, r.share);
-    else pair.set(`${r.exporter_iso3}→${r.importer_iso3}`, r.share);
-  }
-  const lookup = (exp: string): number => pair.get(`${exp}→${iso3}`) ?? wide.get(exp) ?? 0;
+  const ids = scenarioIdsOf(result);
+  const routes = inputs.routes.filter((r) => (ids as readonly string[]).includes(r.disruption_id));
+  // Finding 1: this used to be a hand-rolled copy of the share rule that read
+  // `exporter_iso3` as non-null, so an inbound (importer-wide) row landed
+  // under the pair key "null→KWT" and "Why 0 %?" contradicted the map. It now
+  // calls the engine's own resolver — per scenario first, then combined, then
+  // scaled by severity, exactly as `computeScenarioImpact` does — so the
+  // explanation cannot drift from the number it is explaining.
+  const severity = clampSeverity(result.severity);
+  const bounds = combineShares(
+    ids.map((id) => resolveScenarioShare(routes.filter((r) => r.disruption_id === id))),
+  );
+  const lookup = (exp: string): number => bounds(exp, iso3).lower * severity;
 
   const bySupplier = new Map<string, number>();
   for (const f of inputs.tradeFlows) {
@@ -138,10 +145,18 @@ export function explainZeroExposure(
 
   if (totalQty <= 0) return { kind: "no-imports", iso3, year };
 
-  const routeExporterSet = new Set(routes.map((r) => r.exporter_iso3));
+  const routeExporterSet = new Set(
+    routes.flatMap((r) => (r.exporter_iso3 === null ? [] : [r.exporter_iso3])),
+  );
   const routeExporters = suppliers.filter((s) => routeExporterSet.has(s.iso3) && s.qty > 0);
   if (routeExporters.length > 0) {
-    const zeroPairs = routeExporters.every((s) => pair.get(`${s.iso3}→${iso3}`) === 0);
+    // "Explicitly carved out" means *every* scenario set this pair to 0 —
+    // a single scenario that says nothing about the pair is not the same
+    // statement as one that says the cargo never crosses the route.
+    const zeroPair = (exp: string) =>
+      routes.some((r) => r.exporter_iso3 === exp && r.importer_iso3 === iso3 && r.share === 0) &&
+      !routes.some((r) => r.exporter_iso3 === exp && r.importer_iso3 === iso3 && r.share > 0);
+    const zeroPairs = routeExporters.every((s) => zeroPair(s.iso3));
     return { kind: "not-on-route", iso3, year, totalQty, routeExporters, zeroPairs };
   }
   return { kind: "no-route-suppliers", iso3, year, totalQty, topSuppliers: suppliers.slice(0, 3) };

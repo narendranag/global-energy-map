@@ -7,7 +7,9 @@ import type {
 } from "@/lib/scenarios/types";
 import { polygonIso3 } from "@/lib/geo/iso3";
 import { getScenario } from "@/lib/scenarios/registry";
+import { scenarioIdsOf } from "@/lib/scenarios/shares";
 import { exposureColor, type Rgba } from "@/lib/symbology";
+import type { ScenarioView } from "@/lib/url-state/encode";
 
 export interface OverlayEntry {
   /** Undefined = no override; the country keeps its base (reserves) fill. */
@@ -22,25 +24,59 @@ export function importsNoun(commodity: Commodity): string {
 /** Importers below this fraction of world imports are neither ranked nor shaded. */
 export const MIN_SHARE_OF_WORLD = 0.001;
 
-export function importerOverlay(
+export function exportsNoun(commodity: Commodity): string {
+  return commodity === "gas" ? "LNG exports" : "crude exports";
+}
+
+/** T1: the noun for the side the panel and overlay are describing. */
+export function sideNoun(commodity: Commodity, view: ScenarioView): string {
+  return view === "exporters" ? exportsNoun(commodity) : importsNoun(commodity);
+}
+
+/**
+ * The routes a result covers, as one phrase: "the Strait of Hormuz" or
+ * "the Strait of Hormuz and the Strait of Malacca".
+ */
+export function routeNamesOf(r: ScenarioResult): string {
+  const names = scenarioIdsOf(r).map((id) => getScenario(id).routeName);
+  return names.length <= 1
+    ? names[0] ?? ""
+    : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1] ?? ""}`;
+}
+
+/**
+ * The country fills a scenario paints.
+ *
+ * T1 makes the *side* an argument. In the exporter view the same ramp shades
+ * the countries that lose the outlet rather than the ones that lose the
+ * supply — the same numbers read the other way round, from the same rows
+ * (Σ exporter at-risk ≡ Σ importer at-risk), so the legend only has to change
+ * its noun.
+ */
+export function scenarioOverlay(
   r: ScenarioResult | null,
   commodity: Commodity,
+  view: ScenarioView = "importers",
 ): ReadonlyMap<string, OverlayEntry> | undefined {
   if (!r) return undefined;
-  const route = getScenario(r.scenarioId).routeName;
-  const noun = importsNoun(commodity);
+  const route = routeNamesOf(r);
+  const exporters = view === "exporters";
+  const noun = sideNoun(commodity, view);
+  const rows = exporters ? r.byExporter ?? [] : r.byImporter;
   // Same materiality floor as the ranked list: a country importing a few
   // hundred tonnes at 100 % would otherwise paint as dark as Pakistan.
-  const world = r.byImporter.reduce((sum, i) => sum + i.totalQty, 0);
+  const world = rows.reduce((sum, i) => sum + i.totalQty, 0);
   const floor = world * MIN_SHARE_OF_WORLD;
   // Keyed by the *polygon* code: the choropleth looks entries up by
   // `feature.properties.iso3`, and Natural Earth spells South Sudan SDS and
   // Palestine PSX where the trade data says SSD / PSE (A2).
   const m = new Map<string, OverlayEntry>();
-  for (const imp of r.byImporter) {
+  const severity = r.severity ?? 1;
+  const cut = severity < 1 ? `, ${(severity * 100).toFixed(0)}% cut` : "";
+  for (const imp of rows) {
     const iso3 = polygonIso3(imp.iso3);
     const t = imp.shareAtRisk;
-    const base = `Scenario: ${(t * 100).toFixed(1)}% of ${r.year.toString()} ${noun} routed through ${route}`;
+    const base = `Scenario: ${(t * 100).toFixed(1)}% of ${r.year.toString()} ${noun} routed through ${route}${cut}`;
     if (imp.totalQty < floor) {
       m.set(iso3, { tooltip: `${base} (negligible volume, under 0.1% of world ${noun}; not shaded)` });
       continue;
@@ -49,6 +85,14 @@ export function importerOverlay(
     m.set(iso3, color ? { color, tooltip: base } : { tooltip: base });
   }
   return m;
+}
+
+/** Back-compat name: the importer-side overlay. */
+export function importerOverlay(
+  r: ScenarioResult | null,
+  commodity: Commodity,
+): ReadonlyMap<string, OverlayEntry> | undefined {
+  return scenarioOverlay(r, commodity, "importers");
 }
 
 /**
@@ -62,11 +106,11 @@ export function importerOverlay(
  *    so a 200-tonne importer at 70 % does not outrank Japan.
  *  - Zero-exposure importers are omitted.
  */
-export function rankImportersByShare(
-  importers: readonly ImporterImpact[],
+export function rankImportersByShare<T extends ImporterImpact>(
+  importers: readonly T[],
   isKnownCountry: (iso3: string) => boolean,
   minShareOfWorld = MIN_SHARE_OF_WORLD,
-): ImporterImpact[] {
+): T[] {
   const world = importers.reduce((s, i) => s + i.totalQty, 0);
   const floor = world * minShareOfWorld;
   return importers

@@ -93,9 +93,9 @@ Merge order inside 2b (least → most shared-file contact): S5, S8, S6, S2, S4, 
 | S3 | merged 2026-09-19 | Country panel right of the map, left of the scenario panel ≥1100 px; adds nothing to `data-ready`; CSV limited to redistributable sections |
 | S4 | merged 2026-09-19 | ~13.4k names, lazy index, nothing fetched before first focus |
 | Review | done 2026-09-19 | Two Opus reviews of Wave 2: 0 critical, 3 high, 11 medium — all fixed in two batches (findings in `research/wave2-review-findings.md`). Notable: `<id>_lng` applied to oil-only scenarios (provenance lost on the gas axis); Natural Earth SDS/PSX vs BACI SSD/PSE (South Sudan read as zero trade and was dropped from every ranked list); partner rows could focus polygon-less codes — focus now works for any code with an anchor (SGP, BHR, HKG); /query executed non-SELECT statements. The reported embed FOUC does not occur (`/` bails out to client rendering). A literal NUL byte in `trade-flows.ts` made git treat it as binary — now `\u0000` |
-| S1 | in progress | |
+| S1 | merged 2026-09-19 | Closure glyph at the chokepoint / cased cut route (ignores vintage + layer toggle); camera fits mark + top 8 importers on a user-made scenario change only, **never on load**; ranked rows are buttons that hover-highlight and focus; one source of panel widths. Its first Playwright run hung for 3.5 h (orchestrator killed it) — workers now run one spec per invocation with `--global-timeout` |
 | T5 | dropped | per R4 |
 | T4 | done 2026-09-19 | `/query`: DuckDB-WASM lazy on that route only; tables generated from the catalog + a build-time schema sidecar; export gated on every FROM/JOIN/`read_parquet()` table being `downloadable`, decided from `json_serialize_sql()`'s parse tree; `?q=` base64url via `replaceState`; 6 verified example queries. Closed the `extensions.duckdb.org` fallback (the repository is now always same-origin, a version mismatch fails loudly) and self-hosted the `json` extension, without which the gate refused everything |
 | T6 | done 2026-09-19 | drafts in `docs/announce/`; must acknowledge the 2026 Hormuz closure before publishing |
 | T2 | held | see R3 + RV |
-| T1, T3 | pending (after S1) | |
+| T1, T3 | in progress | T1 must close the 8 S5-review findings; T3 resolves "Recent imports as baseline" as an on-screen recency check, not a recomputed exposure |

@@ -3,6 +3,7 @@ import {
   TWH_PER_MT_LNG,
   buildRecentImportsContextRows,
   buildStorageContextRows,
+  contextCaption,
   isLngStorageScenario,
   mtToTwh,
   showsStorageContext,
@@ -39,9 +40,9 @@ describe("isLngStorageScenario / showsStorageContext", () => {
 });
 
 describe("mtToTwh", () => {
-  it("uses the stated 14.447 TWh/Mt factor", () => {
+  it("uses the stated 15.644 TWh/Mt GCV factor (53.38 mmBtu/t gross, IGU)", () => {
     expect(mtToTwh(1)).toBeCloseTo(TWH_PER_MT_LNG, 6);
-    expect(mtToTwh(10)).toBeCloseTo(144.47, 2);
+    expect(mtToTwh(10)).toBeCloseTo(156.44, 2);
   });
 });
 
@@ -203,5 +204,35 @@ describe("buildRecentImportsContextRows", () => {
     const recent = recentImportsData(new Map());
     const rows = buildRecentImportsContextRows(result, recent, 2);
     expect(rows.map((r) => r.iso3)).toEqual(["B", "C"]);
+  });
+});
+
+describe("contextCaption", () => {
+  it("is null for the common case: full severity, single scenario, importer view", () => {
+    expect(contextCaption({ severity: 1, scenarioIds: ["hormuz"] }, "importers")).toBeNull();
+    // Also null when severity/scenarioIds are absent (ScenarioResult marks both optional).
+    expect(contextCaption({}, "importers")).toBeNull();
+  });
+
+  it("labels severity below 100%", () => {
+    expect(contextCaption({ severity: 0.5 }, "importers")).toBe("Figures below are at 50% severity.");
+  });
+
+  it("says the lower bound applies for a combined result", () => {
+    expect(contextCaption({ scenarioIds: ["hormuz", "malacca"] }, "importers")).toBe(
+      "Figures below are the lower bound of the combined range shown above.",
+    );
+  });
+
+  it("captions the rows as importer-side in exporter view", () => {
+    expect(contextCaption({}, "exporters")).toBe(
+      "Figures below are importers exposed by this closure, not the exporters ranked above.",
+    );
+  });
+
+  it("combines all three that apply, in order", () => {
+    expect(contextCaption({ severity: 0.25, scenarioIds: ["hormuz", "suez"] }, "exporters")).toBe(
+      "Figures below are at 25% severity, and the lower bound of the combined range shown above, and importers exposed by this closure, not the exporters ranked above.",
+    );
   });
 });

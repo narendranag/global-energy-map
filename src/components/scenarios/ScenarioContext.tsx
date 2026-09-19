@@ -17,6 +17,7 @@ import { useMemo } from "react";
 import {
   buildRecentImportsContextRows,
   buildStorageContextRows,
+  contextCaption,
   showsStorageContext,
   TWH_PER_MT_LNG,
 } from "./context-model";
@@ -24,11 +25,14 @@ import { loadGasStorageByCountry } from "@/lib/data/gas-storage";
 import { loadRecentImports } from "@/lib/data/recent-imports";
 import { useAsync } from "@/lib/data/useAsync";
 import { useCountryNames } from "@/lib/geo/useCountryNames";
+import type { ScenarioView } from "@/lib/url-state/encode";
 import { isEmbed } from "@/lib/url-state/embed";
 import type { ScenarioResult } from "@/lib/scenarios/types";
 
 export interface ScenarioContextProps {
   readonly result: ScenarioResult | null;
+  /** Which side of the cut the panel above is showing (final review #10). Defaults to "importers". */
+  readonly view?: ScenarioView;
 }
 
 /** Rows shown before truncation — this block is a check, not the main list. */
@@ -47,7 +51,6 @@ function fmtMt(n: number): string {
 }
 
 function fmtDays(n: number): string {
-  if (!Number.isFinite(n)) return "∞";
   return Math.round(n).toLocaleString("en-US");
 }
 
@@ -55,7 +58,7 @@ function fmtPct(n: number): string {
   return `${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}%`;
 }
 
-export function ScenarioContext({ result }: ScenarioContextProps) {
+export function ScenarioContext({ result, view = "importers" }: ScenarioContextProps) {
   const searchParams = useSearchParams();
   const embed = isEmbed(searchParams);
   const names = useCountryNames();
@@ -84,6 +87,7 @@ export function ScenarioContext({ result }: ScenarioContextProps) {
   if (!wantsStorage && !wantsRecent) return null;
 
   const nameOf = (iso3: string): string => names?.get(iso3) ?? iso3;
+  const caption = contextCaption(result, view);
 
   return (
     <section className="mt-3 border-t border-slate-200 pt-3" aria-label="Context" data-testid="scenario-context">
@@ -92,6 +96,11 @@ export function ScenarioContext({ result }: ScenarioContextProps) {
         View-only figures from two live layers, shown beside this scenario&apos;s own result as a
         check — never a recomputed exposure.
       </p>
+      {caption !== null && (
+        <p className={`mb-2 ${NOTE}`} data-testid="scenario-context-caption">
+          {caption}
+        </p>
+      )}
 
       {wantsStorage && (
         <div className="mb-3" data-testid="scenario-context-storage">
@@ -124,13 +133,16 @@ export function ScenarioContext({ result }: ScenarioContextProps) {
                 ))}
               </ul>
               <p className={`mt-1 ${NOTE}`}>
-                LNG mass → energy: 1 Mt ≈ {TWH_PER_MT_LNG.toFixed(3)} TWh (52 GJ/t HHV, IGU{" "}
-                <em>Natural Gas Conversion Guide</em>, 2012). Storage is a stock serving all of a
+                LNG mass → energy: 1 Mt ≈ {TWH_PER_MT_LNG.toFixed(3)} TWh (53.38 mmBtu/t gross calorific
+                value, IGU <em>Natural Gas Conversion Guide</em>, 2012 — matching AGSI&apos;s own GCV
+                basis). Storage is a stock serving all of a
                 country&apos;s gas demand, not just LNG from this route — &quot;days of cover&quot; is a
                 scale comparison against the at-risk volume, not a forecast of how long storage would
                 actually last. BACI exposure is annual for {result.year}; the storage reading is each
-                country&apos;s own latest published gas day, so the two dates differ. Source: Gas
-                Infrastructure Europe AGSI, view-only (not downloadable).
+                country&apos;s own latest published gas day, so the two dates differ. A country whose own
+                latest reading is more than 30 days behind GIE&apos;s most recent global day is not shown
+                here at all, so it is never mistaken for a current figure. Source: Gas Infrastructure
+                Europe AGSI, view-only (not downloadable).
               </p>
             </>
           )}

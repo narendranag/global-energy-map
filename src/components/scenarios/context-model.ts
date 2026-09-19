@@ -16,6 +16,7 @@
 import type { GasStorageByCountry } from "@/lib/data/gas-storage";
 import { divergesFromBaci, isComplete, type RecentImportsData } from "@/lib/data/recent-imports";
 import type { Commodity, ScenarioId, ScenarioResult } from "@/lib/scenarios/types";
+import type { ScenarioView } from "@/lib/url-state/encode";
 
 /**
  * Energy content of LNG, used only to put the scenario engine's at-risk
@@ -23,13 +24,29 @@ import type { Commodity, ScenarioId, ScenarioResult } from "@/lib/scenarios/type
  * (energy, TWh) — a unit conversion, not a claim about how much of that gas
  * physically reaches any one country's storage.
  *
- * 1 tonne of LNG ≈ 52 GJ higher heating value, the IGU/GIIGNL industry
- * convention (International Gas Union, *Natural Gas Conversion Guide*, 2012 —
- * reprinted at
- * http://large.stanford.edu/courses/2025/ph240/uslu1/docs/igu-2012.pdf):
- * 52 GJ/t = 0.0144472 TWh/t, i.e. **14.447 TWh per million tonnes (Mt)**.
+ * AGSI publishes `gasInStorage` on a **gross calorific value (GCV / higher
+ * heating value)** basis — the JRC's own AGSI-derived storage tables state a
+ * "unified gross calorific value ... used to convert energy" (European
+ * Commission JRC, *Cost-Benefit Analysis of the EU Gas Storage Regulation*,
+ * JRC132366, 2022, table note 1). Matching that GCV stock therefore needs a
+ * **GCV-basis** figure for LNG's energy content, not a net/lower-heating-value
+ * (LHV/NCV) one — the two differ by ~8% for LNG, which is exactly the size of
+ * this bug.
+ *
+ * The IGU's own conversion tables (International Gas Union, *Natural Gas
+ * Conversion Guide/Pocketbook*, 2012) give LNG at **53.38 mmBtu/t (gross)**
+ * (the pocketbook's inter-fuel table prints 53.4 mmBtu/t gross; GIIGNL's
+ * industry figures round the same value). Converting:
+ *   53.38 mmBtu/t × 1.055056 GJ/mmBtu = 56.319 GJ/t (GCV)
+ *   56.319 GJ/t × 1e6 t/Mt ÷ 3.6e6 GJ/TWh = **15.644 TWh per million tonnes (Mt)**
+ *
+ * The constant this replaced (14.447 TWh/Mt, from 52 GJ/t) was mislabelled
+ * HHV in this file's own comment but is in fact a **net/LHV** figure (LNG's
+ * LHV runs ~52 GJ/t; its GCV is ~56 GJ/t) — a stock/flow basis mismatch
+ * against AGSI's GCV-basis reading. Fixed 2026-09-19; see
+ * `docs/superpowers/research/final-review-findings.md` finding #1.
  */
-export const TWH_PER_MT_LNG = 14.447;
+export const TWH_PER_MT_LNG = 15.644;
 
 export function mtToTwh(mt: number): number {
   return mt * TWH_PER_MT_LNG;
@@ -54,6 +71,39 @@ export function isLngStorageScenario(id: ScenarioId): boolean {
 /** True when the storage-cover block has anything to compute for this result. */
 export function showsStorageContext(result: Pick<ScenarioResult, "commodity" | "scenarioId">): boolean {
   return result.commodity === "gas" && isLngStorageScenario(result.scenarioId);
+}
+
+/**
+ * The Context block's own honesty caveats (final review #10): every number
+ * it shows is read straight off `result` and `view`, so the caption below it
+ * must say, in the same breath, whatever would otherwise make the number
+ * misleading on its own —
+ *  - **severity** below 100 % is not the full closure every figure elsewhere
+ *    implies by default;
+ *  - a **combined** result (two scenarios closed together) is the lower
+ *    bound of a range, not a single measured number;
+ *  - in **exporter view** the rows shown here are still importers (gas
+ *    storage and Comtrade recency are inherently importer-side concepts),
+ *    which would otherwise look like it silently ignored the toggle above it.
+ *
+ * Returns null when none of these apply, so the caption line does not print
+ * at severity 100 %, single-scenario, importer view — the common case.
+ */
+export function contextCaption(
+  result: Pick<ScenarioResult, "severity" | "scenarioIds">,
+  view: ScenarioView,
+): string | null {
+  const parts: string[] = [];
+  const severity = result.severity ?? 1;
+  if (severity < 1) parts.push(`at ${Math.round(severity * 100).toString()}% severity`);
+  if ((result.scenarioIds?.length ?? 1) > 1) {
+    parts.push("the lower bound of the combined range shown above");
+  }
+  if (view === "exporters") {
+    parts.push("importers exposed by this closure, not the exporters ranked above");
+  }
+  if (parts.length === 0) return null;
+  return `Figures below are ${parts.join(", and ")}.`;
 }
 
 export interface StorageContextRow {
@@ -91,8 +141,10 @@ export function buildStorageContextRows(
     if (reading === undefined) continue;
     const atRiskMt = imp.atRiskQty / 1e6;
     const atRiskTwhPerYear = mtToTwh(atRiskMt);
+    // atRiskMt > 0 is guaranteed by the loop filter above, so dailyAtRiskTwh
+    // is always strictly positive — no non-finite / zero-division case here.
     const dailyAtRiskTwh = atRiskTwhPerYear / 365;
-    const daysOfCover = dailyAtRiskTwh > 0 ? reading.twh / dailyAtRiskTwh : Infinity;
+    const daysOfCover = reading.twh / dailyAtRiskTwh;
     rows.push({
       iso3: imp.iso3,
       atRiskMt,

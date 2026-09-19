@@ -6,6 +6,7 @@ import { MapShell } from "@/components/map/MapShell";
 import { LayerPanel, type LayerState } from "@/components/layers/LayerPanel";
 import { countryFromPick } from "@/components/layers/CountryPickLayer";
 import { CountryPanel } from "@/components/country/CountryPanel";
+import { setFocusIntent } from "@/components/country/focus-intent";
 import { formatTooltip } from "@/components/layers/tooltips";
 import { needsAssets, useMapLayers } from "@/components/layers/useMapLayers";
 import { Chevron } from "@/components/ui/Chevron";
@@ -71,6 +72,9 @@ function HomeInner() {
   );
   const onPick = useCallback(
     (info: PickingInfo) => {
+      // Declare the intent even though "pointer" is the default: it clears an
+      // earlier keyboard declaration that no `[iso3]` effect consumed (B6).
+      setFocusIntent("pointer");
       const iso3 = countryFromPick(info);
       if (iso3 !== null) {
         setFocus(iso3 === focus ? null : iso3);

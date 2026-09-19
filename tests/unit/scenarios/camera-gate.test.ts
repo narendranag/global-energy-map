@@ -27,6 +27,13 @@ function result(...ids: ScenarioId[]): ScenarioResult {
   };
 }
 
+/** A result with one optional field removed, as a pre-T1 result would be. */
+function omit(r: ScenarioResult): ScenarioResult {
+  const copy = { ...r };
+  delete copy.scenarioIds;
+  return copy;
+}
+
 /**
  * Drive the gate the way the hook does: render with a key, then hand it the
  * results that arrive, and count the fits.
@@ -67,7 +74,7 @@ describe("scenarioKey", () => {
   });
 
   it("falls back to the primary id for a result with no scenarioIds", () => {
-    const { scenarioIds: _drop, ...legacy } = result("hormuz");
+    const legacy: ScenarioResult = omit(result("hormuz"));
     expect(resultScenarioKey(legacy)).toBe("hormuz");
   });
 });

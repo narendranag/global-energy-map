@@ -6,6 +6,7 @@ import { BUNDLED_CATALOG } from "@/lib/data-catalog/bundled";
 import { loadCountries, countryNameMap } from "@/lib/geo/countries";
 import { voyagesInRange, LNG_T3_FIRST_YEAR, LNG_T3_LAST_YEAR } from "@/lib/data/voyages";
 import { getScenario, severityPct } from "@/lib/scenarios/registry";
+import { isCurrentScenarioResult } from "@/lib/scenarios/current";
 import type { ScenarioResult } from "@/lib/scenarios/types";
 import { peekAppStore } from "@/lib/state/store";
 import { encodeUrlState, type AppState } from "@/lib/url-state/encode";
@@ -244,16 +245,19 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
             sources,
           });
 
-  // The scenario prop can lag the store while the new result computes.
+  // The scenario prop can lag the store while the new result computes. T1:
+  // the second scenario and the severity are part of "this result is the
+  // view", or the CSV would be the previous run's numbers. One shared
+  // comparison with the page and the panel (finding 20).
   const scenarioReady =
-    scenario !== null &&
-    app?.scenario === scenario.scenarioId &&
-    app.year === scenario.year &&
-    app.commodity === scenario.commodity &&
-    // T1: the second scenario and the severity are part of "this result is
-    // the view", or the CSV would be the previous run's numbers.
-    (scenario.scenarioIds?.[1] ?? null) === app.scenario2 &&
-    (scenario.severity ?? 1) === app.severity;
+    app !== null &&
+    isCurrentScenarioResult(scenario, {
+      scenario: app.scenario,
+      scenario2: app.scenario2,
+      year: app.year,
+      commodity: app.commodity,
+      severity: app.severity,
+    });
 
   const onScenarioCsv = async () => {
     if (!scenario) return;

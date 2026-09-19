@@ -34,6 +34,7 @@ import {
   type Mode,
 } from "@/lib/modes";
 import { getScenario } from "@/lib/scenarios/registry";
+import { isCurrentScenarioResult } from "@/lib/scenarios/current";
 import type { Commodity, ScenarioId } from "@/lib/scenarios/types";
 import { activeScenarioIds, normalizeScenarioPair, type ScenarioView } from "@/lib/url-state/encode";
 import { panelPadding, requestInitialFit } from "@/lib/state";
@@ -198,14 +199,18 @@ function HomeInner() {
   // a scenario whose result does not yet match (scenario, year, commodity).
   // T1: the second scenario and the severity are inputs too — without them
   // `data-ready` would flip true while the panel still showed the single-
-  // scenario, full-closure numbers.
+  // scenario, full-closure numbers. The comparison itself is shared with the
+  // panel and ShareMenu (`isCurrentScenarioResult`) and is made against the
+  // ids the loader was *asked* for, not the ones it kept (finding 20).
   const scenarioPending =
     scenarioId !== null &&
-    (scenario?.scenarioId !== scenarioId ||
-      scenario.year !== year ||
-      scenario.commodity !== commodity ||
-      (scenario.scenarioIds?.[1] ?? null) !== scenario2 ||
-      (scenario.severity ?? 1) !== severity);
+    !isCurrentScenarioResult(scenario, {
+      scenario: scenarioId,
+      scenario2,
+      year,
+      commodity,
+      severity,
+    });
   const pending = layersPending + scenarioMap.pending + (scenarioPending ? 1 : 0);
   const mapLayers = useMemo(
     () => [...deckLayers, ...scenarioMap.layers],

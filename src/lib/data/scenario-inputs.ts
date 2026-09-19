@@ -147,6 +147,14 @@ export interface ScenarioInputs {
   readonly scenarioId: ScenarioId;
   /** T1: every scenario these inputs cover, primary first. */
   readonly scenarioIds: readonly ScenarioId[];
+  /**
+   * T1: every scenario that was *asked for*, primary first — which is not
+   * always what `scenarioIds` reports, because a secondary with no route rows
+   * is dropped below. Every "is this result the one the controls describe?"
+   * test compares against this, or a dropped secondary would leave the page
+   * waiting for a result that can never arrive (finding 20).
+   */
+  readonly requestedIds: readonly ScenarioId[];
   readonly year: number;
   readonly commodity: Commodity;
   readonly tradeFlows: readonly TradeFlowRow[];
@@ -202,6 +210,7 @@ export async function loadScenarioInputs(
   return {
     scenarioId,
     scenarioIds,
+    requestedIds: wanted,
     year,
     commodity,
     tradeFlows,

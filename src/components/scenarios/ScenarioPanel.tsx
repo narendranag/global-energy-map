@@ -11,6 +11,7 @@ import {
   sourceGapNote,
   type ScenarioDef,
 } from "@/lib/scenarios/registry";
+import { isCurrentScenarioResult } from "@/lib/scenarios/current";
 import { useAssets } from "@/lib/data/assets";
 import { useCountryNames } from "@/lib/geo/useCountryNames";
 import { EXPOSURE_LEGEND_STOPS, gradientCss } from "@/lib/symbology";
@@ -257,11 +258,16 @@ export function ScenarioPanel({
   // numbers under a combined, half-severity heading while the next result
   // computes.
   const current =
-    result !== null &&
-    result.scenarioId === active &&
-    result.commodity === commodity &&
-    (result.scenarioIds?.[1] ?? null) === second &&
-    (result.severity ?? 1) === severity
+    isCurrentScenarioResult(result, {
+      scenario: active,
+      scenario2: second,
+      // The year is the result's own: the panel reads whatever year the
+      // result describes (it prints it), and the page already counts a
+      // year change into `pending`.
+      year: result?.year ?? 0,
+      commodity,
+      severity,
+    })
       ? result
       : null;
   const inputs = useScenarioInputsFor(current);

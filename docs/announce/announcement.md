@@ -2,6 +2,8 @@
 
 *Draft for a personal site / Substack post. Word count ~800. Every number below is checked against the live data as of 2026-09-19 — see `docs/announce/fact-check.md` for the exact command or file behind each one.*
 
+**DO NOT PUBLISH YET.** As of 2026-09-19 the 11-scenario set, trade-flow arcs, country panel, search, embed mode, the scenario severity/combine/exporter controls and `/query` exist only on the unpushed branch `post-launch-ux-scenarios`; the live site still has the original five scenarios. A fix agent removed an earlier version of this warning believing the branch had shipped — it has not. Publish only after the branch is on `main` and deployed, or cut every paragraph that mentions those features.
+
 ---
 
 I built an interactive map of the world's oil and gas system: [energymap.marain.space](https://energymap.marain.space). It's free, needs no account, and runs entirely in your browser — there's no backend, no API key, no database server. Every fact on it traces to a public, cited source.

@@ -76,11 +76,25 @@ function Metric({ series }: { series: CountryTimeSeries }) {
   );
 }
 
+/**
+ * "N partners have no recorded quantity" (B11). Those rows are excluded from
+ * the total and from the list — the same denominator on both sides, so the
+ * listed shares add to 100% — but the reader has to be told they exist.
+ */
+function unquantifiedNote(count: number, noun: string): string | null {
+  if (count === 0) return null;
+  return count === 1
+    ? `One more ${noun} has no quantity recorded in BACI: it is in neither the list nor the total.`
+    : `${String(count)} more ${noun}s have no quantity recorded in BACI: they are in neither the list nor the total.`;
+}
+
 function PartnerList({
   rows,
   total,
   commodity,
   emptyText,
+  unquantified,
+  noun,
   onFocus,
   testId,
 }: {
@@ -88,10 +102,20 @@ function PartnerList({
   total: number;
   commodity: Commodity;
   emptyText: string;
+  unquantified: number;
+  noun: string;
   onFocus: (iso3: string) => void;
   testId: string;
 }) {
-  if (rows.length === 0) return <p className={NOTE}>{emptyText}</p>;
+  const missing = unquantifiedNote(unquantified, noun);
+  if (rows.length === 0) {
+    return (
+      <>
+        <p className={NOTE}>{emptyText}</p>
+        {missing !== null && <p className={NOTE}>{missing}</p>}
+      </>
+    );
+  }
   return (
     <ol className="space-y-0.5" data-testid={testId}>
       {rows.map((r) => (
@@ -118,6 +142,7 @@ function PartnerList({
       ))}
       <li className={`px-1 ${NOTE}`}>
         Shares of {formatVolume(total, commodity)} total.
+        {missing !== null && ` ${missing}`}
       </li>
     </ol>
   );
@@ -299,6 +324,8 @@ export function CountryPanel({
                 total={trade.importsQty}
                 commodity={commodity}
                 emptyText={`No ${noun} imports recorded in ${String(year)}.`}
+                unquantified={trade.unquantifiedSuppliers}
+                noun="supplier"
                 onFocus={onFocus}
                 testId="country-suppliers"
               />
@@ -308,6 +335,8 @@ export function CountryPanel({
                 total={trade.exportsQty}
                 commodity={commodity}
                 emptyText={`No ${noun} exports recorded in ${String(year)}.`}
+                unquantified={trade.unquantifiedCustomers}
+                noun="customer"
                 onFocus={onFocus}
                 testId="country-customers"
               />

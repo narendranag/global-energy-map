@@ -122,6 +122,14 @@ export interface CountryTrade {
   readonly source: string | null;
   /** True when BACI has no row at all for this country in this year. */
   readonly emptyYear: boolean;
+  /**
+   * Partners in the selected year whose BACI row carries no quantity (B11).
+   * They are excluded from the totals *and* from the lists — the same
+   * denominator on both sides, so the listed shares reconcile — and counted
+   * here so the panel can say they exist rather than imply they do not.
+   */
+  readonly unquantifiedSuppliers: number;
+  readonly unquantifiedCustomers: number;
 }
 
 export interface ExposureRow {
@@ -349,19 +357,35 @@ function buildTrade(
   const exportsByYear = new Map<number, number>();
   const suppliers = new Map<string, number>();
   const customers = new Map<string, number>();
+  // BACI leaves 1,317 rows without a quantity. They are worth nothing to
+  // either side of the arithmetic, so they add nothing to the totals and
+  // nothing to the partner maps — one denominator, shares that reconcile —
+  // but they are counted, because a partner the panel cannot show is a
+  // partner the reader will assume does not exist (B11).
+  const unquantified = { suppliers: new Set<string>(), customers: new Set<string>() };
   let touched = false;
+  let rowsThisYear = 0;
   for (const r of rows) {
     if (r.hs_code !== hs) continue;
-    const qty = r.qty ?? 0;
+    const known = r.qty !== null && Number.isFinite(r.qty) && r.qty > 0;
+    const qty = known ? r.qty : 0;
     if (r.importer_iso3 === iso3) {
       touched = true;
       importsByYear.set(r.year, (importsByYear.get(r.year) ?? 0) + qty);
-      if (r.year === year) suppliers.set(r.exporter_iso3, (suppliers.get(r.exporter_iso3) ?? 0) + qty);
+      if (r.year === year) {
+        rowsThisYear += 1;
+        if (known) suppliers.set(r.exporter_iso3, (suppliers.get(r.exporter_iso3) ?? 0) + qty);
+        else unquantified.suppliers.add(r.exporter_iso3);
+      }
     }
     if (r.exporter_iso3 === iso3) {
       touched = true;
       exportsByYear.set(r.year, (exportsByYear.get(r.year) ?? 0) + qty);
-      if (r.year === year) customers.set(r.importer_iso3, (customers.get(r.importer_iso3) ?? 0) + qty);
+      if (r.year === year) {
+        rowsThisYear += 1;
+        if (known) customers.set(r.importer_iso3, (customers.get(r.importer_iso3) ?? 0) + qty);
+        else unquantified.customers.add(r.importer_iso3);
+      }
     }
   }
   if (!touched) return null;
@@ -396,7 +420,12 @@ function buildTrade(
     importsSeries,
     exportsSeries,
     source,
-    emptyYear: importsQty === 0 && exportsQty === 0,
+    // "No trade" means no rows, not "no rows we could add up": Kazakhstan's
+    // three 2024 crude imports are all unquantified, and saying BACI records
+    // none of them would be false (B11).
+    emptyYear: rowsThisYear === 0,
+    unquantifiedSuppliers: unquantified.suppliers.size,
+    unquantifiedCustomers: unquantified.customers.size,
   };
 }
 

@@ -291,6 +291,45 @@ describe("buildCountryProfile", () => {
     expect(p.trade?.suppliers).toEqual([]);
   });
 
+  // B11: 1,317 BACI rows carry no quantity. They must not be silently folded
+  // into the total (which would stop the shares reconciling) and they must
+  // not be invisible either: a partner nobody can see is a partner the
+  // reader will assume does not exist.
+  describe("rows with no recorded quantity (B11)", () => {
+    const withNulls: CountryTradeRow[] = [
+      { year: 2024, hs_code: "2709", importer_iso3: "JPN", exporter_iso3: "ARE", qty: 90 },
+      { year: 2024, hs_code: "2709", importer_iso3: "JPN", exporter_iso3: "SAU", qty: 10 },
+      { year: 2024, hs_code: "2709", importer_iso3: "JPN", exporter_iso3: "KWT", qty: null },
+      { year: 2024, hs_code: "2709", importer_iso3: "NOR", exporter_iso3: "JPN", qty: null },
+    ];
+
+    it("keeps the listed shares reconciling against the stated total", () => {
+      const t = buildCountryProfile({ ...EMPTY, names: NAMES, trade: withNulls }, "JPN", 2024, "oil")
+        .trade;
+      expect(t?.importsQty).toBe(100);
+      expect(t?.suppliers.map((s) => s.iso3)).toEqual(["ARE", "SAU"]);
+      expect(t?.suppliers.reduce((sum, s) => sum + s.share, 0)).toBeCloseTo(1);
+      expect(t?.suppliers.reduce((sum, s) => sum + s.qty, 0)).toBe(t?.importsQty);
+    });
+
+    it("counts the partners it had to leave out, per side", () => {
+      const t = buildCountryProfile({ ...EMPTY, names: NAMES, trade: withNulls }, "JPN", 2024, "oil")
+        .trade;
+      expect(t?.unquantifiedSuppliers).toBe(1);
+      expect(t?.unquantifiedCustomers).toBe(1);
+    });
+
+    it("does not call a year empty when BACI has rows but no quantities", () => {
+      const onlyNulls: CountryTradeRow[] = [
+        { year: 2024, hs_code: "2709", importer_iso3: "KAZ", exporter_iso3: "ARE", qty: null },
+      ];
+      const t = buildCountryProfile({ ...EMPTY, trade: onlyNulls }, "KAZ", 2024, "oil").trade;
+      expect(t?.importsQty).toBe(0);
+      expect(t?.emptyYear).toBe(false);
+      expect(t?.unquantifiedSuppliers).toBe(1);
+    });
+  });
+
   it("counts assets and sums only the capacities the source carries", () => {
     const asset = (country_iso3: string, capacity: number | null) => ({
       asset_id: `a${String(capacity ?? 0)}${country_iso3}`,

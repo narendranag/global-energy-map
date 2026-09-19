@@ -232,4 +232,31 @@ describe("scenario CSV", () => {
     expect(csv).toContain("#   2 pairs (ARE -> KWT, QAT -> KWT): 0 — IEA (2026) https://iea.example");
     expect(csv).not.toContain("0.65"); // the crude share does not apply to LNG
   });
+
+  it("T3: the scenario CSV never carries GIE gas-storage or Comtrade figures (view-only context, screen only)", () => {
+    // scenarioRows/scenarioHeader take only a ScenarioResult + catalog/citation
+    // context — neither GIE (gas storage) nor Comtrade (recent imports) data
+    // ever reaches this function, so this asserts the shape rather than
+    // scanning strings: there is no field on ScenarioRow or in the header
+    // builder's inputs that could carry either source.
+    const gas: ScenarioResult = { ...RESULT, scenarioId: "hormuz", commodity: "gas" };
+    const csv = scenarioCsv(gas, { viewUrl: "https://x/", exported: "2026-09-11", catalog: CATALOG, shares: [] });
+    for (const telltale of [
+      "gas_in_storage",
+      "gas_storage",
+      "AGSI",
+      "GIE",
+      "comtrade",
+      "Comtrade",
+      "days_of_cover",
+      "atRiskTwh",
+    ]) {
+      expect(csv).not.toContain(telltale);
+    }
+    // The columns themselves are a closed, hand-declared list (SCENARIO_COLUMNS in
+    // src/lib/export/scenario.ts) — nothing from the Context block's model can
+    // silently ride along even if a future edit passed it in by mistake.
+    expect(Object.keys(scenarioRows(gas)[0] ?? {})).not.toContain("comtradeMt");
+    expect(Object.keys(scenarioRows(gas)[0] ?? {})).not.toContain("storageTwh");
+  });
 });

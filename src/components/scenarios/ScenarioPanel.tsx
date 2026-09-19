@@ -22,6 +22,7 @@ import {
   type ScenarioHover,
 } from "./hover";
 import { goToAsset, goToCountry } from "./row-actions";
+import { ScenarioContext } from "./ScenarioContext";
 import { importsNoun, rankAssetsByCapacityAtRisk, rankImportersByShare } from "./overlay";
 import { useScenarioInputsFor } from "./useScenario";
 import { describeExposure, explainZeroExposure } from "./explain";
@@ -586,6 +587,8 @@ export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioP
           </p>
         </section>
       )}
+
+      {def && current && <ScenarioContext result={current} />}
     </section>
   );
 }

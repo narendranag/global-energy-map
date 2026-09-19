@@ -38,6 +38,15 @@ test.describe("axe: zero serious/critical violations", () => {
     expect(await seriousViolations(page)).toEqual([]);
   });
 
+  test("/ with the country panel open beside a scenario", async ({ page }) => {
+    await gotoReady(page, "/?focus=JPN&year=2024&scenario=hormuz&layers=reserves");
+    // Wait for the panel's own sections: they load after `data-ready`, and an
+    // axe run on a half-built panel proves nothing.
+    await expect(page.getByTestId("country-suppliers")).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByTestId("country-exposure-rows")).toBeVisible({ timeout: 60_000 });
+    expect(await seriousViolations(page)).toEqual([]);
+  });
+
   test("/methodology", async ({ page }) => {
     await page.goto("/methodology");
     await expect(page.getByRole("heading", { level: 1, name: "Methodology" })).toBeVisible();
@@ -149,6 +158,38 @@ test("focus order runs header → panels → map", async ({ page }) => {
   expect(picker).toBeLessThan(gas); // then the bottom controls
   expect(gas).toBeLessThan(slider);
   expect(slider).toBeLessThan(map); // map last
+});
+
+test("the country panel sits between the scenario panel and the bottom controls", async ({
+  page,
+}) => {
+  await gotoReady(page, "/?mode=scenarios&scenario=druzhba&year=2022&layers=reserves&focus=DEU");
+  await expect(page.getByTestId("country-suppliers")).toBeVisible({ timeout: 60_000 });
+  await page.getByRole("tab", { name: "Scenarios" }).focus();
+
+  // A budget larger than the plain focus-order test's: the country panel adds
+  // ~15 tabbable rows (suppliers, customers, exposure) of its own.
+  const seen: string[] = [];
+  for (let i = 0; i < 200; i++) {
+    await page.keyboard.press("Tab");
+    const key = await focusedKey(page);
+    seen.push(key);
+    if (key === "map") break;
+  }
+  const at = (pred: (k: string) => boolean) => seen.findIndex(pred);
+  const picker = at((k) => k.startsWith("select:"));
+  const close = at((k) => k.startsWith("button:Close Germany"));
+  const zoom = at((k) => k === "button:Zoom to");
+  const gas = at((k) => k === "button:Gas");
+  const map = at((k) => k === "map");
+
+  for (const [name, idx] of Object.entries({ picker, close, zoom, gas, map })) {
+    expect(idx, `${name} in ${seen.join(" | ")}`).toBeGreaterThanOrEqual(0);
+  }
+  expect(picker).toBeLessThan(close); // scenario panel, then the country panel
+  expect(close).toBeLessThan(zoom); // its header first
+  expect(zoom).toBeLessThan(gas); // then the bottom controls
+  expect(gas).toBeLessThan(map); // map last
 });
 
 test("keyboard focus shows a visible ring (controls and the map)", async ({ page }) => {
@@ -290,6 +331,15 @@ test.describe("text contrast ≥ 4.5:1 with panels over a black map", () => {
     await clickUntil(page.getByTestId("share-button"), async () => {
       await expect(page.getByTestId("share-panel")).toBeVisible({ timeout: 2_000 });
     });
+    expect(await lowContrastText(page)).toEqual([]);
+  });
+
+  test("the country panel: every section, source line and sparkline caption", async ({ page }) => {
+    // Germany has all of them: EI reserves, BACI trade, exposure, assets, GIE
+    // storage and a Comtrade window — the widest set of section text there is.
+    await gotoReady(page, "/?focus=DEU&year=2022&commodity=gas&layers=reserves&scenario=hormuz");
+    await expect(page.getByTestId("country-storage")).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByTestId("country-suppliers")).toBeVisible();
     expect(await lowContrastText(page)).toEqual([]);
   });
 });

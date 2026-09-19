@@ -48,6 +48,7 @@ global-energy-map/
 │   │   ├── layers/                # pure builders `buildXLayer(rows, opts)` + `formatXTooltip` per layer; useMapLayers memoises them; LayerPanel, generated Legend
 │   │   ├── time-slider/
 │   │   ├── scenarios/             # ScenarioPanel, overlay, useScenario hook
+│   │   ├── country/               # CountryPanel (opens on AppState.focus), Sparkline, useCountryProfile, focus-intent
 │   │   └── ui/
 │   └── lib/
 │       ├── duckdb/                # WASM bootstrap, query() — kept for the planned query console, unused at runtime
@@ -57,6 +58,7 @@ global-energy-map/
 │       ├── data-catalog/          # typed access to catalog.json
 │       ├── scenarios/             # pure-function scenario engine (oil + gas axes, refinery/LNG attribution)
 │       ├── url-state/             # encode/decode (incl. lon/lat/z) + useUrlState (thin wrapper over the store)
+│       ├── viz/                   # pure sparkline path/scale helpers (no chart library)
 │       ├── vintage/               # vintage filter predicate for time-aware layers
 │       └── geo/
 ├── public/
@@ -69,7 +71,7 @@ global-energy-map/
 ├── tests/
 │   ├── unit/                      # Vitest (TS) — scenarios, url-state, vintage filter, data-catalog
 │   ├── python/                    # pytest — helpers, transform fixtures, data-integrity checks over public/data
-│   └── e2e/                       # 14 Playwright specs (map, layers, time, scenarios, modes, url, share, data, methodology, legal, network, errors, phone, a11y) + helpers.ts
+│   └── e2e/                       # 16 Playwright specs (map, layers, time, scenarios, modes, url, share, data, methodology, legal, network, errors, phone, a11y, focus, country-panel) + helpers.ts
 ├── docs/
 │   ├── data-sources.md            # researcher-facing source inventory
 │   ├── methodology.md             # current-state methodology, rendered at /methodology
@@ -195,6 +197,7 @@ CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typec
 - **Parallel implementer agents do not commit or stage.** Give each a disjoint file set, have them report changed files, then commit each set with an explicit `git add <files>`. Never `git add -A` on a shared tree. An agent's `git rm` stages a deletion that the next commit sweeps up — agents delete with plain `rm`.
 - **e2e waits on `main[data-ready="true"]`** (data loaded for the current inputs), clicks through the hydration-safe helpers in `tests/e2e/helpers.ts`, and proves rendering with screenshot pixel probes at projected lon/lat points — never fixed sleeps.
 - **Focus and camera (the S0 seam).** `AppState.focus` is the selected country (ISO3 or null, URL `focus=`, written only when set so old links are unchanged; `parseIso3` in `src/lib/geo/iso3.ts` validates against the Natural Earth codes we actually hold). Modes never clear it. A click sets it via `countryFromPick` in `src/components/layers/CountryPickLayer.tsx`, which decides by **layer id** — an always-present invisible country layer sits at the bottom of the deck stack as the hit target, and clicks on points/lines never re-select the country underneath. The outline is `buildFocusLayer` (a white halo + near-black line; one colour cannot clear 3:1 on both the pale basemap and the darkest scenario fill). To move the map, use `useCamera()` from `src/lib/state` — `request({kind:"fitBounds"|"flyTo", …})` or `fitCountry(iso3, {padding})` — never a map handle; MapShell executes the command and honours `prefers-reduced-motion`. `panelPadding({left,right,bottom})` keeps a target clear of the panels, `countryBounds(iso3)` (`src/lib/geo/bounds.ts`) gives the box (antimeridian countries fall back to their largest polygon). An explicit `lon`/`lat`/`z` in a shared link always beats the load-time fit.
+- **The country panel is a second reader of one data path.** `AppState.focus` opens `src/components/country/CountryPanel.tsx`; its numbers come from the pure `buildCountryProfile(inputs, iso3, year, commodity)` in `src/lib/data/country-profile.ts` over rows the shared loaders already hold — the loaders in `src/lib/data/country-inputs.ts` ask `readParquet` for the *same column sets* `loadReserves` and `loadTradeFlows` use, so opening the panel re-decodes nothing. **It is deliberately not counted in `pending`/`data-ready`**: the header paints from `countries.geojson` and each section fills in on its own, because blocking readiness on ~1 MB of BACI would stall every `?focus=` link and the e2e ready signal. Exposure iterates `SCENARIOS` (so a new scenario appears for free) and runs the engine without asset rows, cached on (year, commodity). Sparklines are `src/lib/viz/sparkline.ts` — pure path builders, no chart library, gaps break the line. The panel's CSV applies the same catalog `redistributable` test per section and states its omissions in the file header. Keyboard-made selections move focus to the panel heading (`focus-intent.ts`); pointer ones never do.
 - **Modes are presets, not filters.** `mode` (infrastructure | flows | scenarios) fills in only what the URL leaves out; explicit `layers`/`year`/`commodity`/`scenario` params always win, so old shared links render unchanged. Presets live in `src/lib/modes/`.
 - **Downloads follow the licensing decision.** Only files whose every source is CC BY 4.0 or public domain are downloadable (`downloadable` in the catalog). EI reserves, BACI trade and `assets.parquet` (88 ODbL OSM rows mixed in) are view-only. The scenario-results CSV is treated as derived analysis and ships with citation header lines.
 - **Palette discipline.** Oil = warm family, gas = cool family, reserves = olive sequential, red only for scenario exposure; `tests/unit/symbology-contrast.test.ts` guards contrast against the Positron basemap and between key pairs. Storage and ports render only from zoom 4.

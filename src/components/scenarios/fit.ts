@@ -10,15 +10,16 @@ import { MAX_LAT } from "@/lib/state/view";
 
 /**
  * The padding every camera move made from the scenario panel uses — the
- * scenario fit, a ranked importer row, a ranked asset row. One constant so
- * the three cannot drift: whatever is framed has to clear the left layer
- * panel and the right scenario panel, which is the whole point (the most
- * exposed importers used to land underneath the panel ranking them).
+ * scenario fit and a ranked importer row. One helper so the two cannot
+ * drift: whatever is framed has to clear the left layer panel, the right
+ * scenario panel and (when a country is selected) the country panel stacked
+ * beside it. That is the whole point of the fit — the most exposed importers
+ * used to land underneath the panel ranking them. The widths themselves live
+ * in `panelPadding`, which is the single place that knows them.
  */
-export const SCENARIO_CAMERA_PADDING: Partial<CameraPadding> = panelPadding({
-  left: true,
-  right: true,
-});
+export function scenarioCameraPadding(countryPanelOpen: boolean): Partial<CameraPadding> {
+  return panelPadding({ left: true, right: true, country: countryPanelOpen });
+}
 
 /**
  * How many exposed importers the fit tries to hold. Eight is enough to frame

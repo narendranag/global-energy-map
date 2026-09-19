@@ -10,3 +10,9 @@ Verified: single-scenario results are bit-identical (27,197 exporter→importer 
 6. `howComputed` does not dedupe `combinedWith`; severity text rounds 0.4 % to "0%".
 7. Test gaps: severity on the LNG-T3 voyage path; Σexporter ≡ Σimporter uses an absolute tolerance (use relative); 3+ scenarios; a scenario listed twice.
 8. Whoever adds inbound Hormuz rows must extend the explicit share-0 intra-Gulf pair set in the same commit (42 pair rows on `hormuz`, 12 on `hormuz_lng` today) — under the `max` rule an importer-wide 1 otherwise raises ARE→KWT to 1.0.
+
+# Wave 2 polish list (orchestrator's visual check, 2026-09-19)
+
+1. `?mode=flows&focus=JPN` fits the camera to Japan on load (S0's rule), which pushes the focused country's trade arcs — the whole point of focus in Flows — off screen, and at zoom 5 the pixel-width arcs fuse into a wedge. When `trade_flows` is on, the load-time fit should frame the country **and its top partners' anchors** (or not zoom at all), and arc width should be capped lower at high zoom.
+2. Bare `?mode=flows` still opens on 2020 (the app default is inside BACI's range, and the preset keeps an in-range year). Deliberate — it preserves what old `?mode=flows` links showed — but the LNG-era blurb "Where LNG cargoes went, 2020–2024 (LNG-T3 voyages)" on the Flows tab is now wrong: the default layer is BACI trade, 1995–2024.
+3. The intro card's third bullet and the header strapline still describe the pre-search, pre-query app.

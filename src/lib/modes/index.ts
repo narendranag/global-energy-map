@@ -55,6 +55,7 @@ const NO_LAYERS: LayerState = {
   gas_storage: false,
   shale_regions: false,
   recent_imports: false,
+  trade_flows: false,
   reserves: false,
   basins: false,
   extraction: false,
@@ -78,18 +79,33 @@ function only(...keys: (keyof LayerState)[]): LayerState {
  * extraction, basins, storage, ports off). The scenario exposure ramp is drawn
  * on the reserves (country) layer, so Scenarios keeps it on.
  */
+/**
+ * Flows dropped `lng_voyages` from its default set (S2, 2026-09-19): country-
+ * pair BACI arcs (`trade_flows`) and terminal-to-terminal LNG-T3 voyages both
+ * draw great-circle arcs between roughly the same points for the same
+ * commodity, one aggregated-annual and one voyage-level — on together they
+ * read as double vision, not two kinds of information, which is the
+ * hairball problem this layer exists to fix. `lng_voyages` stays a manual
+ * toggle for the voyage-level view; `trade_flows` is what Flows opens with.
+ */
 export const MODE_LAYERS: Readonly<Record<Mode, LayerState>> = {
   infrastructure: only("reserves", "pipelines", "gas_pipelines", "refineries", "lng_terminals"),
-  flows: only("gas_pipelines", "lng_terminals", "lng_voyages"),
+  flows: only("gas_pipelines", "lng_terminals", "trade_flows"),
   scenarios: only("reserves", "pipelines", "refineries", "lng_terminals"),
 };
 
 /** LNG-T3 voyage coverage (mirrors `src/lib/data/voyages.ts`). */
 export const FLOWS_FIRST_YEAR = 2020;
 export const FLOWS_LAST_YEAR = 2024;
-/** Year Flows jumps to when the current year has no voyages. */
-export const FLOWS_DEFAULT_YEAR = 2023;
-/** BACI trade coverage: scenarios have no trade data before this year. */
+/**
+ * Year Flows jumps to when the current year has no BACI trade data — the
+ * latest BACI year (mirrors `TRADE_LAST_YEAR` / `src/lib/data/trade-flows.ts`).
+ * Also LNG-T3's range end, though LNG-T3's own 2024 snapshot is thinner
+ * (1,592 voyages vs 3,958 in 2023) — `lng_voyages` is off by default in this
+ * preset, so that does not affect what Flows opens showing.
+ */
+export const FLOWS_DEFAULT_YEAR = 2024;
+/** BACI trade coverage: scenarios have no trade data before this year (mirrors `src/lib/data/trade-flows.ts`). */
 export const TRADE_FIRST_YEAR = 1995;
 export const TRADE_LAST_YEAR = 2024;
 
@@ -114,7 +130,10 @@ export function layersOpenByDefault(mode: Mode): boolean {
 /**
  * Select `mode` from `state`: the mode's layers replace the current set, and
  * commodity / year move only where the mode needs them —
- *  - Flows: gas; year → 2023 unless already inside 2020–2024.
+ *  - Flows: gas; year → 2024 (the latest BACI year) unless already inside
+ *    BACI's 1995–2024 coverage, so a year already showing meaningful trade
+ *    flows is left alone — `trade_flows` is the default layer here, not
+ *    `lng_voyages`, so the range checked is BACI's, not LNG-T3's 2020–2024.
  *  - Scenarios: year → latest BACI year if before BACI coverage (1995).
  * Leaving Scenarios clears the active scenario (the tab is where disruptions
  * live); entering it keeps any scenario already chosen.
@@ -130,7 +149,7 @@ export function applyMode(state: AppState, mode: Mode): AppState {
     case "infrastructure":
       return { ...state, mode, layers, scenario: null };
     case "flows": {
-      const inRange = state.year >= FLOWS_FIRST_YEAR && state.year <= FLOWS_LAST_YEAR;
+      const inRange = state.year >= TRADE_FIRST_YEAR && state.year <= TRADE_LAST_YEAR;
       return {
         ...state,
         mode,
@@ -208,9 +227,12 @@ export const EXAMPLE_QUESTIONS: readonly ExampleQuestion[] = [
     commodity: "oil",
     scenario: "hormuz",
   }),
+  // Focused so it shows every one of Qatar's flows (BACI trade_flows), not
+  // just the pairs that make the world top 150 — the point of the focus view.
   question("qatar-lng-2023", "Where did Qatar's LNG go in 2023?", "flows", {
     year: 2023,
     commodity: "gas",
+    focus: "QAT",
   }),
   question("pipelines-1995", "Which pipelines existed in 1995?", "infrastructure", {
     year: 1995,

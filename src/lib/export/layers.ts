@@ -1,6 +1,15 @@
 import type { Feature, Geometry } from "geojson";
 import type { Catalog, CatalogEntry } from "@/lib/data-catalog/types";
 import type { Asset, LngTerminalAsset } from "@/lib/data/assets";
+import {
+  exporterShare,
+  importerShare,
+  positionPairs,
+  topPairs,
+  focusPairs,
+  TOP_N_PAIRS,
+  type TradeFlowsData,
+} from "@/lib/data/trade-flows";
 import type { PositionedVoyage } from "@/lib/data/voyages";
 import type { Commodity, ScenarioId } from "@/lib/scenarios/types";
 import type { AppState } from "@/lib/url-state/encode";
@@ -33,6 +42,7 @@ export const LAYER_LABELS: Record<LayerKey, string> = {
   gas_storage: "Gas storage (EU)",
   shale_regions: "US shale regions",
   recent_imports: "Recent imports (Comtrade)",
+  trade_flows: "Trade flows (BACI)",
 };
 
 /** Display order in the Share menu (matches the layer panel). */
@@ -50,12 +60,14 @@ export const LAYER_ORDER: readonly LayerKey[] = [
   "lng_voyages",
   "gas_storage",
   "recent_imports",
+  "trade_flows",
 ];
 
 /** Catalog `layers` tags behind a map layer. */
 export function layerTags(key: LayerKey, commodity: Commodity): string[] {
   // Comtrade + the BACI figure its tooltip quotes beside it.
   if (key === "recent_imports") return ["trade_monthly", "trade"];
+  if (key === "trade_flows") return ["trade"];
   if (key === "reserves") return commodity === "gas" ? ["reserves", "reserves:gas"] : ["reserves"];
   return [key];
 }
@@ -272,6 +284,62 @@ export function voyageTable(voyages: readonly PositionedVoyage[], year: number):
       { fromLon: "from_lon", fromLat: "from_lat", toLon: "to_lon", toLat: "to_lat" },
     ),
     filter: `export voyages active in ${String(year)} with LNG-T3 confidence >= 3; drawn as straight terminal-to-terminal lines`,
+  };
+}
+
+const TRADE_FLOW_COLUMNS = [
+  "exporter_iso3",
+  "importer_iso3",
+  "qty_tonnes",
+  "share_of_exporter_total",
+  "share_of_importer_total",
+  "exporter_lon",
+  "exporter_lat",
+  "importer_lon",
+  "importer_lat",
+] as const;
+
+/**
+ * BACI pairs as the map draws them: the world top-N (`focus === null`) or, with
+ * a country focused, every pair touching it above the small floor
+ * (`focusPairs`) — the same two functions the layer builder uses, so the
+ * export always matches what is on screen. Pairs whose exporter or importer
+ * has no anchor point (`country-anchors.ts`) are dropped; none do as of
+ * 2026-09-19 (every BACI code has an anchor).
+ */
+export function tradeFlowTable(data: TradeFlowsData, focus: string | null): ExportTable {
+  let basePairs: readonly { exporter_iso3: string; importer_iso3: string; qty: number }[];
+  let filter: string;
+  if (focus === null) {
+    const { pairs, coverage } = topPairs(data, TOP_N_PAIRS);
+    basePairs = pairs;
+    filter = `top ${String(TOP_N_PAIRS)} pairs by volume (${(coverage * 100).toFixed(1)}% of world volume shown)`;
+  } else {
+    basePairs = focusPairs(data, focus);
+    filter = `every pair involving ${focus} above 0.1% of its trade`;
+  }
+
+  const rows: Record<string, CsvValue>[] = positionPairs(basePairs).map((p) => ({
+    exporter_iso3: p.exporter_iso3,
+    importer_iso3: p.importer_iso3,
+    qty_tonnes: p.qty,
+    share_of_exporter_total: exporterShare(data, p),
+    share_of_importer_total: importerShare(data, p),
+    exporter_lon: p.from_lon,
+    exporter_lat: p.from_lat,
+    importer_lon: p.to_lon,
+    importer_lat: p.to_lat,
+  }));
+
+  return {
+    columns: TRADE_FLOW_COLUMNS,
+    rows,
+    features: lineFeatures(
+      rows,
+      TRADE_FLOW_COLUMNS.filter((c) => !c.endsWith("_lon") && !c.endsWith("_lat")),
+      { fromLon: "exporter_lon", fromLat: "exporter_lat", toLon: "importer_lon", toLat: "importer_lat" },
+    ),
+    filter,
   };
 }
 

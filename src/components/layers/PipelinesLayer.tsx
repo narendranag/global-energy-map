@@ -21,6 +21,9 @@ export interface PipelineProps extends Record<string, unknown> {
   capacity_unit?: string | null;
   operator: string | null;
   start_year: number | null;
+  /** Present in the shipped sidecar though not read anywhere before search (S4). */
+  start_country_iso3?: string | null;
+  end_country_iso3?: string | null;
 }
 
 export type PipelineFeature = Feature<LineString | MultiLineString, PipelineProps>;

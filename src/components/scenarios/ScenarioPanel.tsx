@@ -12,7 +12,7 @@ import {
 import { useAssets } from "@/lib/data/assets";
 import { useCountryNames } from "@/lib/geo/useCountryNames";
 import { EXPOSURE_LEGEND_STOPS, gradientCss } from "@/lib/symbology";
-import { SCENARIO_CAMERA_PADDING } from "./fit";
+import { scenarioCameraPadding } from "./fit";
 import {
   clearScenarioHover,
   hoveredAssetId,
@@ -419,7 +419,9 @@ export function ScenarioPanel({ active, onChange, commodity, result }: ScenarioP
                         hover={{ kind: "country", iso3: r.iso3 }}
                         active={hoverIso3 === r.iso3}
                         title={`Select ${nameOf(r.iso3)} and show it on the map`}
-                        onActivate={() => { void goToCountry(r.iso3, SCENARIO_CAMERA_PADDING); }}
+                        // Activating the row also selects the country, which opens the
+                        // country panel beside this one — so the fit clears both.
+                        onActivate={() => { void goToCountry(r.iso3, scenarioCameraPadding(true)); }}
                       >
                         <span className="flex justify-between gap-2">
                           <span className="min-w-0 truncate">

@@ -39,8 +39,14 @@ function isFinitePosition(p: Position): boolean {
   return Number.isFinite(p[0]) && Number.isFinite(p[1]);
 }
 
-/** `[west, south, east, north]` of a ring set, or null when it has no usable point. */
-function ringsBounds(rings: readonly Position[][]): Bounds | null {
+/**
+ * `[west, south, east, north]` of a ring set, or null when it has no usable
+ * point. Generic over any array-of-position-arrays: a polygon's rings, a
+ * MultiPolygon's rings flattened one level, a LineString wrapped in a single
+ * outer array, or a MultiLineString's lines as-is — `src/lib/search/build.ts`
+ * reuses it for pipeline/basin/shale-region bounds.
+ */
+export function ringsBounds(rings: readonly Position[][]): Bounds | null {
   let w = Infinity;
   let s = Infinity;
   let e = -Infinity;

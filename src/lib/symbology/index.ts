@@ -42,6 +42,16 @@ export const PALETTE = {
   voyageExport: "#2aa5c4", // light cyan (export end)
   voyageImport: "#2f4fa6", // blue (import end)
 
+  // Trade flows (BACI arcs) — one two-tone gradient per commodity, light at
+  // the exporter end darkening to the importer end (the same light→dark
+  // convention as the LNG voyage arcs), so which way a flow runs is legible
+  // without a legend. Oil stays in the warm family, close to the extraction
+  // hue; gas stays cool, close to the voyage-arc hue.
+  tradeFlowOilFrom: "#e3b46a", // pale gold (exporter end)
+  tradeFlowOilTo: "#823f0e", // burnt umber (importer end)
+  tradeFlowGasFrom: "#8ed3e2", // pale cyan (exporter end)
+  tradeFlowGasTo: "#163f6e", // deep blue (importer end)
+
   // Neutral / shared.
   port: "#5f6670", // slate
   basin: "#6e5c48", // brown-grey outline
@@ -86,6 +96,12 @@ export const PALETTE = {
   // owns, and without touching the red the scenario ramp reserves.
   focusOutline: "#101a24",
   focusHalo: "#ffffff",
+
+  // Search result highlight (S4) — a violet ring, the one hue family nothing
+  // else on the map owns (oil warm, gas cool, reserves olive, port slate,
+  // scenario exposure red), so a found result never reads as any of them.
+  searchHighlight: "#7c3aed",
+  searchHighlightHalo: "#ffffff",
 
   // Scenario — red only.
   exposureLow: "#fcbba1",
@@ -409,6 +425,22 @@ export function disruptionColor(active: boolean): Rgba {
 }
 
 // ---------------------------------------------------------------------------
+// Search result highlight (S4)
+// ---------------------------------------------------------------------------
+
+/**
+ * A cased ring (white halo + violet line), same reasoning as the focus
+ * outline: one colour cannot clear 3:1 on both the pale basemap and the
+ * darkest scenario fill. Not part of `LEGEND` — it is transient UI, not a
+ * data layer a reader toggles.
+ */
+export const SEARCH_HIGHLIGHT_COLOR: Rgba = paletteRgba("searchHighlight", 255);
+export const SEARCH_HIGHLIGHT_HALO_COLOR: Rgba = paletteRgba("searchHighlightHalo", 235);
+export const SEARCH_HIGHLIGHT_LINE_MIN_PX = 3;
+export const SEARCH_HIGHLIGHT_HALO_LINE_MIN_PX = 6;
+export const SEARCH_HIGHLIGHT_RADIUS = { minPixels: 14, maxPixels: 26 } as const;
+
+// ---------------------------------------------------------------------------
 // Basins
 // ---------------------------------------------------------------------------
 
@@ -543,6 +575,46 @@ export function voyageWidth(amountCbm: number): number {
 }
 
 // ---------------------------------------------------------------------------
+// Trade flows (BACI arcs)
+// ---------------------------------------------------------------------------
+
+const TRADE_FLOW_RGB: Record<"oil" | "gas", { from: Rgb; to: Rgb }> = {
+  oil: { from: hex(PALETTE.tradeFlowOilFrom), to: hex(PALETTE.tradeFlowOilTo) },
+  gas: { from: hex(PALETTE.tradeFlowGasFrom), to: hex(PALETTE.tradeFlowGasTo) },
+};
+
+/**
+ * Opacity of the arc. World view (many overlapping top-N pairs) stays
+ * translucent so density itself reads as volume, the way the LNG voyage
+ * arcs do; focus view (a handful of pairs for one country) is more opaque so
+ * each one reads as a distinct flow.
+ */
+export const TRADE_FLOW_ALPHA = { world: 150, focus: 225 } as const;
+
+export function tradeFlowSourceColor(
+  commodity: "oil" | "gas",
+  mode: "world" | "focus" = "world",
+): Rgba {
+  const [r, g, b] = TRADE_FLOW_RGB[commodity].from;
+  return [r, g, b, TRADE_FLOW_ALPHA[mode]];
+}
+export function tradeFlowTargetColor(
+  commodity: "oil" | "gas",
+  mode: "world" | "focus" = "world",
+): Rgba {
+  const [r, g, b] = TRADE_FLOW_RGB[commodity].to;
+  return [r, g, b, TRADE_FLOW_ALPHA[mode]];
+}
+
+export const TRADE_FLOW_WIDTH = { minPixels: 0.5, maxPixels: 6 } as const;
+
+/** Square-root width against the largest pair drawn, so the top pair does not swamp the rest. */
+export function tradeFlowWidth(qty: number, maxQty: number): number {
+  if (!(maxQty > 0) || !(qty > 0)) return TRADE_FLOW_WIDTH.minPixels;
+  return Math.max(TRADE_FLOW_WIDTH.minPixels, Math.sqrt(qty / maxQty) * TRADE_FLOW_WIDTH.maxPixels);
+}
+
+// ---------------------------------------------------------------------------
 // Legend
 // ---------------------------------------------------------------------------
 
@@ -639,6 +711,20 @@ export const LEGEND: Readonly<Record<LayerKey, readonly LegendItem[]>> = {
   lng_voyages: [
     { label: "LNG voyage, export → import", swatch: { kind: "arc", from: VOYAGE_EXPORT_END, to: VOYAGE_IMPORT_END } },
   ],
+  trade_flows: [
+    {
+      label: "Crude trade (oil view), top 150 pairs by volume (typically ~85–90% of world crude)",
+      swatch: { kind: "arc", from: tradeFlowSourceColor("oil"), to: tradeFlowTargetColor("oil") },
+    },
+    {
+      label: "LNG trade (gas view), top 150 pairs by volume (typically ~95%+ of world LNG)",
+      swatch: { kind: "arc", from: tradeFlowSourceColor("gas"), to: tradeFlowTargetColor("gas") },
+    },
+    {
+      label: "With a country selected: every flow of its trade above 0.1%, exports and imports both",
+      swatch: { kind: "arc", from: tradeFlowSourceColor("oil", "focus"), to: tradeFlowTargetColor("oil", "focus") },
+    },
+  ],
 };
 
 /** Legend sections, grouped by commodity (reserves first, then oil, gas, shared). */
@@ -647,7 +733,7 @@ export const LEGEND_GROUPS: readonly { readonly title: string; readonly keys: re
   { title: "Oil", keys: ["pipelines", "extraction", "refineries", "storage"] },
   { title: "Gas", keys: ["gas_pipelines", "lng_terminals", "lng_voyages", "gas_storage"] },
   { title: "Shipping", keys: ["ports"] },
-  { title: "Trade", keys: ["recent_imports"] },
+  { title: "Trade", keys: ["recent_imports", "trade_flows"] },
 ];
 
 /**

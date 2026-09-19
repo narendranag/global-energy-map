@@ -56,6 +56,7 @@ describe("layer export policy (shipped catalog)", () => {
       gas_storage: false,
       shale_regions: false,
       recent_imports: false,
+      trade_flows: false,
     };
     expect(enabledLayers(layers)).toEqual(["reserves", "pipelines", "gas_pipelines"]);
   });

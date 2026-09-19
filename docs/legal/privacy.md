@@ -45,6 +45,10 @@ The query console runs [DuckDB](https://duckdb.org) compiled to WebAssembly **in
 
 If the map hits an error, the error panel offers a **Report an issue** link. It opens a pre-filled GitHub issue containing the error message, the page URL and your browser's user agent. Nothing is sent unless you choose to submit that issue on GitHub, which is then public and covered by [GitHub's privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
 
+## Embedding
+
+The map can be embedded on third-party sites in an `<iframe>` (`?embed=1`). An embedded map behaves exactly as described above — no accounts, no cookies, the same Vercel Web Analytics page-view counting and the same OpenFreeMap tile requests — nothing changes about what is collected because the map is inside someone else's page. That page has its own privacy policy, which is not covered here; if you have concerns about a specific site that embeds the map, contact that site.
+
 ## Links to other sites
 
 The map and its pages link to data publishers, documentation and GitHub. Those sites have their own privacy practices, which this policy does not cover.

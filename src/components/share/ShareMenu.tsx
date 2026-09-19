@@ -11,6 +11,7 @@ import { peekAppStore } from "@/lib/state/store";
 import { encodeUrlState, type AppState } from "@/lib/url-state/encode";
 import type { MapView } from "@/lib/state/view";
 import { downloadText, todayIso } from "@/lib/export/browser";
+import { embedSnippet } from "@/lib/export/embed";
 import {
   apaCitation,
   bibtexCitation,
@@ -194,6 +195,7 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
   const [format, setFormat] = useState<CiteFormat>("view");
   const [status, setStatus] = useState<string>("");
   const [busy, setBusy] = useState<string | null>(null);
+  const [embedHideControls, setEmbedHideControls] = useState(false);
   const headingId = `${id}-title`;
 
   const accessed = todayIso();
@@ -319,6 +321,41 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
         <p className="mt-1 text-2xs text-ink-subtle">
           Includes mode, year, commodity, scenario, layers and map position.
         </p>
+      </section>
+
+      {/* ---- Embed ---- */}
+      <section aria-label="Embed this view" className="mt-4 border-t border-panel-border pt-3">
+        <div className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Embed this view</div>
+        <label className="mt-1.5 flex items-center gap-1.5 text-xs text-ink">
+          <input
+            type="checkbox"
+            checked={embedHideControls}
+            onChange={(e) => {
+              setEmbedHideControls(e.target.checked);
+            }}
+          />
+          Static (hide the year slider and commodity toggle)
+        </label>
+        <pre
+          tabIndex={0}
+          aria-label="Embed code"
+          className="mt-1.5 max-h-32 overflow-auto whitespace-pre-wrap break-words rounded border border-panel-border bg-slate-50 p-2 font-mono text-2xs leading-snug text-ink"
+          data-testid="embed-code"
+        >
+          {embedSnippet(viewUrl, { hideControls: embedHideControls })}
+        </pre>
+        <div className="mt-1.5 flex items-center justify-between gap-2">
+          <span className="text-2xs text-ink-subtle">
+            Keeps the attribution bar (GEM, LNG-T3, NETL, EI, BACI, OSM licences) required by the data.
+          </span>
+          <CopyButton
+            text={() => embedSnippet(viewUrl, { hideControls: embedHideControls })}
+            label="Copy embed code"
+            onCopied={() => {
+              setStatus("Embed code copied.");
+            }}
+          />
+        </div>
       </section>
 
       {/* ---- Cite ---- */}

@@ -40,7 +40,20 @@ const nextConfig: NextConfig = {
     ]);
   },
   headers() {
-    return Promise.resolve([...cacheRules("/data/:path*"), ...cacheRules("/duckdb/:path*")]);
+    return Promise.resolve([
+      ...cacheRules("/data/:path*"),
+      ...cacheRules("/duckdb/:path*"),
+      // S7 (embed mode): nothing here ever set X-Frame-Options or a CSP
+      // frame-ancestors directive, so a third-party <iframe> already worked —
+      // this makes that explicit rather than relying on the absence of a
+      // header. `/` is a public, read-only map (no accounts, no forms), so
+      // `frame-ancestors *` is acceptable; every other route keeps the
+      // platform default.
+      {
+        source: "/",
+        headers: [{ key: "Content-Security-Policy", value: "frame-ancestors *" }],
+      },
+    ]);
   },
 };
 

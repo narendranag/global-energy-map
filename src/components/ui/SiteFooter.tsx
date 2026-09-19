@@ -28,6 +28,17 @@ export function SiteFooter() {
         </a>
         .
       </p>
+      <nav aria-label="Explore" className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+        <Link href="/" className={LINK}>
+          Map
+        </Link>
+        <Link href="/data" className={LINK}>
+          Data
+        </Link>
+        <Link href="/query" className={LINK}>
+          Query console
+        </Link>
+      </nav>
       <nav aria-label="Legal" className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
         <Link href="/terms" className={LINK}>
           Terms of use

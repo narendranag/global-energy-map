@@ -26,7 +26,7 @@ const INDIA_POINTS = [
 ] as const;
 
 test.describe("Scenarios", () => {
-  test("oil dropdown lists all four scenarios; gas lists only Hormuz", async ({ page }) => {
+  test("oil dropdown lists every oil scenario; gas lists only the chokepoints with an LNG axis", async ({ page }) => {
     // The picker lives in Scenarios mode (or wherever a scenario is active).
     await gotoReady(page, "/?mode=scenarios&layers=reserves");
     const select = scenarioSelect(page);
@@ -35,11 +35,25 @@ test.describe("Scenarios", () => {
     expect(oil.some((s) => /Druzhba/i.test(s))).toBe(true);
     expect(oil.some((s) => /Baku-Tbilisi-Ceyhan/i.test(s))).toBe(true);
     expect(oil.some((s) => /Caspian/i.test(s))).toBe(true);
+    // S6 (2026-09-19): new chokepoints and pipelines.
+    expect(oil.some((s) => /Malacca/i.test(s))).toBe(true);
+    expect(oil.some((s) => /Suez/i.test(s))).toBe(true);
+    expect(oil.some((s) => /Bab el-Mandeb/i.test(s))).toBe(true);
+    expect(oil.some((s) => /Turkish Straits/i.test(s))).toBe(true);
+    expect(oil.some((s) => /Keystone/i.test(s))).toBe(true);
+    expect(oil.some((s) => /Enbridge Mainline/i.test(s))).toBe(true);
+    expect(oil.some((s) => /ESPO/i.test(s))).toBe(true);
 
     await press(page.getByRole("button", { name: "Gas" }));
     const gas = await select.locator("option").allTextContents();
     expect(gas.some((s) => /Hormuz/i.test(s))).toBe(true);
-    expect(gas.some((s) => /Druzhba|Baku-Tbilisi-Ceyhan|Caspian/i.test(s))).toBe(false);
+    expect(gas.some((s) => /Malacca/i.test(s))).toBe(true);
+    expect(gas.some((s) => /Suez/i.test(s))).toBe(true);
+    expect(gas.some((s) => /Bab el-Mandeb/i.test(s))).toBe(true);
+    // Oil-only scenarios (no LNG-carrying commodity for these routes) stay off the gas list.
+    expect(
+      gas.some((s) => /Druzhba|Baku-Tbilisi-Ceyhan|Caspian|Turkish Straits|Keystone|Enbridge|ESPO/i.test(s)),
+    ).toBe(false);
   });
 
   test("Scenarios tab from the default map, then Hormuz, populates the ranked list", async ({

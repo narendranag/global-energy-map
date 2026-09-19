@@ -277,3 +277,51 @@ describe("browser singleton", () => {
     expect(window.location.search).toBe("");
   });
 });
+
+describe("embed/controls survive URL rewrites (S7)", () => {
+  it("re-appends embed=1 after a patch, even though it is not part of AppState", () => {
+    const writeSearch = vi.fn();
+    const store = createAppStore({ defaults: DEFAULTS, search: "embed=1" });
+    // AppState never carries embed — it must not leak into getApp().
+    expect(store.getApp()).toEqual(DEFAULTS);
+
+    const store2 = createAppStore({ defaults: DEFAULTS, search: "embed=1", writeSearch: (s) => { writeSearch(s); } });
+    store2.patch({ year: 2023 });
+    store2.flush();
+    expect(writeSearch).toHaveBeenCalledTimes(1);
+    const params = new URLSearchParams(writeSearch.mock.calls[0]?.[0] as string);
+    expect(params.get("year")).toBe("2023");
+    expect(params.get("embed")).toBe("1");
+  });
+
+  it("re-appends both embed=1 and controls=0 across a debounced write", () => {
+    const writeSearch = vi.fn();
+    const store = createAppStore({ defaults: DEFAULTS, search: "embed=1&controls=0", writeSearch });
+    store.patch({ year: 2024 });
+    vi.advanceTimersByTime(URL_WRITE_DEBOUNCE_MS);
+    expect(writeSearch).toHaveBeenCalledTimes(1);
+    const params = new URLSearchParams(writeSearch.mock.calls[0]?.[0] as string);
+    expect(params.get("embed")).toBe("1");
+    expect(params.get("controls")).toBe("0");
+    expect(params.get("year")).toBe("2024");
+  });
+
+  it("writes no embed params when none were present initially", () => {
+    const writeSearch = vi.fn();
+    const store = createAppStore({ defaults: DEFAULTS, search: "", writeSearch });
+    store.patch({ year: 2024 });
+    store.flush();
+    const params = new URLSearchParams(writeSearch.mock.calls[0]?.[0] as string);
+    expect(params.has("embed")).toBe(false);
+    expect(params.has("controls")).toBe(false);
+  });
+
+  it("a reset() (client-side navigation) re-reads embed params from the new search", () => {
+    const writeSearch = vi.fn();
+    const store = createAppStore({ defaults: DEFAULTS, search: "embed=1", writeSearch });
+    store.reset("");
+    store.patch({ year: 2024 });
+    store.flush();
+    expect(new URLSearchParams(writeSearch.mock.calls[0]?.[0] as string).has("embed")).toBe(false);
+  });
+});

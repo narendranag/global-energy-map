@@ -35,6 +35,12 @@ export interface LayerPanelProps {
    * change.
    */
   readonly defaultOpen?: boolean;
+  /**
+   * Embed mode (S7): collapse the whole card to a small "Legend" toggle at
+   * every viewport width, not just under 768 px. `defaultOpen` still governs
+   * the inner "Layers" disclosure once expanded.
+   */
+  readonly embedded?: boolean;
 }
 
 type Row =
@@ -94,7 +100,13 @@ function StaleBadge({ layer, today }: { layer: keyof LayerState; today: string |
  * Left panel: the "Layers" disclosure (toggles + time-aware badges) above the
  * Legend. Below 768 px the whole card collapses to its header until tapped.
  */
-export function LayerPanel({ state, onChange, scenarioNoun, defaultOpen = true }: LayerPanelProps) {
+export function LayerPanel({
+  state,
+  onChange,
+  scenarioNoun,
+  defaultOpen = true,
+  embedded = false,
+}: LayerPanelProps) {
   const [open, setOpen] = useState(defaultOpen);
   const [phoneOpen, setPhoneOpen] = useState(false);
   const [vintageOpen, setVintageOpen] = useState(false);
@@ -111,10 +123,13 @@ export function LayerPanel({ state, onChange, scenarioNoun, defaultOpen = true }
       aria-label="Layers and legend"
       className="pointer-events-auto absolute left-4 top-4 z-10 flex max-h-[calc(100%-9rem)] w-72 flex-col rounded-md border border-slate-200 bg-white/95 text-sm text-slate-800 shadow-lg backdrop-blur max-md:max-h-[calc(100%-16rem)] max-md:w-auto max-md:max-w-[calc(100%-2rem)]"
     >
-      {/* Phone-only header: the whole card collapses to this. */}
+      {/* Phone-only header (or always, in embed mode): the whole card collapses to this. */}
       <button
         type="button"
-        className="flex items-center gap-2 px-3 py-2 text-xs font-medium uppercase tracking-wide text-slate-700 md:hidden"
+        className={
+          "flex items-center gap-2 px-3 py-2 text-xs font-medium uppercase tracking-wide text-slate-700 " +
+          (embedded ? "" : "md:hidden")
+        }
         aria-expanded={phoneOpen}
         aria-controls={bodyId}
         onClick={() => {
@@ -122,12 +137,13 @@ export function LayerPanel({ state, onChange, scenarioNoun, defaultOpen = true }
         }}
       >
         <Chevron open={phoneOpen} />
-        Layers &amp; legend
+        {embedded ? "Legend" : "Layers & legend"}
       </button>
       <div
         id={bodyId}
         className={
-          "min-h-0 overflow-y-auto overscroll-contain p-3 max-md:pt-0 md:block " +
+          "min-h-0 overflow-y-auto overscroll-contain p-3 max-md:pt-0 " +
+          (embedded ? "" : "md:block ") +
           (phoneOpen ? "block" : "hidden")
         }
       >

@@ -36,7 +36,12 @@ describe("layer export policy (shipped catalog)", () => {
   });
 
   it("scenario tags include trade and route shares for every scenario", () => {
-    for (const id of ["hormuz", "druzhba", "btc", "cpc"] as const) {
+    for (const id of [
+      "hormuz", "druzhba", "btc", "cpc",
+      // S6: new chokepoint + pipeline scenarios follow the same catalog tags.
+      "malacca", "suez", "bab_el_mandeb", "turkish_straits",
+      "keystone", "enbridge_mainline", "espo_spur",
+    ] as const) {
       const ids = CATALOG.entries
         .filter((e) => e.layers.some((l) => scenarioTags(id, "oil").includes(l)))
         .map((e) => e.id);

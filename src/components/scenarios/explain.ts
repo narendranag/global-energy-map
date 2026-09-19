@@ -200,7 +200,7 @@ export function describeExposure(e: ExposureExplanation, ctx: DescribeContext): 
       return (
         `0%: ${name} imports from ${list(e.routeExporters.map((s) => `${ctx.nameOf(s.iso3)} (${ctx.formatVolume(s.qty)})`))}, ` +
         (e.zeroPairs
-          ? `but that trade never reaches ${ctx.routeName}: the scenario sets a 0% route share for these pairs (cargoes that stay inside the Gulf).`
+          ? `but that trade never reaches ${ctx.routeName}: the scenario sets a 0% route share for these pairs (their cargoes never cross this route).`
           : `but the scenario routes none of that trade through ${ctx.routeName} — the route share is set only for the importers it serves.`)
       );
     case "no-route-suppliers":

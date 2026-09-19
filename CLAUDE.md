@@ -23,7 +23,7 @@ A public web app that lets serious analysts interrogate global energy dependenci
 
 **In-browser data layer**
 - Loaders read Parquet served from our own origin with `hyparquet` (+ `fzstd` for zstd pages) via `src/lib/data/parquet.ts`: one fetch per file (versioned URL), decoded once per column set, filtered in memory. Rows match the old `query()` contract (BIGINT → number, DATE → ISO string). Took cold load from ~4.9 s to ~1.2 s (2026-09-11, `docs/performance.md`)
-- `@duckdb/duckdb-wasm` is kept, self-hosted under `/duckdb/` (copied/downloaded at `predev`/`prebuild` by `scripts/copy-duckdb.mjs`, sha256-pinned), for the planned query console — but **nothing imports `src/lib/duckdb/` at runtime today**; `tests/e2e/network.spec.ts` asserts no `/duckdb/` request on a cold load. Don't reintroduce it on the load path
+- `@duckdb/duckdb-wasm` is self-hosted under `/duckdb/` (bundles copied and the `parquet` + `json` extensions downloaded sha256-pinned at `predev`/`prebuild` by `scripts/copy-duckdb.mjs`) and is loaded **only on `/query`**, through one dynamic `import("@/lib/query/engine")` inside the Run handler. Nothing on the map's load path imports `src/lib/duckdb/`; `tests/e2e/network.spec.ts` asserts no `/duckdb/` request on a cold `/`, and `tests/e2e/query.spec.ts` asserts the opposite for `/query` plus zero foreign hosts. Don't reintroduce it on the load path
 - No backend for the analytics path; the only third-party runtime host is the OpenFreeMap basemap
 
 **Build-time data layer**
@@ -42,20 +42,22 @@ A public web app that lets serious analysts interrogate global energy dependenci
 ```
 global-energy-map/
 ├── src/
-│   ├── app/                       # Next.js App Router: page.tsx (map), methodology/, data/, terms/, privacy/ (/about → /methodology redirect in next.config.ts)
+│   ├── app/                       # Next.js App Router: page.tsx (map), methodology/, data/, query/, terms/, privacy/ (/about → /methodology redirect in next.config.ts)
 │   ├── components/
 │   │   ├── map/                   # MapShell: MapLibre map + deck.gl via MapboxOverlay (interleaved, beneath basemap labels)
 │   │   ├── layers/                # pure builders `buildXLayer(rows, opts)` + `formatXTooltip` per layer; useMapLayers memoises them; LayerPanel, generated Legend
 │   │   ├── time-slider/
 │   │   ├── scenarios/             # ScenarioPanel, overlay, useScenario hook
+│   │   ├── query/                 # /query console: editor + schema sidebar + result grid (the only DuckDB consumer)
 │   │   └── ui/
 │   └── lib/
-│       ├── duckdb/                # WASM bootstrap, query() — kept for the planned query console, unused at runtime
+│       ├── duckdb/                # WASM bootstrap, file registration, query() — reached only from src/lib/query/engine.ts on /query
 │       ├── data/                  # cached loaders over parquet.ts (hyparquet): assets (one read, grouped by kind), voyages, reserves, scenario inputs, catalog sources
 │       ├── symbology/             # every colour, ramp, radius rule and glyph — layers and Legend both import from here
 │       ├── state/                 # external app store (AppState + map view) with debounced history.replaceState
 │       ├── data-catalog/          # typed access to catalog.json
 │       ├── scenarios/             # pure-function scenario engine (oil + gas axes, refinery/LNG attribution)
+│       ├── query/                 # /query: catalog→tables + generated schema, DuckDB-parse-tree table refs, export gate, ?q= encoding, engine, examples
 │       ├── url-state/             # encode/decode (incl. lon/lat/z) + useUrlState (thin wrapper over the store)
 │       ├── vintage/               # vintage filter predicate for time-aware layers
 │       └── geo/
@@ -69,7 +71,7 @@ global-energy-map/
 ├── tests/
 │   ├── unit/                      # Vitest (TS) — scenarios, url-state, vintage filter, data-catalog
 │   ├── python/                    # pytest — helpers, transform fixtures, data-integrity checks over public/data
-│   └── e2e/                       # 14 Playwright specs (map, layers, time, scenarios, modes, url, share, data, methodology, legal, network, errors, phone, a11y) + helpers.ts
+│   └── e2e/                       # 15 Playwright specs (map, layers, time, scenarios, modes, url, share, data, methodology, query, legal, network, errors, phone, a11y) + helpers.ts
 ├── docs/
 │   ├── data-sources.md            # researcher-facing source inventory
 │   ├── methodology.md             # current-state methodology, rendered at /methodology
@@ -78,7 +80,7 @@ global-energy-map/
 │   ├── performance.md             # load-path measurements (the hyparquet switch)
 │   ├── commercial-data-options.md # paid-vendor landscape + the redistribution-licence wall (research note)
 │   ├── ai/                        # agent-facing docs: case study, playbook, machine interface
-│   ├── researchers/               # researcher-facing tour, worked examples, coverage, FAQ
+│   ├── researchers/               # researcher-facing tour, worked examples, query console, coverage, FAQ
 │   └── superpowers/
 │       ├── specs/                 # design specs (per phase + master)
 │       └── plans/                 # implementation plans (per phase)
@@ -125,7 +127,7 @@ For a researcher-facing inventory (with coverage gaps, evaluated-and-rejected so
 | Basins / storage / ports | NETL Global Oil & Gas Infrastructure (US DOE) | Public domain (17 USC §105) | Phase 4 — 1,046 basins + 7,733 storage (EPA regulatory records filtered, 2026-09-11) + 3,694 ports |
 | Crude + LNG trade flows | BACI (CEPII), HS 2709 + HS 271111 | Free for academic/research use; see CEPII terms | Annual bilateral flows 1995–2024, both sides reconciled; no API key required; pre-processed & deduplicated |
 | Monthly crude + LNG imports | UN Comtrade, HS 2709 + HS 271111 | UN Comtrade terms; re-dissemination limited | **Supplements BACI, never merged with it** — as-reported (importer's declaration only), monthly, 2025-01 → 2026-05, 8,839 rows. Reaches ~18 months past BACI at the cost of reconciliation. Needs `COMTRADE_API_KEY`. View-only; drawn as the Recent imports layer (each country's latest 12 reported months; China and Taiwan do not report monthly) |
-| Chokepoints + pipeline disruption scenarios | EIA World Oil Transit Chokepoints + IEA pipeline reports | Public, free | 5 scenarios: Hormuz, Hormuz-LNG, Druzhba, BTC, CPC |
+| Chokepoints + pipeline disruption scenarios | EIA World Oil Transit Chokepoints + IEA pipeline reports | Public, free | 15 scenarios: Hormuz, Hormuz-LNG, Druzhba, BTC, CPC, Malacca, Malacca-LNG, Suez+SUMED, Suez-LNG, Bab el-Mandeb, Bab el-Mandeb-LNG, Turkish Straits, Keystone, Enbridge Mainline, ESPO Skovorodino-Mohe spur (2026-09-19; Danish Straits, Saudi East-West/Petroline, Kirkuk-Ceyhan and the Russia-wide chokepoint wildcards were researched and held — see `docs/superpowers/research/chokepoints.md` and `oil-pipelines.md`) |
 | Country boundaries | Natural Earth admin-0 (1:110m) | Public domain | Phase 1 — basemap + reserves choropleth fills |
 | Basemap | OpenFreeMap Positron (vector, OpenMapTiles schema) | Free (no key); © OpenMapTiles, data © OpenStreetMap | Runtime tiles via `src/components/map/style.ts` |
 | EU gas storage + LNG send-out (daily) | Gas Infrastructure Europe AGSI + ALSI | Free with registration; attribute "GIE AGSI / ALSI" | **Daily**, 2020-01-01 → present — the only daily series here. 188,767 rows, 22 countries. Country level only (terminal names do not join safely — see `scripts/ingest/gie_daily.py`). View-only: free, but not an open licence. Needs `GIE_API_KEY` |
@@ -171,7 +173,7 @@ CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typec
 
 - **TDD where it pays:** scenario engine, data transforms, query helpers — write failing test first. UI components covered by Playwright e2e smoke tests, not unit-tested by default.
 - **Pure functions for scenarios:** `src/lib/scenarios/` exports pure functions that take in baseline data + scenario params and return derived layer styling. No side effects, no map handles. Easy to unit-test.
-- **Catalog manifest is the source of truth for `/methodology`, `/data`, tooltips and Share/cite** (license, source URL, as-of, rows, sha256, `redistributable` / `downloadable`). `build_catalog.py` also writes `src/lib/export/citations.generated.json` (scenario-share citations + CITATION.cff) — regenerate, never hand-edit.
+- **Catalog manifest is the source of truth for `/methodology`, `/data`, `/query`, tooltips and Share/cite** (license, source URL, as-of, rows, sha256, `redistributable` / `downloadable`). `build_catalog.py` also writes `src/lib/export/citations.generated.json` (scenario-share citations + CITATION.cff) and `src/lib/query/schema.generated.json` (per-file columns + SQL types for the console's schema sidebar) — regenerate, never hand-edit.
 - **Runtime data paths are hardcoded by design.** Loaders in `src/lib/data/` call `readParquet('/data/<file>.parquet', columns)` directly (or `fetch` a GeoJSON sidecar). Do not try to thread catalog `path` fields through the runtime — the catalog is metadata, not a config table. When you add a new layer, add a `public/data/catalog.json` entry AND hardcode the path in the loader.
 - **Geometry ships as simplified GeoJSON sidecars** (`pipelines.geojson`, `basins.geojson`, `countries.geojson`); the DuckDB-WASM `spatial` extension was not reliable in the pinned dev build, and the runtime no longer loads DuckDB at all. Full-resolution GeoParquet stays build-time only in `data/derived/`.
 - **One data path.** Layers never query on their own: `src/lib/data/` loaders are module-cached promises (cache the promise, not the result), `useAssets()` reads `assets.parquet` once and groups by `kind`, and layer files are pure `buildXLayer(rows, opts)` functions memoised in `useMapLayers`. Year/vintage filtering happens in memory. Layer ids are stable (tooltips and e2e key on them).
@@ -187,7 +189,8 @@ CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typec
 - **Vintage-aware layer behavior.** Pipelines (`start_year`, 64% oil / 74% gas), extraction sites (`commissioned_year`, 32%) and LNG terminals (`commissioned_year`, 97.8%) respect the active year slider. Null vintage = always visible; refineries/storage/ports have no vintage data and remain time-independent. Scenario LNG attribution uses `lngTerminalsInService` (`src/lib/scenarios/lng-in-service.ts`): a terminal counts if it took a qualifying voyage that year, else if it is not in-construction and its vintage ≤ year.
 - **Route-share pairs override the exporter wildcard.** `disruption_route` rows with `importer_iso3` set win over the exporter-wide row, including share 0 (the 54 intra-Gulf Hormuz pairs from `GULF_COASTAL`). Identical pair rows are shown as one entry (`groupIdenticalPairShares`) in the panel, the CSV header and `/methodology`.
 - **Versioned data URLs + immutable caching.** Runtime data URLs go through `dataUrl()` (`src/lib/data/urls.ts`), which appends `?v=<first 8 of sha256>` from the bundled catalog; `next.config.ts` serves `?v=` requests `max-age=31536000, immutable` and unversioned ones `max-age=0`. Never change a file in `public/data/` without regenerating the catalog (`build_all` does) — a stale hash would pin browsers to old bytes for a year.
-- **DuckDB core version is pinned twice** (`DUCKDB_CORE_VERSION` in `src/lib/duckdb/bundles.ts` and `scripts/copy-duckdb.mjs`, with the extension sha256s). Upgrading `@duckdb/duckdb-wasm` means bumping both and the hashes; on a mismatch the app warns and falls back to DuckDB's default extension repository.
+- **DuckDB core version is pinned twice** (`DUCKDB_CORE_VERSION` in `src/lib/duckdb/bundles.ts` and `scripts/copy-duckdb.mjs`, with the `parquet` + `json` extension sha256s). Upgrading `@duckdb/duckdb-wasm` means bumping both and the hashes. **The extension repository is always this origin**; on a version mismatch the app reports the mismatch and extension loading fails loudly rather than falling back to `extensions.duckdb.org` — that fallback used to exist and would have made a version bump silently contact a third party.
+- **The `/query` export gate is decided by DuckDB, not by a regex.** `src/lib/query/references.ts` walks `json_serialize_sql()`'s parse tree for base tables and `read_parquet()` file arguments; export is allowed only when every one resolves to a `downloadable: true` catalog file, and anything the walker does not model refuses. That is why the `json` extension is self-hosted alongside `parquet`. Unit-test fixtures are real DuckDB trees, regenerated by `scripts/dev/serialize_sql_fixtures.py`.
 - **Errors surface.** Render errors, uncaught errors/rejections and failed data loads (`useAsync` → `reportError`) show the error panel (reload / report-an-issue) instead of a blank or forever-loading map.
 - **Data licensing lives in `LICENSE-DATA.md`.** Downloadable = every source of the file is CC BY 4.0, public domain, Etalab Open Licence 2.0 (BACI) or project-derived. `assets_open.parquet` is the downloadable asset table (no ODbL OSM rows); EI reserves stay view-only.
 - **Refreshing data:** follow `docs/refresh.md`; all source URLs/releases/dates are pinned in `scripts/common/sources.py`. **GEM's public CDN is gone** (confirmed 2026-09-17) and its origin answers 410 for direct downloads, so GOGET comes from the Internet Archive and pipeline geometry from GEM's GitHub routes repo. `data/raw/gem_{oil,gas}_infra/` hold the last public copies of the GOIT/GGIT snapshots — **archived to Cloudflare R2 `global-energy-map-raw` (2026-09-17), which is the only other copy**; see `docs/refresh.md` to restore. `test_source_liveness.py` guards every pinned URL against this happening silently again.
@@ -204,6 +207,7 @@ CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typec
 - **Tailwind v4 layers vs. third-party CSS.** Tailwind utilities live in `@layer utilities`; unlayered library CSS (e.g. `maplibre-gl.css`) beats them regardless of order. Size the MapLibre container with inline styles (see `MapShell.tsx`).
 - **deck.gl accessors need `updateTriggers`.** Recolouring a layer from a `useMemo` with fresh closures does nothing unless the trigger changes; keep `updateTriggers` keyed on the input that drives the colour.
 - **Terminal name is the runtime join key** between `lng_voyage.parquet` and LNG terminal rows (never `asset_id`); `build_lng_terminals.py` asserts `(country_iso3, name)` uniqueness and `build_lng_voyages.py` asserts every `to_terminal` resolves.
+- **Embed mode (S7).** `?embed=1` (optionally `&controls=0`) is a *view* flag, decoded straight from `URLSearchParams` in `src/lib/url-state/embed.ts` — deliberately not part of `AppState`, so it never rides along in a normal "Copy link" and every pre-embed link is unaffected. `page.tsx` reads it once (`isEmbed`/`embedControlsHidden`) and hides the header, intro card, phone banner and full footer behind an `EmbedAttributionBar` (keeps every licence-required credit + an "Open full map" link); the year slider and commodity toggle stay unless `controls=0`; `LayerPanel`'s `embedded` prop collapses it to a "Legend" toggle at every width; the scenario panel collapses to a one-line chip. Because the store's debounced `history.replaceState` rebuilds the querystring from `AppState` + `MapView` on every write, `createAppStore` separately captures `embed`/`controls` (`extractEmbedParams`) and re-appends them to every write, or a year change inside an embed would silently drop the flag. New chrome added to `page.tsx` must default to hidden/collapsed under `embed` unless essential to reading the map. ShareMenu's "Copy embed code" builds the `<iframe>` snippet (`src/lib/export/embed.ts`), HTML-attribute-escaped.
 
 ## Workflow
 
@@ -230,5 +234,6 @@ CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typec
 - **Phase 9 — Product redesign** — _shipped 2026-09-10_ (PR #19) (plan: `docs/superpowers/plans/2026-09-10-global-energy-map-phase-9.md`): three-mode IA + sane defaults, visual pass, time controls, Methodology/Data pages, export + cite + copy link, scenario panel v2, phone banner, accessibility.
 - **Phase 10 — Public-launch hardening** — _shipped 2026-09-11_ (PR #20) (plan: `docs/superpowers/plans/2026-09-10-global-energy-map-phase-10.md`): perf + caching + self-hosted DuckDB, LICENSE-DATA.md + open asset extract, refresh runbook, analytics + error boundary + post-deploy smoke; merged pipeline fragments + no hit band (the Linux e2e timeouts: a gas-pipeline frame cost ~15 s under software WebGL).
 - **Post-launch follow-ups** — _shipped 2026-09-11_: PR #23 (intra-Gulf Hormuz pairs = 0, inbound out of scope; vintage-aware LNG terminal attribution; grouped share rows; gas-axis CSV citation fix), PR #24 (all loaders on hyparquet, DuckDB-WASM off the load path; cold `/` 4.85 → 1.20 s), PR #25 (storage 26,102 → 7,733 by dropping EPA non-storage records; year-aware BACI gap notes via `sourceGapNote`). Remaining candidates: pipelines as PMTiles, query console (DuckDB kept for it), inbound Hormuz exposure (needs an importer-wide route wildcard).
+- **Query console (`/query`)** — _shipped 2026-09-19_ (T4 of `docs/superpowers/plans/2026-09-19-post-launch-ux-scenarios.md`, per the R4 research note): DuckDB-WASM lazily loaded on that route only, tables generated from the catalog, schema sidebar, shareable `?q=`, CSV with citation header gated on every referenced table being downloadable, six verified example queries. Closed the `extensions.duckdb.org` fallback in `bootstrap.ts` at the same time.
 - **Data freshness (free sources)** — _shipped 2026-09-18_: `docs/superpowers/plans/2026-09-17-data-freshness-upgrade.md`. Track 0 (GEM ingests unbroken, liveness test, raw snapshots archived to R2), Track A (GOGET March 2026, EI 2026, OSM/NETL/BACI checked), B.1 GIE (live gas-storage layer), B.2 UN Comtrade (Recent imports layer), B.3 EIA STEO (US shale regions layer), Track C (catalog v7 `coverage` + `cadence`; layers dated by when their data ends, "old" badge past 18 months, generated `/methodology` recency table). Paid data is ruled out for now on redistribution-licence grounds, not cost — see `docs/commercial-data-options.md`.
 - **Going public** — decided: after Phase 9, with `LICENSE-DATA.md` (done), map-footer attribution (done), downloads limited to openly licensed files (CC BY / public domain / Etalab). Done since: Vercel Web Analytics enabled, custom domain energymap.marain.space. Remaining launch step for the maintainer: announce. Light-only UI; phones get a "best on desktop" banner; keep DuckDB-WASM (export + query console in scope).

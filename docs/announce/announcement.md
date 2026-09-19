@@ -2,11 +2,9 @@
 
 *Draft for a personal site / Substack post. Word count ~800. Every number below is checked against the live data as of 2026-09-19 — see `docs/announce/fact-check.md` for the exact command or file behind each one.*
 
-**Note to self before publishing:** this draft describes two features that are not yet live — the wider scenario set (beyond the original five) and the trade-flow arcs — because they ship from a branch that has not merged to `main` yet. Both are marked below. **If you are publishing before that branch ships, delete the two marked paragraphs and the sentence about 11 scenarios**, and the post still stands on its own as an accurate description of what's live today.
-
 ---
 
-I build an interactive map of the world's oil and gas system: [energymap.marain.space](https://energymap.marain.space). It's free, needs no account, and runs entirely in your browser — there's no backend, no API key, no database server. Every fact on it traces to a public, cited source.
+I built an interactive map of the world's oil and gas system: [energymap.marain.space](https://energymap.marain.space). It's free, needs no account, and runs entirely in your browser — there's no backend, no API key, no database server. Every fact on it traces to a public, cited source.
 
 The question it exists to answer is a plain one: **when a piece of energy infrastructure stops working, whose imports actually run through it, and by how much?** Not "is this route important" in the abstract — a number, per country, per year, that you can trace back to a bilateral trade record.
 
@@ -19,6 +17,8 @@ The question it exists to answer is a plain one: **when a piece of energy infras
 By share of a country's own crude imports: Pakistan 78.2%, the Philippines 77.1%, Japan 73.3% (1,721 of 2,347 kb/d), South Korea 61.9% (1,699 of 2,743 kb/d). By raw volume the ranking flips: China's 3,518 kb/d at risk (33.8% of its imports) is the largest single number on the list, ahead of India's 1,877 kb/d (38.6%). Those are two different questions — dependence versus scale — and the map lets you switch between them rather than picking one for you.
 
 The honest caveat sits right next to the number: Iranian crude exports are close to zero in the trade data for 2023–2024 (sanctioned cargoes get relabelled — Malaysia is a common one), so China, Iran's main buyer, is *understated* here, not overstated. The panel says this in the same breath as the ranking, not in a footnote you have to go looking for.
+
+One more thing worth saying plainly: these are 2024 structural exposures — "how much of each country's trade *would be* at risk, based on last measured pattern of that trade" — not a live read of the strait today. EIA data show Hormuz was effectively closed for weeks in early 2026 (the Congressional Research Service dates Iran's declared closure to February 28–April 7, 2026, after Iran-Israel strikes), and the map does not attempt to model that: it pins to the pre-crisis structural baseline, the same convention every other scenario on it uses.
 
 **2. How exposed is Central Europe to a Druzhba cut, in 2022 — the year it would have mattered?**
 
@@ -44,7 +44,7 @@ No prices, no market model, no rerouting or substitution — a scenario result i
 
 None of this is buried. Every hover shows a source and an as-of date; every scenario panel lists the route shares it used and the document behind each one; a "why 0%?" lookup exists specifically so a surprising absence has an explanation instead of a shrug.
 
-*[Not yet live, pending merge]* Two more things are on the way: a wider scenario set — eleven routes instead of the original five, adding the Straits of Malacca and Turkish Straits, Suez/SUMED, Bab el-Mandeb, and the Keystone and Enbridge Mainline pipelines out of Canada — and a trade-flow layer that draws BACI's bilateral crude and LNG arcs directly on the map instead of only in the scenario tables.
+Two more recent additions: eleven scenarios instead of the original five — adding the Straits of Malacca and Turkish Straits, Suez/SUMED, Bab el-Mandeb, and the Keystone, Enbridge Mainline and ESPO pipelines — closable individually, at partial severity, two at once, or viewed from the exporter's side of the cut; and a trade-flow layer that draws BACI's bilateral crude and LNG arcs directly on the map instead of only in the scenario tables.
 
 ## Citing it, and finding what's wrong with it
 

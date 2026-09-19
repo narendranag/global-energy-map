@@ -13,6 +13,7 @@ import { computeRefineryImpacts } from "./refinery";
 import { computeLngImportImpacts } from "./lng";
 import { computeLngImportImpactsFromVoyages } from "./lng-t3";
 import { lngTerminalsInService } from "./lng-in-service";
+import { LNG_T3_FIRST_YEAR, LNG_T3_LAST_YEAR } from "./registry";
 
 export * from "./types";
 
@@ -88,7 +89,7 @@ export function computeScenarioImpact(input: ScenarioInput): ScenarioResult {
   // Phase 6: prefer LNG-T3 voyage-derived per-terminal attribution when
   // we have voyage data and the active year falls in the LNG-T3 range.
   const lngVoyages =
-    input.year >= 2020 && input.year <= 2024 ? (input.lngVoyages ?? []) : [];
+    input.year >= LNG_T3_FIRST_YEAR && input.year <= LNG_T3_LAST_YEAR ? (input.lngVoyages ?? []) : [];
   const lngImports = lngTerminalsInService(input.lngImports ?? [], input.year, lngVoyages);
 
   const byLngImport =

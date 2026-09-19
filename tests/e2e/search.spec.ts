@@ -19,7 +19,11 @@ test.describe("search", () => {
     const input = searchBox(page);
     await input.click();
     await input.fill("Japan");
-    await expect(page.getByRole("option", { name: /Japan/ })).toBeVisible();
+    // Several assets have "Japan" in their own name too (e.g. a gas field's
+    // parenthetical); the country ranks first, so pin to the top option
+    // rather than any option matching the name.
+    const firstOption = page.getByRole("listbox").getByRole("option").first();
+    await expect(firstOption).toHaveText(/^Japan/);
 
     await input.press("Enter");
     await expect.poll(() => urlParams(page).get("focus"), { timeout: 15_000 }).toBe("JPN");
@@ -68,7 +72,11 @@ test.describe("search", () => {
     await expect(searchBox(page)).toBeFocused();
 
     await page.keyboard.type("Japan");
-    await expect(page.getByRole("listbox", { name: "Search results" })).toBeVisible();
+    // Wait for a real option (not just the — always-mounted — listbox
+    // wrapper): the index loads asynchronously, and arrow/Enter presses sent
+    // while it is still empty would silently no-op.
+    const firstOption = page.getByRole("listbox").getByRole("option").first();
+    await expect(firstOption).toHaveText(/^Japan/);
     // Down then back up: proves the arrow keys move the active option, and
     // Enter still lands on the (still top-ranked) country.
     await page.keyboard.press("ArrowDown");

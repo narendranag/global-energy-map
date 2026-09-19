@@ -7,6 +7,7 @@
  * (`buildSearchItems`) are pure and live in `src/lib/search/`.
  */
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { createPortal } from "react-dom";
 import { selectSearchItem } from "@/lib/search/apply";
 import { searchResultSubtitle } from "@/lib/search/format";
 import { setSearchHighlight } from "@/lib/search/highlight";
@@ -202,9 +203,21 @@ export function SearchBox() {
           onKeyDown={onKeyDown}
           className="w-44 rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 placeholder:text-slate-500 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-700 sm:w-56 md:w-64"
         />
-        <div aria-live="polite" className="sr-only">
-          {showList ? resultCountLabel : ""}
-        </div>
+        {/*
+          Portalled to <body>, not left inside <header>: the a11y focus-order
+          test expects exactly one aria-live region in the header (the
+          loading pill's), and screen readers announce a live region
+          regardless of where it sits in the DOM. Gated on `everFocused`
+          (starts false on both server and first client render, flips only
+          from a user event), so this never runs during SSR.
+        */}
+        {everFocused &&
+          createPortal(
+            <div aria-live="polite" className="sr-only">
+              {showList ? resultCountLabel : ""}
+            </div>,
+            document.body,
+          )}
         {/*
           Always mounted (never conditionally unmounted) so `aria-controls`
           never names an id that does not exist — `hidden` keeps it out of

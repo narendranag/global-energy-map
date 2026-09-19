@@ -105,9 +105,13 @@ export function rangeLabel(
   return lo === hi ? lo : `${lo}–${hi}`;
 }
 
-/** The same rule for a percentage pair: "61.9%" or "61.9–78.0%". */
+/**
+ * The same rule for a percentage pair: "61.9%" or "61.9–78.0%" — the unit
+ * printed once, as a range of one quantity rather than two quantities.
+ */
 export function pctRange(r: { shareAtRisk: number; shareAtRiskUpper?: number }): string {
-  return rangeLabel(r.shareAtRisk, r.shareAtRiskUpper, pct);
+  const n = rangeLabel(r.shareAtRisk, r.shareAtRiskUpper, (v) => (v * 100).toFixed(1));
+  return `${n}%`;
 }
 
 /** …and for a volume pair, with the unit printed once: "1.2–1.9 Mt". */

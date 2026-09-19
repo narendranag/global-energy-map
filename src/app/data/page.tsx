@@ -243,7 +243,11 @@ export default function DataPage() {
               The year slider and commodity toggle stay — they are how a reader interrogates the view — unless
               you add <code className="font-mono text-[0.85em]">&amp;controls=0</code> for a static figure.
             </p>
-            <pre className="overflow-x-auto rounded border border-panel-border bg-slate-50 p-2 font-mono text-xs leading-snug text-ink">
+            {/* tabIndex so the horizontal scroll is keyboard-reachable (axe: scrollable-region-focusable). */}
+            <pre
+              tabIndex={0}
+              className="overflow-x-auto rounded border border-panel-border bg-slate-50 p-2 font-mono text-xs leading-snug text-ink"
+            >
               {embedSnippet(`${CANONICAL_ORIGIN}/?mode=scenarios&scenario=hormuz&commodity=oil&year=2023`)}
             </pre>
             <p>

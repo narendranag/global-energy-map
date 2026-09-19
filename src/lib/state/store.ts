@@ -62,6 +62,9 @@ function sameApp(a: AppState, b: AppState): boolean {
     a.year !== b.year ||
     a.commodity !== b.commodity ||
     a.scenario !== b.scenario ||
+    a.scenario2 !== b.scenario2 ||
+    a.severity !== b.severity ||
+    a.view !== b.view ||
     a.focus !== b.focus
   ) {
     return false;

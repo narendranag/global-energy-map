@@ -30,7 +30,7 @@ const LAYERS: LayerState = {
   recent_imports: false,
   trade_flows: false,
 };
-const DEFAULTS: AppState = { mode: "infrastructure", year: 2020, commodity: "oil", scenario: null, focus: null, layers: LAYERS };
+const DEFAULTS: AppState = { mode: "infrastructure", year: 2020, commodity: "oil", scenario: null, scenario2: null, severity: 1, view: "importers", focus: null, layers: LAYERS };
 
 beforeEach(() => {
   vi.useFakeTimers();

@@ -13,12 +13,81 @@ export interface AppState {
   readonly commodity: Commodity;
   readonly scenario: ScenarioId | null;
   /**
+   * T1: a second scenario closed at the same time, or null. It gets its own
+   * param (`scenario2=`) rather than overloading `scenario=a+b`, so every
+   * parser that ever read `scenario` — old shared links, the smoke script,
+   * `/methodology` — keeps reading exactly one known id.
+   *
+   * Only meaningful alongside a primary: decoding drops it when there is no
+   * `scenario`, when it repeats the primary, or when the commodity axis does
+   * not model it (the rule `scenario` itself follows).
+   */
+  readonly scenario2: ScenarioId | null;
+  /**
+   * T1: how much of the route(s) is cut, 0.05–1. 1 is the full closure every
+   * link shared so far means. Serialised as the integer percentage `sev=`,
+   * omitted at 100, so no existing URL changes by a byte.
+   */
+  readonly severity: number;
+  /**
+   * T1: which side of the cut the scenario panel lists and the map shades —
+   * importers (who loses supply) or exporters (who loses the outlet). App
+   * state rather than panel-local React state because it repaints the map:
+   * a copied link that did not carry it would not show what was on screen.
+   */
+  readonly view: ScenarioView;
+  /**
    * Selected country (ISO3), or null. A *selection*, not a filter: it outlines
    * one country and tells the panels/flows/search which country to talk about.
    * Modes deliberately leave it alone (see `applyMode`).
    */
   readonly focus: string | null;
   readonly layers: LayerState;
+}
+
+/** Which side of a scenario's flows the panel and overlay describe. */
+export type ScenarioView = "importers" | "exporters";
+
+const SCENARIO_VIEWS: readonly ScenarioView[] = ["importers", "exporters"];
+
+/**
+ * Severity travels as a percentage, never a float: `sev=50` reads as "half the
+ * route", and an integer keeps the querystring stable as the slider moves.
+ * The floor is 5 % — below that the closure rounds to nothing on every readout
+ * the panel has, and 0 would paint a scenario that does nothing at all.
+ */
+export const SEVERITY_MIN_PCT = 5;
+export const SEVERITY_STEP_PCT = 5;
+
+/** A `sev=` value as the app uses it: an integer percentage in [5, 100]. */
+export function clampSeverityPct(pct: number): number {
+  return Math.min(100, Math.max(SEVERITY_MIN_PCT, Math.round(pct)));
+}
+
+/**
+ * The scenario pair a commodity axis can actually render. A scenario with no
+ * route rows for the axis can only produce a confident 0 % (A1), so it is
+ * dropped — and a second scenario without a primary, or equal to it, is not a
+ * combination at all.
+ */
+export function normalizeScenarioPair(
+  scenario: ScenarioId | null,
+  scenario2: ScenarioId | null,
+  commodity: Commodity,
+): { readonly scenario: ScenarioId | null; readonly scenario2: ScenarioId | null } {
+  const primary = scenarioForCommodity(scenario, commodity);
+  if (primary === null) return { scenario: null, scenario2: null };
+  const second = scenarioForCommodity(scenario2, commodity);
+  return { scenario: primary, scenario2: second === primary ? null : second };
+}
+
+/** Every scenario a result covers, primary first: `[]` when none is active. */
+export function activeScenarioIds(state: {
+  readonly scenario: ScenarioId | null;
+  readonly scenario2: ScenarioId | null;
+}): readonly ScenarioId[] {
+  if (state.scenario === null) return [];
+  return state.scenario2 === null ? [state.scenario] : [state.scenario, state.scenario2];
 }
 
 const COMMODITIES: readonly Commodity[] = ["oil", "gas"];
@@ -47,6 +116,13 @@ export function encodeAppState(state: AppState): string {
   params.set("year", String(state.year));
   params.set("commodity", state.commodity);
   if (state.scenario !== null) params.set("scenario", state.scenario);
+  // Written only alongside a primary, and only when set — a single-scenario
+  // link stays byte-for-byte what it was before combinations existed.
+  if (state.scenario !== null && state.scenario2 !== null) {
+    params.set("scenario2", state.scenario2);
+  }
+  if (state.severity < 1) params.set("sev", String(clampSeverityPct(state.severity * 100)));
+  if (state.view !== "importers") params.set("view", state.view);
   // Written only when set, so every link shared before `focus` existed — and
   // every link shared with nothing selected — is byte-for-byte what it was.
   if (state.focus !== null) params.set("focus", state.focus);
@@ -93,9 +169,34 @@ export function decodeAppState(
     const known = SCENARIOS.find((s) => s.id === rawScenario);
     scenario = known ? known.id : null;
   }
+  let scenario2: ScenarioId | null = defaults.scenario2;
+  const rawScenario2 = params.get("scenario2");
+  if (rawScenario2 !== null) {
+    const known2 = SCENARIOS.find((s) => s.id === rawScenario2);
+    scenario2 = known2 ? known2.id : null;
+  }
   // A scenario the commodity axis does not model has no route rows, so it can
-  // only render a confident 0 %. Drop it, as the commodity toggle does (A1).
-  scenario = scenarioForCommodity(scenario, commodity);
+  // only render a confident 0 %. Drop it, as the commodity toggle does (A1) —
+  // and drop the second with it, or when it merely repeats the primary.
+  ({ scenario, scenario2 } = normalizeScenarioPair(scenario, scenario2, commodity));
+
+  const rawSeverity = params.get("sev");
+  let severity = defaults.severity;
+  if (rawSeverity !== null) {
+    const n = Number(rawSeverity);
+    // An unparseable `sev` falls back to the default rather than to 0: a bad
+    // parameter must neither invent a closure nor silently erase one.
+    severity =
+      rawSeverity.trim() !== "" && Number.isFinite(n)
+        ? clampSeverityPct(n) / 100
+        : defaults.severity;
+  }
+
+  const rawView = params.get("view");
+  const view: ScenarioView =
+    rawView !== null && (SCENARIO_VIEWS as readonly string[]).includes(rawView)
+      ? (rawView as ScenarioView)
+      : defaults.view;
 
   // A `focus` we cannot draw is no focus at all: an unknown or malformed code
   // decodes to null rather than leaving a phantom selection in the URL.
@@ -112,7 +213,7 @@ export function decodeAppState(
     layers = next;
   }
 
-  return { mode, year, commodity, scenario, focus, layers };
+  return { mode, year, commodity, scenario, scenario2, severity, view, focus, layers };
 }
 
 /**

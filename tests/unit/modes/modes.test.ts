@@ -74,6 +74,9 @@ describe("applyMode", () => {
     year: 2008,
     commodity: "oil",
     scenario: null,
+    scenario2: null,
+    severity: 1,
+    view: "importers",
     focus: "SAU",
     layers: { ...DEFAULT_APP_STATE.layers, storage: true, ports: true },
   };
@@ -89,9 +92,27 @@ describe("applyMode", () => {
       year: 2008,
       commodity: "gas",
       scenario: null,
+      scenario2: null,
+      severity: 1,
+      view: "importers",
       focus: "SAU",
       layers: MODE_LAYERS.infrastructure,
     });
+  });
+
+  it("leaving Scenarios clears everything the scenario carried, not just its id", () => {
+    const active = {
+      ...custom,
+      mode: "scenarios" as const,
+      scenario: "hormuz" as const,
+      scenario2: "malacca" as const,
+      severity: 0.5,
+      view: "exporters" as const,
+    };
+    for (const mode of ["infrastructure", "flows"] as const) {
+      const s = applyMode(active, mode);
+      expect([s.scenario, s.scenario2, s.severity, s.view]).toEqual([null, null, 1, "importers"]);
+    }
   });
 
   it("Flows: gas, trade flows + LNG terminals + gas pipelines, year kept inside BACI's 1995–2024", () => {
@@ -167,6 +188,9 @@ describe("URL precedence", () => {
       year: 2010,
       commodity: "oil",
       scenario: "druzhba",
+      scenario2: null,
+      severity: 1,
+      view: "importers",
       focus: null,
       layers: { ...MODE_LAYERS.flows, gas_pipelines: false, lng_terminals: false, trade_flows: false, pipelines: true },
     });

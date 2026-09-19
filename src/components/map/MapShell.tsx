@@ -8,6 +8,7 @@ import { basemapStyle, fallbackStyle, firstSymbolLayerId } from "./style";
 import { peekAppStore } from "@/lib/state/store";
 import {
   FIT_MAX_ZOOM,
+  paddingOffset,
   prefersReducedMotion,
   resolvePadding,
   type CameraPadding,
@@ -58,17 +59,28 @@ function fitPadding(padding: CameraPadding, width: number, height: number): Came
 /** Run one camera command against the map, honouring `prefers-reduced-motion`. */
 function applyCamera(map: maplibregl.Map, command: CameraRequest): void {
   const duration = prefersReducedMotion() ? 0 : CAMERA_DURATION_MS;
+  const canvas = map.getCanvas();
   if (command.kind === "flyTo") {
     const target = {
       center: [command.lon, command.lat] as [number, number],
       ...(command.zoom === undefined ? {} : { zoom: command.zoom }),
+      // Panel-aware, as a one-shot offset: MapLibre's camera `padding` would
+      // stick to the map and skew every later interaction (finding 14).
+      ...(command.padding === undefined
+        ? {}
+        : {
+            offset: paddingOffset(
+              fitPadding(resolvePadding(command.padding), canvas.clientWidth, canvas.clientHeight),
+              canvas.clientWidth,
+              canvas.clientHeight,
+            ),
+          }),
     };
     if (duration === 0) map.jumpTo(target);
     else map.flyTo({ ...target, duration });
     return;
   }
   const [west, south, east, north] = command.bounds;
-  const canvas = map.getCanvas();
   map.fitBounds(
     [
       [west, south],

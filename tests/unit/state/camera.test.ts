@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_CAMERA_PADDING,
+  paddingOffset,
   panelPadding,
   prefersReducedMotion,
   resolvePadding,
+  type CameraPadding,
 } from "@/lib/state/camera";
 
 afterEach(() => {
@@ -40,6 +42,41 @@ describe("panelPadding", () => {
     const both = panelPadding({ right: true, country: true }).right;
     expect(country).toBeGreaterThan(panelPadding({}).right);
     expect(both).toBeGreaterThan(Math.max(country, scenario));
+  });
+});
+
+/**
+ * Finding 14: `goToAsset` flew with no padding at all, so a ranked refinery
+ * landed dead centre — behind the panel that ranked it. `flyTo` honours a
+ * padding as a one-shot pixel offset (MapLibre's camera `padding` is sticky
+ * and would skew every later interaction).
+ */
+describe("paddingOffset", () => {
+  const pad = (p: Partial<CameraPadding>): CameraPadding => ({
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    ...p,
+  });
+
+  it("is zero for symmetric padding", () => {
+    expect(paddingOffset(pad({ left: 100, right: 100, top: 40, bottom: 40 }), 1000, 800)).toEqual([0, 0]);
+  });
+
+  it("pushes the target away from the padded side", () => {
+    // A wide right-hand panel: the subject moves left of centre.
+    expect(paddingOffset(pad({ left: 0, right: 400 }), 1000, 800)).toEqual([-200, 0]);
+    // A wide left-hand panel: the subject moves right of centre.
+    expect(paddingOffset(pad({ left: 300, right: 0 }), 1000, 800)).toEqual([150, 0]);
+    // Controls along the bottom: the subject moves up.
+    expect(paddingOffset(pad({ top: 0, bottom: 144 }), 1000, 800)).toEqual([0, -72]);
+  });
+
+  it("clamps an offset that would push the subject off screen", () => {
+    // Two panels on a phone-width map: at most 40 % of the extent either way.
+    expect(paddingOffset(pad({ left: 0, right: 2000 }), 400, 300)).toEqual([-160, 0]);
+    expect(paddingOffset(pad({ top: 2000, bottom: 0 }), 400, 300)).toEqual([0, 120]);
   });
 });
 

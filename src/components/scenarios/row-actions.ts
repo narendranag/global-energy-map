@@ -12,6 +12,7 @@
 import { countryBounds } from "@/lib/geo/bounds";
 import { FIT_MAX_ZOOM, type CameraPadding } from "@/lib/state";
 import { peekAppStore } from "@/lib/state/store";
+import { scenarioCameraPadding } from "./fit";
 
 /** Zoom a "fly to this refinery / terminal" lands at: the plant and its port. */
 export const ASSET_FLY_ZOOM = 8;
@@ -42,7 +43,18 @@ export async function goToCountry(
   return true;
 }
 
-/** A ranked asset row: fly to the plant itself. */
+/**
+ * A ranked asset row: fly to the plant itself, clear of the panels.
+ *
+ * The padding is the same `scenarioCameraPadding` every other move made from
+ * this panel uses (finding 14): a fly-to used to drop the refinery dead
+ * centre, which on a desktop is a third of the way behind the panel that
+ * ranked it. `flyTo` applies it as a one-shot offset (see `camera.ts`).
+ */
 export function goToAsset(lon: number, lat: number): void {
-  peekAppStore()?.requestCamera({ kind: "flyTo", lon, lat, zoom: ASSET_FLY_ZOOM });
+  const store = peekAppStore();
+  // Unlike a country row, this one selects nothing, so the country panel is
+  // in the way only when one is already open — which the store knows.
+  const padding = scenarioCameraPadding(store?.getApp().focus != null);
+  store?.requestCamera({ kind: "flyTo", lon, lat, zoom: ASSET_FLY_ZOOM, padding });
 }

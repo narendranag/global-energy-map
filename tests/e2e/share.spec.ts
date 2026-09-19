@@ -68,7 +68,7 @@ test.describe("Share / cite", () => {
     expect(await page.evaluate(() => navigator.clipboard.readText())).toContain("@software{");
   });
 
-  test("scenario table downloads as CSV with a citation header", async ({ page }) => {
+  test("scenario table downloads as CSV with a citation header", async ({ page, baseURL }) => {
     await gotoReady(page, "/?mode=scenarios&scenario=hormuz&commodity=oil&year=2020&layers=reserves");
     const panel = await openShare(page);
     const button = panel.getByTestId("download-scenario-csv");
@@ -89,7 +89,8 @@ test.describe("Share / cite", () => {
     expect(header).toContain("Route shares (disruption_route.parquet, 49 rows");
     expect(header).toMatch(/ARE -> all importers: 0\.65 — /);
     expect(header).toMatch(/# {3}42 pairs \(IRN -> IRQ, .*\): 0 — /);
-    expect(header).toMatch(/View: http:\/\/localhost:3000\/\?[^\n]*scenario=hormuz/);
+    const escapedBase = (baseURL ?? "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    expect(header).toMatch(new RegExp(`View: ${escapedBase}/\\?[^\\n]*scenario=hormuz`));
     expect(header).toContain("Cite this site:");
 
     // Then the column row and at least one importer row.

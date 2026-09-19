@@ -38,6 +38,7 @@ const LAYER_KEYS: readonly (keyof LayerState)[] = [
   "gas_storage",
   "shale_regions",
   "recent_imports",
+  "trade_flows",
 ];
 
 export function encodeAppState(state: AppState): string {

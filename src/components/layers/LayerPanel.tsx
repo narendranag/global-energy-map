@@ -21,6 +21,7 @@ export interface LayerState {
   gas_storage: boolean;     // GIE AGSI — live, slider-independent
   shale_regions: boolean;   // EIA STEO — US shale-region production, annual
   recent_imports: boolean;  // UN Comtrade — latest 12 reported months, slider-independent
+  trade_flows: boolean;     // BACI — country-pair crude/LNG arcs, year-keyed (1995–2024)
 }
 
 export interface LayerPanelProps {
@@ -58,6 +59,7 @@ const ROWS: readonly Row[] = [
   { kind: "toggle", key: "gas_storage", label: "Gas storage (EU)" },
   { kind: "group", label: "Trade" },
   { kind: "toggle", key: "recent_imports", label: "Recent imports (Comtrade)" },
+  { kind: "toggle", key: "trade_flows", label: "Trade flows (BACI)" },
 ];
 
 const BADGE_CLASS: Record<"yes" | "partial" | "no" | "live", string> = {

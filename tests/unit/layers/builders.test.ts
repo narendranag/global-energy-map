@@ -237,6 +237,7 @@ describe("needsAssets", () => {
     gas_storage: false,
     shale_regions: false,
     recent_imports: false,
+    trade_flows: false,
   };
   it("is false for geometry-only views and true for any asset layer or a scenario", () => {
     expect(needsAssets(none, false)).toBe(false);

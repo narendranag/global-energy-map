@@ -28,6 +28,7 @@ const LAYERS: LayerState = {
   gas_storage: false,
   shale_regions: false,
   recent_imports: false,
+  trade_flows: false,
 };
 const DEFAULTS: AppState = { mode: "infrastructure", year: 2020, commodity: "oil", scenario: null, focus: null, layers: LAYERS };
 

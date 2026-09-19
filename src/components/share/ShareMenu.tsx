@@ -260,7 +260,7 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
     if (!st.exportable) return;
     setBusy(`${key}:${ext}`);
     try {
-      const table = await loadLayerTable(key, year);
+      const table = await loadLayerTable(key, year, { commodity, focus: app?.focus ?? null });
       if (!table) {
         setStatus(`${st.label}: nothing to export.`);
         return;

@@ -33,6 +33,8 @@ import {
   reservesRampColor,
   shaleRampColor,
   recentImportsRampColor,
+  tradeFlowSourceColor,
+  tradeFlowTargetColor,
   type Rgb,
   type Rgba,
 } from "@/lib/symbology";
@@ -62,6 +64,10 @@ const MARKS = {
   lngTerminal: onLand(LNG_TERMINAL_COLOR),
   voyageExport: onLand(VOYAGE_EXPORT_END),
   voyageImport: onLand(VOYAGE_IMPORT_END),
+  tradeFlowOilFrom: onLand(tradeFlowSourceColor("oil", "focus")),
+  tradeFlowOilTo: onLand(tradeFlowTargetColor("oil", "focus")),
+  tradeFlowGasFrom: onLand(tradeFlowSourceColor("gas", "focus")),
+  tradeFlowGasTo: onLand(tradeFlowTargetColor("gas", "focus")),
   port: onLand(PORT_COLOR),
   basinLine: onLand(BASIN_LINE),
   atRiskLow: onLand(atRiskColor(0.05)),
@@ -217,6 +223,12 @@ const PAIRS: readonly (readonly [Mark | "reservesTop" | "reservesMid", Mark | "r
   ["gasPipeline", "reservesTop", 15, 12, "gas line on the darkest reserves"],
   ["lngTerminal", "reservesTop", 15, 12, "LNG glyph on the darkest reserves"],
   ["refinery", "reservesMid", 10, 8, "amber refinery on mid reserves (outline adds edge)"],
+  // Trade-flow arc ends: oil vs gas must read apart (hue is the only cue,
+  // same as the pipelines), and each commodity's dark (importer) end must
+  // not be mistaken for its own light (exporter) end.
+  ["tradeFlowOilTo", "tradeFlowGasTo", 15, 12, "oil vs gas trade-flow arcs — hue is the only cue"],
+  ["tradeFlowOilFrom", "tradeFlowOilTo", 12, 8, "trade-flow arc direction: light exporter end vs dark importer end"],
+  ["tradeFlowGasFrom", "tradeFlowGasTo", 12, 8, "trade-flow arc direction: light exporter end vs dark importer end"],
 ];
 
 const GROUND: Partial<Record<string, Rgb>> = { ...MARKS, reservesTop: RESERVES_TOP, reservesMid: RESERVES_MID };
@@ -238,11 +250,18 @@ describe("identity: ΔE between key mark pairs (normal / protan / deutan)", () =
 describe("hue families", () => {
   const hue = (hex: string) => oklch(hexToRgb(hex))[2];
   it("oil marks are warm, gas marks are cool, reserves sit between", () => {
-    for (const k of ["oilPipeline", "refinery", "extraction", "storage"] as const) {
+    for (const k of ["oilPipeline", "refinery", "extraction", "storage", "tradeFlowOilFrom", "tradeFlowOilTo"] as const) {
       expect(hue(PALETTE[k])).toBeGreaterThan(40);
       expect(hue(PALETTE[k])).toBeLessThan(90);
     }
-    for (const k of ["gasPipeline", "lngTerminal", "voyageExport", "voyageImport"] as const) {
+    for (const k of [
+      "gasPipeline",
+      "lngTerminal",
+      "voyageExport",
+      "voyageImport",
+      "tradeFlowGasFrom",
+      "tradeFlowGasTo",
+    ] as const) {
       expect(hue(PALETTE[k])).toBeGreaterThan(190);
       expect(hue(PALETTE[k])).toBeLessThan(275);
     }

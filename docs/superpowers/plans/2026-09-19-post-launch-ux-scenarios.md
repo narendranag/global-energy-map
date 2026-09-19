@@ -82,6 +82,7 @@ Merge order inside 2b (least → most shared-file contact): S5, S8, S6, S2, S4, 
 | F1–F4 | done 2026-09-19 | F1 incomplete importers: oil 37 → 28, gas 27 → 21 |
 | R4 | done 2026-09-19 | PMTiles: **not now** — 8.11 MB raw is 1.25 MB brotli, paid once per data version; tiles would not beat it at world view, and the pip-only GDAL writer is not byte-identical on rerun. Console: go; duckdb module still passes its 24 tests; export gated on every FROM/JOIN table being downloadable; the core-version fallback can reach extensions.duckdb.org and needs its own network guard |
 | R1–R3, RV | running | |
-| S0–S8 | pending | |
+| S8 | merged 2026-09-19 | Haiku draft, Sonnet rewrite (runs in a disposable worktree, never the maintainer's checkout), orchestrator fixed bash-3.2 `mapfile` + data/raw symlink tripping the change guard. **Not installed** — loading the plist is the maintainer's call; first real run is untested end to end (no ingests/push/PR were run) |
+| S0–S7 | in progress | |
 | T5 | dropped | per R4 |
 | T1–T4, T6 | pending | |

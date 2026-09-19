@@ -226,3 +226,101 @@ Record every data change here, newest first: date, source and release, files aff
 - New file `assets_open.parquet` (36,191 rows): `assets.parquet` minus its 88 OpenStreetMap rows, offered for download on `/data`.
 - Source pins consolidated into `scripts/common/sources.py`; every existing data file rebuilt byte-identical.
 - Catalog metadata only: CEPII BACI licence corrected to Etalab Open Licence 2.0 (was "academic/research use"); NETL entries carry an attribution line; EI licence wording aligned with EI's terms.
+
+## Scheduled refresh
+
+Automated monthly refresh of free data sources via `launchd`. The script (`scripts/refresh/monthly.sh`) ingests GIE AGSI/ALSI, UN Comtrade, and EIA STEO, rebuilds `public/data/`, and opens a PR — never pushes `main`, and never touches the maintainer's own checkout or its currently-checked-out branch.
+
+### Runs in a disposable worktree, not your checkout
+
+The whole run happens in a `git worktree` under `~/Library/Caches/global-energy-map/refresh-<YYYY-MM>/`, checked out from `origin/main` on a `refresh/<YYYY-MM>` branch:
+
+- `data/raw/` (gitignored, the build-input cache) is **symlinked in** from the maintainer's own checkout rather than re-downloaded, since raw upstream snapshots are a shared cache, not per-run state.
+- `uv sync` runs inside the worktree, so it gets its own `.venv`.
+- On success, the worktree is removed (`git worktree remove --force`) after the PR is opened/updated.
+- On failure, the worktree is **left in place** for inspection; its path is recorded in `refresh-status.json` (`worktree`, `worktree_kept`). The script refuses to start a new run while a stale worktree from a previous failure still exists at that month's path — remove it by hand first:
+  ```bash
+  git worktree remove ~/Library/Caches/global-energy-map/refresh-2026-09 --force
+  ```
+- Because your checkout is never branched or modified, there is no "dirty tree" precondition to satisfy before running this.
+
+**Re-running in the same month** reuses the `refresh/<YYYY-MM>` branch (fetches it from origin if it already exists there) instead of failing on "branch already exists", and checks `gh pr list --head` before opening a PR so a second run in the same month pushes an update to the existing PR rather than opening a duplicate.
+
+**No-op refreshes open no PR.** `build_all` is deterministic (see its module docstring and `scripts/transform/build_catalog.py`), so if nothing upstream actually changed, the rebuilt worktree is byte-identical to `origin/main` and the script stops after the diff check — no commit, no push, no PR, worktree removed, status written as `{"status": "ok", "step": "no changes"}`.
+
+**Only the known generated paths are ever committed.** The script diffs the whole worktree after `build_all` and fails loudly if anything changed outside `public/data/` or `src/lib/export/citations.generated.json` — that would mean an ingest or transform touched something it shouldn't have, and it needs a human before it goes anywhere near a PR.
+
+### What it automates
+
+- **GIE AGSI + ALSI:** EU gas storage and LNG send-out (daily, live layers). No per-day files, so `--force` refetches the whole pinned range every run (~48 calls).
+- **UN Comtrade:** Crude + LNG imports (monthly, backfills). Comtrade months arrive thin and backfill over roughly six months, so a plain re-run without `--force` would never pick up revisions to months already on disk. The script runs `--from <6 months ago> --to <last full month> --force` — forcing only a rolling 7-month window, not the whole series, since each call costs ~50s and the API rate-limits.
+- **EIA STEO:** US shale-region production (annual pin, monthly release cadence). `--force` also refetches the static DPR county list and Census counties files every run — a few extra small requests, not worth a separate flag.
+
+Each ingest runs as documented in the per-source sections above; the script reads API keys from `~/.config/secrets.env` and fails clearly if they are missing (checked before the worktree is created).
+
+### What it deliberately does NOT automate
+
+- **Annual pin bumps:** EI Statistical Review (`history_through_year` in January; reserves frozen check), BACI release + download URL, GEM GOGET/GGIT tracker releases (form-gated).
+- **PR merging:** the script opens (or updates) a PR and stops. A human reviews the data diff, runs spot checks, and merges.
+- **Pushing main:** the refresh branch never reaches `main` through git. The maintainer merges and deploys manually via `vercel --prod`.
+- **Deleting the local `refresh/<YYYY-MM>` branch** after it's merged — that's a manual `git branch -d` in the maintainer's own checkout once the PR lands; old month branches otherwise accumulate there (they're harmless, just clutter).
+
+### Install and run
+
+1. Copy the plist template to `~/Library/LaunchAgents/`:
+   ```bash
+   cp scripts/refresh/space.marain.energymap.refresh.plist \
+      ~/Library/LaunchAgents/space.marain.energymap.refresh.plist
+   ```
+
+2. Install with `launchctl`:
+   ```bash
+   launchctl load ~/Library/LaunchAgents/space.marain.energymap.refresh.plist
+   ```
+
+   The plist's `PATH` (`~/.local/bin:/opt/homebrew/bin:/usr/local/bin:...`) is what `which uv gh git jq` resolve to on the maintainer's machine — check that still holds if any of those tools move (e.g. after a Homebrew reinstall). `monthly.sh` also exports a fallback `PATH` itself, so a manual/interactive run doesn't depend on the plist at all.
+
+3. The job runs monthly on the 5th at 9:30 AM local time. To run it manually:
+   ```bash
+   launchctl start space.marain.energymap.refresh
+   # or directly:
+   scripts/refresh/monthly.sh
+   ```
+
+4. To uninstall:
+   ```bash
+   launchctl unload ~/Library/LaunchAgents/space.marain.energymap.refresh.plist
+   rm ~/Library/LaunchAgents/space.marain.energymap.refresh.plist
+   ```
+
+### Logs and status
+
+- `~/Library/Logs/global-energy-map/refresh-<UTC timestamp>.log` — one timestamped file per run (the script `tee`s its own output there), pruned automatically past ~12 months.
+- `~/Library/Logs/global-energy-map/refresh.log` / `refresh.err` — launchd's own stdout/stderr redirection for the most recent invocation (per the plist); the timestamped file above is the durable record.
+- `~/Library/Logs/global-energy-map/refresh-status.json` — last run status: `status` (`ok`/`failed`), `timestamp`, `step`, `branch`, `log` (path to that run's timestamped log), `worktree` and `worktree_kept` (true if a failed run's worktree was left for inspection).
+
+Dry-run mode (no network calls, no git writes, and no worktree is created at all — the whole run is a print-only walkthrough):
+```bash
+scripts/refresh/monthly.sh --dry-run
+```
+
+Health check (for monitoring; exits non-zero if last run failed or is >40 days old; needs `jq`):
+```bash
+scripts/refresh/healthcheck.sh
+```
+
+### Pin bumps (manual steps)
+
+When a new release arrives for an annual source, edit `scripts/common/sources.py`:
+
+- **EIA STEO:** After each EIA release (monthly), bump `EIA_STEO.release` and `as_of`. In January, bump `history_through_year` to the new year.
+- **EI Statistical Review:** After each annual release (~June), bump `EI.release`, `as_of`, and `download_url`. Check whether reserves were updated (still 2020 as of the 2026 edition); if so, update `test_reserves_end_2020_and_non_negative` in `tests/python/test_source_liveness.py`.
+- **BACI:** After the annual release (~January), bump `BACI.release`, `as_of`, and re-derive the constants in `scripts/ingest/baci.py` from the new archive's central directory.
+- **GEM GOGET/GGIT:** When a new tracker release is announced, download the tracker file, update `GEM_GOGET`/`GEM_GGIT` pin with the Wayback URL or GitHub tarball release, and bump `release` and `as_of`.
+
+After updating pins, run:
+```bash
+uv run python -m scripts.build_all [--ingest]  # optionally re-download
+```
+
+Then follow the "Checks after a refresh" section above.

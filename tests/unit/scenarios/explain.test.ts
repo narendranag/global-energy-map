@@ -123,6 +123,27 @@ describe("explainZeroExposure", () => {
     expect(s).toMatch(/Its own crude imports show 10\.0% at risk \(10 t\)/);
   });
 
+  /**
+   * Finding 9: the sentence asserted that "the scenario measures importers'
+   * exposure, not an exporter's lost sales", which stopped being true the
+   * moment the panel gained an exporter ranking. The lookup still explains
+   * import exposure — it just says so instead of denying the other side.
+   */
+  it("exporter: points at the exporter ranking when that is what is on screen", () => {
+    const e = run("hormuz", HORMUZ)("SAU");
+    const ctx = {
+      commodity: "oil" as const,
+      routeName: "the Strait of Hormuz",
+      nameOf: (x: string) => x,
+      formatVolume: (t: number) => `${t.toString()} t`,
+    };
+    expect(describeExposure(e, ctx)).toContain("The scenario measures importers' exposure");
+    const exporterSide = describeExposure(e, { ...ctx, view: "exporters" });
+    expect(exporterSide).not.toContain("The scenario measures importers' exposure");
+    expect(exporterSide).toContain("the ranking above");
+    expect(exporterSide).toContain("is an exporter on this route");
+  });
+
   it("exporter: pair-only shares report the importers served", () => {
     const e = run("druzhba", DRUZHBA)("RUS");
     expect(e).toMatchObject({ kind: "exporter", routeShare: null, routeImporters: ["DEU", "HUN"] });

@@ -346,6 +346,7 @@ export function ScenarioPanel({
           routeName: routesLabel,
           nameOf,
           formatVolume: volume,
+          view,
         })
       : null;
 
@@ -610,6 +611,20 @@ export function ScenarioPanel({
 
               <div className="mt-3">
                 <h3 className={`mb-1 ${HEADING}`}>{assetLabel}</h3>
+                {/* These rows (and the tint the map gives the same assets)
+                    are importer-side by construction: they split an
+                    *importer's* at-risk imports across its own plants. The
+                    exporter view has no counterpart for them, so they are
+                    captioned rather than silently left looking like part of
+                    the exporter ranking (finding 9). */}
+                {exporterView && (
+                  <p className={`mb-1 ${NOTE}`} data-testid="asset-side-note">
+                    Importer side: the {showLng ? "terminals" : "refineries"} that lose supply,
+                    from the importers&apos; exposure. These rows — and the shaded{" "}
+                    {showLng ? "terminals" : "refineries"} on the map — do not change with the
+                    exporter view.
+                  </p>
+                )}
                 {rankedAssets.length === 0 ? (
                   <p className={NOTE}>No {showLng ? "terminal" : "refinery"} with capacity data is exposed.</p>
                 ) : (
@@ -722,6 +737,15 @@ export function ScenarioPanel({
           <label htmlFor={lookupId} className={`mb-1 block ${HEADING}`}>
             Check a country (why 0%?)
           </label>
+          {/* The lookup reads a country's *imports*, whichever side the list
+              above ranks — say so rather than let it read as the exporter
+              figure it sits under (finding 9). */}
+          {exporterView && (
+            <p className={`mb-1 ${NOTE}`} data-testid="lookup-side-note">
+              Importer side: this explains a country&apos;s exposure as a buyer — the share of its
+              imports at risk — not the share of {noun} ranked above.
+            </p>
+          )}
           <input
             id={lookupId}
             type="text"

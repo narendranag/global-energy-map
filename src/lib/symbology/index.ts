@@ -764,6 +764,9 @@ export const LEGEND_GROUPS: readonly { readonly title: string; readonly keys: re
   { title: "Trade", keys: ["recent_imports", "trade_flows"] },
 ];
 
+/** Which side of a scenario's flows a panel is listing (T1's `view`). */
+export type ScenarioSide = "importers" | "exporters";
+
 /**
  * Extra rows shown while a scenario is active. With `layers`, asset rows are
  * limited to layers that can show them (refineries / LNG terminals).
@@ -773,6 +776,14 @@ export function scenarioLegend(
   layers?: LayerState,
   /** The active scenario's kind — adds the row for the mark the map draws (S1). */
   kind?: ScenarioKind,
+  /**
+   * T1: which side the panel and the choropleth describe. The *asset* tint
+   * never changes with it — refineries and LNG import terminals are
+   * importer-side by construction — so in the exporter view the row says so
+   * rather than letting the reader take it for part of the exporter ramp
+   * (finding 9).
+   */
+  view?: ScenarioSide,
 ): readonly LegendItem[] {
   const assets = layers === undefined || layers.refineries || layers.lng_terminals;
   const lng = layers === undefined || layers.lng_terminals;
@@ -803,7 +814,10 @@ export function scenarioLegend(
     ...(assets
       ? [
           {
-            label: "Asset at risk (darker = larger share)",
+            label:
+              view === "exporters"
+                ? "Asset at risk — importer side (darker = larger share)"
+                : "Asset at risk (darker = larger share)",
             swatch: { kind: "dot", color: atRiskColor(0.5), size: 9 } as const,
           },
         ]
@@ -837,13 +851,18 @@ export function legendSections(
   scenarioNoun?: string,
   zoom?: number,
   scenarioKind?: ScenarioKind,
+  /** T1: the side the scenario panel is listing (see `scenarioLegend`). */
+  scenarioView?: ScenarioSide,
 ): LegendSection[] {
   const sections: LegendSection[] = LEGEND_GROUPS.map((g) => ({
     title: g.title,
     items: g.keys.filter((k) => layers[k]).flatMap((k) => rowsFor(k, zoom)),
   })).filter((s) => s.items.length > 0);
   if (scenarioNoun !== undefined) {
-    sections.push({ title: "Scenario", items: scenarioLegend(scenarioNoun, layers, scenarioKind) });
+    sections.push({
+      title: "Scenario",
+      items: scenarioLegend(scenarioNoun, layers, scenarioKind, scenarioView),
+    });
   }
   return sections;
 }

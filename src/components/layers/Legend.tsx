@@ -12,6 +12,7 @@ import {
   type LegendItem,
   type Rgba,
   type ScenarioKind,
+  type ScenarioSide,
   type Swatch,
 } from "@/lib/symbology";
 import type { LayerState } from "./LayerPanel";
@@ -22,6 +23,8 @@ export interface LegendProps {
   readonly scenarioNoun?: string | undefined;
   /** The active scenario's kind — adds the disruption mark's row (S1). */
   readonly scenarioKind?: ScenarioKind | undefined;
+  /** T1: the side the scenario panel lists; only the asset row reads it. */
+  readonly scenarioView?: ScenarioSide | undefined;
   /**
    * "inline" (default) renders bare rows for embedding in another panel;
    * "card" wraps them in their own quiet card for a free-standing placement.
@@ -123,8 +126,11 @@ export function legendItems(
   scenarioNoun?: string,
   zoom?: number,
   scenarioKind?: ScenarioKind,
+  scenarioView?: ScenarioSide,
 ): LegendItem[] {
-  return legendSections(layers, scenarioNoun, zoom, scenarioKind).flatMap((s) => s.items);
+  return legendSections(layers, scenarioNoun, zoom, scenarioKind, scenarioView).flatMap(
+    (s) => s.items,
+  );
 }
 
 function Row({ item }: { readonly item: LegendItem }) {
@@ -157,10 +163,22 @@ function useHydrated(): boolean {
   );
 }
 
-export function Legend({ layers, scenarioNoun, scenarioKind, variant = "inline" }: LegendProps) {
+export function Legend({
+  layers,
+  scenarioNoun,
+  scenarioKind,
+  scenarioView,
+  variant = "inline",
+}: LegendProps) {
   const { zoom } = useMapView();
   const hydrated = useHydrated();
-  const sections = legendSections(layers, scenarioNoun, hydrated ? zoom : undefined, scenarioKind);
+  const sections = legendSections(
+    layers,
+    scenarioNoun,
+    hydrated ? zoom : undefined,
+    scenarioKind,
+    scenarioView,
+  );
   const card =
     variant === "card"
       ? "rounded-lg border border-panel-border bg-panel p-3 shadow-sm backdrop-blur"

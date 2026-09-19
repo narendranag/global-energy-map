@@ -334,6 +334,7 @@ function HomeInner() {
           // the same ramp shades who loses the outlet, so only the noun moves.
           scenarioNoun={scenarioId !== null ? sideNoun(commodity, view) : undefined}
           scenarioKind={scenarioDef?.kind}
+          scenarioView={scenarioId !== null ? view : undefined}
           defaultOpen={layersOpenByDefault(mode)}
           embedded={embed}
         />

@@ -27,9 +27,29 @@ export interface ScenarioInput {
   readonly lngImports?: readonly LngImportRow[];
   /** Phase 6: LNG-T3 voyages, already pre-filtered by active year. */
   readonly lngVoyages?: readonly LngVoyageRow[];
+  /**
+   * How much of the route is cut, 0–1. Default 1 = the full closure the
+   * route shares describe. Values outside [0, 1] are clamped and a non-finite
+   * value falls back to 1, so a bad URL parameter cannot invent exposure.
+   */
+  readonly severity?: number;
+}
+
+/** `severity` as the engine uses it: finite, in [0, 1], default 1. */
+export function clampSeverity(severity: number | undefined): number {
+  if (severity === undefined || !Number.isFinite(severity)) return 1;
+  return Math.min(1, Math.max(0, severity));
 }
 
 export function computeScenarioImpact(input: ScenarioInput): ScenarioResult {
+  /**
+   * Severity multiplies the route share, not the flow: a half-closure cuts
+   * half of the barrels that the route carries, and leaves the rest of the
+   * importer's supply (its total, the denominator of `shareAtRisk`) alone.
+   * Every downstream view — refineries, LNG terminals — reads the same
+   * multiplied share, so they scale with it for free.
+   */
+  const severity = clampSeverity(input.severity);
   // Filter routes to this scenario only
   const scenarioRoutes = input.routes.filter((r) => r.disruption_id === input.scenarioId);
 
@@ -44,7 +64,8 @@ export function computeScenarioImpact(input: ScenarioInput): ScenarioResult {
     }
   }
   const lookupShare = (exporter: string, importer: string): number => {
-    return sharePerPair.get(`${exporter}→${importer}`) ?? sharePerExporter.get(exporter) ?? 0;
+    const share = sharePerPair.get(`${exporter}→${importer}`) ?? sharePerExporter.get(exporter) ?? 0;
+    return share * severity;
   };
 
   // Per-importer pass + remember flow rows for refinery view
@@ -113,6 +134,7 @@ export function computeScenarioImpact(input: ScenarioInput): ScenarioResult {
     scenarioId: input.scenarioId,
     commodity: input.commodity,
     year: input.year,
+    severity,
     byImporter,
     rankedImporters,
     byRefinery,

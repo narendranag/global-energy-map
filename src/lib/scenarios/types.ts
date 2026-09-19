@@ -107,6 +107,13 @@ export interface ScenarioResult {
   readonly scenarioId: ScenarioId;
   readonly commodity: Commodity;
   readonly year: number;
+  /**
+   * S5: the severity the engine actually used (clamped to [0, 1], 1 when the
+   * caller passed none). Optional so results built before S5 — and the test
+   * fixtures that stand in for them — still typecheck; `computeScenarioImpact`
+   * always sets it.
+   */
+  readonly severity?: number;
   readonly byImporter: readonly ImporterImpact[];
   readonly rankedImporters: readonly ImporterImpact[];
   readonly byRefinery: readonly RefineryImpact[];

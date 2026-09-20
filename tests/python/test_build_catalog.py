@@ -98,7 +98,7 @@ def test_citations_sidecar_is_current():
     """Re-run `uv run python -m scripts.transform.build_catalog` if this fails."""
     on_disk = json.loads(bc.CITATIONS_OUT.read_text())
     assert on_disk == bc.build_citations()
-    assert len(on_disk["scenario_shares"]) == 521  # see test_disruption_routing.py
+    assert len(on_disk["scenario_shares"]) == 522  # see test_disruption_routing.py
 
 
 def test_table_schema_sidecar_is_current():

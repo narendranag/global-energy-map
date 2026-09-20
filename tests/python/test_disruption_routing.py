@@ -79,10 +79,12 @@ EXPECTED_SHARES[("turkish_straits", "KAZ", "BGR")] = 0.00
 EXPECTED_SHARES[("turkish_straits", "KAZ", "ROU")] = 0.00
 EXPECTED_SHARES[("turkish_straits", "KAZ", "CHN")] = 0.00
 # Final review #7: landlocked/overland buyers of Kazakh crude that
-# demonstrably avoid the Straits. Germany is deliberately NOT here: its KEBCO
-# via Druzhba is real but began only in Feb 2023 and is ~1.0-1.5 Mt/y against
-# BACI's 3.1 Mt (2023) / 4.3 Mt (2024), so a share-0 pair would understate
-# every pre-2023 year by the full 2.0-2.7 Mt (reverted 2026-09-20).
+# demonstrably avoid the Straits.
+# Germany is a partial carve-out, not a zero: KEBCO via Druzhba began only in
+# Feb 2023 and runs ~1.0-1.5 Mt/y against BACI's 3.1 Mt (2023) / 4.3 Mt (2024),
+# so ~2/3 of German volumes still transit. Interim estimate (0.80 x ~0.66)
+# pending a year-aware share; see the row's source_note.
+EXPECTED_SHARES[("turkish_straits", "KAZ", "DEU")] = 0.53
 EXPECTED_SHARES[("turkish_straits", "KAZ", "UZB")] = 0.00
 EXPECTED_SHARES[("turkish_straits", "KAZ", "KGZ")] = 0.00
 

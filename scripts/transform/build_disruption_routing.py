@@ -65,6 +65,11 @@ EIA_CASPIAN = (
     "https://www.eia.gov/international/content/analysis/regions_of_interest/caspian_sea/",
     2025,
 )
+KAZ_DEU_DRUZHBA = (
+    "Reuters, 'Russia to halt Kazakhstan's oil flows to Germany via Druzhba, sources say'",
+    "https://www.reuters.com/business/energy/russia-halt-kazakhstans-oil-flows-germany-via-druzhba-sources-say-2026-04-21",
+    2026,
+)
 EIA_MALACCA = (
     "EIA, World Oil Transit Chokepoints: Strait of Malacca",
     "https://www.eia.gov/todayinenergy/detail.php?id=32452",
@@ -623,14 +628,7 @@ TURKISH_STRAITS = [
         "crude then transits the Turkish Straits, since the Black Sea has no other sea exit. "
         "Turkey's Izmit (Marmara) refinery transits only the Bosporus, while EIA's own series "
         "is labelled 'Turkish Straits (Dardanelles)' - a nuance this share does not attempt "
-        "to resolve. Caveat (2026-09-20): a part of Kazakhstan's crude to inland Europe moves "
-        "overland instead - KEBCO to Germany's PCK Schwedt runs Uzen-Atyrau-Samara into "
-        "Druzhba, never touching a tanker. That flow began only in February 2023 and runs "
-        "~1.0-1.5 Mt/y against BACI's 3.1 Mt (2023) and 4.3 Mt (2024) of KAZ->DEU crude, so "
-        "the majority still arrives seaborne or via TAL from Trieste on CPC blend that does "
-        "transit the Straits. This wildcard therefore overstates Germany 2023-24 by roughly "
-        "a third; zeroing the pair was tried and rejected, because it understated every "
-        "pre-2023 year by the full 2.0-2.7 Mt.",
+        "to resolve. Germany is carved out below.",
     ),
     _row(
         "turkish_straits",
@@ -664,6 +662,34 @@ TURKISH_STRAITS = [
         EIA_CASPIAN,
         "Structural: Kazakh crude to China moves by the Kazakhstan-China pipeline "
         "(Atasu-Alashankou), not by sea, so it never reaches Novorossiysk or the Straits.",
+    ),
+    # INTERIM (2026-09-20, maintainer's call). Germany is the one Turkish
+    # Straits buyer with a material overland alternative, so it gets a partial
+    # share rather than the 0.80 wildcard or the share-0 row that shipped on
+    # 2026-09-19 and was reverted the next day. Replace this with a year-aware
+    # share (1.00 through 2022, ~0.65 from 2023) once `disruption_route`
+    # carries activeYears per row - the same schema change Kirkuk-Ceyhan waits
+    # on. Until then one number has to cover both regimes, and it is an
+    # estimate, not a sourced figure.
+    _row(
+        "turkish_straits",
+        "chokepoint",
+        "KAZ",
+        "DEU",
+        0.53,
+        SRC_IEA_PIPELINE,
+        KAZ_DEU_DRUZHBA,
+        "ESTIMATE, not a published share - interim pending a year-aware share. Germany takes "
+        "Kazakh crude by two routes. KEBCO to PCK Schwedt runs overland (Uzen-Atyrau-Samara "
+        "into Druzhba's northern spur) and never sees a tanker; the rest arrives seaborne or "
+        "via the TAL pipeline from Trieste, fed by CPC blend that does transit the Bosporus "
+        "and Dardanelles. The overland leg began only in February 2023 and runs ~1.0-1.5 Mt/y "
+        "against BACI's 3.1 Mt (2023) and 4.3 Mt (2024) of KAZ->DEU crude, so roughly "
+        "two-thirds of recent German volumes still transit the Straits; before 2023 "
+        "essentially all of it did (2.0-2.7 Mt/y, 2018-2022). Derived as the 0.80 exporter "
+        "wildcard x ~0.66 non-overland = 0.53. This understates 1995-2022, when the true "
+        "value is nearer the full wildcard, and is close to right for 2023-24. A share-0 pair "
+        "would be wrong in every year: it deletes an exposure Germany demonstrably had.",
     ),
     _row(
         "turkish_straits",

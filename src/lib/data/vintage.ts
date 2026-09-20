@@ -165,3 +165,67 @@ export function formatSpan(span: CoverageSpan): string {
   const sep = span.grain === "year" ? "–" : " – ";
   return `${formatPeriod(span.from, span.grain)}${sep}${formatPeriod(span.through, span.grain)}`;
 }
+
+/**
+ * Catalog labels carry a trailing parenthetical naming the release
+ * ("... (EIA STEO history)"), which is what the /methodology table wants and
+ * what a four-line intro card cannot afford. Only a trailing one is dropped.
+ */
+function shortLabel(label: string): string {
+  return label.replace(/\s*\([^()]*\)\s*$/, "").trim();
+}
+
+/** One source whose data runs past the end of the year slider. */
+export interface HorizonEntry {
+  readonly id: string;
+  readonly label: string;
+  /** Already formatted for display: "2025", "May 2026", "17 Sep 2026". */
+  readonly through: string;
+  /** ISO date the data actually ends, for sorting and tests. */
+  readonly dataEnd: string;
+}
+
+export interface CoverageHorizon {
+  readonly timeline: { readonly from: number; readonly through: number };
+  /** Runtime sources ending after the timeline, newest first. */
+  readonly beyond: readonly HorizonEntry[];
+}
+
+/**
+ * What the year slider covers, and what the map holds beyond it.
+ *
+ * The slider stops at the last reconciled BACI year because the scenario
+ * engine is anchored on bilateral trade, but several layers are more current
+ * than that and deliberately ignore the slider (GIE is daily, Comtrade
+ * monthly, EI production and EIA STEO run a year further). Saying only
+ * "1990-2024" therefore tells a first-time reader something false about the
+ * data, which is what this exists to prevent. Derived from the catalog, so a
+ * refresh moves the sentence without anyone editing it.
+ */
+export function coverageHorizon(
+  catalog: Catalog,
+  from: number,
+  through: number,
+): CoverageHorizon {
+  const timelineEnd = `${through.toString()}-12-31`;
+  const newest = new Map<string, HorizonEntry>();
+  for (const e of catalog.entries) {
+    if (e.runtime === false) continue;
+    for (const span of e.coverage ?? []) {
+      const end = periodEnd(span.through, span.grain);
+      if (end <= timelineEnd) continue;
+      const prev = newest.get(e.id);
+      if (prev && prev.dataEnd >= end) continue;
+      newest.set(e.id, {
+        id: e.id,
+        label: shortLabel(e.label),
+        through: formatPeriod(span.through, span.grain),
+        dataEnd: end,
+      });
+    }
+  }
+  const beyond = [...newest.values()].toSorted((a, b) =>
+    a.dataEnd < b.dataEnd ? 1 : a.dataEnd > b.dataEnd ? -1 : 0,
+  );
+  return { timeline: { from, through }, beyond };
+}

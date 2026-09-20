@@ -2,8 +2,19 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useSearchParams } from "next/navigation";
 import { EXAMPLE_QUESTIONS, type ExampleQuestion } from "@/lib/modes";
+import { BUNDLED_CATALOG } from "@/lib/data-catalog/bundled";
+import { coverageHorizon } from "@/lib/data/vintage";
+import { YEAR_MAX, YEAR_MIN } from "@/lib/time/range";
 
 export const INTRO_DISMISSED_KEY = "gem.intro.dismissed.v1";
+
+/**
+ * Computed once from the bundled catalog: a data refresh moves these dates
+ * with no edit here, which is the point - the old copy hard-coded
+ * "1990-2024" and so told a first-time reader the map stopped at 2024 when
+ * four of its layers run past it.
+ */
+const HORIZON = coverageHorizon(BUNDLED_CATALOG, YEAR_MIN, YEAR_MAX);
 
 /**
  * Returns true if the search string contains any explicit state parameters
@@ -120,8 +131,9 @@ export function IntroCard({ onPick }: IntroCardProps) {
           terminal for its value, year and source.
         </li>
         <li>
-          <span className="font-medium text-slate-900">Slide through time</span>, 1990–2024 — the
-          badges in the Layers panel say which layers respond.
+          <span className="font-medium text-slate-900">Slide through time</span>,{" "}
+          {HORIZON.timeline.from}–{HORIZON.timeline.through} — the badges in the Layers panel say
+          which layers respond.
         </li>
         <li>
           <span className="font-medium text-slate-900">Pick a disruption</span> in Scenarios to see
@@ -133,6 +145,33 @@ export function IntroCard({ onPick }: IntroCardProps) {
           the same files on the Query page.
         </li>
       </ul>
+      {HORIZON.beyond.length > 0 && (
+        <div className="mt-3 rounded border border-slate-200 bg-slate-50 p-2" data-testid="intro-coverage">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+            How current the data is
+          </p>
+          <p className="mt-1 text-[12px] leading-snug text-slate-700">
+            The timeline ends at {HORIZON.timeline.through}, the last year of reconciled bilateral
+            trade (BACI) that the scenarios are built on. These layers are newer and ignore the
+            slider:
+          </p>
+          <ul className="mt-1 space-y-0.5 text-[12px] leading-snug text-slate-700">
+            {HORIZON.beyond.map((b) => (
+              <li key={b.id} className="flex justify-between gap-2">
+                <span className="min-w-0 truncate">{b.label}</span>
+                <span className="shrink-0 tabular-nums font-medium text-slate-900">{b.through}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1 text-[11px] leading-snug text-slate-600">
+            Full dates and update cadence on the{" "}
+            <a className="underline hover:text-slate-900" href="/methodology#how-current-each-layer-is">
+              Methodology
+            </a>{" "}
+            page.
+          </p>
+        </div>
+      )}
       <p className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
         Try a question
       </p>

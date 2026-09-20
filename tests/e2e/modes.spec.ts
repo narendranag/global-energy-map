@@ -135,7 +135,11 @@ test.describe("Modes", () => {
     await expect(page.getByRole("tab", { name: "Infrastructure" })).toHaveAttribute("aria-selected", "true");
     await expect(page.getByRole("button", { name: /^Layers\s*2 on$/ })).toBeVisible();
     await expectLayers(page, ["basins", "ports"]);
-    await expect(yearSlider(page)).toHaveValue("2010");
+    // basins and ports are both undated, so the year control collapses to its
+    // chip (see year-relevance.spec.ts). The state a shared link carries is
+    // unchanged - the year is still 2010 and still on screen - only the
+    // control's presentation differs, so this asserts the value, not the input.
+    await expect(page.getByTestId("year-value")).toHaveText("2010");
     // Nothing rewrote the shared layer set.
     await expect.poll(() => param(page, "layers")).toBe("basins,ports");
   });
@@ -163,6 +167,27 @@ test.describe("First-run intro card", () => {
     await page.reload();
     await waitForReady(page);
     await expect(page.getByTestId("intro-card")).toHaveCount(0);
+  });
+
+  // The card used to say only "1990-2024", which reads as "no data after
+  // 2024" when four layers run past the slider. These dates come from the
+  // catalog, so a refresh moves them with no edit to the card.
+  test("says how current the data is, beyond the timeline", async ({ page }) => {
+    await gotoReady(page, "/");
+    const block = page.getByTestId("intro-coverage");
+    await expect(block).toBeVisible();
+    await expect(block).toContainText("EU gas storage");
+    await expect(block).toContainText("Monthly crude + LNG imports");
+    // Dates newer than the slider's last year must be on screen.
+    await expect(block).toContainText("2026");
+    await expect(block).toContainText("2025");
+
+    // The Methodology link must land on a real heading, not a dead anchor.
+    const link = block.getByRole("link", { name: "Methodology" });
+    const href = await link.getAttribute("href");
+    expect(href).toBe("/methodology#how-current-each-layer-is");
+    await page.goto(href ?? "/methodology");
+    await expect(page.locator("#how-current-each-layer-is")).toBeVisible();
   });
 
   test("an example question sets the whole view", async ({ page }) => {

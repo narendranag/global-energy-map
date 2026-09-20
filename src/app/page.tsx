@@ -42,6 +42,7 @@ import { panelPadding, requestInitialFit } from "@/lib/state";
 import { embedControlsHidden, isEmbed } from "@/lib/url-state/embed";
 import { useUrlState } from "@/lib/url-state/useUrlState";
 import { RESERVES_LATEST_YEAR, YEAR_MAX, YEAR_MIN } from "@/lib/time/range";
+import { yearRelevance } from "@/lib/time/relevance";
 
 /** First focusable control inside the scenario panel (its picker). */
 const SCENARIO_PICKER = "select, input, button, [tabindex]:not([tabindex='-1'])";
@@ -470,6 +471,7 @@ function HomeInner() {
             value={year}
             onChange={setYear}
             note={reservesNote}
+            relevance={yearRelevance(layers, scenarioId !== null)}
           />
         )}
         {embed ? <EmbedAttributionBar state={state} /> : <MapFooter />}

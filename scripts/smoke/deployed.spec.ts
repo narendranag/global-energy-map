@@ -1,5 +1,7 @@
-// scripts/smoke/deployed.spec.ts — the deployed map boots end to end: DuckDB
-// + every default layer reach `data-ready`, and a basemap tile arrives.
+// scripts/smoke/deployed.spec.ts — the deployed map boots end to end: every
+// default layer reaches `data-ready`, and a basemap tile arrives. DuckDB is
+// deliberately NOT on this path (it loads only on /query); the HTTP smoke in
+// smoke.mjs HEADs the bundle instead.
 // Run via scripts/smoke/playwright.config.ts (SMOKE_URL); not part of the
 // local e2e suite.
 import { SPEC_TIMEOUT, expect, test, waitForReady } from "../../tests/e2e/helpers";

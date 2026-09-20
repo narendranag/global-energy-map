@@ -218,6 +218,23 @@ async function checkRange(path, bytes, sha256) {
   }
 }
 
+/**
+ * `/query` lazily loads DuckDB-WASM from our own origin. The page rendering is
+ * not enough: if the bundle 404s the console is dead on arrival. A HEAD is all
+ * we need — actually running WASM is what tests/e2e/query.spec.ts is for, and
+ * the smoke run's budget should not pay for it.
+ */
+async function checkAsset(path, name) {
+  try {
+    const res = await get(path, { method: "HEAD" });
+    const len = Number(res.headers.get("content-length") ?? 0);
+    const ok = res.status === 200 && len > 0;
+    record(ok, name, `HEAD ${res.status}, ${len.toLocaleString()} bytes, content-type: ${res.headers.get("content-type") ?? "—"}`);
+  } catch (err) {
+    record(false, name, String(err));
+  }
+}
+
 async function main() {
   console.log(`Smoke-testing ${BASE}${BYPASS ? " (with protection bypass)" : ""}`);
   if (await checkProtection()) {
@@ -227,6 +244,8 @@ async function main() {
   await checkPage("/", "Global Energy Map");
   await checkPage("/methodology", "Methodology");
   await checkPage("/data", "Global Energy Map");
+  await checkPage("/query", "Query console");
+  await checkAsset("/duckdb/duckdb-eh.wasm", "DuckDB bundle");
 
   const entries = await loadCatalog();
   if (entries) {

@@ -30,7 +30,12 @@ export interface SiteCitation {
 export interface ShareCitation {
   readonly disruption_id: string;
   readonly kind: string;
-  readonly exporter_iso3: string;
+  /**
+   * null = the importer-wide (inbound) wildcard — S5's mirror of the
+   * exporter-wide row. Widened here (review finding 1) so every consumer
+   * formats it through `pairLabel` instead of printing "null → KWT".
+   */
+  readonly exporter_iso3: string | null;
   /** null = applies to every importer of this exporter. */
   readonly importer_iso3: string | null;
   readonly share: number;

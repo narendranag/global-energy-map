@@ -11,6 +11,7 @@ import {
   scenarioSelect,
   test,
   waitForReady,
+  yearSlider,
 } from "./helpers";
 
 test.setTimeout(SPEC_TIMEOUT);
@@ -26,6 +27,7 @@ const ALL_LAYERS = [
   "gas_pipelines",
   "lng_terminals",
   "lng_voyages",
+  "trade_flows",
 ] as const;
 
 /** Layer panel label per URL key. */
@@ -40,6 +42,7 @@ const LABEL: Record<(typeof ALL_LAYERS)[number], string> = {
   gas_pipelines: "Gas pipelines",
   lng_terminals: "LNG terminals",
   lng_voyages: "LNG voyages",
+  trade_flows: "Trade flows (BACI)",
 };
 
 /** Assert exactly `on` are ticked in the panel (every other layer unticked). */
@@ -66,16 +69,19 @@ test.describe("Modes", () => {
   test("tabs apply their presets and write `mode` to the URL", async ({ page }) => {
     await gotoReady(page, "/?layers=reserves&year=2021");
 
-    // Flows: gas, LNG layers incl. voyages; 2021 is inside 2020–2024 so it stays.
+    // Flows: gas, LNG terminals + gas pipelines + trade flows (BACI); 2021 is
+    // inside BACI's 1995–2024 so it stays (lng_voyages is off by default here
+    // — S2 dropped it from the preset since it and trade_flows draw
+    // overlapping arcs for the same commodity; it stays a manual toggle).
     await selectTab(page, "Flows");
     await expect(page.locator("main")).toHaveAttribute("data-mode", "flows");
     await expect(page.getByRole("button", { name: "Gas" })).toHaveAttribute("aria-pressed", "true");
-    await expect(page.locator('input[type="range"]')).toHaveValue("2021");
+    await expect(yearSlider(page)).toHaveValue("2021");
     await expect(page).toHaveURL(/mode=flows/);
-    expect(param(page, "layers")).toBe("gas_pipelines,lng_terminals,lng_voyages");
+    expect(param(page, "layers")).toBe("gas_pipelines,lng_terminals,trade_flows");
     await expect(page.getByRole("button", { name: /^Layers\s*3 on$/ })).toHaveAttribute("aria-expanded", "false");
     await openLayers(page);
-    await expectLayers(page, ["gas_pipelines", "lng_terminals", "lng_voyages"]);
+    await expectLayers(page, ["gas_pipelines", "lng_terminals", "trade_flows"]);
     await waitForReady(page);
 
     // Scenarios: the picker appears and takes focus; reserves carries the ramp.
@@ -114,11 +120,11 @@ test.describe("Modes", () => {
     await gotoReady(page, "/?mode=flows");
     await expect(page.getByRole("tab", { name: "Flows" })).toHaveAttribute("aria-selected", "true");
     await expect(page.getByRole("button", { name: "Gas" })).toHaveAttribute("aria-pressed", "true");
-    await expectLayers(page, ["gas_pipelines", "lng_terminals", "lng_voyages"]);
+    await expectLayers(page, ["gas_pipelines", "lng_terminals", "trade_flows"]);
 
     await gotoReady(page, "/?mode=flows&year=2015&commodity=oil&layers=reserves");
     await expect(page.getByRole("tab", { name: "Flows" })).toHaveAttribute("aria-selected", "true");
-    await expect(page.locator('input[type="range"]')).toHaveValue("2015");
+    await expect(yearSlider(page)).toHaveValue("2015");
     await expect(page.getByRole("button", { name: "Oil" })).toHaveAttribute("aria-pressed", "true");
     await expectLayers(page, ["reserves"]);
   });
@@ -129,7 +135,7 @@ test.describe("Modes", () => {
     await expect(page.getByRole("tab", { name: "Infrastructure" })).toHaveAttribute("aria-selected", "true");
     await expect(page.getByRole("button", { name: /^Layers\s*2 on$/ })).toBeVisible();
     await expectLayers(page, ["basins", "ports"]);
-    await expect(page.locator('input[type="range"]')).toHaveValue("2010");
+    await expect(yearSlider(page)).toHaveValue("2010");
     // Nothing rewrote the shared layer set.
     await expect.poll(() => param(page, "layers")).toBe("basins,ports");
   });
@@ -139,7 +145,8 @@ test.describe("First-run intro card", () => {
   test.use({ showIntro: true });
 
   test("shows on a first visit; Escape dismisses it for good", async ({ page }) => {
-    await gotoReady(page, "/?layers=");
+    // A bare / still shows the intro card (no explicit state params).
+    await gotoReady(page, "/");
     const card = page.getByTestId("intro-card");
     await expect(card).toBeVisible();
     await expect(card.getByRole("heading", { name: "What this map can answer" })).toBeVisible();
@@ -159,15 +166,19 @@ test.describe("First-run intro card", () => {
   });
 
   test("an example question sets the whole view", async ({ page }) => {
-    await gotoReady(page, "/?layers=");
+    // A bare / still shows the intro card (no explicit state params).
+    await gotoReady(page, "/");
     const card = page.getByTestId("intro-card");
     await clickUntil(card.getByTestId("example-qatar-lng-2023"), async () => {
       await expect(card).toHaveCount(0, { timeout: 2_000 });
     });
     await expect(page.locator("main")).toHaveAttribute("data-mode", "flows");
-    await expect(page.locator('input[type="range"]')).toHaveValue("2023");
+    await expect(yearSlider(page)).toHaveValue("2023");
     await expect(page.getByRole("button", { name: "Gas" })).toHaveAttribute("aria-pressed", "true");
     await expect(page).toHaveURL(/mode=flows/);
+    // Focused on Qatar so the trade-flows layer shows all of its LNG trade,
+    // not just whichever pairs make the world top 150.
+    await expect(page).toHaveURL(/focus=QAT/);
     await waitForReady(page);
   });
 });

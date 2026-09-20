@@ -13,6 +13,7 @@ import {
   SAUDI_POINTS,
   test,
   waitForReady,
+  yearSlider,
 } from "./helpers";
 
 test.setTimeout(SPEC_TIMEOUT);
@@ -74,7 +75,7 @@ test.describe("Map", () => {
     await expect(headerLink(page, "Data")).toHaveAttribute("href", "/data");
     await expect(page.locator("main")).toHaveAttribute("data-mode", "infrastructure");
 
-    await expect(page.locator('input[type="range"]')).toBeVisible();
+    await expect(yearSlider(page)).toBeVisible();
     // No scenario picker outside Scenarios mode (and no scenario in the URL).
     await expect(page.getByRole("combobox", { name: "Scenario" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Oil" })).toHaveAttribute("aria-pressed", "true");

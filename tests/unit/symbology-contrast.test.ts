@@ -10,8 +10,18 @@
 import { describe, expect, it } from "vitest";
 import {
   BASIN_LINE,
+  COUNTRY_OUTLINE_COLOR,
+  COUNTRY_OUTLINE_MIN_PX,
+  DISRUPTION_COLOR,
+  DISRUPTION_HALO_COLOR,
+  DISRUPTION_MUTED_COLOR,
   EXTRACTION_FILL,
   EXTRACTION_LINE,
+  HOVER_OUTLINE_COLOR,
+  FOCUS_HALO_COLOR,
+  FOCUS_HALO_MIN_PX,
+  FOCUS_OUTLINE_COLOR,
+  FOCUS_OUTLINE_MIN_PX,
   LNG_TERMINAL_COLOR,
   PALETTE,
   PORT_COLOR,
@@ -27,6 +37,8 @@ import {
   reservesRampColor,
   shaleRampColor,
   recentImportsRampColor,
+  tradeFlowSourceColor,
+  tradeFlowTargetColor,
   type Rgb,
   type Rgba,
 } from "@/lib/symbology";
@@ -56,6 +68,10 @@ const MARKS = {
   lngTerminal: onLand(LNG_TERMINAL_COLOR),
   voyageExport: onLand(VOYAGE_EXPORT_END),
   voyageImport: onLand(VOYAGE_IMPORT_END),
+  tradeFlowOilFrom: onLand(tradeFlowSourceColor("oil", "focus")),
+  tradeFlowOilTo: onLand(tradeFlowTargetColor("oil", "focus")),
+  tradeFlowGasFrom: onLand(tradeFlowSourceColor("gas", "focus")),
+  tradeFlowGasTo: onLand(tradeFlowTargetColor("gas", "focus")),
   port: onLand(PORT_COLOR),
   basinLine: onLand(BASIN_LINE),
   atRiskLow: onLand(atRiskColor(0.05)),
@@ -135,6 +151,100 @@ describe("US shale regions (EIA) as ground", () => {
   });
 });
 
+describe("the focus outline reads on every ground it can be drawn over", () => {
+  // A *cased* line: white halo, near-black line on top. One colour cannot
+  // clear 3:1 on both the pale basemap and a fully exposed country's
+  // near-#990000 fill, so the contract is (a) on every ground at least one of
+  // the two reads, and (b) the two read against each other. The outline is
+  // the only thing that says which country is selected, so it is held to
+  // WCAG 1.4.11's full 3:1 — not the 2–2.5:1 the identity marks settle for.
+  const line = over(FOCUS_OUTLINE_COLOR, LAND);
+  const halo = over(FOCUS_HALO_COLOR, LAND);
+  const GROUNDS: readonly (readonly [string, Rgb])[] = [
+    ["basemap land", LAND],
+    ["basemap water", WATER],
+    ["reserves top", RESERVES_TOP],
+    ["muted reserves top (scenario active)", RESERVES_MUTED_TOP],
+    ["shale crude top", over(shaleRampColor(1, "oil"), LAND)],
+    ["shale gas top", over(shaleRampColor(1, "gas"), LAND)],
+    ["recent imports crude top", over(recentImportsRampColor(1, "oil"), LAND)],
+    ["recent imports gas top", over(recentImportsRampColor(1, "gas"), LAND)],
+    ["exposure top (scenario)", over(exposureColor(1) ?? [0, 0, 0, 0], LAND)],
+  ];
+
+  it.each(GROUNDS)("one of halo/line clears 3:1 on %s", (name, ground) => {
+    const c = Math.max(contrast(line, ground), contrast(halo, ground));
+    note({
+      pair: `focus outline / ${name}`,
+      contrast: r2(contrast(line, ground)),
+      halo: r2(contrast(halo, ground)),
+    });
+    expect(c).toBeGreaterThanOrEqual(3);
+  });
+
+  it("the casing reads against its own halo", () => {
+    expect(contrast(line, halo)).toBeGreaterThanOrEqual(3);
+  });
+
+  it("is a neutral, not a hue any family owns", () => {
+    for (const role of ["focusOutline", "focusHalo"] as const) {
+      expect(oklch(hexToRgb(PALETTE[role]))[1]).toBeLessThan(0.05);
+    }
+  });
+
+  it("is clearly heavier than the basemap's own country borders", () => {
+    expect(FOCUS_OUTLINE_MIN_PX).toBeGreaterThanOrEqual(2 * COUNTRY_OUTLINE_MIN_PX);
+    expect(FOCUS_HALO_MIN_PX).toBeGreaterThan(FOCUS_OUTLINE_MIN_PX);
+    expect(contrast(line, LAND)).toBeGreaterThan(contrast(over(COUNTRY_OUTLINE_COLOR, LAND), LAND));
+  });
+});
+
+describe("the disruption mark and cut route (S1)", () => {
+  // The mark sits on a chokepoint — i.e. over water at least as often as over
+  // land — and on the cut pipeline it is drawn over whatever the route
+  // crosses. Its ring is its edge, so it is held to WCAG 1.4.11's 3:1, on a
+  // white casing that carries it over the dark exposure fills.
+  const mark = over(DISRUPTION_COLOR, LAND);
+  const markOnWater = over(DISRUPTION_COLOR, WATER);
+  const halo = over(DISRUPTION_HALO_COLOR, LAND);
+  const muted = over(DISRUPTION_MUTED_COLOR, LAND);
+
+  it("clears 3:1 on basemap land and on water", () => {
+    note({ pair: "disruption mark / land", contrast: r2(contrast(mark, LAND)), water: r2(contrast(markOnWater, WATER)) });
+    expect(contrast(mark, LAND)).toBeGreaterThanOrEqual(3);
+    expect(contrast(markOnWater, WATER)).toBeGreaterThanOrEqual(3);
+  });
+
+  it("reads against its own white casing", () => {
+    expect(contrast(mark, halo)).toBeGreaterThanOrEqual(3);
+  });
+
+  it("stands apart from the exposure fills it explains", () => {
+    // Cause vs consequence: the mark must not be mistaken for a dark
+    // importer fill under it.
+    const exposureTop = over(exposureColor(1) ?? [0, 0, 0, 0], LAND);
+    note({ pair: "disruption mark / exposure top", dE: r1(deltaE(mark, exposureTop)) });
+    expect(deltaE(mark, exposureTop)).toBeGreaterThanOrEqual(10);
+  });
+
+  it("the muted (inactive-year) mark still reads, and reads as quieter", () => {
+    expect(contrast(muted, LAND)).toBeGreaterThanOrEqual(2);
+    expect(oklch(DISRUPTION_MUTED_COLOR.slice(0, 3) as unknown as Rgb)[1]).toBeLessThan(
+      oklch(DISRUPTION_COLOR.slice(0, 3) as unknown as Rgb)[1],
+    );
+  });
+});
+
+describe("the hover highlight (S1) is distinct from the focus outline", () => {
+  it("its edge reads on the pale basemap", () => {
+    expect(contrast(over(HOVER_OUTLINE_COLOR, LAND), LAND)).toBeGreaterThanOrEqual(3);
+  });
+
+  it("is lighter than the selection it can share the screen with", () => {
+    expect(HOVER_OUTLINE_COLOR[3]).toBeLessThan(FOCUS_OUTLINE_COLOR[3]);
+  });
+});
+
 describe("recent imports (Comtrade) as ground", () => {
   it("pipelines keep contrast on the darkest import fills", () => {
     const oilTop = over(recentImportsRampColor(1, "oil"), LAND);
@@ -163,6 +273,12 @@ const PAIRS: readonly (readonly [Mark | "reservesTop" | "reservesMid", Mark | "r
   ["gasPipeline", "reservesTop", 15, 12, "gas line on the darkest reserves"],
   ["lngTerminal", "reservesTop", 15, 12, "LNG glyph on the darkest reserves"],
   ["refinery", "reservesMid", 10, 8, "amber refinery on mid reserves (outline adds edge)"],
+  // Trade-flow arc ends: oil vs gas must read apart (hue is the only cue,
+  // same as the pipelines), and each commodity's dark (importer) end must
+  // not be mistaken for its own light (exporter) end.
+  ["tradeFlowOilTo", "tradeFlowGasTo", 15, 12, "oil vs gas trade-flow arcs — hue is the only cue"],
+  ["tradeFlowOilFrom", "tradeFlowOilTo", 12, 8, "trade-flow arc direction: light exporter end vs dark importer end"],
+  ["tradeFlowGasFrom", "tradeFlowGasTo", 12, 8, "trade-flow arc direction: light exporter end vs dark importer end"],
 ];
 
 const GROUND: Partial<Record<string, Rgb>> = { ...MARKS, reservesTop: RESERVES_TOP, reservesMid: RESERVES_MID };
@@ -184,11 +300,18 @@ describe("identity: ΔE between key mark pairs (normal / protan / deutan)", () =
 describe("hue families", () => {
   const hue = (hex: string) => oklch(hexToRgb(hex))[2];
   it("oil marks are warm, gas marks are cool, reserves sit between", () => {
-    for (const k of ["oilPipeline", "refinery", "extraction", "storage"] as const) {
+    for (const k of ["oilPipeline", "refinery", "extraction", "storage", "tradeFlowOilFrom", "tradeFlowOilTo"] as const) {
       expect(hue(PALETTE[k])).toBeGreaterThan(40);
       expect(hue(PALETTE[k])).toBeLessThan(90);
     }
-    for (const k of ["gasPipeline", "lngTerminal", "voyageExport", "voyageImport"] as const) {
+    for (const k of [
+      "gasPipeline",
+      "lngTerminal",
+      "voyageExport",
+      "voyageImport",
+      "tradeFlowGasFrom",
+      "tradeFlowGasTo",
+    ] as const) {
       expect(hue(PALETTE[k])).toBeGreaterThan(190);
       expect(hue(PALETTE[k])).toBeLessThan(275);
     }
@@ -198,7 +321,14 @@ describe("hue families", () => {
   });
 
   it("red (hue < 40°, chroma > 0.1) is used only by scenario colours", () => {
-    const scenario = new Set(["exposureLow", "exposureHigh", "atRiskLow", "atRiskHigh"]);
+    const scenario = new Set([
+      "exposureLow",
+      "exposureHigh",
+      "atRiskLow",
+      "atRiskHigh",
+      // S1: the mark that says *where* the scenario happens is scenario red too.
+      "disruptionMark",
+    ]);
     for (const [role, hex] of Object.entries(PALETTE)) {
       const [, c, h] = oklch(hexToRgb(hex));
       const red = c > 0.1 && (h < 40 || h > 350);

@@ -70,4 +70,21 @@ test.describe("Runtime error panel", () => {
     });
     await expect(page.getByTestId("app-error")).toHaveCount(0);
   });
+
+  // B7: the country panel is a second reader off the map's critical path. One
+  // of its five sections failing must not replace the whole map.
+  test("a failed country-panel section stays inside the panel", async ({ page }) => {
+    await page.route("**/data/gie_daily.parquet*", (route) => route.abort());
+    await gotoReady(page, "/?focus=DEU&commodity=gas&year=2020&layers=reserves");
+
+    const note = page.getByTestId("country-section-error");
+    await expect(note).toBeVisible({ timeout: 60_000 });
+    await expect(note).toContainText("gas storage");
+    await expect(note.getByRole("button", { name: "Retry" })).toBeVisible();
+
+    // The map, and the rest of the panel, are untouched.
+    await expect(page.getByTestId("app-error")).toHaveCount(0);
+    await expect(page.locator(".maplibregl-canvas")).toBeVisible();
+    await expect(page.getByTestId("country-panel")).toContainText("Germany");
+  });
 });

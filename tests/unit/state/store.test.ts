@@ -24,9 +24,10 @@ const LAYERS: LayerState = {
   gas_storage: false,
   shale_regions: false,
   recent_imports: false,
+  trade_flows: false,
 };
 
-const DEFAULTS: AppState = { mode: "infrastructure", year: 2020, commodity: "oil", scenario: null, layers: LAYERS };
+const DEFAULTS: AppState = { mode: "infrastructure", year: 2020, commodity: "oil", scenario: null, scenario2: null, severity: 1, view: "importers", focus: null, layers: LAYERS };
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -100,6 +101,75 @@ describe("patch semantics", () => {
     store.setView({ lon: 200.123, lat: 89, zoom: 12 });
     expect(store.getView()).toEqual({ lon: -159.88, lat: 85.05, zoom: 8 });
     expect(store.getApp()).toBe(app);
+  });
+});
+
+describe("focus", () => {
+  it("decodes from the querystring and counts as a change", () => {
+    const store = createAppStore({ defaults: DEFAULTS, search: "?focus=JPN" });
+    expect(store.getApp().focus).toBe("JPN");
+    const listener = vi.fn();
+    store.subscribe(listener);
+    store.patch({ focus: "JPN" });
+    expect(listener).not.toHaveBeenCalled();
+    store.patch({ focus: "DEU" });
+    expect(listener).toHaveBeenCalledTimes(1);
+    store.patch({ focus: null });
+    expect(listener).toHaveBeenCalledTimes(2);
+    expect(store.getApp().focus).toBeNull();
+  });
+
+  it("reaches the URL only while set", () => {
+    const writeSearch = vi.fn();
+    const store = createAppStore({ defaults: DEFAULTS, writeSearch });
+    store.patch({ focus: "JPN" });
+    store.flush();
+    expect(new URLSearchParams(writeSearch.mock.calls[0]?.[0] as string).get("focus")).toBe("JPN");
+    store.patch({ focus: null });
+    store.flush();
+    expect(new URLSearchParams(writeSearch.mock.calls[1]?.[0] as string).has("focus")).toBe(false);
+  });
+});
+
+describe("camera commands", () => {
+  const FIT = { kind: "fitBounds", bounds: [129, 31, 146, 46] } as const;
+
+  it("delivers a request to every subscriber, and stops after unsubscribe", () => {
+    const store = createAppStore({ defaults: DEFAULTS });
+    const a = vi.fn();
+    const b = vi.fn();
+    const offA = store.subscribeCamera(a);
+    store.subscribeCamera(b);
+    store.requestCamera(FIT);
+    expect(a).toHaveBeenCalledWith(FIT);
+    expect(b).toHaveBeenCalledWith(FIT);
+    offA();
+    store.requestCamera({ kind: "flyTo", lon: 10, lat: 20, zoom: 5 });
+    expect(a).toHaveBeenCalledTimes(1);
+    expect(b).toHaveBeenCalledTimes(2);
+  });
+
+  it("holds a request posted before the map subscribed, and delivers it once", () => {
+    const store = createAppStore({ defaults: DEFAULTS });
+    store.requestCamera(FIT);
+    const late = vi.fn();
+    store.subscribeCamera(late);
+    expect(late).toHaveBeenCalledWith(FIT);
+    const later = vi.fn();
+    store.subscribeCamera(later);
+    expect(later).not.toHaveBeenCalled();
+  });
+
+  it("is not state: it never touches the view, the snapshot or the URL", () => {
+    const writeSearch = vi.fn();
+    const store = createAppStore({ defaults: DEFAULTS, writeSearch });
+    const app = store.getApp();
+    store.subscribeCamera(vi.fn());
+    store.requestCamera(FIT);
+    vi.advanceTimersByTime(URL_WRITE_DEBOUNCE_MS * 2);
+    expect(store.getApp()).toBe(app);
+    expect(store.getView()).toEqual(DEFAULT_VIEW);
+    expect(writeSearch).not.toHaveBeenCalled();
   });
 });
 
@@ -205,5 +275,53 @@ describe("browser singleton", () => {
     vi.advanceTimersByTime(URL_WRITE_DEBOUNCE_MS);
     expect(window.location.pathname).toBe("/about");
     expect(window.location.search).toBe("");
+  });
+});
+
+describe("embed/controls survive URL rewrites (S7)", () => {
+  it("re-appends embed=1 after a patch, even though it is not part of AppState", () => {
+    const writeSearch = vi.fn();
+    const store = createAppStore({ defaults: DEFAULTS, search: "embed=1" });
+    // AppState never carries embed — it must not leak into getApp().
+    expect(store.getApp()).toEqual(DEFAULTS);
+
+    const store2 = createAppStore({ defaults: DEFAULTS, search: "embed=1", writeSearch: (s) => { writeSearch(s); } });
+    store2.patch({ year: 2023 });
+    store2.flush();
+    expect(writeSearch).toHaveBeenCalledTimes(1);
+    const params = new URLSearchParams(writeSearch.mock.calls[0]?.[0] as string);
+    expect(params.get("year")).toBe("2023");
+    expect(params.get("embed")).toBe("1");
+  });
+
+  it("re-appends both embed=1 and controls=0 across a debounced write", () => {
+    const writeSearch = vi.fn();
+    const store = createAppStore({ defaults: DEFAULTS, search: "embed=1&controls=0", writeSearch });
+    store.patch({ year: 2024 });
+    vi.advanceTimersByTime(URL_WRITE_DEBOUNCE_MS);
+    expect(writeSearch).toHaveBeenCalledTimes(1);
+    const params = new URLSearchParams(writeSearch.mock.calls[0]?.[0] as string);
+    expect(params.get("embed")).toBe("1");
+    expect(params.get("controls")).toBe("0");
+    expect(params.get("year")).toBe("2024");
+  });
+
+  it("writes no embed params when none were present initially", () => {
+    const writeSearch = vi.fn();
+    const store = createAppStore({ defaults: DEFAULTS, search: "", writeSearch });
+    store.patch({ year: 2024 });
+    store.flush();
+    const params = new URLSearchParams(writeSearch.mock.calls[0]?.[0] as string);
+    expect(params.has("embed")).toBe(false);
+    expect(params.has("controls")).toBe(false);
+  });
+
+  it("a reset() (client-side navigation) re-reads embed params from the new search", () => {
+    const writeSearch = vi.fn();
+    const store = createAppStore({ defaults: DEFAULTS, search: "embed=1", writeSearch });
+    store.reset("");
+    store.patch({ year: 2024 });
+    store.flush();
+    expect(new URLSearchParams(writeSearch.mock.calls[0]?.[0] as string).has("embed")).toBe(false);
   });
 });

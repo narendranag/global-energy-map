@@ -1,6 +1,7 @@
 import { GeoJsonLayer } from "@deck.gl/layers";
 import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import type { CountryCollection, CountryProps } from "@/lib/geo/countries";
+import { dataIso3 } from "@/lib/geo/iso3";
 import {
   divergesFromBaci,
   isComplete,
@@ -37,7 +38,7 @@ export function recentImportsFeatures(
         properties: {
           ...f.properties,
           commodity: data.commodity,
-          recent: data.byIso3.get(f.properties.iso3) ?? null,
+          recent: data.byIso3.get(dataIso3(f.properties.iso3)) ?? null,
           baci_year: data.baciYear,
         },
       }),
@@ -95,6 +96,9 @@ export const formatRecentImportsTooltip: TooltipFormatter<RecentImportsFeature> 
     `${what}, ${formatMonth(r.from)} – ${formatMonth(r.through)}: ${mt(r.mt)}`,
     !isComplete(r) &&
       `Only ${r.monthsReported.toString()} of ${RECENT_IMPORTS_WINDOW.toString()} months reported — a partial total, drawn as incomplete`,
+    isComplete(r) &&
+      r.monthsWithImports < RECENT_IMPORTS_WINDOW &&
+      `Cargoes in ${r.monthsWithImports.toString()} of ${RECENT_IMPORTS_WINDOW.toString()} months — reporter filed every month, just none to declare the rest`,
     r.baciMt !== null ? `BACI ${p.baci_year.toString()} (reconciled, annual): ${mt(r.baciMt)}` : `BACI ${p.baci_year.toString()}: none recorded`,
     divergesFromBaci(r) && "More than 2× off BACI — likely a reporting or unit error; check before citing",
     "As reported by the importer, not reconciled; a different measurement from BACI",

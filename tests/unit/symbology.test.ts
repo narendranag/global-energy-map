@@ -133,6 +133,22 @@ describe("legend", () => {
     );
   });
 
+  /**
+   * Finding 9: the exporter view flips the choropleth and its noun, but the
+   * assets keep their importer-side tint. The legend row says so rather than
+   * reading as part of the exporter ramp.
+   */
+  it("marks the asset tint importer-side in the exporter view only", () => {
+    const importerSide = legendItems(only("refineries"), "crude imports", undefined, undefined, "importers");
+    expect(importerSide.some((i) => i.label === "Asset at risk (darker = larger share)")).toBe(true);
+
+    const exporterSide = legendItems(only("refineries"), "crude exports", undefined, undefined, "exporters");
+    const asset = exporterSide.find((i) => i.label.includes("Asset at risk"));
+    expect(asset?.label).toBe("Asset at risk — importer side (darker = larger share)");
+    // The ramp itself still follows the side being listed.
+    expect(exporterSide.some((i) => i.label.includes("Share of crude exports at risk"))).toBe(true);
+  });
+
   it("groups sections by commodity, in a fixed order", () => {
     const all = Object.fromEntries(ALL_LAYER_KEYS.map((x) => [x, true])) as unknown as LayerState;
     expect(legendSections(all, undefined, 6).map((s) => s.title)).toEqual([

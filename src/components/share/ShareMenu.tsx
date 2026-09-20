@@ -5,12 +5,14 @@ import { type KeyboardEvent as ReactKeyboardEvent, type Ref, useCallback, useEff
 import { BUNDLED_CATALOG } from "@/lib/data-catalog/bundled";
 import { loadCountries, countryNameMap } from "@/lib/geo/countries";
 import { voyagesInRange, LNG_T3_FIRST_YEAR, LNG_T3_LAST_YEAR } from "@/lib/data/voyages";
-import { getScenario } from "@/lib/scenarios/registry";
+import { isCurrentScenarioResult } from "@/lib/scenarios/current";
+import { scenarioSummaryParts } from "@/lib/scenarios/summary";
 import type { ScenarioResult } from "@/lib/scenarios/types";
 import { peekAppStore } from "@/lib/state/store";
 import { encodeUrlState, type AppState } from "@/lib/url-state/encode";
 import type { MapView } from "@/lib/state/view";
 import { downloadText, todayIso } from "@/lib/export/browser";
+import { embedSnippet } from "@/lib/export/embed";
 import {
   apaCitation,
   bibtexCitation,
@@ -24,6 +26,7 @@ import {
   layerExportStatus,
   layerTags,
   scenarioTags,
+  TRADE_FLOW_COMMODITY_LABEL,
   type LayerKey,
 } from "@/lib/export/layers";
 import { scenarioCsv, scenarioFilename } from "@/lib/export/scenario";
@@ -194,6 +197,7 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
   const [format, setFormat] = useState<CiteFormat>("view");
   const [status, setStatus] = useState<string>("");
   const [busy, setBusy] = useState<string | null>(null);
+  const [embedHideControls, setEmbedHideControls] = useState(false);
   const headingId = `${id}-title`;
 
   const accessed = todayIso();
@@ -206,15 +210,24 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
   const sources = useMemo(() => {
     if (!app) return [];
     const tags = layers.flatMap((k) => layerTags(k, commodity));
+    // Both scenarios (T1): a combined view's citation that named only the
+    // primary would omit half the route shares the numbers came from.
     if (app.scenario) tags.push(...scenarioTags(app.scenario, commodity));
+    if (app.scenario2) tags.push(...scenarioTags(app.scenario2, commodity));
     return entriesForTags(tags, BUNDLED_CATALOG);
   }, [app, layers, commodity]);
 
-  const scenarioLabel = app?.scenario ? getScenario(app.scenario).label : null;
+  // The same naming the embed chip uses (finding 11): scenario, second
+  // scenario, severity, view — one helper so the two cannot drift.
   const summary = [
     String(year),
     commodity === "gas" ? "gas" : "oil",
-    scenarioLabel ?? "no scenario",
+    ...scenarioSummaryParts({
+      scenario: app?.scenario ?? null,
+      scenario2: app?.scenario2 ?? null,
+      severity: app?.severity ?? 1,
+      view: app?.view ?? "importers",
+    }),
   ].join(" · ");
 
   const citeText =
@@ -230,26 +243,43 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
             sources,
           });
 
-  // The scenario prop can lag the store while the new result computes.
+  // The scenario prop can lag the store while the new result computes. T1:
+  // the second scenario and the severity are part of "this result is the
+  // view", or the CSV would be the previous run's numbers. One shared
+  // comparison with the page and the panel (finding 20).
   const scenarioReady =
-    scenario !== null &&
-    app?.scenario === scenario.scenarioId &&
-    app.year === scenario.year &&
-    app.commodity === scenario.commodity;
+    app !== null &&
+    isCurrentScenarioResult(scenario, {
+      scenario: app.scenario,
+      scenario2: app.scenario2,
+      year: app.year,
+      commodity: app.commodity,
+      severity: app.severity,
+    });
+
+  const scenarioSide = app?.view ?? "importers";
 
   const onScenarioCsv = async () => {
     if (!scenario) return;
     setBusy("scenario");
     try {
       const names = await loadCountries().then(countryNameMap).catch(() => null);
+      // T1: the file follows the side the panel is listing (finding 3) —
+      // exporting a table of importers while the screen ranks exporters is
+      // the one thing a researcher cannot check from the file itself.
       const csv = scenarioCsv(scenario, {
         viewUrl,
         exported: accessed,
         catalog: BUNDLED_CATALOG,
         countryNames: names,
+        view: scenarioSide,
       });
-      downloadText(scenarioFilename(scenario), csv, "text/csv");
-      setStatus("Scenario table downloaded.");
+      downloadText(scenarioFilename(scenario, scenarioSide), csv, "text/csv");
+      setStatus(
+        scenarioSide === "exporters"
+          ? "Scenario table (exporters) downloaded."
+          : "Scenario table downloaded.",
+      );
     } finally {
       setBusy(null);
     }
@@ -260,16 +290,26 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
     if (!st.exportable) return;
     setBusy(`${key}:${ext}`);
     try {
-      const table = await loadLayerTable(key, year);
+      const table = await loadLayerTable(key, year, { commodity, focus: app?.focus ?? null });
       if (!table) {
         setStatus(`${st.label}: nothing to export.`);
         return;
       }
       const ctx = { viewUrl, exported: accessed };
+      // A3: crude and LNG pairs would otherwise share one filename.
+      const commoditySuffix = key === "trade_flows" ? TRADE_FLOW_COMMODITY_LABEL[commodity] : undefined;
       if (ext === "csv") {
-        downloadText(layerFilename(key, year, "csv"), layerCsv(st, table, ctx), "text/csv");
+        downloadText(
+          layerFilename(key, year, "csv", commoditySuffix),
+          layerCsv(st, table, ctx),
+          "text/csv",
+        );
       } else {
-        downloadText(layerFilename(key, year, "geojson"), layerGeoJson(st, table, ctx), "application/geo+json");
+        downloadText(
+          layerFilename(key, year, "geojson", commoditySuffix),
+          layerGeoJson(st, table, ctx),
+          "application/geo+json",
+        );
       }
       setStatus(`${st.label}: ${String(table.rows.length)} rows downloaded (${ext.toUpperCase()}).`);
     } catch (err: unknown) {
@@ -319,6 +359,41 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
         <p className="mt-1 text-2xs text-ink-subtle">
           Includes mode, year, commodity, scenario, layers and map position.
         </p>
+      </section>
+
+      {/* ---- Embed ---- */}
+      <section aria-label="Embed this view" className="mt-4 border-t border-panel-border pt-3">
+        <div className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Embed this view</div>
+        <label className="mt-1.5 flex items-center gap-1.5 text-xs text-ink">
+          <input
+            type="checkbox"
+            checked={embedHideControls}
+            onChange={(e) => {
+              setEmbedHideControls(e.target.checked);
+            }}
+          />
+          Static (hide the year slider and commodity toggle)
+        </label>
+        <pre
+          tabIndex={0}
+          aria-label="Embed code"
+          className="mt-1.5 max-h-32 overflow-auto whitespace-pre-wrap break-words rounded border border-panel-border bg-slate-50 p-2 font-mono text-2xs leading-snug text-ink"
+          data-testid="embed-code"
+        >
+          {embedSnippet(viewUrl, { hideControls: embedHideControls })}
+        </pre>
+        <div className="mt-1.5 flex items-center justify-between gap-2">
+          <span className="text-2xs text-ink-subtle">
+            Keeps the attribution bar (GEM, LNG-T3, NETL, EI, BACI, OSM licences) required by the data.
+          </span>
+          <CopyButton
+            text={() => embedSnippet(viewUrl, { hideControls: embedHideControls })}
+            label="Copy embed code"
+            onCopied={() => {
+              setStatus("Embed code copied.");
+            }}
+          />
+        </div>
       </section>
 
       {/* ---- Cite ---- */}
@@ -379,7 +454,9 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
         <ul className="mt-1.5 space-y-2 text-xs">
           <li>
             <div className="flex items-center justify-between gap-2">
-              <span className="font-medium text-ink">Scenario table</span>
+              <span className="font-medium text-ink">
+                Scenario table{scenarioSide === "exporters" ? " (exporters)" : ""}
+              </span>
               <button
                 type="button"
                 className={btn}
@@ -397,7 +474,9 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
                 ? "Pick a disruption scenario to export its importer and asset table."
                 : !scenarioReady
                   ? "Computing the scenario…"
-                  : "Derived analysis (BACI imports × cited route shares); the file header cites every input."}
+                  : scenarioSide === "exporters"
+                    ? "Derived analysis, exporter side (BACI exports × cited route shares): one row per exporter, share of its own exports at risk. Importer-side refinery / terminal rows are in the importer view."
+                    : "Derived analysis (BACI imports × cited route shares); the file header cites every input."}
             </p>
           </li>
           {layers.length === 0 && <li className="text-2xs text-ink-subtle">No layers are switched on.</li>}

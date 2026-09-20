@@ -1,9 +1,13 @@
 "use client";
 import { useId, useState } from "react";
 import { TIME_AWARE, TIME_AWARE_NOTE, timeAwareLabel } from "@/lib/symbology/time-aware";
+import type { ScenarioKind, ScenarioSide } from "@/lib/symbology";
 import { Chevron } from "@/components/ui/Chevron";
 import { LAYER_LABELS } from "@/lib/export/layers";
 import { STALE_AFTER_MONTHS, formatVintage, isStale, layerVintages, staleNote } from "@/lib/data/vintage";
+import { TRADE_FIRST_YEAR, TRADE_LAST_YEAR } from "@/lib/data/trade-flows";
+import { useAppYear } from "@/lib/state";
+import { tradeFlowsHasNoData } from "./TradeFlowsLayer";
 import { useToday } from "./useToday";
 import { Legend } from "./Legend";
 
@@ -21,6 +25,7 @@ export interface LayerState {
   gas_storage: boolean;     // GIE AGSI — live, slider-independent
   shale_regions: boolean;   // EIA STEO — US shale-region production, annual
   recent_imports: boolean;  // UN Comtrade — latest 12 reported months, slider-independent
+  trade_flows: boolean;     // BACI — country-pair crude/LNG arcs, year-keyed (1995–2024)
 }
 
 export interface LayerPanelProps {
@@ -28,12 +33,22 @@ export interface LayerPanelProps {
   readonly onChange: (next: LayerState) => void;
   /** Imports noun while a scenario is active — adds the exposure ramp to the legend. */
   readonly scenarioNoun?: string | undefined;
+  /** The active scenario's kind — adds the disruption mark's legend row (S1). */
+  readonly scenarioKind?: ScenarioKind | undefined;
+  /** T1: the side the scenario panel lists; passed straight to the Legend. */
+  readonly scenarioView?: ScenarioSide | undefined;
   /**
    * Whether the "Layers" disclosure starts expanded (Infrastructure: yes;
    * Flows / Scenarios: no). Remount with a new `key` to re-apply on a mode
    * change.
    */
   readonly defaultOpen?: boolean;
+  /**
+   * Embed mode (S7): collapse the whole card to a small "Legend" toggle at
+   * every viewport width, not just under 768 px. `defaultOpen` still governs
+   * the inner "Layers" disclosure once expanded.
+   */
+  readonly embedded?: boolean;
 }
 
 type Row =
@@ -58,6 +73,7 @@ const ROWS: readonly Row[] = [
   { kind: "toggle", key: "gas_storage", label: "Gas storage (EU)" },
   { kind: "group", label: "Trade" },
   { kind: "toggle", key: "recent_imports", label: "Recent imports (Comtrade)" },
+  { kind: "toggle", key: "trade_flows", label: "Trade flows (BACI)" },
 ];
 
 const BADGE_CLASS: Record<"yes" | "partial" | "no" | "live", string> = {
@@ -71,6 +87,27 @@ const BADGE_CLASS: Record<"yes" | "partial" | "no" | "live", string> = {
 // Static: the catalog is bundled at build, so this never changes at runtime.
 const VINTAGES = layerVintages(LAYER_LABELS);
 const VINTAGE_BY_KEY = new Map(VINTAGES.map((v) => [v.key, v]));
+
+/**
+ * A8: with the trade-flows toggle on but the active year outside BACI's
+ * 1995–2024 coverage, the layer draws nothing — this says why, instead of an
+ * empty map reading as a bug. `tradeFlowsHasNoData` is exported by the layer
+ * itself (`TradeFlowsLayer.tsx`) precisely so this and the layer agree on
+ * what "no data" means; before this it was computed and never read anywhere.
+ */
+function TradeFlowsNoDataBadge({ enabled, year }: { enabled: boolean; year: number | null }) {
+  if (!enabled || year === null || !tradeFlowsHasNoData(year)) return null;
+  const note = `BACI has no crude/LNG trade data before ${String(TRADE_FIRST_YEAR)} or after ${String(TRADE_LAST_YEAR)}.`;
+  return (
+    <span
+      title={note}
+      data-testid="trade-flows-no-data"
+      className="shrink-0 whitespace-nowrap rounded border border-amber-600 bg-amber-50 px-1 text-[11px] leading-4 text-amber-900"
+    >
+      no data<span className="sr-only">: {note}</span>
+    </span>
+  );
+}
 
 /** "old" beside a layer whose data ended more than STALE_AFTER_MONTHS ago. */
 function StaleBadge({ layer, today }: { layer: keyof LayerState; today: string | null }) {
@@ -92,7 +129,15 @@ function StaleBadge({ layer, today }: { layer: keyof LayerState; today: string |
  * Left panel: the "Layers" disclosure (toggles + time-aware badges) above the
  * Legend. Below 768 px the whole card collapses to its header until tapped.
  */
-export function LayerPanel({ state, onChange, scenarioNoun, defaultOpen = true }: LayerPanelProps) {
+export function LayerPanel({
+  state,
+  onChange,
+  scenarioNoun,
+  scenarioKind,
+  scenarioView,
+  defaultOpen = true,
+  embedded = false,
+}: LayerPanelProps) {
   const [open, setOpen] = useState(defaultOpen);
   const [phoneOpen, setPhoneOpen] = useState(false);
   const [vintageOpen, setVintageOpen] = useState(false);
@@ -103,16 +148,21 @@ export function LayerPanel({ state, onChange, scenarioNoun, defaultOpen = true }
   const activeCount = Object.values(state).filter(Boolean).length;
   // Null until mounted: staleness is judged against the reader's today.
   const today = useToday();
+  // Null before the store is adopted / on the server — same "no year yet" case.
+  const year = useAppYear();
 
   return (
     <section
       aria-label="Layers and legend"
       className="pointer-events-auto absolute left-4 top-4 z-10 flex max-h-[calc(100%-9rem)] w-72 flex-col rounded-md border border-slate-200 bg-white/95 text-sm text-slate-800 shadow-lg backdrop-blur max-md:max-h-[calc(100%-16rem)] max-md:w-auto max-md:max-w-[calc(100%-2rem)]"
     >
-      {/* Phone-only header: the whole card collapses to this. */}
+      {/* Phone-only header (or always, in embed mode): the whole card collapses to this. */}
       <button
         type="button"
-        className="flex items-center gap-2 px-3 py-2 text-xs font-medium uppercase tracking-wide text-slate-700 md:hidden"
+        className={
+          "flex items-center gap-2 px-3 py-2 text-xs font-medium uppercase tracking-wide text-slate-700 " +
+          (embedded ? "" : "md:hidden")
+        }
         aria-expanded={phoneOpen}
         aria-controls={bodyId}
         onClick={() => {
@@ -120,12 +170,13 @@ export function LayerPanel({ state, onChange, scenarioNoun, defaultOpen = true }
         }}
       >
         <Chevron open={phoneOpen} />
-        Layers &amp; legend
+        {embedded ? "Legend" : "Layers & legend"}
       </button>
       <div
         id={bodyId}
         className={
-          "min-h-0 overflow-y-auto overscroll-contain p-3 max-md:pt-0 md:block " +
+          "min-h-0 overflow-y-auto overscroll-contain p-3 max-md:pt-0 " +
+          (embedded ? "" : "md:block ") +
           (phoneOpen ? "block" : "hidden")
         }
       >
@@ -167,6 +218,9 @@ export function LayerPanel({ state, onChange, scenarioNoun, defaultOpen = true }
                   {r.label}
                 </label>
                 <StaleBadge layer={r.key} today={today} />
+                {r.key === "trade_flows" && (
+                  <TradeFlowsNoDataBadge enabled={state.trade_flows} year={year} />
+                )}
                 <span
                   title={TIME_AWARE_NOTE[r.key]}
                   data-testid={`time-badge-${r.key}`}
@@ -183,7 +237,12 @@ export function LayerPanel({ state, onChange, scenarioNoun, defaultOpen = true }
         </div>
         <div className="mt-3 border-t border-slate-200 pt-2">
           <h2 className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-600">Legend</h2>
-          <Legend layers={state} scenarioNoun={scenarioNoun} />
+          <Legend
+            layers={state}
+            scenarioNoun={scenarioNoun}
+            scenarioKind={scenarioKind}
+            scenarioView={scenarioView}
+          />
         </div>
         <div className="mt-3 border-t border-slate-200 pt-2">
           <button

@@ -95,14 +95,21 @@ describe("site citation (from CITATION.cff)", () => {
 });
 
 describe("scenario share citations", () => {
-  it("carries all 72 disruption_route rows with a source title", () => {
-    // 18 hand-set shares + 54 share-0 intra-Gulf Hormuz pairs (42 crude, 12 LNG).
-    expect(SCENARIO_SHARES).toHaveLength(72);
+  it("carries every disruption_route row with a source title", () => {
+    // 72 from the original 4 scenarios (18 hand-set + 54 share-0 intra-Gulf
+    // Hormuz pairs) plus S6's region-expanded chokepoints and new pipeline
+    // scenarios — see tests/python/test_disruption_routing.py for the count.
+    expect(SCENARIO_SHARES).toHaveLength(521);
+    // Share-0 rows are no longer Hormuz-only: direction-dependent chokepoints
+    // (Malacca/Suez/Bab el-Mandeb/Turkish Straits) carry explicit 0 pairs too.
+    const zeroShareScenarios = new Set(
+      ["hormuz", "hormuz_lng", "malacca", "bab_el_mandeb", "turkish_straits"],
+    );
     for (const r of SCENARIO_SHARES) {
       expect(r.source_title.length).toBeGreaterThan(0);
       expect(r.share).toBeGreaterThanOrEqual(0);
       expect(r.share).toBeLessThanOrEqual(1);
-      if (r.share === 0) expect(r.disruption_id).toMatch(/^hormuz/);
+      if (r.share === 0) expect(zeroShareScenarios.has(r.disruption_id), r.disruption_id).toBe(true);
     }
     expect(sharesFor("druzhba").map((r) => r.importer_iso3)).toEqual(["BLR", "POL", "DEU", "SVK", "HUN", "CZE"]);
     expect(sharesFor("hormuz_lng").filter((r) => r.importer_iso3 === null).map((r) => r.exporter_iso3)).toEqual([

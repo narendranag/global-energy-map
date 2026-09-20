@@ -1,0 +1,483 @@
+{
+  "_generated_by": "scripts/transform/build_catalog.py — do not edit",
+  "tables": {
+    "/data/assets.parquet": [
+      {
+        "name": "asset_id",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "kind",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "country_iso3",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "lon",
+        "type": "DOUBLE"
+      },
+      {
+        "name": "lat",
+        "type": "DOUBLE"
+      },
+      {
+        "name": "capacity",
+        "type": "DOUBLE"
+      },
+      {
+        "name": "capacity_unit",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "operator",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "commissioned_year",
+        "type": "BIGINT"
+      },
+      {
+        "name": "decommissioned_year",
+        "type": "BIGINT"
+      },
+      {
+        "name": "source",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "source_version",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "unit_count",
+        "type": "BIGINT"
+      },
+      {
+        "name": "total_processed_bcm",
+        "type": "BIGINT"
+      },
+      {
+        "name": "un_locode",
+        "type": "VARCHAR"
+      }
+    ],
+    "/data/assets_open.parquet": [
+      {
+        "name": "asset_id",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "kind",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "country_iso3",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "lon",
+        "type": "DOUBLE"
+      },
+      {
+        "name": "lat",
+        "type": "DOUBLE"
+      },
+      {
+        "name": "capacity",
+        "type": "DOUBLE"
+      },
+      {
+        "name": "capacity_unit",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "operator",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "commissioned_year",
+        "type": "BIGINT"
+      },
+      {
+        "name": "decommissioned_year",
+        "type": "BIGINT"
+      },
+      {
+        "name": "source",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "source_version",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "unit_count",
+        "type": "BIGINT"
+      },
+      {
+        "name": "total_processed_bcm",
+        "type": "BIGINT"
+      },
+      {
+        "name": "un_locode",
+        "type": "VARCHAR"
+      }
+    ],
+    "/data/comtrade_monthly.parquet": [
+      {
+        "name": "month",
+        "type": "DATE"
+      },
+      {
+        "name": "importer_iso3",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "exporter_iso3",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "hs_code",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "value_usd",
+        "type": "DOUBLE"
+      },
+      {
+        "name": "qty",
+        "type": "DOUBLE"
+      },
+      {
+        "name": "qty_unit",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "source",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "reporters_in_month",
+        "type": "BIGINT"
+      }
+    ],
+    "/data/country_year_series.parquet": [
+      {
+        "name": "iso3",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "year",
+        "type": "BIGINT"
+      },
+      {
+        "name": "metric",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "value",
+        "type": "DOUBLE"
+      },
+      {
+        "name": "unit",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "source",
+        "type": "VARCHAR"
+      }
+    ],
+    "/data/disruption_route.parquet": [
+      {
+        "name": "disruption_id",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "kind",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "exporter_iso3",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "importer_iso3",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "share",
+        "type": "DOUBLE"
+      },
+      {
+        "name": "source",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "source_title",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "source_url",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "source_year",
+        "type": "INTEGER"
+      },
+      {
+        "name": "source_note",
+        "type": "VARCHAR"
+      }
+    ],
+    "/data/gie_daily.parquet": [
+      {
+        "name": "iso3",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "gas_day",
+        "type": "DATE"
+      },
+      {
+        "name": "metric",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "value",
+        "type": "DOUBLE"
+      },
+      {
+        "name": "unit",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "source",
+        "type": "VARCHAR"
+      }
+    ],
+    "/data/lng_terminal_daily.parquet": [
+      {
+        "name": "terminal_name",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "date",
+        "type": "DATE"
+      },
+      {
+        "name": "processed_cbm",
+        "type": "BIGINT"
+      },
+      {
+        "name": "source",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "source_version",
+        "type": "VARCHAR"
+      }
+    ],
+    "/data/lng_trade_daily.parquet": [
+      {
+        "name": "date",
+        "type": "DATE"
+      },
+      {
+        "name": "type",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "from_country",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "to_country",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "from_country_iso3",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "to_country_iso3",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "amount_cbm",
+        "type": "BIGINT"
+      },
+      {
+        "name": "voyage_distance_km",
+        "type": "DOUBLE"
+      },
+      {
+        "name": "confidence_score",
+        "type": "FLOAT"
+      },
+      {
+        "name": "source",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "source_version",
+        "type": "VARCHAR"
+      }
+    ],
+    "/data/lng_voyage.parquet": [
+      {
+        "name": "voyage_id",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "start_date",
+        "type": "DATE"
+      },
+      {
+        "name": "end_date",
+        "type": "DATE"
+      },
+      {
+        "name": "imo",
+        "type": "BIGINT"
+      },
+      {
+        "name": "voyage_type",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "from_terminal",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "to_terminal",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "from_country",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "to_country",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "from_country_iso3",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "to_country_iso3",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "amount_cbm",
+        "type": "BIGINT"
+      },
+      {
+        "name": "confidence_score",
+        "type": "TINYINT"
+      },
+      {
+        "name": "voyage_distance_km",
+        "type": "BIGINT"
+      },
+      {
+        "name": "source",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "source_version",
+        "type": "VARCHAR"
+      }
+    ],
+    "/data/shale_region_year.parquet": [
+      {
+        "name": "region_id",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "year",
+        "type": "BIGINT"
+      },
+      {
+        "name": "metric",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "value",
+        "type": "DOUBLE"
+      },
+      {
+        "name": "unit",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "source",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "source_version",
+        "type": "VARCHAR"
+      }
+    ],
+    "/data/trade_flow.parquet": [
+      {
+        "name": "year",
+        "type": "BIGINT"
+      },
+      {
+        "name": "importer_iso3",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "exporter_iso3",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "hs_code",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "value_usd",
+        "type": "DOUBLE"
+      },
+      {
+        "name": "qty",
+        "type": "DOUBLE"
+      },
+      {
+        "name": "qty_unit",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "source",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "qty_reported",
+        "type": "DOUBLE"
+      },
+      {
+        "name": "qty_imputed",
+        "type": "BOOLEAN"
+      }
+    ]
+  }
+}

@@ -74,8 +74,16 @@ describe("applyMode", () => {
     year: 2008,
     commodity: "oil",
     scenario: null,
+    scenario2: null,
+    severity: 1,
+    view: "importers",
+    focus: "SAU",
     layers: { ...DEFAULT_APP_STATE.layers, storage: true, ports: true },
   };
+
+  it("keeps the focused country: a mode is a lens, not a new selection", () => {
+    for (const mode of MODES) expect(applyMode(custom, mode).focus).toBe("SAU");
+  });
 
   it("Infrastructure: preset layers, keeps year and commodity, clears the scenario", () => {
     const s = applyMode({ ...custom, mode: "scenarios", commodity: "gas", scenario: "hormuz" }, "infrastructure");
@@ -84,23 +92,43 @@ describe("applyMode", () => {
       year: 2008,
       commodity: "gas",
       scenario: null,
+      scenario2: null,
+      severity: 1,
+      view: "importers",
+      focus: "SAU",
       layers: MODE_LAYERS.infrastructure,
     });
   });
 
-  it("Flows: gas, voyages + LNG terminals + gas pipelines, year → 2023 outside 2020–2024", () => {
+  it("leaving Scenarios clears everything the scenario carried, not just its id", () => {
+    const active = {
+      ...custom,
+      mode: "scenarios" as const,
+      scenario: "hormuz" as const,
+      scenario2: "malacca" as const,
+      severity: 0.5,
+      view: "exporters" as const,
+    };
+    for (const mode of ["infrastructure", "flows"] as const) {
+      const s = applyMode(active, mode);
+      expect([s.scenario, s.scenario2, s.severity, s.view]).toEqual([null, null, 1, "importers"]);
+    }
+  });
+
+  it("Flows: gas, trade flows + LNG terminals + gas pipelines, year kept inside BACI's 1995–2024", () => {
     const s = applyMode(custom, "flows");
     expect(s.mode).toBe("flows");
     expect(s.commodity).toBe("gas");
-    expect(s.year).toBe(FLOWS_DEFAULT_YEAR);
-    expect(on(s)).toEqual(["gas_pipelines", "lng_terminals", "lng_voyages"]);
+    expect(s.year).toBe(custom.year); // 2008, already inside 1995–2024
+    expect(on(s)).toEqual(["gas_pipelines", "lng_terminals", "trade_flows"]);
   });
 
-  it("Flows keeps a year already inside the voyage range", () => {
+  it("Flows keeps a year already inside BACI's range, jumps to the latest year otherwise", () => {
     expect(applyMode({ ...custom, year: 2021 }, "flows").year).toBe(2021);
     expect(applyMode({ ...custom, year: 2020 }, "flows").year).toBe(2020);
     expect(applyMode({ ...custom, year: 2024 }, "flows").year).toBe(2024);
-    expect(applyMode({ ...custom, year: 2019 }, "flows").year).toBe(FLOWS_DEFAULT_YEAR);
+    expect(applyMode({ ...custom, year: 1995 }, "flows").year).toBe(1995);
+    expect(applyMode({ ...custom, year: 1990 }, "flows").year).toBe(FLOWS_DEFAULT_YEAR);
   });
 
   it("Flows clears the scenario", () => {
@@ -160,7 +188,11 @@ describe("URL precedence", () => {
       year: 2010,
       commodity: "oil",
       scenario: "druzhba",
-      layers: { ...MODE_LAYERS.flows, gas_pipelines: false, lng_terminals: false, lng_voyages: false, pipelines: true },
+      scenario2: null,
+      severity: 1,
+      view: "importers",
+      focus: null,
+      layers: { ...MODE_LAYERS.flows, gas_pipelines: false, lng_terminals: false, trade_flows: false, pipelines: true },
     });
   });
 

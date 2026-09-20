@@ -96,4 +96,45 @@ describe("next.config.ts cache headers", () => {
     }
     expect(IMMUTABLE).toBe("public, max-age=31536000, immutable");
   });
+
+  it("allows / to be framed (S7 embed mode); every other page-y route refuses (A9)", async () => {
+    const rules = (await nextConfig.headers?.()) ?? [];
+    const mine = rules.filter((r) => r.source === "/");
+    expect(mine).toHaveLength(1);
+    expect(mine[0]?.headers).toEqual([
+      { key: "Content-Security-Policy", value: "frame-ancestors *" },
+    ]);
+
+    for (const source of ["/query", "/data", "/methodology", "/terms", "/privacy"]) {
+      const rule = rules.find((r) => r.source === source);
+      expect(rule?.headers, source).toEqual([
+        { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+      ]);
+    }
+
+    // A `/` request with a query string (the embed URL itself) still matches
+    // the `/` rule — Next's `source` matches on pathname, not the querystring.
+    // /?embed=1 is not a distinct route, so there is nothing more to assert
+    // here beyond `mine` above already matching plain "/".
+
+    // The static-file cache rules (/data/:path*, /duckdb/:path*) are
+    // untouched by the new CSP rules: no rule whose source is the *pattern*
+    // "/data/:path*" (as opposed to the exact page path "/data") carries a
+    // CSP header, so a parquet/geojson download's Cache-Control is exactly
+    // what cacheRules() set and nothing else.
+    for (const pattern of ["/data/:path*", "/duckdb/:path*"]) {
+      const rulesForPattern = rules.filter((r) => r.source === pattern);
+      expect(rulesForPattern.length).toBeGreaterThan(0);
+      for (const r of rulesForPattern) {
+        expect(r.headers.some((h) => h.key === "Content-Security-Policy"), pattern).toBe(false);
+      }
+    }
+
+    // Every CSP-bearing rule is scoped to one of the routes above; nothing
+    // stray picked up a CSP header.
+    const withCsp = rules.filter((r) => r.headers.some((h) => h.key === "Content-Security-Policy"));
+    expect(withCsp.map((r) => r.source).sort()).toEqual(
+      ["/", "/data", "/methodology", "/privacy", "/query", "/terms"].sort(),
+    );
+  });
 });

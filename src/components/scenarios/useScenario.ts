@@ -11,6 +11,7 @@ import type {
 } from "@/lib/scenarios/types";
 import type { AssetsByKind } from "@/lib/data/assets";
 import { loadScenarioInputs, type ScenarioInputs } from "@/lib/data/scenario-inputs";
+import { requestedIdsOf } from "@/lib/scenarios/current";
 import { useAsync } from "@/lib/data/useAsync";
 
 /** Engine rows from shared asset rows; unknown capacity → 0 (engine spreads uniformly). */
@@ -38,10 +39,20 @@ function lngImportRows(assets: AssetsByKind): LngImportRow[] {
  * refinery names (the engine's RefineryImpact carries none) so the panel can
  * show "Ruwais Refinery" rather than "ARE · 0 kbpd".
  */
-export function scenarioFromInputs(inputs: ScenarioInputs, assets: AssetsByKind): ScenarioResult {
+export function scenarioFromInputs(
+  inputs: ScenarioInputs,
+  assets: AssetsByKind,
+  severity = 1,
+): ScenarioResult {
   const isOil = inputs.commodity === "oil";
+  // What was asked for, carried through the engine untouched: a secondary the
+  // loader dropped for want of route rows is still what the controls say, and
+  // `isCurrentScenarioResult` has to compare against that (finding 20).
+  const requestedScenarioIds = inputs.requestedIds;
   const raw = computeScenarioImpact({
     scenarioId: inputs.scenarioId,
+    scenarioIds: inputs.scenarioIds,
+    severity,
     commodity: inputs.commodity,
     year: inputs.year,
     tradeFlows: inputs.tradeFlows,
@@ -49,7 +60,7 @@ export function scenarioFromInputs(inputs: ScenarioInputs, assets: AssetsByKind)
     ...(isOil ? { refineries: refineryRows(assets) } : { lngImports: lngImportRows(assets) }),
     ...(inputs.lngVoyages.length > 0 ? { lngVoyages: inputs.lngVoyages } : {}),
   });
-  if (!isOil) return raw;
+  if (!isOil) return { ...raw, requestedScenarioIds };
 
   const nameById = new Map(assets.refinery.map((r) => [r.asset_id, r.name]));
   const withName = (i: RefineryImpact): RefineryImpact => {
@@ -60,6 +71,7 @@ export function scenarioFromInputs(inputs: ScenarioInputs, assets: AssetsByKind)
   const byId = new Map(byRefinery.map((i) => [i.asset_id, i]));
   return {
     ...raw,
+    requestedScenarioIds,
     byRefinery,
     rankedRefineries: raw.rankedRefineries.map((i) => byId.get(i.asset_id) ?? i),
   };
@@ -77,15 +89,20 @@ export function useScenario(
   year: number,
   commodity: Commodity,
   assets: AssetsByKind | null,
+  /** T1: the second scenario closed at the same time, or null. */
+  scenario2: ScenarioId | null = null,
+  /** T1: fraction of the route(s) cut, 0–1. */
+  severity = 1,
 ): ScenarioResult | null {
-  const { data: inputs } = useAsync(
-    loadScenarioInputs,
-    scenarioId === null ? null : [scenarioId, year, commodity],
-  );
+  // The tuple is spelled out (`as const`) rather than left as an array
+  // literal: `useAsync` infers its argument tuple from this expression, and a
+  // widened `(string | number)[]` no longer matches `loadScenarioInputs`.
+  const args = scenarioId === null ? null : ([scenarioId, year, commodity, scenario2 ?? ""] as const);
+  const { data: inputs } = useAsync(loadScenarioInputs, args);
   return useMemo(() => {
     if (scenarioId === null || inputs === null || assets === null) return null;
-    return scenarioFromInputs(inputs, assets);
-  }, [scenarioId, inputs, assets]);
+    return scenarioFromInputs(inputs, assets, severity);
+  }, [scenarioId, inputs, assets, severity]);
 }
 
 /**
@@ -95,14 +112,21 @@ export function useScenario(
  * the inputs match `result`.
  */
 export function useScenarioInputsFor(result: ScenarioResult | null): ScenarioInputs | null {
-  const { data } = useAsync(
-    loadScenarioInputs,
-    result === null ? null : [result.scenarioId, result.year, result.commodity],
-  );
+  // The second scenario is part of the key: with `hormuz + malacca` active,
+  // asking for `hormuz`'s inputs alone would list only half the route shares.
+  // It is the *requested* secondary, so the cache key matches the run even
+  // when the loader dropped a row-less secondary (finding 20).
+  const secondary = result === null ? "" : requestedIdsOf(result)[1] ?? "";
+  const args =
+    result === null
+      ? null
+      : ([result.scenarioId, result.year, result.commodity, secondary] as const);
+  const { data } = useAsync(loadScenarioInputs, args);
   if (data === null || result === null) return null;
   return data.scenarioId === result.scenarioId &&
     data.year === result.year &&
-    data.commodity === result.commodity
+    data.commodity === result.commodity &&
+    (data.requestedIds[1] ?? "") === secondary
     ? data
     : null;
 }

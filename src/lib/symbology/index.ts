@@ -42,6 +42,16 @@ export const PALETTE = {
   voyageExport: "#2aa5c4", // light cyan (export end)
   voyageImport: "#2f4fa6", // blue (import end)
 
+  // Trade flows (BACI arcs) — one two-tone gradient per commodity, light at
+  // the exporter end darkening to the importer end (the same light→dark
+  // convention as the LNG voyage arcs), so which way a flow runs is legible
+  // without a legend. Oil stays in the warm family, close to the extraction
+  // hue; gas stays cool, close to the voyage-arc hue.
+  tradeFlowOilFrom: "#e3b46a", // pale gold (exporter end)
+  tradeFlowOilTo: "#823f0e", // burnt umber (importer end)
+  tradeFlowGasFrom: "#8ed3e2", // pale cyan (exporter end)
+  tradeFlowGasTo: "#163f6e", // deep blue (importer end)
+
   // Neutral / shared.
   port: "#5f6670", // slate
   basin: "#6e5c48", // brown-grey outline
@@ -80,11 +90,34 @@ export const PALETTE = {
   importsGasLow: "#e3ebf4",
   importsGasHigh: "#8ea4d4",
 
+  // Focus (selected country) outline. Deliberately a near-black neutral: the
+  // selection must read on the pale basemap, on every choropleth fill and
+  // over the warm and cool mark families without claiming a hue any of them
+  // owns, and without touching the red the scenario ramp reserves.
+  focusOutline: "#101a24",
+  focusHalo: "#ffffff",
+
+  // Search result highlight (S4) — a violet ring, the one hue family nothing
+  // else on the map owns (oil warm, gas cool, reserves olive, port slate,
+  // scenario exposure red), so a found result never reads as any of them.
+  searchHighlight: "#7c3aed",
+  searchHighlightHalo: "#ffffff",
+
   // Scenario — red only.
   exposureLow: "#fcbba1",
   exposureHigh: "#99000d",
   atRiskLow: "#a3141c",
   atRiskHigh: "#650810",
+  // The disruption mark (S1): where the scenario *happens* — a chokepoint
+  // closure or the cut stretch of a pipeline. A vivid red, one step brighter
+  // than the exposure ramp's dark end, so the cause reads apart from the
+  // consequence it paints on the importers. It is drawn over water as often
+  // as over land, hence its own contrast row in symbology-contrast.test.ts.
+  disruptionMark: "#d21024",
+  // Same mark in a year the scenario does not describe (`activeYears`): the
+  // route is still shown, the claim is not. Desaturated far enough to fall
+  // under the "red is scenario-only" chroma threshold.
+  disruptionMuted: "#9c7a7e",
 } as const;
 
 export type PaletteRole = keyof typeof PALETTE;
@@ -320,6 +353,94 @@ export function recentImportsColor(
 }
 
 // ---------------------------------------------------------------------------
+// Focus (selected country)
+// ---------------------------------------------------------------------------
+
+/**
+ * Outline of the focused country: a **cased** line — a white halo with a
+ * near-black line on top — drawn above the choropleth fills and below the
+ * point layers, so it frames the ground without hiding the marks on it.
+ *
+ * The casing is not decoration. One colour cannot clear 3:1 on both the pale
+ * basemap and the darkest fill the map can paint (a fully exposed country
+ * under a scenario is near-`#990000`): a dark line vanishes on the latter, a
+ * light one on the former. With a casing, whichever of the two reads is the
+ * one you see, and the pair reads against each other — which is what
+ * `symbology-contrast.test.ts` checks.
+ *
+ * Both are heavier than the basemap's own 0.5 px country borders, so the
+ * selection cannot be mistaken for another administrative line.
+ */
+export const FOCUS_OUTLINE_COLOR: Rgba = paletteRgba("focusOutline", 255);
+export const FOCUS_OUTLINE_MIN_PX = 2.5;
+export const FOCUS_HALO_COLOR: Rgba = paletteRgba("focusHalo", 235);
+export const FOCUS_HALO_MIN_PX = 6;
+
+// ---------------------------------------------------------------------------
+// Transient hover highlight (S1: a ranked panel row ↔ the map)
+// ---------------------------------------------------------------------------
+
+/**
+ * Hovering a ranked importer row lights its country up. Deliberately *not* a
+ * second coloured outline: a white wash plus a thin dark edge reads as
+ * "pointing at this" where the focus outline's heavy cased line reads as
+ * "this is selected", and the two can be on screen at once without either
+ * being mistaken for the other. The wash carries most of the signal over the
+ * dark exposure fills (where a dark line would vanish); the edge carries it
+ * on the pale basemap.
+ */
+export const HOVER_FILL: Rgba = paletteRgba("focusHalo", 86);
+export const HOVER_OUTLINE_COLOR: Rgba = paletteRgba("focusOutline", 200);
+export const HOVER_OUTLINE_MIN_PX = 1.5;
+/** Ring drawn around a hovered refinery / LNG terminal row's asset. */
+export const HOVER_RING_RADIUS_PX = 11;
+export const HOVER_RING_WIDTH_PX = 2;
+
+// ---------------------------------------------------------------------------
+// Disruption mark + cut route (S1)
+// ---------------------------------------------------------------------------
+
+export const DISRUPTION_COLOR: Rgba = paletteRgba("disruptionMark", 255);
+export const DISRUPTION_MUTED_COLOR: Rgba = paletteRgba("disruptionMuted", 235);
+/** White casing under every part of the mark, so it reads over water too. */
+export const DISRUPTION_HALO_COLOR: Rgba = paletteRgba("focusHalo", 235);
+/** Translucent white inside the ring, so the ring is a ring and not a blob. */
+export const DISRUPTION_FILL_COLOR: Rgba = paletteRgba("focusHalo", 170);
+
+/** Closure glyph: halo disc, ring, centre dot — all in screen pixels. */
+export const DISRUPTION_MARK = {
+  haloRadiusPx: 14,
+  ringRadiusPx: 10.5,
+  ringWidthPx: 3.5,
+  dotRadiusPx: 3.5,
+} as const;
+
+/** The cut stretch of a pipeline: a heavy white casing under a vivid red line. */
+export const DISRUPTION_CUT_CASING_PX = 6;
+export const DISRUPTION_CUT_LINE_PX = 2.5;
+
+/** The mark's colour for a year the scenario describes (or does not). */
+export function disruptionColor(active: boolean): Rgba {
+  return active ? DISRUPTION_COLOR : DISRUPTION_MUTED_COLOR;
+}
+
+// ---------------------------------------------------------------------------
+// Search result highlight (S4)
+// ---------------------------------------------------------------------------
+
+/**
+ * A cased ring (white halo + violet line), same reasoning as the focus
+ * outline: one colour cannot clear 3:1 on both the pale basemap and the
+ * darkest scenario fill. Not part of `LEGEND` — it is transient UI, not a
+ * data layer a reader toggles.
+ */
+export const SEARCH_HIGHLIGHT_COLOR: Rgba = paletteRgba("searchHighlight", 255);
+export const SEARCH_HIGHLIGHT_HALO_COLOR: Rgba = paletteRgba("searchHighlightHalo", 235);
+export const SEARCH_HIGHLIGHT_LINE_MIN_PX = 3;
+export const SEARCH_HIGHLIGHT_HALO_LINE_MIN_PX = 6;
+export const SEARCH_HIGHLIGHT_RADIUS = { minPixels: 14, maxPixels: 26 } as const;
+
+// ---------------------------------------------------------------------------
 // Basins
 // ---------------------------------------------------------------------------
 
@@ -454,6 +575,74 @@ export function voyageWidth(amountCbm: number): number {
 }
 
 // ---------------------------------------------------------------------------
+// Trade flows (BACI arcs)
+// ---------------------------------------------------------------------------
+
+const TRADE_FLOW_RGB: Record<"oil" | "gas", { from: Rgb; to: Rgb }> = {
+  oil: { from: hex(PALETTE.tradeFlowOilFrom), to: hex(PALETTE.tradeFlowOilTo) },
+  gas: { from: hex(PALETTE.tradeFlowGasFrom), to: hex(PALETTE.tradeFlowGasTo) },
+};
+
+/**
+ * Opacity of the arc. World view (many overlapping top-N pairs) stays
+ * translucent so density itself reads as volume, the way the LNG voyage
+ * arcs do; focus view (a handful of pairs for one country) is more opaque so
+ * each one reads as a distinct flow.
+ */
+export const TRADE_FLOW_ALPHA = { world: 150, focus: 225 } as const;
+
+export function tradeFlowSourceColor(
+  commodity: "oil" | "gas",
+  mode: "world" | "focus" = "world",
+): Rgba {
+  const [r, g, b] = TRADE_FLOW_RGB[commodity].from;
+  return [r, g, b, TRADE_FLOW_ALPHA[mode]];
+}
+export function tradeFlowTargetColor(
+  commodity: "oil" | "gas",
+  mode: "world" | "focus" = "world",
+): Rgba {
+  const [r, g, b] = TRADE_FLOW_RGB[commodity].to;
+  return [r, g, b, TRADE_FLOW_ALPHA[mode]];
+}
+
+export const TRADE_FLOW_WIDTH = { minPixels: 0.5, maxPixels: 6 } as const;
+
+/**
+ * Arc widths are in pixels, so they do not shrink as you zoom in — but the
+ * arcs all converge on one country anchor, and by the time a focused country
+ * fills the screen a hundred 6 px ribbons have fused into a solid wedge
+ * (Wave 2 polish 1). The cap tapers from `maxPixels` at world zoom to
+ * `closeMaxPixels` at street zoom, where the arcs are a bundle of threads
+ * leaving the country rather than a shape.
+ */
+export const TRADE_FLOW_WIDTH_TAPER = { fromZoom: 3, toZoom: 6, closeMaxPixels: 2 } as const;
+
+/** The width cap in pixels at `zoom`. */
+export function tradeFlowMaxWidth(zoom: number): number {
+  const { fromZoom, toZoom, closeMaxPixels } = TRADE_FLOW_WIDTH_TAPER;
+  const wide = TRADE_FLOW_WIDTH.maxPixels;
+  if (!Number.isFinite(zoom) || zoom <= fromZoom) return wide;
+  if (zoom >= toZoom) return closeMaxPixels;
+  const t = (zoom - fromZoom) / (toZoom - fromZoom);
+  return wide + (closeMaxPixels - wide) * t;
+}
+
+/**
+ * Square-root width against the largest pair drawn, so the top pair does not
+ * swamp the rest, capped at `maxPixels` (zoom-dependent — see
+ * {@link tradeFlowMaxWidth}).
+ */
+export function tradeFlowWidth(
+  qty: number,
+  maxQty: number,
+  maxPixels: number = TRADE_FLOW_WIDTH.maxPixels,
+): number {
+  if (!(maxQty > 0) || !(qty > 0)) return TRADE_FLOW_WIDTH.minPixels;
+  return Math.max(TRADE_FLOW_WIDTH.minPixels, Math.sqrt(qty / maxQty) * maxPixels);
+}
+
+// ---------------------------------------------------------------------------
 // Legend
 // ---------------------------------------------------------------------------
 
@@ -474,6 +663,13 @@ export interface LegendItem {
 }
 
 export type LayerKey = keyof LayerState;
+
+/**
+ * Mirrors `ScenarioDef["kind"]`. Declared here rather than imported so the
+ * symbology module keeps no dependency on the scenario registry; the two are
+ * tied together by `tests/unit/symbology.test.ts`.
+ */
+export type ScenarioKind = "chokepoint" | "pipeline";
 
 const RESERVES_LEGEND_STOPS: readonly Rgba[] = [0, 0.25, 0.5, 0.75, 1].map((t) => reservesRampColor(t));
 const SHALE_OIL_LEGEND_STOPS: readonly Rgba[] = [0, 0.25, 0.5, 0.75, 1].map((t) => shaleRampColor(t, "oil"));
@@ -543,6 +739,20 @@ export const LEGEND: Readonly<Record<LayerKey, readonly LegendItem[]>> = {
   lng_voyages: [
     { label: "LNG voyage, export → import", swatch: { kind: "arc", from: VOYAGE_EXPORT_END, to: VOYAGE_IMPORT_END } },
   ],
+  trade_flows: [
+    {
+      label: "Crude trade (oil view), top 150 pairs by volume (typically ~85–90% of world crude)",
+      swatch: { kind: "arc", from: tradeFlowSourceColor("oil"), to: tradeFlowTargetColor("oil") },
+    },
+    {
+      label: "LNG trade (gas view), top 150 pairs by volume (typically ~95%+ of world LNG)",
+      swatch: { kind: "arc", from: tradeFlowSourceColor("gas"), to: tradeFlowTargetColor("gas") },
+    },
+    {
+      label: "With a country selected: every flow of its trade above 0.1%, exports and imports both",
+      swatch: { kind: "arc", from: tradeFlowSourceColor("oil", "focus"), to: tradeFlowTargetColor("oil", "focus") },
+    },
+  ],
 };
 
 /** Legend sections, grouped by commodity (reserves first, then oil, gas, shared). */
@@ -551,17 +761,52 @@ export const LEGEND_GROUPS: readonly { readonly title: string; readonly keys: re
   { title: "Oil", keys: ["pipelines", "extraction", "refineries", "storage"] },
   { title: "Gas", keys: ["gas_pipelines", "lng_terminals", "lng_voyages", "gas_storage"] },
   { title: "Shipping", keys: ["ports"] },
-  { title: "Trade", keys: ["recent_imports"] },
+  { title: "Trade", keys: ["recent_imports", "trade_flows"] },
 ];
+
+/** Which side of a scenario's flows a panel is listing (T1's `view`). */
+export type ScenarioSide = "importers" | "exporters";
 
 /**
  * Extra rows shown while a scenario is active. With `layers`, asset rows are
  * limited to layers that can show them (refineries / LNG terminals).
  */
-export function scenarioLegend(importsNoun: string, layers?: LayerState): readonly LegendItem[] {
+export function scenarioLegend(
+  importsNoun: string,
+  layers?: LayerState,
+  /** The active scenario's kind — adds the row for the mark the map draws (S1). */
+  kind?: ScenarioKind,
+  /**
+   * T1: which side the panel and the choropleth describe. The *asset* tint
+   * never changes with it — refineries and LNG import terminals are
+   * importer-side by construction — so in the exporter view the row says so
+   * rather than letting the reader take it for part of the exporter ramp
+   * (finding 9).
+   */
+  view?: ScenarioSide,
+): readonly LegendItem[] {
   const assets = layers === undefined || layers.refineries || layers.lng_terminals;
   const lng = layers === undefined || layers.lng_terminals;
   return [
+    ...(kind === undefined
+      ? []
+      : kind === "pipeline"
+        ? [
+            {
+              label: "Cut route (the pipeline this scenario closes)",
+              swatch: { kind: "line", color: DISRUPTION_COLOR, width: DISRUPTION_CUT_LINE_PX } as const,
+            },
+            {
+              label: "Closure point on the route",
+              swatch: { kind: "dot", color: DISRUPTION_COLOR, outline: DISRUPTION_HALO_COLOR, size: 10 } as const,
+            },
+          ]
+        : [
+            {
+              label: "Closed chokepoint",
+              swatch: { kind: "dot", color: DISRUPTION_COLOR, outline: DISRUPTION_HALO_COLOR, size: 10 } as const,
+            },
+          ]),
     {
       label: `Share of ${importsNoun} at risk (0 → 100 %)`,
       swatch: { kind: "gradient", stops: EXPOSURE_LEGEND_STOPS },
@@ -569,7 +814,10 @@ export function scenarioLegend(importsNoun: string, layers?: LayerState): readon
     ...(assets
       ? [
           {
-            label: "Asset at risk (darker = larger share)",
+            label:
+              view === "exporters"
+                ? "Asset at risk — importer side (darker = larger share)"
+                : "Asset at risk (darker = larger share)",
             swatch: { kind: "dot", color: atRiskColor(0.5), size: 9 } as const,
           },
         ]
@@ -602,13 +850,19 @@ export function legendSections(
   layers: LayerState,
   scenarioNoun?: string,
   zoom?: number,
+  scenarioKind?: ScenarioKind,
+  /** T1: the side the scenario panel is listing (see `scenarioLegend`). */
+  scenarioView?: ScenarioSide,
 ): LegendSection[] {
   const sections: LegendSection[] = LEGEND_GROUPS.map((g) => ({
     title: g.title,
     items: g.keys.filter((k) => layers[k]).flatMap((k) => rowsFor(k, zoom)),
   })).filter((s) => s.items.length > 0);
   if (scenarioNoun !== undefined) {
-    sections.push({ title: "Scenario", items: scenarioLegend(scenarioNoun, layers) });
+    sections.push({
+      title: "Scenario",
+      items: scenarioLegend(scenarioNoun, layers, scenarioKind, scenarioView),
+    });
   }
   return sections;
 }

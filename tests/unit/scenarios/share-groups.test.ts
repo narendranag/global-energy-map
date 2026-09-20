@@ -24,4 +24,14 @@ describe("groupIdenticalPairShares", () => {
     ];
     expect(groupIdenticalPairShares(rows).every((g) => g.rows.length === 1)).toBe(true);
   });
+
+  it("keeps importer-wide rows separate from pair rows and labels them *→X", () => {
+    const rows = [
+      { exporter_iso3: null, importer_iso3: "KWT", share: 1, ...cite },
+      { exporter_iso3: "IRQ", importer_iso3: "KWT", share: 1, ...cite },
+      { exporter_iso3: null, importer_iso3: "BHR", share: 1, ...cite },
+    ];
+    const groups = groupIdenticalPairShares(rows);
+    expect(groups.map((g) => g.rows.map(pairLabel))).toEqual([["*→KWT"], ["IRQ→KWT"], ["*→BHR"]]);
+  });
 });

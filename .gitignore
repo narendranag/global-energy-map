@@ -63,3 +63,6 @@ data/derived/
 # DuckDB-WASM bundles copied from node_modules at predev/prebuild
 # (scripts/copy-duckdb.mjs) — generated, never committed
 /public/duckdb/
+
+# agent worktrees
+.claude/worktrees/

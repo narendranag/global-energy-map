@@ -3,10 +3,13 @@ import {
   capacityAtRisk,
   coverageLabel,
   formatVolume,
+  hasRange,
+  pctRange,
   routeRowsForDisplay,
   sharePct,
   sortImporters,
   tonnesToKbd,
+  volumeRange,
 } from "@/components/scenarios/panel-model";
 import { UNSOURCED_TITLE } from "@/lib/data/scenario-inputs";
 import type { ImporterImpact } from "@/lib/scenarios/types";
@@ -129,5 +132,49 @@ describe("routeRowsForDisplay", () => {
     expect(rows).toHaveLength(2);
     expect(rows[0]).toMatchObject({ exporter: "QAT", importer: null, share: 1, pairs: null });
     expect(rows[1]).toMatchObject({ share: 0, pairs: ["QAT→KWT", "QAT→BHR"], note: "inside" });
+  });
+});
+
+/**
+ * Finding 21: the range note followed the printed *share* only, so a row
+ * whose percentages collapsed to one figure while its volumes still spanned
+ * a range showed an unexplained dash.
+ */
+describe("hasRange", () => {
+  const row = (
+    shareAtRisk: number,
+    shareAtRiskUpper: number,
+    atRiskQty: number,
+    atRiskQtyUpper: number,
+  ) => ({ shareAtRisk, shareAtRiskUpper, atRiskQty, atRiskQtyUpper });
+
+  it("is false when a single scenario gives one figure", () => {
+    expect(hasRange([{ shareAtRisk: 0.5, atRiskQty: 50 }], "oil")).toBe(false);
+  });
+
+  it("is true when the printed share spans a range", () => {
+    const r = row(0.2, 0.35, 2e6, 3.5e6);
+    expect(pctRange(r)).toContain("–");
+    expect(hasRange([r], "gas")).toBe(true);
+  });
+
+  it("is true when only the printed VOLUME spans a range", () => {
+    // 22.04 % and 22.02 % both print as "22.0%", while 1.24 Mt and 1.91 Mt do
+    // not collapse: the row shows a dash, so the note must appear.
+    const r = row(0.2204, 0.2202, 1.24e6, 1.91e6);
+    expect(pctRange(r)).not.toContain("–");
+    expect(volumeRange(r, "gas")).toContain("–");
+    expect(hasRange([r], "gas")).toBe(true);
+  });
+
+  it("is false when neither printed figure spans a range", () => {
+    // Differences too small to print in either unit.
+    const r = row(0.2204, 0.22041, 1.2400e6, 1.2401e6);
+    expect(hasRange([r], "gas")).toBe(false);
+  });
+
+  it("is true when any row in the list spans one", () => {
+    const flat = { shareAtRisk: 0.5, atRiskQty: 50 };
+    expect(hasRange([flat, row(0.2, 0.35, 2e6, 3.5e6)], "gas")).toBe(true);
   });
 });

@@ -24,6 +24,33 @@ describe("csvField", () => {
     expect(csvField(Number.NaN)).toBe("");
     expect(csvField(Number.POSITIVE_INFINITY)).toBe("");
   });
+
+  // B10: a string cell that opens with =, +, -, @, a tab or a CR is a
+  // formula-injection vector in Excel/Sheets/LibreOffice — prefix a single
+  // quote so it opens as literal text. Numbers are never guarded (a negative
+  // number typed as `number` must stay numeric, unquoted).
+  it("prefixes a leading formula-trigger character in a string with a single quote", () => {
+    expect(csvField("=cmd|'/c calc'!A1")).toBe("'=cmd|'/c calc'!A1");
+    expect(csvField("+1234")).toBe("'+1234");
+    expect(csvField("-1234")).toBe("'-1234");
+    expect(csvField("@SUM(A1:A2)")).toBe("'@SUM(A1:A2)");
+    // Tab is not itself a CSV-special character once the guard quote moves it
+    // off the leading position, so no outer CSV quoting is added for it — but
+    // a CR always forces CSV quoting regardless of position.
+    expect(csvField("\t=1+1")).toBe("'\t=1+1");
+    expect(csvField("\r=1+1")).toBe('"\'\r=1+1"');
+  });
+
+  it("never guards a number, even a negative one", () => {
+    expect(csvField(-1234)).toBe("-1234");
+    expect(csvField(-0.5)).toBe("-0.5");
+  });
+
+  it("leaves an ordinary string that merely contains those characters alone", () => {
+    expect(csvField("2024-09-19")).toBe("2024-09-19");
+    expect(csvField("a=b+c")).toBe("a=b+c");
+    expect(csvField("Coyol - San José")).toBe("Coyol - San José");
+  });
 });
 
 describe("toCsv", () => {

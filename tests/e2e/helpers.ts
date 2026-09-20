@@ -167,6 +167,15 @@ export async function openLayers(page: Page, timeout = 30_000): Promise<void> {
   }).toPass({ timeout });
 }
 
+/**
+ * The year slider. Named rather than `input[type="range"]`: T1 added a second
+ * range input (the scenario severity slider), so the bare selector is no
+ * longer unique whenever a scenario is active.
+ */
+export function yearSlider(page: Page): Locator {
+  return page.getByRole("slider", { name: "Year" });
+}
+
 /** The scenario picker (rendered in Scenarios mode or while a scenario is active). */
 export function scenarioSelect(page: Page): Locator {
   return page.getByRole("combobox", { name: "Scenario" });
@@ -324,6 +333,23 @@ export async function samplePixels(page: Page, points: readonly Px[], radius = 3
     out.push({ r: median(r), g: median(g), b: median(b) });
   }
   return out;
+}
+
+/**
+ * Count pixels in `clip` matching `match`. The screenshot is decoded in the
+ * page; `match` runs here in Node, so it may close over anything.
+ */
+export async function countPixels(
+  page: Page,
+  clip: { x: number; y: number; width: number; height: number },
+  match: (c: Rgb) => boolean,
+): Promise<number> {
+  const data = await screenshotRgba(page, clip);
+  let n = 0;
+  for (let i = 0; i + 3 < data.length; i += 4) {
+    if (match({ r: data[i] ?? 0, g: data[i + 1] ?? 0, b: data[i + 2] ?? 0 })) n++;
+  }
+  return n;
 }
 
 /** Count pixels in `clip` that read as the extraction-site burnt orange (#b85a14). */

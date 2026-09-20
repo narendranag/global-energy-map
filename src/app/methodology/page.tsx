@@ -34,6 +34,21 @@ function shareGroups() {
   return ids.flatMap((id) => groupIdenticalPairShares(SCENARIO_SHARES.filter((r) => r.disruption_id === id)));
 }
 
+/**
+ * A disruption_id's display label. Every LNG variant is stored as
+ * `${scenarioId}_lng` (routeKeyFor in registry.ts); strip that suffix to
+ * find the base scenario, then disambiguate crude vs. LNG rows for any
+ * scenario that ships both (Hormuz, Malacca, Suez, Bab el-Mandeb).
+ */
+function scenarioLabelForDisruption(disruptionId: string): string {
+  const isLng = disruptionId.endsWith("_lng");
+  const baseId = isLng ? disruptionId.slice(0, -4) : disruptionId;
+  const scenario = getScenario(baseId as ScenarioId);
+  const label = scenario.label.replace(/^(Close|Cut) /, "");
+  if (isLng) return `${label} (LNG)`;
+  return scenario.commodities.includes("gas") ? `${label} (crude)` : label;
+}
+
 function ScenarioSharesTable() {
   return (
     <div className="mt-4 overflow-x-auto" data-testid="scenario-shares">
@@ -53,15 +68,12 @@ function ScenarioSharesTable() {
             const pairs = rows.length > 1 ? rows.map(pairLabel) : null;
             const unsourced = r.source_title === UNSOURCED_TITLE;
             return (
-              <tr key={`${r.disruption_id}-${r.exporter_iso3}-${r.importer_iso3 ?? "all"}`} className="align-top">
+              <tr key={`${r.disruption_id}-${pairLabel(r)}`} className="align-top">
                 <td className="border-t border-panel-border py-2 pr-4 whitespace-nowrap">
-                  {r.disruption_id === "hormuz_lng"
-                    ? "Strait of Hormuz (LNG)"
-                    : getScenario(r.disruption_id as ScenarioId).label.replace(/^(Close|Cut) /, "")}
-                  {r.disruption_id === "hormuz" ? " (crude)" : ""}
+                  {scenarioLabelForDisruption(r.disruption_id)}
                 </td>
                 <td className="border-t border-panel-border py-2 pr-4 whitespace-nowrap font-mono text-xs text-ink">
-                  {pairs ? `${pairs.length.toString()} pairs` : `${r.exporter_iso3} → ${r.importer_iso3 ?? "all"}`}
+                  {pairs ? `${pairs.length.toString()} pairs` : pairLabel(r)}
                 </td>
                 <td className="border-t border-panel-border py-2 pr-4 text-right whitespace-nowrap font-mono tabular-nums text-ink">
                   {pct(r.share)}

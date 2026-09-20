@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
-from scripts.transform.build_disruption_routing import GULF_COASTAL, UNSOURCED, all_rows
+from scripts.transform.build_disruption_routing import (
+    EAST_ASIA_MINUS_IDN,
+    EUROPE_MED,
+    GULF_COASTAL,
+    SOUTH_ASIA,
+    UNSOURCED,
+    all_rows,
+)
 
 # Shares drive every scenario and must not change silently. Six were updated
 # to source-derived values on 2026-09-10 (user-approved); see row notes.
@@ -39,10 +46,54 @@ for _sid, _exporters in _HORMUZ_EXPORTERS.items():
             if _imp != _exp:
                 EXPECTED_SHARES[(_sid, _exp, _imp)] = 0.0
 
+# ── R1 chokepoints (region-expanded, S6 2026-09-19) ─────────────────────────
+_MALACCA_GULF = ("SAU", "ARE", "KWT", "IRQ", "QAT", "BHR", "OMN")
+for _exp in _MALACCA_GULF:
+    for _imp in EAST_ASIA_MINUS_IDN:
+        EXPECTED_SHARES[("malacca", _exp, _imp)] = 1.00
+    for _imp in SOUTH_ASIA:
+        EXPECTED_SHARES[("malacca", _exp, _imp)] = 0.00
+for _imp in EAST_ASIA_MINUS_IDN:
+    EXPECTED_SHARES[("malacca", "USA", _imp)] = 0.60
+    EXPECTED_SHARES[("malacca_lng", "QAT", _imp)] = 1.00
+
+_SUEZ_GULF = ("SAU", "ARE", "KWT", "QAT", "IRQ", "BHR")
+for _exp in _SUEZ_GULF:
+    # No USA row (final review #6): a hole beats a contested number, see the
+    # header comment on _SUEZ_IMPORTERS in build_disruption_routing.py.
+    for _imp in EUROPE_MED:
+        EXPECTED_SHARES[("suez", _exp, _imp)] = 1.00
+for _imp in EUROPE_MED:
+    EXPECTED_SHARES[("suez_lng", "QAT", _imp)] = 1.00
+    EXPECTED_SHARES[("bab_el_mandeb_lng", "QAT", _imp)] = 1.00
+
+_BAB_GULF = ("ARE", "KWT", "QAT", "IRQ", "BHR")
+for _exp in _BAB_GULF:
+    for _imp in EUROPE_MED:
+        EXPECTED_SHARES[("bab_el_mandeb", _exp, _imp)] = 1.00
+for _imp in EUROPE_MED:
+    EXPECTED_SHARES[("bab_el_mandeb", "SAU", _imp)] = 0.00
+
+EXPECTED_SHARES[("turkish_straits", "KAZ", None)] = 0.80
+EXPECTED_SHARES[("turkish_straits", "KAZ", "BGR")] = 0.00
+EXPECTED_SHARES[("turkish_straits", "KAZ", "ROU")] = 0.00
+EXPECTED_SHARES[("turkish_straits", "KAZ", "CHN")] = 0.00
+# Final review #7: landlocked/overland buyers of Kazakh crude that
+# demonstrably avoid the Straits. Germany is deliberately NOT here: its KEBCO
+# via Druzhba is real but began only in Feb 2023 and is ~1.0-1.5 Mt/y against
+# BACI's 3.1 Mt (2023) / 4.3 Mt (2024), so a share-0 pair would understate
+# every pre-2023 year by the full 2.0-2.7 Mt (reverted 2026-09-20).
+EXPECTED_SHARES[("turkish_straits", "KAZ", "UZB")] = 0.00
+EXPECTED_SHARES[("turkish_straits", "KAZ", "KGZ")] = 0.00
+
+EXPECTED_SHARES[("keystone", "CAN", "USA")] = 0.14
+EXPECTED_SHARES[("enbridge_mainline", "CAN", "USA")] = 0.60
+EXPECTED_SHARES[("espo_spur", "RUS", "CHN")] = 0.28
+
 
 def test_every_row_is_cited():
     rows = all_rows()
-    assert len(rows) == 18 + 7 * 6 + 2 * 6
+    assert len(rows) == len(EXPECTED_SHARES)
     for r in rows:
         assert r["source_title"].strip(), r
         assert isinstance(r["source_year"], int) and 1990 <= r["source_year"] <= 2100, r
@@ -60,3 +111,15 @@ def test_shares_unchanged():
 
 def test_gulf_coastal_is_the_hormuz_exporter_set():
     assert set(GULF_COASTAL) == set(_HORMUZ_EXPORTERS["hormuz"])
+
+
+def test_no_duplicate_disruption_route_keys():
+    """Blocking fix (chokepoints.md verification): region expansion must never
+    emit two rows for the same (disruption_id, exporter, importer)."""
+    keys = [(r["disruption_id"], r["exporter_iso3"], r["importer_iso3"]) for r in all_rows()]
+    assert len(keys) == len(set(keys))
+
+
+def test_shares_are_in_unit_range():
+    for r in all_rows():
+        assert 0.0 <= r["share"] <= 1.0, r

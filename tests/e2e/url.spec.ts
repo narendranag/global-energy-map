@@ -10,6 +10,7 @@ import {
   setChecked,
   test,
   waitForReady,
+  yearSlider,
 } from "./helpers";
 
 test.setTimeout(SPEC_TIMEOUT);
@@ -22,7 +23,7 @@ test.describe("URL state", () => {
   test("a URL restores year, commodity, scenario and layers", async ({ page }) => {
     await gotoReady(page, "/?year=2015&commodity=gas&scenario=hormuz&layers=reserves,lng_terminals");
 
-    await expect(page.locator('input[type="range"]')).toHaveValue("2015");
+    await expect(yearSlider(page)).toHaveValue("2015");
     await expect(page.getByRole("button", { name: "Gas" })).toHaveAttribute("aria-pressed", "true");
     // A URL without `mode` decodes as Infrastructure; its scenario still shows the panel.
     await expect(page.locator("main")).toHaveAttribute("data-mode", "infrastructure");
@@ -75,7 +76,7 @@ test.describe("URL state", () => {
     await openLayers(page);
     await setChecked(page.getByLabel("Refineries"), true);
     await setChecked(page.getByLabel("Oil pipelines"), false);
-    const slider = page.locator('input[type="range"]');
+    const slider = yearSlider(page);
     await slider.focus();
     await page.keyboard.press("ArrowLeft");
     await expect(slider).toHaveValue("2019");
@@ -114,7 +115,7 @@ test.describe("URL state", () => {
     // Open the link in a fresh tab.
     const other = await context.newPage();
     await gotoReady(other, `/?${shared.toString()}`);
-    await expect(other.locator('input[type="range"]')).toHaveValue("2019");
+    await expect(yearSlider(other)).toHaveValue("2019");
     await expect(other.locator("main")).toHaveAttribute("data-mode", "scenarios");
     await expect(scenarioSelect(other)).toHaveValue("druzhba");
     await expect(other.getByLabel("Refineries")).toBeChecked();
@@ -145,7 +146,7 @@ test.describe("URL state", () => {
       if (req.isNavigationRequest() || isRsc(req)) offending.push(`${req.method()} ${req.url()}`);
     });
 
-    const slider = page.locator('input[type="range"]');
+    const slider = yearSlider(page);
     await slider.focus();
     for (const expected of ["2019", "2018", "2017"]) {
       await page.keyboard.press("ArrowLeft");

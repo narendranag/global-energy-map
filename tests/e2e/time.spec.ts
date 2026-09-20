@@ -7,6 +7,7 @@ import {
   saudiGreenness,
   test,
   waitForReady,
+  yearSlider,
 } from "./helpers";
 
 test.setTimeout(SPEC_TIMEOUT);
@@ -17,7 +18,7 @@ test.describe("Time axis — 1990–2024", () => {
   test("slider spans 1990–2024 and an out-of-range URL year is clamped", async ({ page }) => {
     await gotoReady(page, "/?year=99999&layers=reserves");
 
-    const slider = page.locator('input[type="range"]');
+    const slider = yearSlider(page);
     await expect(slider).toHaveAttribute("min", "1990");
     await expect(slider).toHaveAttribute("max", "2024");
     await expect(slider).toHaveValue("2024");
@@ -29,7 +30,7 @@ test.describe("Time axis — 1990–2024", () => {
     const errors = collectConsoleErrors(page);
     await gotoReady(page, "/?year=2020&layers=reserves");
 
-    const slider = page.locator('input[type="range"]');
+    const slider = yearSlider(page);
     await expect(slider).toHaveValue("2020");
     await expect(page.getByText(RESERVES_BADGE)).toHaveCount(0);
 
@@ -51,7 +52,7 @@ test.describe("Time axis — 1990–2024", () => {
 
   test("no reserves badge when the reserves layer is off", async ({ page }) => {
     await gotoReady(page, "/?year=2023&layers=pipelines");
-    await expect(page.locator('input[type="range"]')).toHaveValue("2023");
+    await expect(yearSlider(page)).toHaveValue("2023");
     await expect(page.getByText(RESERVES_BADGE)).toHaveCount(0);
   });
 
@@ -62,7 +63,7 @@ test.describe("Time axis — 1990–2024", () => {
       const errors = collectConsoleErrors(page);
       await gotoReady(page, `/?layers=pipelines&year=${String(year)}`);
       await expect(page.getByLabel("Oil pipelines")).toBeChecked();
-      await expect(page.locator('input[type="range"]')).toHaveValue(String(year));
+      await expect(yearSlider(page)).toHaveValue(String(year));
       expect(errors).toEqual([]);
     });
   }

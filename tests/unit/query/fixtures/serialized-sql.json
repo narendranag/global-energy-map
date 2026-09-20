@@ -1,0 +1,2042 @@
+{
+  "_generated_by": "scripts/dev/serialize_sql_fixtures.py \u2014 do not edit",
+  "duckdb": "1.5.2",
+  "sql": {
+    "simple": "SELECT * FROM trade_flow",
+    "join": "SELECT a.name FROM assets a JOIN country_year_series c ON a.country_iso3 = c.iso3",
+    "cte": "WITH t AS (SELECT * FROM trade_flow) SELECT * FROM t",
+    "cte_shadowing_a_table": "WITH trade_flow AS (SELECT 1 AS x) SELECT * FROM trade_flow",
+    "subquery": "SELECT * FROM (SELECT importer_iso3 FROM trade_flow) x WHERE x.importer_iso3 IN (SELECT iso3 FROM country_year_series)",
+    "quoted_identifiers": "SELECT * FROM \"trade_flow\" AS \"tf\"",
+    "read_parquet_direct": "SELECT * FROM read_parquet('/data/assets.parquet')",
+    "read_parquet_view_only": "SELECT * FROM read_parquet('/data/gie_daily.parquet')",
+    "read_csv": "SELECT * FROM read_csv('https://example.invalid/x.csv')",
+    "read_parquet_list_arg": "SELECT * FROM read_parquet(['/data/assets.parquet', '/data/trade_flow.parquet'])",
+    "set_operation": "SELECT iso3 FROM country_year_series UNION ALL SELECT importer_iso3 FROM trade_flow",
+    "scalar_subquery_over_file": "SELECT (SELECT count(*) FROM read_parquet('/data/gie_daily.parquet')) AS n",
+    "recursive_cte": "WITH RECURSIVE r(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM r WHERE n < 3) SELECT * FROM r",
+    "values_list": "SELECT * FROM (VALUES (1), (2)) v(x)",
+    "constant_only": "SELECT 1 AS a",
+    "qualified_memory_main": "SELECT * FROM memory.main.trade_flow",
+    "qualified_other_catalog": "SELECT * FROM other.main.trade_flow",
+    "two_statements": "SELECT 1; SELECT 2",
+    "non_select": "CREATE TABLE x AS SELECT 1",
+    "syntax_error": "SELECT FROM WHERE",
+    "create_table_as": "CREATE TABLE trade_flow AS SELECT 1",
+    "create_view": "CREATE VIEW v AS SELECT 1",
+    "copy_to": "COPY (SELECT 1) TO '/tmp/x.csv'",
+    "attach": "ATTACH 'foo.db' AS foo",
+    "install_extension": "INSTALL httpfs",
+    "load_extension": "LOAD httpfs",
+    "pragma": "PRAGMA table_info('trade_flow')",
+    "set_var": "SET memory_limit='1GB'",
+    "multi_statement_select_then_ddl": "SELECT 1; CREATE TABLE x AS SELECT 1",
+    "pivot_top_level_statement": "PIVOT (SELECT * FROM (VALUES ('a', 1), ('b', 2)) t(k, v)) ON k USING sum(v)",
+    "table_function_range": "SELECT * FROM range(10)",
+    "pivot_clause": "SELECT * FROM (VALUES ('a', 1), ('b', 2)) t(k, v) PIVOT (sum(v) FOR k IN ('a', 'b'))"
+  },
+  "trees": {
+    "simple": {
+      "error": false,
+      "statements": [
+        {
+          "node": {
+            "type": "SELECT_NODE",
+            "modifiers": [],
+            "cte_map": {
+              "map": []
+            },
+            "select_list": [
+              {
+                "class": "STAR",
+                "type": "STAR",
+                "alias": "",
+                "query_location": 7,
+                "relation_name": "",
+                "exclude_list": [],
+                "replace_list": [],
+                "columns": false,
+                "expr": null,
+                "qualified_exclude_list": [],
+                "rename_list": []
+              }
+            ],
+            "from_table": {
+              "type": "BASE_TABLE",
+              "alias": "",
+              "sample": null,
+              "query_location": 14,
+              "schema_name": "",
+              "table_name": "trade_flow",
+              "column_name_alias": [],
+              "catalog_name": "",
+              "at_clause": null
+            },
+            "where_clause": null,
+            "group_expressions": [],
+            "group_sets": [],
+            "aggregate_handling": "STANDARD_HANDLING",
+            "having": null,
+            "sample": null,
+            "qualify": null
+          },
+          "named_param_map": []
+        }
+      ]
+    },
+    "join": {
+      "error": false,
+      "statements": [
+        {
+          "node": {
+            "type": "SELECT_NODE",
+            "modifiers": [],
+            "cte_map": {
+              "map": []
+            },
+            "select_list": [
+              {
+                "class": "COLUMN_REF",
+                "type": "COLUMN_REF",
+                "alias": "",
+                "query_location": 7,
+                "column_names": [
+                  "a",
+                  "name"
+                ]
+              }
+            ],
+            "from_table": {
+              "type": "JOIN",
+              "alias": "",
+              "sample": null,
+              "query_location": 28,
+              "left": {
+                "type": "BASE_TABLE",
+                "alias": "a",
+                "sample": null,
+                "query_location": 19,
+                "schema_name": "",
+                "table_name": "assets",
+                "column_name_alias": [],
+                "catalog_name": "",
+                "at_clause": null
+              },
+              "right": {
+                "type": "BASE_TABLE",
+                "alias": "c",
+                "sample": null,
+                "query_location": 33,
+                "schema_name": "",
+                "table_name": "country_year_series",
+                "column_name_alias": [],
+                "catalog_name": "",
+                "at_clause": null
+              },
+              "condition": {
+                "class": "COMPARISON",
+                "type": "COMPARE_EQUAL",
+                "alias": "",
+                "query_location": 73,
+                "left": {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 58,
+                  "column_names": [
+                    "a",
+                    "country_iso3"
+                  ]
+                },
+                "right": {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 75,
+                  "column_names": [
+                    "c",
+                    "iso3"
+                  ]
+                }
+              },
+              "join_type": "INNER",
+              "ref_type": "REGULAR",
+              "using_columns": [],
+              "delim_flipped": false,
+              "duplicate_eliminated_columns": []
+            },
+            "where_clause": null,
+            "group_expressions": [],
+            "group_sets": [],
+            "aggregate_handling": "STANDARD_HANDLING",
+            "having": null,
+            "sample": null,
+            "qualify": null
+          },
+          "named_param_map": []
+        }
+      ]
+    },
+    "cte": {
+      "error": false,
+      "statements": [
+        {
+          "node": {
+            "type": "SELECT_NODE",
+            "modifiers": [],
+            "cte_map": {
+              "map": [
+                {
+                  "key": "t",
+                  "value": {
+                    "aliases": [],
+                    "query": {
+                      "node": {
+                        "type": "SELECT_NODE",
+                        "modifiers": [],
+                        "cte_map": {
+                          "map": []
+                        },
+                        "select_list": [
+                          {
+                            "class": "STAR",
+                            "type": "STAR",
+                            "alias": "",
+                            "query_location": 18,
+                            "relation_name": "",
+                            "exclude_list": [],
+                            "replace_list": [],
+                            "columns": false,
+                            "expr": null,
+                            "qualified_exclude_list": [],
+                            "rename_list": []
+                          }
+                        ],
+                        "from_table": {
+                          "type": "BASE_TABLE",
+                          "alias": "",
+                          "sample": null,
+                          "query_location": 25,
+                          "schema_name": "",
+                          "table_name": "trade_flow",
+                          "column_name_alias": [],
+                          "catalog_name": "",
+                          "at_clause": null
+                        },
+                        "where_clause": null,
+                        "group_expressions": [],
+                        "group_sets": [],
+                        "aggregate_handling": "STANDARD_HANDLING",
+                        "having": null,
+                        "sample": null,
+                        "qualify": null
+                      },
+                      "named_param_map": []
+                    },
+                    "materialized": "CTE_MATERIALIZE_DEFAULT",
+                    "key_targets": []
+                  }
+                }
+              ]
+            },
+            "select_list": [
+              {
+                "class": "STAR",
+                "type": "STAR",
+                "alias": "",
+                "query_location": 44,
+                "relation_name": "",
+                "exclude_list": [],
+                "replace_list": [],
+                "columns": false,
+                "expr": null,
+                "qualified_exclude_list": [],
+                "rename_list": []
+              }
+            ],
+            "from_table": {
+              "type": "BASE_TABLE",
+              "alias": "",
+              "sample": null,
+              "query_location": 51,
+              "schema_name": "",
+              "table_name": "t",
+              "column_name_alias": [],
+              "catalog_name": "",
+              "at_clause": null
+            },
+            "where_clause": null,
+            "group_expressions": [],
+            "group_sets": [],
+            "aggregate_handling": "STANDARD_HANDLING",
+            "having": null,
+            "sample": null,
+            "qualify": null
+          },
+          "named_param_map": []
+        }
+      ]
+    },
+    "cte_shadowing_a_table": {
+      "error": false,
+      "statements": [
+        {
+          "node": {
+            "type": "SELECT_NODE",
+            "modifiers": [],
+            "cte_map": {
+              "map": [
+                {
+                  "key": "trade_flow",
+                  "value": {
+                    "aliases": [],
+                    "query": {
+                      "node": {
+                        "type": "SELECT_NODE",
+                        "modifiers": [],
+                        "cte_map": {
+                          "map": []
+                        },
+                        "select_list": [
+                          {
+                            "class": "CONSTANT",
+                            "type": "VALUE_CONSTANT",
+                            "alias": "x",
+                            "query_location": 27,
+                            "value": {
+                              "type": {
+                                "id": "INTEGER",
+                                "type_info": null
+                              },
+                              "is_null": false,
+                              "value": 1
+                            }
+                          }
+                        ],
+                        "from_table": {
+                          "type": "EMPTY",
+                          "alias": "",
+                          "sample": null,
+                          "query_location": 18446744073709551615
+                        },
+                        "where_clause": null,
+                        "group_expressions": [],
+                        "group_sets": [],
+                        "aggregate_handling": "STANDARD_HANDLING",
+                        "having": null,
+                        "sample": null,
+                        "qualify": null
+                      },
+                      "named_param_map": []
+                    },
+                    "materialized": "CTE_MATERIALIZE_DEFAULT",
+                    "key_targets": []
+                  }
+                }
+              ]
+            },
+            "select_list": [
+              {
+                "class": "STAR",
+                "type": "STAR",
+                "alias": "",
+                "query_location": 42,
+                "relation_name": "",
+                "exclude_list": [],
+                "replace_list": [],
+                "columns": false,
+                "expr": null,
+                "qualified_exclude_list": [],
+                "rename_list": []
+              }
+            ],
+            "from_table": {
+              "type": "BASE_TABLE",
+              "alias": "",
+              "sample": null,
+              "query_location": 49,
+              "schema_name": "",
+              "table_name": "trade_flow",
+              "column_name_alias": [],
+              "catalog_name": "",
+              "at_clause": null
+            },
+            "where_clause": null,
+            "group_expressions": [],
+            "group_sets": [],
+            "aggregate_handling": "STANDARD_HANDLING",
+            "having": null,
+            "sample": null,
+            "qualify": null
+          },
+          "named_param_map": []
+        }
+      ]
+    },
+    "subquery": {
+      "error": false,
+      "statements": [
+        {
+          "node": {
+            "type": "SELECT_NODE",
+            "modifiers": [],
+            "cte_map": {
+              "map": []
+            },
+            "select_list": [
+              {
+                "class": "STAR",
+                "type": "STAR",
+                "alias": "",
+                "query_location": 7,
+                "relation_name": "",
+                "exclude_list": [],
+                "replace_list": [],
+                "columns": false,
+                "expr": null,
+                "qualified_exclude_list": [],
+                "rename_list": []
+              }
+            ],
+            "from_table": {
+              "type": "SUBQUERY",
+              "alias": "x",
+              "sample": null,
+              "query_location": 18446744073709551615,
+              "subquery": {
+                "node": {
+                  "type": "SELECT_NODE",
+                  "modifiers": [],
+                  "cte_map": {
+                    "map": []
+                  },
+                  "select_list": [
+                    {
+                      "class": "COLUMN_REF",
+                      "type": "COLUMN_REF",
+                      "alias": "",
+                      "query_location": 22,
+                      "column_names": [
+                        "importer_iso3"
+                      ]
+                    }
+                  ],
+                  "from_table": {
+                    "type": "BASE_TABLE",
+                    "alias": "",
+                    "sample": null,
+                    "query_location": 41,
+                    "schema_name": "",
+                    "table_name": "trade_flow",
+                    "column_name_alias": [],
+                    "catalog_name": "",
+                    "at_clause": null
+                  },
+                  "where_clause": null,
+                  "group_expressions": [],
+                  "group_sets": [],
+                  "aggregate_handling": "STANDARD_HANDLING",
+                  "having": null,
+                  "sample": null,
+                  "qualify": null
+                },
+                "named_param_map": []
+              },
+              "column_name_alias": []
+            },
+            "where_clause": {
+              "class": "SUBQUERY",
+              "type": "SUBQUERY",
+              "alias": "",
+              "query_location": 77,
+              "subquery_type": "ANY",
+              "subquery": {
+                "node": {
+                  "type": "SELECT_NODE",
+                  "modifiers": [],
+                  "cte_map": {
+                    "map": []
+                  },
+                  "select_list": [
+                    {
+                      "class": "COLUMN_REF",
+                      "type": "COLUMN_REF",
+                      "alias": "",
+                      "query_location": 88,
+                      "column_names": [
+                        "iso3"
+                      ]
+                    }
+                  ],
+                  "from_table": {
+                    "type": "BASE_TABLE",
+                    "alias": "",
+                    "sample": null,
+                    "query_location": 98,
+                    "schema_name": "",
+                    "table_name": "country_year_series",
+                    "column_name_alias": [],
+                    "catalog_name": "",
+                    "at_clause": null
+                  },
+                  "where_clause": null,
+                  "group_expressions": [],
+                  "group_sets": [],
+                  "aggregate_handling": "STANDARD_HANDLING",
+                  "having": null,
+                  "sample": null,
+                  "qualify": null
+                },
+                "named_param_map": []
+              },
+              "child": {
+                "class": "COLUMN_REF",
+                "type": "COLUMN_REF",
+                "alias": "",
+                "query_location": 61,
+                "column_names": [
+                  "x",
+                  "importer_iso3"
+                ]
+              },
+              "comparison_type": "COMPARE_EQUAL"
+            },
+            "group_expressions": [],
+            "group_sets": [],
+            "aggregate_handling": "STANDARD_HANDLING",
+            "having": null,
+            "sample": null,
+            "qualify": null
+          },
+          "named_param_map": []
+        }
+      ]
+    },
+    "quoted_identifiers": {
+      "error": false,
+      "statements": [
+        {
+          "node": {
+            "type": "SELECT_NODE",
+            "modifiers": [],
+            "cte_map": {
+              "map": []
+            },
+            "select_list": [
+              {
+                "class": "STAR",
+                "type": "STAR",
+                "alias": "",
+                "query_location": 7,
+                "relation_name": "",
+                "exclude_list": [],
+                "replace_list": [],
+                "columns": false,
+                "expr": null,
+                "qualified_exclude_list": [],
+                "rename_list": []
+              }
+            ],
+            "from_table": {
+              "type": "BASE_TABLE",
+              "alias": "tf",
+              "sample": null,
+              "query_location": 14,
+              "schema_name": "",
+              "table_name": "trade_flow",
+              "column_name_alias": [],
+              "catalog_name": "",
+              "at_clause": null
+            },
+            "where_clause": null,
+            "group_expressions": [],
+            "group_sets": [],
+            "aggregate_handling": "STANDARD_HANDLING",
+            "having": null,
+            "sample": null,
+            "qualify": null
+          },
+          "named_param_map": []
+        }
+      ]
+    },
+    "read_parquet_direct": {
+      "error": false,
+      "statements": [
+        {
+          "node": {
+            "type": "SELECT_NODE",
+            "modifiers": [],
+            "cte_map": {
+              "map": []
+            },
+            "select_list": [
+              {
+                "class": "STAR",
+                "type": "STAR",
+                "alias": "",
+                "query_location": 7,
+                "relation_name": "",
+                "exclude_list": [],
+                "replace_list": [],
+                "columns": false,
+                "expr": null,
+                "qualified_exclude_list": [],
+                "rename_list": []
+              }
+            ],
+            "from_table": {
+              "type": "TABLE_FUNCTION",
+              "alias": "",
+              "sample": null,
+              "query_location": 14,
+              "function": {
+                "class": "FUNCTION",
+                "type": "FUNCTION",
+                "alias": "",
+                "query_location": 14,
+                "function_name": "read_parquet",
+                "schema": "",
+                "children": [
+                  {
+                    "class": "CONSTANT",
+                    "type": "VALUE_CONSTANT",
+                    "alias": "",
+                    "query_location": 27,
+                    "value": {
+                      "type": {
+                        "id": "VARCHAR",
+                        "type_info": null
+                      },
+                      "is_null": false,
+                      "value": "/data/assets.parquet"
+                    }
+                  }
+                ],
+                "filter": null,
+                "order_bys": {
+                  "type": "ORDER_MODIFIER",
+                  "orders": []
+                },
+                "distinct": false,
+                "is_operator": false,
+                "export_state": false,
+                "catalog": ""
+              },
+              "column_name_alias": [],
+              "with_ordinality": "WITHOUT_ORDINALITY"
+            },
+            "where_clause": null,
+            "group_expressions": [],
+            "group_sets": [],
+            "aggregate_handling": "STANDARD_HANDLING",
+            "having": null,
+            "sample": null,
+            "qualify": null
+          },
+          "named_param_map": []
+        }
+      ]
+    },
+    "read_parquet_view_only": {
+      "error": false,
+      "statements": [
+        {
+          "node": {
+            "type": "SELECT_NODE",
+            "modifiers": [],
+            "cte_map": {
+              "map": []
+            },
+            "select_list": [
+              {
+                "class": "STAR",
+                "type": "STAR",
+                "alias": "",
+                "query_location": 7,
+                "relation_name": "",
+                "exclude_list": [],
+                "replace_list": [],
+                "columns": false,
+                "expr": null,
+                "qualified_exclude_list": [],
+                "rename_list": []
+              }
+            ],
+            "from_table": {
+              "type": "TABLE_FUNCTION",
+              "alias": "",
+              "sample": null,
+              "query_location": 14,
+              "function": {
+                "class": "FUNCTION",
+                "type": "FUNCTION",
+                "alias": "",
+                "query_location": 14,
+                "function_name": "read_parquet",
+                "schema": "",
+                "children": [
+                  {
+                    "class": "CONSTANT",
+                    "type": "VALUE_CONSTANT",
+                    "alias": "",
+                    "query_location": 27,
+                    "value": {
+                      "type": {
+                        "id": "VARCHAR",
+                        "type_info": null
+                      },
+                      "is_null": false,
+                      "value": "/data/gie_daily.parquet"
+                    }
+                  }
+                ],
+                "filter": null,
+                "order_bys": {
+                  "type": "ORDER_MODIFIER",
+                  "orders": []
+                },
+                "distinct": false,
+                "is_operator": false,
+                "export_state": false,
+                "catalog": ""
+              },
+              "column_name_alias": [],
+              "with_ordinality": "WITHOUT_ORDINALITY"
+            },
+            "where_clause": null,
+            "group_expressions": [],
+            "group_sets": [],
+            "aggregate_handling": "STANDARD_HANDLING",
+            "having": null,
+            "sample": null,
+            "qualify": null
+          },
+          "named_param_map": []
+        }
+      ]
+    },
+    "read_csv": {
+      "error": false,
+      "statements": [
+        {
+          "node": {
+            "type": "SELECT_NODE",
+            "modifiers": [],
+            "cte_map": {
+              "map": []
+            },
+            "select_list": [
+              {
+                "class": "STAR",
+                "type": "STAR",
+                "alias": "",
+                "query_location": 7,
+                "relation_name": "",
+                "exclude_list": [],
+                "replace_list": [],
+                "columns": false,
+                "expr": null,
+                "qualified_exclude_list": [],
+                "rename_list": []
+              }
+            ],
+            "from_table": {
+              "type": "TABLE_FUNCTION",
+              "alias": "",
+              "sample": null,
+              "query_location": 14,
+              "function": {
+                "class": "FUNCTION",
+                "type": "FUNCTION",
+                "alias": "",
+                "query_location": 14,
+                "function_name": "read_csv",
+                "schema": "",
+                "children": [
+                  {
+                    "class": "CONSTANT",
+                    "type": "VALUE_CONSTANT",
+                    "alias": "",
+                    "query_location": 23,
+                    "value": {
+                      "type": {
+                        "id": "VARCHAR",
+                        "type_info": null
+                      },
+                      "is_null": false,
+                      "value": "https://example.invalid/x.csv"
+                    }
+                  }
+                ],
+                "filter": null,
+                "order_bys": {
+                  "type": "ORDER_MODIFIER",
+                  "orders": []
+                },
+                "distinct": false,
+                "is_operator": false,
+                "export_state": false,
+                "catalog": ""
+              },
+              "column_name_alias": [],
+              "with_ordinality": "WITHOUT_ORDINALITY"
+            },
+            "where_clause": null,
+            "group_expressions": [],
+            "group_sets": [],
+            "aggregate_handling": "STANDARD_HANDLING",
+            "having": null,
+            "sample": null,
+            "qualify": null
+          },
+          "named_param_map": []
+        }
+      ]
+    },
+    "read_parquet_list_arg": {
+      "error": false,
+      "statements": [
+        {
+          "node": {
+            "type": "SELECT_NODE",
+            "modifiers": [],
+            "cte_map": {
+              "map": []
+            },
+            "select_list": [
+              {
+                "class": "STAR",
+                "type": "STAR",
+                "alias": "",
+                "query_location": 7,
+                "relation_name": "",
+                "exclude_list": [],
+                "replace_list": [],
+                "columns": false,
+                "expr": null,
+                "qualified_exclude_list": [],
+                "rename_list": []
+              }
+            ],
+            "from_table": {
+              "type": "TABLE_FUNCTION",
+              "alias": "",
+              "sample": null,
+              "query_location": 14,
+              "function": {
+                "class": "FUNCTION",
+                "type": "FUNCTION",
+                "alias": "",
+                "query_location": 14,
+                "function_name": "read_parquet",
+                "schema": "",
+                "children": [
+                  {
+                    "class": "FUNCTION",
+                    "type": "FUNCTION",
+                    "alias": "",
+                    "query_location": 28,
+                    "function_name": "list_value",
+                    "schema": "main",
+                    "children": [
+                      {
+                        "class": "CONSTANT",
+                        "type": "VALUE_CONSTANT",
+                        "alias": "",
+                        "query_location": 28,
+                        "value": {
+                          "type": {
+                            "id": "VARCHAR",
+                            "type_info": null
+                          },
+                          "is_null": false,
+                          "value": "/data/assets.parquet"
+                        }
+                      },
+                      {
+                        "class": "CONSTANT",
+                        "type": "VALUE_CONSTANT",
+                        "alias": "",
+                        "query_location": 52,
+                        "value": {
+                          "type": {
+                            "id": "VARCHAR",
+                            "type_info": null
+                          },
+                          "is_null": false,
+                          "value": "/data/trade_flow.parquet"
+                        }
+                      }
+                    ],
+                    "filter": null,
+                    "order_bys": {
+                      "type": "ORDER_MODIFIER",
+                      "orders": []
+                    },
+                    "distinct": false,
+                    "is_operator": false,
+                    "export_state": false,
+                    "catalog": ""
+                  }
+                ],
+                "filter": null,
+                "order_bys": {
+                  "type": "ORDER_MODIFIER",
+                  "orders": []
+                },
+                "distinct": false,
+                "is_operator": false,
+                "export_state": false,
+                "catalog": ""
+              },
+              "column_name_alias": [],
+              "with_ordinality": "WITHOUT_ORDINALITY"
+            },
+            "where_clause": null,
+            "group_expressions": [],
+            "group_sets": [],
+            "aggregate_handling": "STANDARD_HANDLING",
+            "having": null,
+            "sample": null,
+            "qualify": null
+          },
+          "named_param_map": []
+        }
+      ]
+    },
+    "set_operation": {
+      "error": false,
+      "statements": [
+        {
+          "node": {
+            "type": "SET_OPERATION_NODE",
+            "modifiers": [],
+            "cte_map": {
+              "map": []
+            },
+            "setop_type": "UNION",
+            "left": {
+              "type": "SELECT_NODE",
+              "modifiers": [],
+              "cte_map": {
+                "map": []
+              },
+              "select_list": [
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 7,
+                  "column_names": [
+                    "iso3"
+                  ]
+                }
+              ],
+              "from_table": {
+                "type": "BASE_TABLE",
+                "alias": "",
+                "sample": null,
+                "query_location": 17,
+                "schema_name": "",
+                "table_name": "country_year_series",
+                "column_name_alias": [],
+                "catalog_name": "",
+                "at_clause": null
+              },
+              "where_clause": null,
+              "group_expressions": [],
+              "group_sets": [],
+              "aggregate_handling": "STANDARD_HANDLING",
+              "having": null,
+              "sample": null,
+              "qualify": null
+            },
+            "right": {
+              "type": "SELECT_NODE",
+              "modifiers": [],
+              "cte_map": {
+                "map": []
+              },
+              "select_list": [
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 54,
+                  "column_names": [
+                    "importer_iso3"
+                  ]
+                }
+              ],
+              "from_table": {
+                "type": "BASE_TABLE",
+                "alias": "",
+                "sample": null,
+                "query_location": 73,
+                "schema_name": "",
+                "table_name": "trade_flow",
+                "column_name_alias": [],
+                "catalog_name": "",
+                "at_clause": null
+              },
+              "where_clause": null,
+              "group_expressions": [],
+              "group_sets": [],
+              "aggregate_handling": "STANDARD_HANDLING",
+              "having": null,
+              "sample": null,
+              "qualify": null
+            },
+            "setop_all": true
+          },
+          "named_param_map": []
+        }
+      ]
+    },
+    "scalar_subquery_over_file": {
+      "error": false,
+      "statements": [
+        {
+          "node": {
+            "type": "SELECT_NODE",
+            "modifiers": [],
+            "cte_map": {
+              "map": []
+            },
+            "select_list": [
+              {
+                "class": "SUBQUERY",
+                "type": "SUBQUERY",
+                "alias": "n",
+                "query_location": 7,
+                "subquery_type": "SCALAR",
+                "subquery": {
+                  "node": {
+                    "type": "SELECT_NODE",
+                    "modifiers": [],
+                    "cte_map": {
+                      "map": []
+                    },
+                    "select_list": [
+                      {
+                        "class": "FUNCTION",
+                        "type": "FUNCTION",
+                        "alias": "",
+                        "query_location": 15,
+                        "function_name": "count_star",
+                        "schema": "",
+                        "children": [],
+                        "filter": null,
+                        "order_bys": {
+                          "type": "ORDER_MODIFIER",
+                          "orders": []
+                        },
+                        "distinct": false,
+                        "is_operator": false,
+                        "export_state": false,
+                        "catalog": ""
+                      }
+                    ],
+                    "from_table": {
+                      "type": "TABLE_FUNCTION",
+                      "alias": "",
+                      "sample": null,
+                      "query_location": 29,
+                      "function": {
+                        "class": "FUNCTION",
+                        "type": "FUNCTION",
+                        "alias": "",
+                        "query_location": 29,
+                        "function_name": "read_parquet",
+                        "schema": "",
+                        "children": [
+                          {
+                            "class": "CONSTANT",
+                            "type": "VALUE_CONSTANT",
+                            "alias": "",
+                            "query_location": 42,
+                            "value": {
+                              "type": {
+                                "id": "VARCHAR",
+                                "type_info": null
+                              },
+                              "is_null": false,
+                              "value": "/data/gie_daily.parquet"
+                            }
+                          }
+                        ],
+                        "filter": null,
+                        "order_bys": {
+                          "type": "ORDER_MODIFIER",
+                          "orders": []
+                        },
+                        "distinct": false,
+                        "is_operator": false,
+                        "export_state": false,
+                        "catalog": ""
+                      },
+                      "column_name_alias": [],
+                      "with_ordinality": "WITHOUT_ORDINALITY"
+                    },
+                    "where_clause": null,
+                    "group_expressions": [],
+                    "group_sets": [],
+                    "aggregate_handling": "STANDARD_HANDLING",
+                    "having": null,
+                    "sample": null,
+                    "qualify": null
+                  },
+                  "named_param_map": []
+                },
+                "child": null,
+                "comparison_type": "INVALID"
+              }
+            ],
+            "from_table": {
+              "type": "EMPTY",
+              "alias": "",
+              "sample": null,
+              "query_location": 18446744073709551615
+            },
+            "where_clause": null,
+            "group_expressions": [],
+            "group_sets": [],
+            "aggregate_handling": "STANDARD_HANDLING",
+            "having": null,
+            "sample": null,
+            "qualify": null
+          },
+          "named_param_map": []
+        }
+      ]
+    },
+    "recursive_cte": {
+      "error": false,
+      "statements": [
+        {
+          "node": {
+            "type": "SELECT_NODE",
+            "modifiers": [],
+            "cte_map": {
+              "map": [
+                {
+                  "key": "r",
+                  "value": {
+                    "aliases": [
+                      "n"
+                    ],
+                    "query": {
+                      "node": {
+                        "type": "RECURSIVE_CTE_NODE",
+                        "modifiers": [],
+                        "cte_map": {
+                          "map": []
+                        },
+                        "cte_name": "r",
+                        "union_all": true,
+                        "left": {
+                          "type": "SELECT_NODE",
+                          "modifiers": [],
+                          "cte_map": {
+                            "map": []
+                          },
+                          "select_list": [
+                            {
+                              "class": "CONSTANT",
+                              "type": "VALUE_CONSTANT",
+                              "alias": "",
+                              "query_location": 31,
+                              "value": {
+                                "type": {
+                                  "id": "INTEGER",
+                                  "type_info": null
+                                },
+                                "is_null": false,
+                                "value": 1
+                              }
+                            }
+                          ],
+                          "from_table": {
+                            "type": "EMPTY",
+                            "alias": "",
+                            "sample": null,
+                            "query_location": 18446744073709551615
+                          },
+                          "where_clause": null,
+                          "group_expressions": [],
+                          "group_sets": [],
+                          "aggregate_handling": "STANDARD_HANDLING",
+                          "having": null,
+                          "sample": null,
+                          "qualify": null
+                        },
+                        "right": {
+                          "type": "SELECT_NODE",
+                          "modifiers": [],
+                          "cte_map": {
+                            "map": []
+                          },
+                          "select_list": [
+                            {
+                              "class": "FUNCTION",
+                              "type": "FUNCTION",
+                              "alias": "",
+                              "query_location": 52,
+                              "function_name": "+",
+                              "schema": "",
+                              "children": [
+                                {
+                                  "class": "COLUMN_REF",
+                                  "type": "COLUMN_REF",
+                                  "alias": "",
+                                  "query_location": 50,
+                                  "column_names": [
+                                    "n"
+                                  ]
+                                },
+                                {
+                                  "class": "CONSTANT",
+                                  "type": "VALUE_CONSTANT",
+                                  "alias": "",
+                                  "query_location": 54,
+                                  "value": {
+                                    "type": {
+                                      "id": "INTEGER",
+                                      "type_info": null
+                                    },
+                                    "is_null": false,
+                                    "value": 1
+                                  }
+                                }
+                              ],
+                              "filter": null,
+                              "order_bys": {
+                                "type": "ORDER_MODIFIER",
+                                "orders": []
+                              },
+                              "distinct": false,
+                              "is_operator": true,
+                              "export_state": false,
+                              "catalog": ""
+                            }
+                          ],
+                          "from_table": {
+                            "type": "BASE_TABLE",
+                            "alias": "",
+                            "sample": null,
+                            "query_location": 61,
+                            "schema_name": "",
+                            "table_name": "r",
+                            "column_name_alias": [],
+                            "catalog_name": "",
+                            "at_clause": null
+                          },
+                          "where_clause": {
+                            "class": "COMPARISON",
+                            "type": "COMPARE_LESSTHAN",
+                            "alias": "",
+                            "query_location": 71,
+                            "left": {
+                              "class": "COLUMN_REF",
+                              "type": "COLUMN_REF",
+                              "alias": "",
+                              "query_location": 69,
+                              "column_names": [
+                                "n"
+                              ]
+                            },
+                            "right": {
+                              "class": "CONSTANT",
+                              "type": "VALUE_CONSTANT",
+                              "alias": "",
+                              "query_location": 73,
+                              "value": {
+                                "type": {
+                                  "id": "INTEGER",
+                                  "type_info": null
+                                },
+                                "is_null": false,
+                                "value": 3
+                              }
+                            }
+                          },
+                          "group_expressions": [],
+                          "group_sets": [],
+                          "aggregate_handling": "STANDARD_HANDLING",
+                          "having": null,
+                          "sample": null,
+                          "qualify": null
+                        },
+                        "aliases": [
+                          "n"
+                        ],
+                        "key_targets": []
+                      },
+                      "named_param_map": []
+                    },
+                    "materialized": "CTE_MATERIALIZE_DEFAULT",
+                    "key_targets": []
+                  }
+                }
+              ]
+            },
+            "select_list": [
+              {
+                "class": "STAR",
+                "type": "STAR",
+                "alias": "",
+                "query_location": 83,
+                "relation_name": "",
+                "exclude_list": [],
+                "replace_list": [],
+                "columns": false,
+                "expr": null,
+                "qualified_exclude_list": [],
+                "rename_list": []
+              }
+            ],
+            "from_table": {
+              "type": "BASE_TABLE",
+              "alias": "",
+              "sample": null,
+              "query_location": 90,
+              "schema_name": "",
+              "table_name": "r",
+              "column_name_alias": [],
+              "catalog_name": "",
+              "at_clause": null
+            },
+            "where_clause": null,
+            "group_expressions": [],
+            "group_sets": [],
+            "aggregate_handling": "STANDARD_HANDLING",
+            "having": null,
+            "sample": null,
+            "qualify": null
+          },
+          "named_param_map": []
+        }
+      ]
+    },
+    "values_list": {
+      "error": false,
+      "statements": [
+        {
+          "node": {
+            "type": "SELECT_NODE",
+            "modifiers": [],
+            "cte_map": {
+              "map": []
+            },
+            "select_list": [
+              {
+                "class": "STAR",
+                "type": "STAR",
+                "alias": "",
+                "query_location": 7,
+                "relation_name": "",
+                "exclude_list": [],
+                "replace_list": [],
+                "columns": false,
+                "expr": null,
+                "qualified_exclude_list": [],
+                "rename_list": []
+              }
+            ],
+            "from_table": {
+              "type": "SUBQUERY",
+              "alias": "v",
+              "sample": null,
+              "query_location": 18446744073709551615,
+              "subquery": {
+                "node": {
+                  "type": "SELECT_NODE",
+                  "modifiers": [],
+                  "cte_map": {
+                    "map": []
+                  },
+                  "select_list": [
+                    {
+                      "class": "STAR",
+                      "type": "STAR",
+                      "alias": "",
+                      "query_location": 18446744073709551615,
+                      "relation_name": "",
+                      "exclude_list": [],
+                      "replace_list": [],
+                      "columns": false,
+                      "expr": null,
+                      "qualified_exclude_list": [],
+                      "rename_list": []
+                    }
+                  ],
+                  "from_table": {
+                    "type": "EXPRESSION_LIST",
+                    "alias": "valueslist",
+                    "sample": null,
+                    "query_location": 18446744073709551615,
+                    "expected_names": [],
+                    "expected_types": [],
+                    "values": [
+                      [
+                        {
+                          "class": "CONSTANT",
+                          "type": "VALUE_CONSTANT",
+                          "alias": "",
+                          "query_location": 23,
+                          "value": {
+                            "type": {
+                              "id": "INTEGER",
+                              "type_info": null
+                            },
+                            "is_null": false,
+                            "value": 1
+                          }
+                        }
+                      ],
+                      [
+                        {
+                          "class": "CONSTANT",
+                          "type": "VALUE_CONSTANT",
+                          "alias": "",
+                          "query_location": 28,
+                          "value": {
+                            "type": {
+                              "id": "INTEGER",
+                              "type_info": null
+                            },
+                            "is_null": false,
+                            "value": 2
+                          }
+                        }
+                      ]
+                    ]
+                  },
+                  "where_clause": null,
+                  "group_expressions": [],
+                  "group_sets": [],
+                  "aggregate_handling": "STANDARD_HANDLING",
+                  "having": null,
+                  "sample": null,
+                  "qualify": null
+                },
+                "named_param_map": []
+              },
+              "column_name_alias": [
+                "x"
+              ]
+            },
+            "where_clause": null,
+            "group_expressions": [],
+            "group_sets": [],
+            "aggregate_handling": "STANDARD_HANDLING",
+            "having": null,
+            "sample": null,
+            "qualify": null
+          },
+          "named_param_map": []
+        }
+      ]
+    },
+    "constant_only": {
+      "error": false,
+      "statements": [
+        {
+          "node": {
+            "type": "SELECT_NODE",
+            "modifiers": [],
+            "cte_map": {
+              "map": []
+            },
+            "select_list": [
+              {
+                "class": "CONSTANT",
+                "type": "VALUE_CONSTANT",
+                "alias": "a",
+                "query_location": 7,
+                "value": {
+                  "type": {
+                    "id": "INTEGER",
+                    "type_info": null
+                  },
+                  "is_null": false,
+                  "value": 1
+                }
+              }
+            ],
+            "from_table": {
+              "type": "EMPTY",
+              "alias": "",
+              "sample": null,
+              "query_location": 18446744073709551615
+            },
+            "where_clause": null,
+            "group_expressions": [],
+            "group_sets": [],
+            "aggregate_handling": "STANDARD_HANDLING",
+            "having": null,
+            "sample": null,
+            "qualify": null
+          },
+          "named_param_map": []
+        }
+      ]
+    },
+    "qualified_memory_main": {
+      "error": false,
+      "statements": [
+        {
+          "node": {
+            "type": "SELECT_NODE",
+            "modifiers": [],
+            "cte_map": {
+              "map": []
+            },
+            "select_list": [
+              {
+                "class": "STAR",
+                "type": "STAR",
+                "alias": "",
+                "query_location": 7,
+                "relation_name": "",
+                "exclude_list": [],
+                "replace_list": [],
+                "columns": false,
+                "expr": null,
+                "qualified_exclude_list": [],
+                "rename_list": []
+              }
+            ],
+            "from_table": {
+              "type": "BASE_TABLE",
+              "alias": "",
+              "sample": null,
+              "query_location": 14,
+              "schema_name": "main",
+              "table_name": "trade_flow",
+              "column_name_alias": [],
+              "catalog_name": "memory",
+              "at_clause": null
+            },
+            "where_clause": null,
+            "group_expressions": [],
+            "group_sets": [],
+            "aggregate_handling": "STANDARD_HANDLING",
+            "having": null,
+            "sample": null,
+            "qualify": null
+          },
+          "named_param_map": []
+        }
+      ]
+    },
+    "qualified_other_catalog": {
+      "error": false,
+      "statements": [
+        {
+          "node": {
+            "type": "SELECT_NODE",
+            "modifiers": [],
+            "cte_map": {
+              "map": []
+            },
+            "select_list": [
+              {
+                "class": "STAR",
+                "type": "STAR",
+                "alias": "",
+                "query_location": 7,
+                "relation_name": "",
+                "exclude_list": [],
+                "replace_list": [],
+                "columns": false,
+                "expr": null,
+                "qualified_exclude_list": [],
+                "rename_list": []
+              }
+            ],
+            "from_table": {
+              "type": "BASE_TABLE",
+              "alias": "",
+              "sample": null,
+              "query_location": 14,
+              "schema_name": "main",
+              "table_name": "trade_flow",
+              "column_name_alias": [],
+              "catalog_name": "other",
+              "at_clause": null
+            },
+            "where_clause": null,
+            "group_expressions": [],
+            "group_sets": [],
+            "aggregate_handling": "STANDARD_HANDLING",
+            "having": null,
+            "sample": null,
+            "qualify": null
+          },
+          "named_param_map": []
+        }
+      ]
+    },
+    "two_statements": {
+      "error": false,
+      "statements": [
+        {
+          "node": {
+            "type": "SELECT_NODE",
+            "modifiers": [],
+            "cte_map": {
+              "map": []
+            },
+            "select_list": [
+              {
+                "class": "CONSTANT",
+                "type": "VALUE_CONSTANT",
+                "alias": "",
+                "query_location": 7,
+                "value": {
+                  "type": {
+                    "id": "INTEGER",
+                    "type_info": null
+                  },
+                  "is_null": false,
+                  "value": 1
+                }
+              }
+            ],
+            "from_table": {
+              "type": "EMPTY",
+              "alias": "",
+              "sample": null,
+              "query_location": 18446744073709551615
+            },
+            "where_clause": null,
+            "group_expressions": [],
+            "group_sets": [],
+            "aggregate_handling": "STANDARD_HANDLING",
+            "having": null,
+            "sample": null,
+            "qualify": null
+          },
+          "named_param_map": []
+        },
+        {
+          "node": {
+            "type": "SELECT_NODE",
+            "modifiers": [],
+            "cte_map": {
+              "map": []
+            },
+            "select_list": [
+              {
+                "class": "CONSTANT",
+                "type": "VALUE_CONSTANT",
+                "alias": "",
+                "query_location": 17,
+                "value": {
+                  "type": {
+                    "id": "INTEGER",
+                    "type_info": null
+                  },
+                  "is_null": false,
+                  "value": 2
+                }
+              }
+            ],
+            "from_table": {
+              "type": "EMPTY",
+              "alias": "",
+              "sample": null,
+              "query_location": 18446744073709551615
+            },
+            "where_clause": null,
+            "group_expressions": [],
+            "group_sets": [],
+            "aggregate_handling": "STANDARD_HANDLING",
+            "having": null,
+            "sample": null,
+            "qualify": null
+          },
+          "named_param_map": []
+        }
+      ]
+    },
+    "non_select": {
+      "error": true,
+      "error_type": "not implemented",
+      "error_message": "Only SELECT statements can be serialized to json!"
+    },
+    "syntax_error": {
+      "error": true,
+      "error_type": "parser",
+      "error_message": "syntax error at or near \"WHERE\"",
+      "error_subtype": "SYNTAX_ERROR",
+      "position": "12"
+    },
+    "create_table_as": {
+      "error": true,
+      "error_type": "not implemented",
+      "error_message": "Only SELECT statements can be serialized to json!"
+    },
+    "create_view": {
+      "error": true,
+      "error_type": "not implemented",
+      "error_message": "Only SELECT statements can be serialized to json!"
+    },
+    "copy_to": {
+      "error": true,
+      "error_type": "not implemented",
+      "error_message": "Only SELECT statements can be serialized to json!"
+    },
+    "attach": {
+      "error": true,
+      "error_type": "not implemented",
+      "error_message": "Only SELECT statements can be serialized to json!"
+    },
+    "install_extension": {
+      "error": true,
+      "error_type": "not implemented",
+      "error_message": "Only SELECT statements can be serialized to json!"
+    },
+    "load_extension": {
+      "error": true,
+      "error_type": "not implemented",
+      "error_message": "Only SELECT statements can be serialized to json!"
+    },
+    "pragma": {
+      "error": true,
+      "error_type": "not implemented",
+      "error_message": "Only SELECT statements can be serialized to json!"
+    },
+    "set_var": {
+      "error": true,
+      "error_type": "not implemented",
+      "error_message": "Only SELECT statements can be serialized to json!"
+    },
+    "multi_statement_select_then_ddl": {
+      "error": true,
+      "error_type": "not implemented",
+      "error_message": "Only SELECT statements can be serialized to json!"
+    },
+    "pivot_top_level_statement": {
+      "error": true,
+      "error_type": "not implemented",
+      "error_message": "Only SELECT statements can be serialized to json!"
+    },
+    "table_function_range": {
+      "error": false,
+      "statements": [
+        {
+          "node": {
+            "type": "SELECT_NODE",
+            "modifiers": [],
+            "cte_map": {
+              "map": []
+            },
+            "select_list": [
+              {
+                "class": "STAR",
+                "type": "STAR",
+                "alias": "",
+                "query_location": 7,
+                "relation_name": "",
+                "exclude_list": [],
+                "replace_list": [],
+                "columns": false,
+                "expr": null,
+                "qualified_exclude_list": [],
+                "rename_list": []
+              }
+            ],
+            "from_table": {
+              "type": "TABLE_FUNCTION",
+              "alias": "",
+              "sample": null,
+              "query_location": 14,
+              "function": {
+                "class": "FUNCTION",
+                "type": "FUNCTION",
+                "alias": "",
+                "query_location": 14,
+                "function_name": "range",
+                "schema": "",
+                "children": [
+                  {
+                    "class": "CONSTANT",
+                    "type": "VALUE_CONSTANT",
+                    "alias": "",
+                    "query_location": 20,
+                    "value": {
+                      "type": {
+                        "id": "INTEGER",
+                        "type_info": null
+                      },
+                      "is_null": false,
+                      "value": 10
+                    }
+                  }
+                ],
+                "filter": null,
+                "order_bys": {
+                  "type": "ORDER_MODIFIER",
+                  "orders": []
+                },
+                "distinct": false,
+                "is_operator": false,
+                "export_state": false,
+                "catalog": ""
+              },
+              "column_name_alias": [],
+              "with_ordinality": "WITHOUT_ORDINALITY"
+            },
+            "where_clause": null,
+            "group_expressions": [],
+            "group_sets": [],
+            "aggregate_handling": "STANDARD_HANDLING",
+            "having": null,
+            "sample": null,
+            "qualify": null
+          },
+          "named_param_map": []
+        }
+      ]
+    },
+    "pivot_clause": {
+      "error": false,
+      "statements": [
+        {
+          "node": {
+            "type": "SELECT_NODE",
+            "modifiers": [],
+            "cte_map": {
+              "map": []
+            },
+            "select_list": [
+              {
+                "class": "STAR",
+                "type": "STAR",
+                "alias": "",
+                "query_location": 7,
+                "relation_name": "",
+                "exclude_list": [],
+                "replace_list": [],
+                "columns": false,
+                "expr": null,
+                "qualified_exclude_list": [],
+                "rename_list": []
+              }
+            ],
+            "from_table": {
+              "type": "PIVOT",
+              "alias": "",
+              "sample": null,
+              "query_location": 50,
+              "source": {
+                "type": "SUBQUERY",
+                "alias": "t",
+                "sample": null,
+                "query_location": 18446744073709551615,
+                "subquery": {
+                  "node": {
+                    "type": "SELECT_NODE",
+                    "modifiers": [],
+                    "cte_map": {
+                      "map": []
+                    },
+                    "select_list": [
+                      {
+                        "class": "STAR",
+                        "type": "STAR",
+                        "alias": "",
+                        "query_location": 18446744073709551615,
+                        "relation_name": "",
+                        "exclude_list": [],
+                        "replace_list": [],
+                        "columns": false,
+                        "expr": null,
+                        "qualified_exclude_list": [],
+                        "rename_list": []
+                      }
+                    ],
+                    "from_table": {
+                      "type": "EXPRESSION_LIST",
+                      "alias": "valueslist",
+                      "sample": null,
+                      "query_location": 18446744073709551615,
+                      "expected_names": [],
+                      "expected_types": [],
+                      "values": [
+                        [
+                          {
+                            "class": "CONSTANT",
+                            "type": "VALUE_CONSTANT",
+                            "alias": "",
+                            "query_location": 23,
+                            "value": {
+                              "type": {
+                                "id": "VARCHAR",
+                                "type_info": null
+                              },
+                              "is_null": false,
+                              "value": "a"
+                            }
+                          },
+                          {
+                            "class": "CONSTANT",
+                            "type": "VALUE_CONSTANT",
+                            "alias": "",
+                            "query_location": 28,
+                            "value": {
+                              "type": {
+                                "id": "INTEGER",
+                                "type_info": null
+                              },
+                              "is_null": false,
+                              "value": 1
+                            }
+                          }
+                        ],
+                        [
+                          {
+                            "class": "CONSTANT",
+                            "type": "VALUE_CONSTANT",
+                            "alias": "",
+                            "query_location": 33,
+                            "value": {
+                              "type": {
+                                "id": "VARCHAR",
+                                "type_info": null
+                              },
+                              "is_null": false,
+                              "value": "b"
+                            }
+                          },
+                          {
+                            "class": "CONSTANT",
+                            "type": "VALUE_CONSTANT",
+                            "alias": "",
+                            "query_location": 38,
+                            "value": {
+                              "type": {
+                                "id": "INTEGER",
+                                "type_info": null
+                              },
+                              "is_null": false,
+                              "value": 2
+                            }
+                          }
+                        ]
+                      ]
+                    },
+                    "where_clause": null,
+                    "group_expressions": [],
+                    "group_sets": [],
+                    "aggregate_handling": "STANDARD_HANDLING",
+                    "having": null,
+                    "sample": null,
+                    "qualify": null
+                  },
+                  "named_param_map": []
+                },
+                "column_name_alias": [
+                  "k",
+                  "v"
+                ]
+              },
+              "aggregates": [
+                {
+                  "class": "FUNCTION",
+                  "type": "FUNCTION",
+                  "alias": "",
+                  "query_location": 57,
+                  "function_name": "sum",
+                  "schema": "",
+                  "children": [
+                    {
+                      "class": "COLUMN_REF",
+                      "type": "COLUMN_REF",
+                      "alias": "",
+                      "query_location": 61,
+                      "column_names": [
+                        "v"
+                      ]
+                    }
+                  ],
+                  "filter": null,
+                  "order_bys": {
+                    "type": "ORDER_MODIFIER",
+                    "orders": []
+                  },
+                  "distinct": false,
+                  "is_operator": false,
+                  "export_state": false,
+                  "catalog": ""
+                }
+              ],
+              "unpivot_names": [],
+              "pivots": [
+                {
+                  "pivot_expressions": [
+                    {
+                      "class": "COLUMN_REF",
+                      "type": "COLUMN_REF",
+                      "alias": "",
+                      "query_location": 68,
+                      "column_names": [
+                        "k"
+                      ]
+                    }
+                  ],
+                  "unpivot_names": [],
+                  "entries": [
+                    {
+                      "values": [
+                        {
+                          "type": {
+                            "id": "VARCHAR",
+                            "type_info": null
+                          },
+                          "is_null": false,
+                          "value": "a"
+                        }
+                      ],
+                      "star_expr": null,
+                      "alias": ""
+                    },
+                    {
+                      "values": [
+                        {
+                          "type": {
+                            "id": "VARCHAR",
+                            "type_info": null
+                          },
+                          "is_null": false,
+                          "value": "b"
+                        }
+                      ],
+                      "star_expr": null,
+                      "alias": ""
+                    }
+                  ],
+                  "pivot_enum": ""
+                }
+              ],
+              "groups": [],
+              "column_name_alias": [],
+              "include_nulls": false
+            },
+            "where_clause": null,
+            "group_expressions": [],
+            "group_sets": [],
+            "aggregate_handling": "STANDARD_HANDLING",
+            "having": null,
+            "sample": null,
+            "qualify": null
+          },
+          "named_param_map": []
+        }
+      ]
+    }
+  }
+}

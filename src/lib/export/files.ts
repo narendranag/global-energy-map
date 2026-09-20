@@ -55,6 +55,18 @@ export function layerGeoJson(status: LayerExportStatus, table: ExportTable, ctx:
   return `${JSON.stringify(featureCollection(table.features, metadata))}\n`;
 }
 
-export function layerFilename(key: string, year: number, ext: "csv" | "geojson"): string {
-  return `global-energy-map_${key}_${String(year)}.${ext}`;
+/**
+ * `commoditySuffix` (A3) disambiguates a layer whose rows differ by
+ * commodity within the same key — today only `trade_flows`
+ * (`…_trade_flows_crude_2024.csv` vs `…_trade_flows_lng_2024.csv`), since
+ * crude and LNG pairs would otherwise silently overwrite one file.
+ */
+export function layerFilename(
+  key: string,
+  year: number,
+  ext: "csv" | "geojson",
+  commoditySuffix?: string,
+): string {
+  const suffix = commoditySuffix ? `_${commoditySuffix}` : "";
+  return `global-energy-map_${key}${suffix}_${String(year)}.${ext}`;
 }

@@ -1,6 +1,6 @@
 {
   "version": 7,
-  "generated_at": "2026-09-17T00:00:00+00:00",
+  "generated_at": "2026-09-19T00:00:00+00:00",
   "entries": [
     {
       "id": "comtrade_monthly",
@@ -410,7 +410,17 @@
         "scenario:hormuz-lng",
         "scenario:druzhba",
         "scenario:btc",
-        "scenario:cpc"
+        "scenario:cpc",
+        "scenario:malacca",
+        "scenario:malacca-lng",
+        "scenario:suez",
+        "scenario:suez-lng",
+        "scenario:bab_el_mandeb",
+        "scenario:bab_el_mandeb-lng",
+        "scenario:turkish_straits",
+        "scenario:keystone",
+        "scenario:enbridge_mainline",
+        "scenario:espo_spur"
       ],
       "attribution": "Data: CEPII BACI (release V202601); cite Gaulier & Zignago (2010)",
       "runtime": true,
@@ -428,20 +438,30 @@
       "source_name": "EIA / IEA / Argus Media (Kpler) / GEM — see source_* columns",
       "source_url": "https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz",
       "license": "Hand-set shares derived from public reports; per-row citations",
-      "as_of": "2026-09-11",
+      "as_of": "2026-09-19",
       "layers": [
         "scenario:hormuz",
         "scenario:hormuz-lng",
         "scenario:druzhba",
         "scenario:btc",
-        "scenario:cpc"
+        "scenario:cpc",
+        "scenario:malacca",
+        "scenario:malacca-lng",
+        "scenario:suez",
+        "scenario:suez-lng",
+        "scenario:bab_el_mandeb",
+        "scenario:bab_el_mandeb-lng",
+        "scenario:turkish_straits",
+        "scenario:keystone",
+        "scenario:enbridge_mainline",
+        "scenario:espo_spur"
       ],
       "runtime": true,
       "redistributable": true,
       "downloadable": true,
-      "rows": 72,
-      "bytes": 10561,
-      "sha256": "ce4cffd2135ada69013ec484781ee23e94afd1fda4ac8280d9aeb9b49705516d"
+      "rows": 521,
+      "bytes": 15057,
+      "sha256": "f44a835b16830d26ce1915ff285526673c512cbc2fafe4624eaa4ffbff2fdcb4"
     },
     {
       "id": "natural_earth_countries",

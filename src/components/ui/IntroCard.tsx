@@ -1,8 +1,21 @@
 "use client";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useSearchParams } from "next/navigation";
 import { EXAMPLE_QUESTIONS, type ExampleQuestion } from "@/lib/modes";
 
 export const INTRO_DISMISSED_KEY = "gem.intro.dismissed.v1";
+
+/**
+ * Returns true if the search string contains any explicit state parameters
+ * that indicate the visitor arrived on a deep link (scenario, layers, year,
+ * commodity, lon, lat, or z). A bare `/` or just `mode=` returns false
+ * (the card should show).
+ */
+export function hasExplicitState(search: string): boolean {
+  const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+  const explicitParams = ["scenario", "layers", "year", "commodity", "lon", "lat", "z"];
+  return explicitParams.some((key) => params.has(key));
+}
 
 function readDismissed(): boolean {
   try {
@@ -40,7 +53,14 @@ export function IntroCard({ onPick }: IntroCardProps) {
   // agree (no card); the client snapshot then reads localStorage.
   const stored = useSyncExternalStore(subscribeNever, readDismissed, () => true);
   const [dismissedNow, setDismissedNow] = useState(false);
-  const visible = !stored && !dismissedNow;
+
+  // Read the initial search once at mount to check if visitor arrived on a
+  // deep link (explicit state params). If so, hide the card to uncover what
+  // they came to see.
+  const searchParams = useSearchParams();
+  const [hasInitialState] = useState(() => hasExplicitState(searchParams.toString()));
+
+  const visible = !stored && !dismissedNow && !hasInitialState;
 
   const cardRef = useRef<HTMLElement>(null);
 
@@ -106,6 +126,11 @@ export function IntroCard({ onPick }: IntroCardProps) {
         <li>
           <span className="font-medium text-slate-900">Pick a disruption</span> in Scenarios to see
           which importers, refineries and LNG terminals are exposed.
+        </li>
+        <li>
+          <span className="font-medium text-slate-900">Search</span> for a country, pipeline or
+          terminal; select a country for its trade, suppliers and exposure — or write SQL against
+          the same files on the Query page.
         </li>
       </ul>
       <p className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-slate-600">

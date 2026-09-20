@@ -7,6 +7,8 @@ import { BUNDLED_CATALOG, isDownloadable } from "@/lib/data-catalog/bundled";
 import type { CatalogEntry } from "@/lib/data-catalog/types";
 import { dataUrl } from "@/lib/data/urls";
 import { attributionsFor } from "@/lib/export/citation";
+import { embedSnippet } from "@/lib/export/embed";
+import { CANONICAL_ORIGIN } from "../../../next.config";
 
 const LICENSE_DATA_URL = "https://github.com/narendranag/global-energy-map/blob/main/LICENSE-DATA.md";
 /** The downloadable, openly licensed subset of assets.parquet (no OSM rows). */
@@ -221,6 +223,42 @@ export default function DataPage() {
             How to cite
           </h2>
           <CitationBlock />
+        </section>
+
+        <section className="mt-12 max-w-3xl" aria-labelledby="embed-the-map">
+          <h2
+            id="embed-the-map"
+            className="border-b border-panel-border pb-1.5 text-2xl font-semibold tracking-tight text-ink"
+          >
+            Embed the map
+          </h2>
+          <div className="mt-3 space-y-3 text-base leading-relaxed text-ink-muted">
+            <p>
+              Add <code className="font-mono text-[0.85em]">&amp;embed=1</code> to any shared view&apos;s URL (or
+              use <strong className="text-ink">Share / cite → Copy embed code</strong> on the map itself) to drop
+              it into an <code className="font-mono text-[0.85em]">&lt;iframe&gt;</code>. Embed mode removes the
+              header, intro card and phone banner and replaces the map footer with a one-line attribution bar
+              that keeps the required licence credits (Global Energy Monitor, LNG-T3, NETL, Energy Institute,
+              CEPII BACI, OpenStreetMap) visible, plus an &quot;Open full map&quot; link back to the same view.
+              The year slider and commodity toggle stay — they are how a reader interrogates the view — unless
+              you add <code className="font-mono text-[0.85em]">&amp;controls=0</code> for a static figure.
+            </p>
+            {/* A horizontally scrollable region has to be reachable by keyboard
+                (axe: scrollable-region-focusable), and a focusable element
+                needs a name. */}
+            <pre
+              tabIndex={0}
+              role="region"
+              aria-label="Embed code"
+              className="overflow-x-auto rounded border border-panel-border bg-slate-50 p-2 font-mono text-xs leading-snug text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-700"
+            >
+              {embedSnippet(`${CANONICAL_ORIGIN}/?mode=scenarios&scenario=hormuz&commodity=oil&year=2023`)}
+            </pre>
+            <p>
+              Keep the attribution bar visible in whatever frame or CSS you wrap the iframe in — it is how the
+              CC BY 4.0 sources are credited on the embedding page.
+            </p>
+          </div>
         </section>
         <SiteFooter />
       </main>

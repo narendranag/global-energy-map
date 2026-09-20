@@ -1,4 +1,9 @@
 import type { LayerKey } from "@/lib/symbology";
+import {
+  DISRUPTION_MARK_LAYER_ID,
+  SECOND_SCENARIO_SUFFIX,
+  formatDisruptionTooltip,
+} from "@/components/scenarios/disruption-layers";
 import { BASINS_LAYER_ID, formatBasinTooltip } from "./BasinPolygonsLayer";
 import { EXTRACTION_LAYER_ID, formatExtractionTooltip } from "./ExtractionPoints";
 import { GAS_STORAGE_LAYER_ID, formatGasStorageTooltip } from "./GasStorageChoropleth";
@@ -6,6 +11,7 @@ import { SHALE_REGIONS_LAYER_ID, formatShaleRegionTooltip } from "./ShaleRegions
 import { RECENT_IMPORTS_LAYER_ID, formatRecentImportsTooltip } from "./RecentImportsChoropleth";
 import { LNG_TERMINALS_LAYER_ID, formatLngTerminalTooltip } from "./LngTerminalsLayer";
 import { LNG_VOYAGES_LAYER_ID, formatLngVoyageTooltip } from "./LngVoyagesLayer";
+import { TRADE_FLOWS_LAYER_ID, formatTradeFlowTooltip } from "./TradeFlowsLayer";
 import { PIPELINE_LAYER_IDS, formatPipelineTooltip } from "./PipelinesLayer";
 import { PORTS_LAYER_ID, formatPortTooltip } from "./PortsLayer";
 import { REFINERIES_LAYER_ID, formatRefineryTooltip } from "./RefineriesLayer";
@@ -28,6 +34,7 @@ export const DECK_LAYER_IDS: Readonly<Record<LayerKey, string>> = {
   gas_storage: GAS_STORAGE_LAYER_ID,
   shale_regions: SHALE_REGIONS_LAYER_ID,
   recent_imports: RECENT_IMPORTS_LAYER_ID,
+  trade_flows: TRADE_FLOWS_LAYER_ID,
 };
 
 // `never` parameter: each formatter takes its own row type; dispatch by layer
@@ -46,11 +53,23 @@ const FORMATTERS: Readonly<Record<LayerKey, TooltipFormatter<never>>> = {
   gas_storage: formatGasStorageTooltip,
   shale_regions: formatShaleRegionTooltip,
   recent_imports: formatRecentImportsTooltip,
+  trade_flows: formatTradeFlowTooltip,
 };
 
-const BY_DECK_ID: ReadonlyMap<string, TooltipFormatter<never>> = new Map(
-  (Object.keys(DECK_LAYER_IDS) as LayerKey[]).map((k) => [DECK_LAYER_IDS[k], FORMATTERS[k]]),
-);
+const BY_DECK_ID: ReadonlyMap<string, TooltipFormatter<never>> = new Map<
+  string,
+  TooltipFormatter<never>
+>([
+  ...(Object.keys(DECK_LAYER_IDS) as LayerKey[]).map(
+    (k) => [DECK_LAYER_IDS[k], FORMATTERS[k]] as const,
+  ),
+  // Not a layer toggle: the disruption mark exists because a scenario is
+  // active (S1), so it has no `LayerKey` and is registered on its own id.
+  [DISRUPTION_MARK_LAYER_ID, formatDisruptionTooltip],
+  // T1: a combined run draws a second mark on its own id suffix, so that one
+  // needs the same formatter (the primary's id is unchanged).
+  [`${DISRUPTION_MARK_LAYER_ID}${SECOND_SCENARIO_SUFFIX}`, formatDisruptionTooltip],
+]);
 
 /** Tooltip text for a hovered object on deck layer `layerId`, or null. */
 export function formatTooltip(

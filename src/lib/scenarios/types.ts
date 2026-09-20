@@ -1,4 +1,15 @@
-export type ScenarioId = "hormuz" | "druzhba" | "btc" | "cpc";
+export type ScenarioId =
+  | "hormuz"
+  | "druzhba"
+  | "btc"
+  | "cpc"
+  | "malacca"
+  | "suez"
+  | "bab_el_mandeb"
+  | "turkish_straits"
+  | "keystone"
+  | "enbridge_mainline"
+  | "espo_spur";
 
 export type Commodity = "oil" | "gas";
 
@@ -18,6 +29,28 @@ export interface DisruptionRouteRow {
   readonly importer_iso3: string | null;
   readonly share: number;
 }
+
+/**
+ * S5: the mirror wildcard — `exporter_iso3 = null` means "whatever this
+ * country imports", which is how inbound exposure is expressed (the Gulf
+ * states' own imports must cross Hormuz too, and no exporter-side row can say
+ * that). `importer_iso3` is necessarily set: a row naming neither side
+ * describes no route.
+ *
+ * It is a separate interface rather than a widening of `DisruptionRouteRow`
+ * so that every existing consumer of that type keeps a non-null
+ * `exporter_iso3`; code that must handle both takes `RouteRow`.
+ */
+export interface InboundDisruptionRouteRow {
+  readonly disruption_id: ScenarioId;
+  readonly kind: "chokepoint" | "pipeline";
+  readonly exporter_iso3: null;
+  readonly importer_iso3: string;
+  readonly share: number;
+}
+
+/** Any `disruption_route` row the engine accepts. */
+export type RouteRow = DisruptionRouteRow | InboundDisruptionRouteRow;
 
 export interface RefineryRow {
   readonly asset_id: string;
@@ -85,11 +118,36 @@ export interface LngImportImpact {
   readonly coverage: "measured" | "capacity-proxy" | "none";
 }
 
+/**
+ * S5: the mirror of `ImporterImpact` — what an exporter loses rather than what
+ * an importer misses. `totalQty` is everything the country exported of this
+ * commodity in the year (as BACI records it, so a country with no BACI rows
+ * does not appear); `atRiskQty` is the part that moves on the cut route.
+ */
+export interface ExporterImpact {
+  readonly iso3: string;
+  readonly totalQty: number;
+  readonly atRiskQty: number;
+  readonly shareAtRisk: number;
+  /** S5: the other end of the combined-scenario range; see ImporterImpact. */
+  readonly atRiskQtyUpper?: number;
+  readonly shareAtRiskUpper?: number;
+}
+
 export interface ImporterImpact {
   readonly iso3: string;
   readonly totalQty: number;
   readonly atRiskQty: number;
   readonly shareAtRisk: number;
+  /**
+   * S5: with two or more scenarios combined, `atRiskQty` is the lower bound of
+   * the range (the routes might carry the same barrels) and this is the upper
+   * (they might carry different ones) — see `combineShares` in shares.ts. For
+   * a single scenario the two are equal, and headline figures always quote the
+   * lower one. Optional so pre-S5 results still typecheck.
+   */
+  readonly atRiskQtyUpper?: number;
+  readonly shareAtRiskUpper?: number;
 }
 
 export interface RefineryImpact {
@@ -104,11 +162,39 @@ export interface RefineryImpact {
 }
 
 export interface ScenarioResult {
+  /** The primary scenario — the first of `scenarioIds`. */
   readonly scenarioId: ScenarioId;
+  /**
+   * S5: every scenario this result combines, primary first. A single-scenario
+   * run reports `[scenarioId]`. Optional for the same reason as `severity`.
+   */
+  readonly scenarioIds?: readonly ScenarioId[];
+  /**
+   * T1: the scenarios that were *requested*, primary first. Normally equal to
+   * `scenarioIds`, but a secondary whose route rows are empty is dropped from
+   * the run while remaining what the controls (and the URL) say — so this is
+   * what "is this result current?" must compare against (finding 20).
+   * Optional for the same reason as `scenarioIds`.
+   */
+  readonly requestedScenarioIds?: readonly ScenarioId[];
   readonly commodity: Commodity;
   readonly year: number;
+  /**
+   * S5: the severity the engine actually used (clamped to [0, 1], 1 when the
+   * caller passed none). Optional so results built before S5 — and the test
+   * fixtures that stand in for them — still typecheck; `computeScenarioImpact`
+   * always sets it.
+   */
+  readonly severity?: number;
   readonly byImporter: readonly ImporterImpact[];
   readonly rankedImporters: readonly ImporterImpact[];
+  /**
+   * S5: the exporter-side view of the same cut — who loses the outlet, not who
+   * loses the supply. Optional for the same reason as `severity`;
+   * `computeScenarioImpact` always sets both.
+   */
+  readonly byExporter?: readonly ExporterImpact[];
+  readonly rankedExporters?: readonly ExporterImpact[];
   readonly byRefinery: readonly RefineryImpact[];
   readonly rankedRefineries: readonly RefineryImpact[];
   readonly byLngImport: readonly LngImportImpact[];

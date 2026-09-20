@@ -1,7 +1,18 @@
 import type { Feature, Geometry } from "geojson";
 import type { Catalog, CatalogEntry } from "@/lib/data-catalog/types";
 import type { Asset, LngTerminalAsset } from "@/lib/data/assets";
+import {
+  exporterShare,
+  importerShare,
+  positionPairs,
+  topPairs,
+  focusPairs,
+  TOP_N_PAIRS,
+  HS,
+  type TradeFlowsData,
+} from "@/lib/data/trade-flows";
 import type { PositionedVoyage } from "@/lib/data/voyages";
+import { SCENARIOS } from "@/lib/scenarios/registry";
 import type { Commodity, ScenarioId } from "@/lib/scenarios/types";
 import type { AppState } from "@/lib/url-state/encode";
 import { isVisibleAtYear } from "@/lib/vintage/filter";
@@ -33,6 +44,7 @@ export const LAYER_LABELS: Record<LayerKey, string> = {
   gas_storage: "Gas storage (EU)",
   shale_regions: "US shale regions",
   recent_imports: "Recent imports (Comtrade)",
+  trade_flows: "Trade flows (BACI)",
 };
 
 /** Display order in the Share menu (matches the layer panel). */
@@ -50,20 +62,33 @@ export const LAYER_ORDER: readonly LayerKey[] = [
   "lng_voyages",
   "gas_storage",
   "recent_imports",
+  "trade_flows",
 ];
 
 /** Catalog `layers` tags behind a map layer. */
 export function layerTags(key: LayerKey, commodity: Commodity): string[] {
   // Comtrade + the BACI figure its tooltip quotes beside it.
   if (key === "recent_imports") return ["trade_monthly", "trade"];
+  if (key === "trade_flows") return ["trade"];
   if (key === "reserves") return commodity === "gas" ? ["reserves", "reserves:gas"] : ["reserves"];
   return [key];
 }
 
-/** Catalog tags behind an active scenario (trade, route shares, attributed assets). */
+/**
+ * Catalog tags behind an active scenario (trade, route shares, attributed
+ * assets).
+ *
+ * The `-lng` share tag exists only for the scenarios that ship a gas axis
+ * (`def.commodities` includes "gas"). Appending it unconditionally named a
+ * catalog entry that does not exist, so on the gas axis an oil-only scenario
+ * silently dropped its route provenance from the citation and every CSV
+ * header (A1). Such a pair is only reachable from a hand-typed URL; the oil
+ * tag is the truthful one to cite for it.
+ */
 export function scenarioTags(id: ScenarioId, commodity: Commodity): string[] {
-  const tag = id === "hormuz" && commodity === "gas" ? "scenario:hormuz-lng" : `scenario:${id}`;
-  return [tag, commodity === "gas" ? "lng_terminals" : "refineries"];
+  const def = SCENARIOS.find((s) => s.id === id);
+  const gas = commodity === "gas" && (def === undefined || def.commodities.includes("gas"));
+  return [gas ? `scenario:${id}-lng` : `scenario:${id}`, gas ? "lng_terminals" : "refineries"];
 }
 
 export function enabledLayers(layers: AppState["layers"]): LayerKey[] {
@@ -272,6 +297,70 @@ export function voyageTable(voyages: readonly PositionedVoyage[], year: number):
       { fromLon: "from_lon", fromLat: "from_lat", toLon: "to_lon", toLat: "to_lat" },
     ),
     filter: `export voyages active in ${String(year)} with LNG-T3 confidence >= 3; drawn as straight terminal-to-terminal lines`,
+  };
+}
+
+const TRADE_FLOW_COLUMNS = [
+  "commodity",
+  "hs_code",
+  "exporter_iso3",
+  "importer_iso3",
+  "qty_tonnes",
+  "share_of_exporter_total",
+  "share_of_importer_total",
+  "exporter_lon",
+  "exporter_lat",
+  "importer_lon",
+  "importer_lat",
+] as const;
+
+/** A3: names the commodity in the filter string and drives the export filename. */
+export const TRADE_FLOW_COMMODITY_LABEL: Record<Commodity, string> = { oil: "crude", gas: "lng" };
+
+/**
+ * BACI pairs as the map draws them: the world top-N (`focus === null`) or, with
+ * a country focused, every pair touching it above the small floor
+ * (`focusPairs`) — the same two functions the layer builder uses, so the
+ * export always matches what is on screen. Pairs whose exporter or importer
+ * has no anchor point (`country-anchors.ts`) are dropped; none do as of
+ * 2026-09-19 (every BACI code has an anchor).
+ */
+export function tradeFlowTable(data: TradeFlowsData, focus: string | null): ExportTable {
+  const commodityLabel = TRADE_FLOW_COMMODITY_LABEL[data.commodity];
+  let basePairs: readonly { exporter_iso3: string; importer_iso3: string; qty: number }[];
+  let filter: string;
+  if (focus === null) {
+    const { pairs, coverage } = topPairs(data, TOP_N_PAIRS);
+    basePairs = pairs;
+    filter = `${commodityLabel}: top ${String(TOP_N_PAIRS)} pairs by volume (${(coverage * 100).toFixed(1)}% of world volume shown)`;
+  } else {
+    basePairs = focusPairs(data, focus);
+    filter = `${commodityLabel}: every pair involving ${focus} above 0.1% of its trade`;
+  }
+
+  const rows: Record<string, CsvValue>[] = positionPairs(basePairs).map((p) => ({
+    commodity: data.commodity,
+    hs_code: HS[data.commodity],
+    exporter_iso3: p.exporter_iso3,
+    importer_iso3: p.importer_iso3,
+    qty_tonnes: p.qty,
+    share_of_exporter_total: exporterShare(data, p),
+    share_of_importer_total: importerShare(data, p),
+    exporter_lon: p.from_lon,
+    exporter_lat: p.from_lat,
+    importer_lon: p.to_lon,
+    importer_lat: p.to_lat,
+  }));
+
+  return {
+    columns: TRADE_FLOW_COLUMNS,
+    rows,
+    features: lineFeatures(
+      rows,
+      TRADE_FLOW_COLUMNS.filter((c) => !c.endsWith("_lon") && !c.endsWith("_lat")),
+      { fromLon: "exporter_lon", fromLat: "exporter_lat", toLon: "importer_lon", toLat: "importer_lat" },
+    ),
+    filter,
   };
 }
 

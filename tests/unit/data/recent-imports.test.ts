@@ -51,4 +51,46 @@ describe("toRecentImports", () => {
     const d = toRecentImports("gas", [ct("2025-01", "JPN", 1e9), ct("2025-01", "ESP", 2e9, "271111")], []);
     expect([...d.byIso3.keys()]).toEqual(["ESP"]);
   });
+
+  it("counts a month as reported if the country filed either HS code, not just the selected one", () => {
+    // USA: files LNG (271111) 11 of 12 months, but files crude (2709) every
+    // month including the one month it took no LNG cargo — proving it
+    // reported that month, just with no LNG cargo.
+    const lngMonths = [...months(6, 12), ...months(1, 4, 2026)]; // 11 months, skips 2026-05
+    const rows = [
+      ...lngMonths.map((m) => ct(m, "USA", 3e9, "271111")),
+      ...[...months(6, 12), ...months(1, 5, 2026)].map((m) => ct(m, "USA", 8e9, "2709")),
+    ];
+    const d = toRecentImports("gas", rows, []);
+    const usa = d.byIso3.get("USA");
+    expect(usa?.monthsReported).toBe(12);
+    expect(usa?.monthsWithImports).toBe(11);
+    expect(usa && isComplete(usa)).toBe(true);
+    // Complete, so it counts toward the ramp's max anchor.
+    expect(d.max).toBeGreaterThan(0);
+  });
+
+  it("anchors the window on the reporter's last filed month across both codes, not the last cargo month", () => {
+    // KAZ took its last LNG cargo in month 11 of the run, but filed crude
+    // (proving it was live) through month 12 — the window should still end
+    // at month 12, not fall back a month because the LNG side went quiet.
+    const rows = [
+      ...months(1, 11).map((m) => ct(m, "KAZ", 4e9, "271111")),
+      ct("2025-12", "KAZ", 6e9, "2709"),
+    ];
+    const d = toRecentImports("gas", rows, []);
+    const kaz = d.byIso3.get("KAZ");
+    expect(kaz?.through).toBe("2025-12");
+    expect(kaz?.from).toBe("2025-01");
+    expect(kaz?.monthsReported).toBe(12);
+    expect(kaz?.monthsWithImports).toBe(11);
+  });
+
+  it("leaves single-code filers unchanged: monthsReported equals monthsWithImports", () => {
+    const rows = [ct("2025-03", "PAK", 9e12), ct("2025-09", "PAK", 1e9)];
+    const d = toRecentImports("oil", rows, []);
+    const pak = d.byIso3.get("PAK");
+    expect(pak?.monthsReported).toBe(pak?.monthsWithImports);
+    expect(pak?.monthsReported).toBe(2);
+  });
 });

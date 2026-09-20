@@ -1,6 +1,7 @@
 /**
  * App store: the single source of truth for `AppState` (mode, year,
- * commodity, scenario, layers) and the map view (lon/lat/zoom).
+ * commodity, scenario, focus, layers), the map view (lon/lat/zoom) and the
+ * one-shot camera commands that move it (`./camera.ts`).
  *
  * The URL is a *serialisation* of this store, not the store itself (R16):
  * changes land in memory synchronously and are mirrored to the address bar by
@@ -14,6 +15,8 @@ import {
   encodeUrlState,
   type AppState,
 } from "@/lib/url-state/encode";
+import { extractEmbedParams } from "@/lib/url-state/embed";
+import type { CameraRequest } from "./camera";
 import { DEFAULT_VIEW, normalizeView, sameView, type MapView } from "./view";
 
 export const URL_WRITE_DEBOUNCE_MS = 250;
@@ -36,6 +39,15 @@ export interface AppStore {
   readonly patch: (patch: Partial<AppState>) => void;
   /** Replace the map view (normalised). Schedules a URL write. */
   readonly setView: (view: MapView) => void;
+  /**
+   * Ask the map to move (fit a country, fly to a point). One-shot, not state:
+   * the resulting camera comes back through `setView` on `moveend`. A request
+   * posted before MapShell has subscribed is held and delivered to the first
+   * subscriber, so `?focus=JPN` can fit on load without a mount race.
+   */
+  readonly requestCamera: (request: CameraRequest) => void;
+  /** MapShell subscribes here; returns an unsubscribe. */
+  readonly subscribeCamera: (listener: (request: CameraRequest) => void) => () => void;
   /** Re-decode state from a querystring. Silent: no listeners, no URL write. */
   readonly reset: (search: string) => void;
   /** Write any pending URL change now. */
@@ -49,7 +61,11 @@ function sameApp(a: AppState, b: AppState): boolean {
     a.mode !== b.mode ||
     a.year !== b.year ||
     a.commodity !== b.commodity ||
-    a.scenario !== b.scenario
+    a.scenario !== b.scenario ||
+    a.scenario2 !== b.scenario2 ||
+    a.severity !== b.severity ||
+    a.view !== b.view ||
+    a.focus !== b.focus
   ) {
     return false;
   }
@@ -71,16 +87,29 @@ export function createAppStore(options: AppStoreOptions): AppStore {
   } = options;
 
   const listeners = new Set<() => void>();
+  const cameraListeners = new Set<(request: CameraRequest) => void>();
+  /** A camera request posted while nothing was subscribed (MapShell not mounted yet). */
+  let pendingCamera: CameraRequest | null = null;
   let app: AppState = defaults;
   let view: MapView = normalizeView(defaultView);
   let timer: ReturnType<typeof setTimeout> | null = null;
+  // S7: `embed`/`controls` are view flags, not AppState — decodeAppState never
+  // sees them, so they must be captured here and re-appended on every write,
+  // or the next debounced replaceState (e.g. a year change) would drop them.
+  let embedParams = "";
 
   const decode = (search: string) => {
     const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
     app = decodeAppState(params, defaults);
     view = decodeView(params, defaultView);
+    embedParams = extractEmbedParams(search);
   };
   decode(options.search ?? "");
+
+  const composeSearch = () => {
+    const base = encodeUrlState(app, view);
+    return embedParams ? `${base}&${embedParams}` : base;
+  };
 
   const notify = () => {
     for (const l of [...listeners]) l();
@@ -96,7 +125,7 @@ export function createAppStore(options: AppStoreOptions): AppStore {
   const flush = () => {
     if (timer === null) return;
     cancel();
-    writeSearch?.(encodeUrlState(app, view));
+    writeSearch?.(composeSearch());
   };
 
   const scheduleWrite = () => {
@@ -104,7 +133,7 @@ export function createAppStore(options: AppStoreOptions): AppStore {
     cancel();
     timer = setTimeout(() => {
       timer = null;
-      writeSearch(encodeUrlState(app, view));
+      writeSearch(composeSearch());
     }, debounceMs);
   };
 
@@ -134,6 +163,24 @@ export function createAppStore(options: AppStoreOptions): AppStore {
       view = v;
       notify();
       scheduleWrite();
+    },
+    requestCamera: (request) => {
+      if (cameraListeners.size === 0) {
+        pendingCamera = request;
+        return;
+      }
+      for (const l of [...cameraListeners]) l(request);
+    },
+    subscribeCamera: (listener) => {
+      cameraListeners.add(listener);
+      if (pendingCamera !== null) {
+        const held = pendingCamera;
+        pendingCamera = null;
+        listener(held);
+      }
+      return () => {
+        cameraListeners.delete(listener);
+      };
     },
     reset: (search) => {
       cancel();

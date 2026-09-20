@@ -25,6 +25,7 @@ const ALL_ON: LayerState = {
   gas_storage: false,
   shale_regions: false,
   recent_imports: false,
+  trade_flows: false,
 };
 
 const ALL_OFF: LayerState = {
@@ -41,6 +42,7 @@ const ALL_OFF: LayerState = {
   gas_storage: false,
   shale_regions: false,
   recent_imports: false,
+  trade_flows: false,
 };
 
 const DEFAULTS: AppState = {
@@ -48,6 +50,10 @@ const DEFAULTS: AppState = {
   year: 2020,
   commodity: "oil",
   scenario: null,
+  scenario2: null,
+  severity: 1,
+  view: "importers",
+  focus: null,
   layers: ALL_ON,
 };
 
@@ -58,6 +64,10 @@ describe("encodeAppState", () => {
       year: 2015,
       commodity: "gas",
       scenario: "hormuz",
+      scenario2: null,
+      severity: 1,
+      view: "importers",
+      focus: null,
       layers: { ...ALL_ON, basins: false, ports: false },
     });
     const params = new URLSearchParams(qs);
@@ -78,6 +88,10 @@ describe("decodeAppState", () => {
       year: 2015,
       commodity: "gas",
       scenario: "hormuz",
+      scenario2: null,
+      severity: 1,
+      view: "importers",
+      focus: null,
       layers: { ...ALL_ON, basins: false, ports: false, gas_pipelines: false },
     };
     const qs = encodeAppState(original);
@@ -143,6 +157,10 @@ describe("decodeAppState", () => {
       year: 2023,
       commodity: "gas",
       scenario: "hormuz",
+      scenario2: null,
+      severity: 1,
+      view: "importers",
+      focus: null,
       layers: { ...ALL_ON, lng_voyages: true },
     };
     const qs = encodeAppState(state);
@@ -157,6 +175,118 @@ describe("decodeAppState", () => {
       DEFAULTS,
     );
     expect(decoded.layers.lng_voyages).toBe(false);
+  });
+});
+
+describe("severity, a second scenario and the exporter view (T1)", () => {
+  const base: AppState = { ...DEFAULTS, scenario: "hormuz" };
+
+  it("writes nothing for the defaults, so every pre-T1 link is byte-identical", () => {
+    const qs = encodeAppState(base);
+    const params = new URLSearchParams(qs);
+    expect(params.has("sev")).toBe(false);
+    expect(params.has("scenario2")).toBe(false);
+    expect(params.has("view")).toBe(false);
+  });
+
+  it("round-trips a half closure as an integer percentage", () => {
+    const qs = encodeAppState({ ...base, severity: 0.5 });
+    expect(new URLSearchParams(qs).get("sev")).toBe("50");
+    expect(decodeAppState(new URLSearchParams(qs), DEFAULTS).severity).toBe(0.5);
+  });
+
+  it("honours an in-range sev, including values off the slider's 5 % step", () => {
+    const d = (qs: string) => decodeAppState(new URLSearchParams(qs), DEFAULTS).severity;
+    // The step is a UI matter: a link may say 37 %, and the slider simply
+    // shows the nearest notch if the viewer drags it afterwards.
+    expect(d("scenario=hormuz&sev=37")).toBe(0.37);
+    expect(d("scenario=hormuz&sev=37.4")).toBe(0.37);
+    expect(d("scenario=hormuz&sev=5")).toBe(0.05);
+    expect(d("scenario=hormuz&sev=100")).toBe(1);
+  });
+
+  it("treats an out-of-range sev as invalid — 100 %, never clamped up to 5 % (finding 18)", () => {
+    const d = (qs: string) => decodeAppState(new URLSearchParams(qs), DEFAULTS).severity;
+    expect(d("scenario=hormuz&sev=0")).toBe(1);
+    expect(d("scenario=hormuz&sev=-40")).toBe(1);
+    expect(d("scenario=hormuz&sev=4")).toBe(1);
+    expect(d("scenario=hormuz&sev=400")).toBe(1);
+  });
+
+  it("falls back to the default for an unparseable sev rather than inventing 0", () => {
+    const d = (qs: string) => decodeAppState(new URLSearchParams(qs), DEFAULTS).severity;
+    expect(d("scenario=hormuz&sev=banana")).toBe(1);
+    expect(d("scenario=hormuz&sev=")).toBe(1);
+  });
+
+  it("drops sev, view and scenario2 when there is no primary scenario (finding 19)", () => {
+    const decoded = decodeAppState(
+      new URLSearchParams("sev=50&view=exporters&scenario2=malacca"),
+      DEFAULTS,
+    );
+    expect(decoded.scenario).toBeNull();
+    expect(decoded.scenario2).toBeNull();
+    expect(decoded.severity).toBe(1);
+    expect(decoded.view).toBe("importers");
+    // …and nothing is written back out, so the dangling params cannot survive
+    // a round trip through the address bar.
+    const params = new URLSearchParams(encodeAppState(decoded));
+    expect(params.has("sev")).toBe(false);
+    expect(params.has("view")).toBe(false);
+    expect(params.has("scenario2")).toBe(false);
+  });
+
+  it("drops sev and view when the primary is dropped by the commodity axis", () => {
+    const decoded = decodeAppState(
+      new URLSearchParams("commodity=gas&scenario=druzhba&sev=50&view=exporters"),
+      DEFAULTS,
+    );
+    expect(decoded.scenario).toBeNull();
+    expect(decoded.severity).toBe(1);
+    expect(decoded.view).toBe("importers");
+  });
+
+  it("round-trips a second scenario as its own parameter, never scenario=a+b", () => {
+    const qs = encodeAppState({ ...base, scenario2: "malacca" });
+    const params = new URLSearchParams(qs);
+    expect(params.get("scenario")).toBe("hormuz");
+    expect(params.get("scenario2")).toBe("malacca");
+    const decoded = decodeAppState(new URLSearchParams(qs), DEFAULTS);
+    expect(decoded.scenario).toBe("hormuz");
+    expect(decoded.scenario2).toBe("malacca");
+  });
+
+  it("drops a second scenario with no primary, or one that repeats it", () => {
+    expect(decodeAppState(new URLSearchParams("scenario2=malacca"), DEFAULTS).scenario2).toBeNull();
+    expect(
+      decodeAppState(new URLSearchParams("scenario=hormuz&scenario2=hormuz"), DEFAULTS).scenario2,
+    ).toBeNull();
+  });
+
+  it("drops a second scenario the commodity axis does not model", () => {
+    // Druzhba is crude-only: on the gas axis it has no route rows at all.
+    const d = decodeAppState(
+      new URLSearchParams("commodity=gas&scenario=hormuz&scenario2=druzhba"),
+      DEFAULTS,
+    );
+    expect(d.scenario).toBe("hormuz");
+    expect(d.scenario2).toBeNull();
+  });
+
+  it("drops both when the primary does not model the commodity", () => {
+    const d = decodeAppState(
+      new URLSearchParams("commodity=gas&scenario=druzhba&scenario2=malacca"),
+      DEFAULTS,
+    );
+    expect(d.scenario).toBeNull();
+    expect(d.scenario2).toBeNull();
+  });
+
+  it("round-trips the exporter view and ignores an unknown one", () => {
+    const qs = encodeAppState({ ...base, view: "exporters" });
+    expect(new URLSearchParams(qs).get("view")).toBe("exporters");
+    expect(decodeAppState(new URLSearchParams(qs), DEFAULTS).view).toBe("exporters");
+    expect(decodeAppState(new URLSearchParams("view=sideways"), DEFAULTS).view).toBe("importers");
   });
 });
 
@@ -187,6 +317,10 @@ describe("decodeAppState — mode", () => {
       year: 2015,
       commodity: "gas",
       scenario: "hormuz",
+      scenario2: null,
+      severity: 1,
+      view: "importers",
+      focus: null,
       layers: { ...ALL_OFF, reserves: true, lng_terminals: true },
     });
   });
@@ -207,6 +341,52 @@ describe("decodeAppState — mode", () => {
 
   it("an empty layers param means no layers, even under a mode preset", () => {
     expect(Object.values(decode("mode=flows&layers=").layers).some(Boolean)).toBe(false);
+  });
+});
+
+describe("decodeAppState — focus", () => {
+  const decode = (qs: string) => decodeAppState(new URLSearchParams(qs), DEFAULTS);
+
+  it("is omitted from the querystring when null, so old links are byte-identical", () => {
+    expect(encodeAppState(DEFAULTS)).toBe(
+      "mode=infrastructure&year=2020&commodity=oil&layers=reserves%2Cbasins%2Cextraction%2Cpipelines%2Crefineries%2Cstorage%2Cports%2Cgas_pipelines%2Clng_terminals%2Clng_voyages",
+    );
+    expect(new URLSearchParams(encodeAppState(DEFAULTS)).has("focus")).toBe(false);
+  });
+
+  it("round-trips a focused country", () => {
+    const state: AppState = { ...DEFAULTS, focus: "JPN" };
+    expect(new URLSearchParams(encodeAppState(state)).get("focus")).toBe("JPN");
+    expect(decode(encodeAppState(state))).toEqual(state);
+  });
+
+  it("upper-cases a hand-typed code", () => {
+    expect(decode("focus=jpn").focus).toBe("JPN");
+  });
+
+  it("drops an unknown or malformed code", () => {
+    for (const qs of ["focus=ZZZ", "focus=JP", "focus=JPNX", "focus=", "focus=S19"]) {
+      expect(decode(qs).focus).toBeNull();
+    }
+  });
+
+  // B1: a partner row can name a country with no 1:110m polygon. It is a real
+  // selection — outlined as a ring at its anchor — so the link keeps it.
+  it("keeps a polygon-less but anchored code", () => {
+    expect(decode("focus=SGP").focus).toBe("SGP");
+    expect(decode("focus=BHR").focus).toBe("BHR");
+  });
+
+  it("survives a mode preset: modes never clear a focus the URL carries", () => {
+    expect(decode("mode=flows&focus=JPN").focus).toBe("JPN");
+    expect(decode("mode=scenarios&focus=JPN").focus).toBe("JPN");
+  });
+
+  it("applyMode keeps the current focus", () => {
+    const focused: AppState = { ...DEFAULTS, focus: "DEU" };
+    for (const mode of ["infrastructure", "flows", "scenarios"] as const) {
+      expect(applyMode(focused, mode).focus).toBe("DEU");
+    }
   });
 });
 
@@ -265,5 +445,24 @@ describe("encodeUrlState", () => {
     const params = new URLSearchParams(encodeUrlState(app, v));
     expect(decodeAppState(params, DEFAULTS)).toEqual(app);
     expect(decodeView(params, DEFAULT_VIEW)).toEqual(v);
+  });
+});
+
+describe("decodeAppState: scenario must model the commodity (A1)", () => {
+  const decodeQs = (qs: string) => decodeAppState(new URLSearchParams(qs), DEFAULTS);
+
+  it("drops a scenario the commodity does not support", () => {
+    // `druzhba` is oil-only; on the gas axis there are no `druzhba_lng` route
+    // rows at all, so the pair could only ever render a confident 0 %.
+    expect(decodeQs("scenario=druzhba&commodity=gas").scenario).toBeNull();
+    expect(decodeQs("scenario=btc&commodity=gas").scenario).toBeNull();
+    expect(decodeQs("scenario=keystone&commodity=gas").scenario).toBeNull();
+  });
+
+  it("keeps a scenario that does model the commodity", () => {
+    expect(decodeQs("scenario=hormuz&commodity=gas").scenario).toBe("hormuz");
+    expect(decodeQs("scenario=malacca&commodity=gas").scenario).toBe("malacca");
+    expect(decodeQs("scenario=druzhba&commodity=oil").scenario).toBe("druzhba");
+    expect(decodeQs("scenario=druzhba").scenario).toBe("druzhba");
   });
 });

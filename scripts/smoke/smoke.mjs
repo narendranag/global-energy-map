@@ -220,16 +220,23 @@ async function checkRange(path, bytes, sha256) {
 
 /**
  * `/query` lazily loads DuckDB-WASM from our own origin. The page rendering is
- * not enough: if the bundle 404s the console is dead on arrival. A HEAD is all
- * we need — actually running WASM is what tests/e2e/query.spec.ts is for, and
- * the smoke run's budget should not pay for it.
+ * not enough: if the bundle 404s the console is dead on arrival. A ranged GET
+ * of the first four bytes proves it is really a WASM module, and costs four
+ * bytes -- do NOT assert on content-length, because Vercel serves this asset
+ * `content-encoding: br` to any client that accepts compression and then omits
+ * content-length altogether (that is what failed the 2026-09-20 smoke run, on
+ * a perfectly healthy deploy). Actually running the module is what
+ * tests/e2e/query.spec.ts is for; the smoke budget should not pay for it.
  */
+const WASM_MAGIC = "\u0000asm";
+
 async function checkAsset(path, name) {
   try {
-    const res = await get(path, { method: "HEAD" });
-    const len = Number(res.headers.get("content-length") ?? 0);
-    const ok = res.status === 200 && len > 0;
-    record(ok, name, `HEAD ${res.status}, ${len.toLocaleString()} bytes, content-type: ${res.headers.get("content-type") ?? "—"}`);
+    const res = await get(path, { headers: { range: "bytes=0-3" } });
+    const magic = res.status === 206 || res.status === 200 ? await res.text() : "";
+    const ok = (res.status === 206 || res.status === 200) && magic === WASM_MAGIC;
+    const range = res.headers.get("content-range") ?? "no content-range";
+    record(ok, name, `HTTP ${res.status} (${range}), magic ${ok ? "\\0asm ✓" : JSON.stringify(magic)}`);
   } catch (err) {
     record(false, name, String(err));
   }

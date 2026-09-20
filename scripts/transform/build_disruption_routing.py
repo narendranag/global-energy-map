@@ -65,11 +65,6 @@ EIA_CASPIAN = (
     "https://www.eia.gov/international/content/analysis/regions_of_interest/caspian_sea/",
     2025,
 )
-KAZ_DEU_DRUZHBA = (
-    "Reuters, 'Russia to halt Kazakhstan's oil flows to Germany via Druzhba, sources say'",
-    "https://www.reuters.com/business/energy/russia-halt-kazakhstans-oil-flows-germany-via-druzhba-sources-say-2026-04-21",
-    2026,
-)
 EIA_MALACCA = (
     "EIA, World Oil Transit Chokepoints: Strait of Malacca",
     "https://www.eia.gov/todayinenergy/detail.php?id=32452",
@@ -628,7 +623,14 @@ TURKISH_STRAITS = [
         "crude then transits the Turkish Straits, since the Black Sea has no other sea exit. "
         "Turkey's Izmit (Marmara) refinery transits only the Bosporus, while EIA's own series "
         "is labelled 'Turkish Straits (Dardanelles)' - a nuance this share does not attempt "
-        "to resolve.",
+        "to resolve. Caveat (2026-09-20): a part of Kazakhstan's crude to inland Europe moves "
+        "overland instead - KEBCO to Germany's PCK Schwedt runs Uzen-Atyrau-Samara into "
+        "Druzhba, never touching a tanker. That flow began only in February 2023 and runs "
+        "~1.0-1.5 Mt/y against BACI's 3.1 Mt (2023) and 4.3 Mt (2024) of KAZ->DEU crude, so "
+        "the majority still arrives seaborne or via TAL from Trieste on CPC blend that does "
+        "transit the Straits. This wildcard therefore overstates Germany 2023-24 by roughly "
+        "a third; zeroing the pair was tried and rejected, because it understated every "
+        "pre-2023 year by the full 2.0-2.7 Mt.",
     ),
     _row(
         "turkish_straits",
@@ -662,30 +664,6 @@ TURKISH_STRAITS = [
         EIA_CASPIAN,
         "Structural: Kazakh crude to China moves by the Kazakhstan-China pipeline "
         "(Atasu-Alashankou), not by sea, so it never reaches Novorossiysk or the Straits.",
-    ),
-    # Final review #7 (2026-09-19): Germany's KEBCO crude runs overland via the
-    # Uzen-Atyrau-Samara pipeline into Transneft's Druzhba system (northern
-    # spur, via Poland) to the PCK Schwedt refinery - never loaded onto a
-    # tanker, so it never reaches Novorossiysk or the Straits. Austria,
-    # Czechia, Switzerland etc. are deliberately NOT zeroed here even though
-    # they also receive Kazakh-blend crude inland: their volumes arrive via
-    # the TAL pipeline from Trieste, fed by CPC-blend crude that DOES sail
-    # from Novorossiysk through the Bosporus/Dardanelles first.
-    _row(
-        "turkish_straits",
-        "chokepoint",
-        "KAZ",
-        "DEU",
-        0.00,
-        SRC_IEA_PIPELINE,
-        KAZ_DEU_DRUZHBA,
-        "Reuters: Kazakhstan supplies KEBCO (Kazakhstan Export Blend Crude Oil) to Germany's "
-        "PCK Schwedt refinery via the Uzen-Atyrau-Samara pipeline and Transneft's Druzhba "
-        "system (northern spur through Poland to Adamova Zastava) - an entirely overland "
-        "route that never touches a tanker, so this crude never reaches Novorossiysk or the "
-        "Turkish Straits. Do not confuse with Austria/Czechia/Switzerland (below), which "
-        "receive Kazakh-blend crude via the TAL pipeline from Trieste - fed by CPC crude "
-        "that does sail through the Straits.",
     ),
     _row(
         "turkish_straits",

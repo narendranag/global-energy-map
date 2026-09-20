@@ -2,8 +2,8 @@
   "_generated_by": "scripts/transform/build_catalog.py — do not edit",
   "site": {
     "title": "Global Energy Map",
-    "version": "1.0.0",
-    "date-released": "2026-09-09",
+    "version": "1.1.0",
+    "date-released": "2026-09-20",
     "repository-code": "https://github.com/narendranag/global-energy-map",
     "url": "https://energymap.marain.space",
     "license": "MIT",
@@ -5656,7 +5656,7 @@
       "source_title": "EIA, Regional Analysis Brief: Caspian Sea",
       "source_url": "https://www.eia.gov/international/content/analysis/regions_of_interest/caspian_sea/",
       "source_year": 2025,
-      "source_note": "EIA: 'The CPC carries about 80% of Kazakhstan's crude oil export' (the same figure and citation as the shipped `cpc` row); essentially all of that Novorossiysk-loaded crude then transits the Turkish Straits, since the Black Sea has no other sea exit. Turkey's Izmit (Marmara) refinery transits only the Bosporus, while EIA's own series is labelled 'Turkish Straits (Dardanelles)' - a nuance this share does not attempt to resolve."
+      "source_note": "EIA: 'The CPC carries about 80% of Kazakhstan's crude oil export' (the same figure and citation as the shipped `cpc` row); essentially all of that Novorossiysk-loaded crude then transits the Turkish Straits, since the Black Sea has no other sea exit. Turkey's Izmit (Marmara) refinery transits only the Bosporus, while EIA's own series is labelled 'Turkish Straits (Dardanelles)' - a nuance this share does not attempt to resolve. Caveat (2026-09-20): a part of Kazakhstan's crude to inland Europe moves overland instead - KEBCO to Germany's PCK Schwedt runs Uzen-Atyrau-Samara into Druzhba, never touching a tanker. That flow began only in February 2023 and runs ~1.0-1.5 Mt/y against BACI's 3.1 Mt (2023) and 4.3 Mt (2024) of KAZ->DEU crude, so the majority still arrives seaborne or via TAL from Trieste on CPC blend that does transit the Straits. This wildcard therefore overstates Germany 2023-24 by roughly a third; zeroing the pair was tried and rejected, because it understated every pre-2023 year by the full 2.0-2.7 Mt."
     },
     {
       "disruption_id": "turkish_straits",
@@ -5690,17 +5690,6 @@
       "source_url": "https://www.eia.gov/international/content/analysis/regions_of_interest/caspian_sea/",
       "source_year": 2025,
       "source_note": "Structural: Kazakh crude to China moves by the Kazakhstan-China pipeline (Atasu-Alashankou), not by sea, so it never reaches Novorossiysk or the Straits."
-    },
-    {
-      "disruption_id": "turkish_straits",
-      "kind": "chokepoint",
-      "exporter_iso3": "KAZ",
-      "importer_iso3": "DEU",
-      "share": 0.0,
-      "source_title": "Reuters, 'Russia to halt Kazakhstan's oil flows to Germany via Druzhba, sources say'",
-      "source_url": "https://www.reuters.com/business/energy/russia-halt-kazakhstans-oil-flows-germany-via-druzhba-sources-say-2026-04-21",
-      "source_year": 2026,
-      "source_note": "Reuters: Kazakhstan supplies KEBCO (Kazakhstan Export Blend Crude Oil) to Germany's PCK Schwedt refinery via the Uzen-Atyrau-Samara pipeline and Transneft's Druzhba system (northern spur through Poland to Adamova Zastava) - an entirely overland route that never touches a tanker, so this crude never reaches Novorossiysk or the Turkish Straits. Do not confuse with Austria/Czechia/Switzerland (below), which receive Kazakh-blend crude via the TAL pipeline from Trieste - fed by CPC crude that does sail through the Straits."
     },
     {
       "disruption_id": "turkish_straits",

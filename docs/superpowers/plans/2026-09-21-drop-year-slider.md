@@ -82,3 +82,17 @@ typecheck, Vitest.
 ## Not doing
 Removing `year` from `AppState` or the URL; changing `DEFAULT_MODE`; touching country-panel
 sparklines (a time *series*, not the slider — they are now the one place the years are visible).
+
+## Outcome (2026-09-21, `97c0688`…`9aa8c3c`)
+
+Shipped as planned, T1–T6 in order, plus two same-day follow-ups the plan didn't anticipate:
+
+- **T1–T3** (year control removed, catalog-derived constants, badges/chip): shipped. `src/lib/data-catalog/years.ts` throws at module load on a missing catalog entry rather than falling back to a literal; two pytest checks (`test_baci_coverage_matches_the_trade_parquet`, `test_ei_coverage_matches_the_country_year_parquet`) pin the catalog spans to the parquet.
+- **T4** (visible headline + "Data behind this result" disclosure): shipped, open by default. The plan expected to update "the byte-pinned importer fixture… deliberately, in this commit" — no such fixture existed; `tests/unit/export/layers-scenario.test.ts` and `tests/unit/scenarios/panel-model.test.ts` were written fresh instead.
+- **T5** (framing copy): shipped across README, `layout.tsx`, `Header.tsx`, `llms.txt`, `CITATION.cff` and the intro card, per the recommendation in `docs/superpowers/briefs/2026-09-20-scenario-first-framing.md`.
+- **T6** (e2e): shipped. `time.spec.ts` and `year-relevance.spec.ts` removed with the control they tested; `tests/e2e/as-of.spec.ts` added (chip, pinned-year vintage filter, embed case, scenario headline, empty state). Full suite on a production build: 145 passed. The later label-only change (dropping bracketed years from the four intro questions, `9aa8c3c`) shipped without a fresh e2e run, at the maintainer's direction.
+- **Deviation — naming.** `src/lib/scenarios/summary.ts`'s `tradeYearPhrase` became `dataYearsPhrase(tradeYear, routes)` partway through T4/T5 once route-share years needed stating alongside the trade year — one function, not two, so a citation and the embed chip can't drift apart.
+- **Deviation — attribution.** The "every surface states its vintage" pass (`sectionVintage`, `src/lib/data/section-vintage.ts`) reads LNG terminal/voyage attribution off the `lng_voyages` layer's catalog tag rather than a new constant, so a source-attribution change there flows through automatically.
+- **Follow-ups folded in same day, not deferred:** `disruption_route.data_year` (nullable, 73 of 522 rows; `f85c00c`) and the catalog-derived year constants (`8f54601`) were originally candidates for a later pass but landed the same day once T1–T3 made the gap between "published" and "describes" visible in the UI.
+
+**Open items** (also recorded in `docs/superpowers/HANDOFF.md` and CLAUDE.md's Phase status): the maintainer should confirm or reverse several `data_year` judgement calls in `scripts/transform/build_disruption_routing.py` — Malacca's headline reads "2025 route shares" from only 10 of 108 rows dated; `suez_lng`/`bab_el_mandeb_lng` use the EIA article's 2018 traffic vintage though the "98 % LNG" sentence only says "in recent years"; Keystone/Enbridge (2020) and CPC (2023) are document vintages, not measured-flow years; the Argus and Reuters sources behind a few rows were never fetched (paywall). None of this was in scope for T1–T6 and no code changed to address it.

@@ -65,7 +65,7 @@ The rule (from [`LICENSE-DATA.md`](../../LICENSE-DATA.md)): a file is offered on
 | `basins.geojson` | basin polygons, simplified | public domain (credit NETL) | Yes |
 | `lng_voyage.parquet`, `lng_trade_daily.parquet`, `lng_terminal_daily.parquet` | LNG-T3 voyages and daily tables, 2020–2024 | CC BY 4.0 | Yes |
 | `trade_flow.parquet` | BACI HS 2709 + 271111 extract, 1995–2024, with the quantity repair | Etalab Open Licence 2.0 | Yes |
-| `disruption_route.parquet` | the route-share table: 18 hand-set shares with citations, plus 54 intra-Gulf share-0 pairs (72 rows) | project table; cite project and sources | Yes |
+| `disruption_route.parquet` | the route-share table: 522 rows across 15 route-share sets for the 11 scenarios, each tied to a cited document with a publication year (`source_year`) and, where stated, a data year (`data_year`, 73 rows) | project table; cite project and sources | Yes |
 | `countries.geojson` | Natural Earth 1:110m | public domain | Yes |
 | `assets.parquet` | the map's asset table, incl. 88 OSM refineries | mixed, includes ODbL | **No** — use `assets_open.parquet` |
 | `country_year_series.parquet` | EI reserves and production | EI terms | **No** — get it from the Energy Institute |
@@ -109,8 +109,8 @@ Source URLs and releases are pinned in `scripts/common/sources.py`. The build en
 
 ## Versions and as-of dates
 
-- **Software version** — `CITATION.cff` (currently 1.0.0).
-- **Data version** — each file's **as-of date** and **sha256** on /data. The catalogue as a whole carries a version number (currently 6) and a `generated_at` date equal to the newest source as-of date.
+- **Software version** — `CITATION.cff` (currently 1.1.0).
+- **Data version** — each file's **as-of date** and **sha256** on /data. The catalogue as a whole carries a version number (currently 7) and a `generated_at` date equal to the newest source as-of date.
 - **What changed** — the dated [data changelog](../refresh.md#data-changelog) in the refresh runbook. Sources are refreshed by hand, at each publisher's cadence (EI annually around June; BACI annually around January–February; GEM, LNG-T3 and NETL per release or ad hoc; OpenStreetMap quarterly).
 
 A view URL records the *view*, not the *data*. If you report numbers, record the access date and, ideally, the sha256 of `trade_flow.parquet` (for scenarios) or keep the exported CSV alongside your analysis.

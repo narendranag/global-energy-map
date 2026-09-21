@@ -46,4 +46,4 @@ Built and maintained by Narendra Nag (https://narendranag.com) as a project of M
 
 ## Cite
 
-Nag, N. (2026). Global Energy Map (Version 1.0.0) [Computer software]. https://energymap.marain.space. Also cite the sources behind any number, using each catalog entry's `attribution`.
+Nag, N. (2026). Global Energy Map (Version 1.1.0) [Computer software]. https://energymap.marain.space. Also cite the sources behind any number, using each catalog entry's `attribution`.

@@ -23,7 +23,7 @@ The measure is about **importers**. Exporters on the route (Saudi Arabia for Hor
 
 ## Route shares
 
-Every scenario is driven by a small hand-set table, `disruption_route.parquet` (72 rows: 18 hand-set shares, each tied to a document, and 54 intra-Gulf share-0 pairs). The panel's **Route shares used** list shows the rows for the active scenario with their citations; **How this share follows from the source** gives the arithmetic.
+Every scenario is driven by a hand-set table, `disruption_route.parquet` (522 rows across 15 route-share sets drawn from the 11 scenarios: the original 18 hand-set shares behind Hormuz, Druzhba, BTC and CPC; the 54 intra-Gulf share-0 pairs; and region-expanded exporter→importer pairs for the five chokepoints added 2026-09-19 — Malacca, Suez+SUMED, Bab el-Mandeb, Turkish Straits — each still tied to a document. See [Methodology → Route shares](../methodology.md#route-shares) for the full breakdown). The table below covers the original four scenarios only. The panel's **Route shares used** list shows the rows for the active scenario with their citations; **How this share follows from the source** gives the arithmetic.
 
 | Scenario | Exporter → importer | Share | Source (year) |
 |---|---|---|---|

@@ -1,5 +1,9 @@
 # Brief: is this a time machine or a dependency model?
 
+> **Status: answered; shipped 2026-09-21.** See the recommendation in
+> [`docs/superpowers/briefs/2026-09-21-scenario-first-framing-recommendation.md`](2026-09-21-scenario-first-framing-recommendation.md)
+> and the plan in [`docs/superpowers/plans/2026-09-21-drop-year-slider.md`](../plans/2026-09-21-drop-year-slider.md).
+
 > For a Fable agent. Written 2026-09-20 by the Opus session that shipped the day's three deploys.
 > **Read `CLAUDE.md` first**, then this. Read-only until you have a recommendation; the ask is a
 > design judgement, not an implementation ticket.

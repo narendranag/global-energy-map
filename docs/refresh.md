@@ -213,6 +213,11 @@ Record every data change here, newest first: date, source and release, files aff
 - Notes: ...
 ```
 
+### 2026-09-21 — disruption_route gains data_year (no upstream refresh)
+- Files: `disruption_route.parquet`, `catalog.json`.
+- Rows: 522 → 522 (no row change; new nullable `data_year` column, populated for 73 rows).
+- Notes: `source_year` (when a cited document was published) and `data_year` (the year of the flows or routing it describes) are no longer conflated — see `scripts/transform/build_disruption_routing.py`. Set only where a document or its `source_note` states which year's flows the figure is; structural rows (the 54 intra-Gulf pairs, the physical-geography wildcards, the ESPO spur) and the three unsourced analyst estimates stay NULL. Also folded in the same day: every year constant (`TRADE_FIRST_YEAR`, `TRADE_LAST_YEAR`, `YEAR_MAX`, reserves/LNG-T3 spans) moved from hand-typed literals to `src/lib/data-catalog/years.ts`, derived from catalog `coverage` and guarded by `tests/python/test_data_integrity.py`.
+
 ### 2026-09-11 — storage filtered to bulk storage (no upstream refresh)
 - Files: `assets.parquet`, `assets_open.parquet`, `catalog.json`.
 - Rows: `netl_storage` 26,102 → 7,733 (−18,369); `assets_open.parquet` 36,191 → 17,822.

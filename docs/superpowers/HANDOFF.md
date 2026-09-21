@@ -1,47 +1,44 @@
 # Session handoff — resume prompt
 
 > **When the maintainer says hello, read this file first, then act on "First thing to do".**
-> Last updated: 2026-09-19, end of session. **No agents are running. Every worker branch is merged. The tree is clean.**
-
-You are picking up the orchestration of `docs/superpowers/plans/2026-09-19-post-launch-ux-scenarios.md` on Global Energy Map. Read `CLAUDE.md`, then that plan's **§3 Status** table — it is the ledger of what merged and why.
+> Last updated: 2026-09-21, end of session. **No agents are running. `main` is clean and matches `origin/main`.**
 
 ## 1. Where things stand
 
-- Branch **`post-launch-ux-scenarios`** in the main checkout. **Nothing is pushed.** `main` is 5 commits ahead of `origin/main` (the data-freshness work + an R2 archive note) and this branch sits on top of it. **Pushing `main` deploys production — ask the maintainer first, every time.**
-- Merged and reviewed on the branch: Wave 0 fixes; research R1–R4 with independent verification; S0 focus/camera; S1 scenario on the map; S2 BACI trade-flow arcs; S3 country panel; S4 search; S5 engine extensions; S6 seven new scenarios (15 route-share sets across 11 scenarios); S7 embed mode; S8 scheduled-refresh scripts (**not installed**); T1 severity / combine / exporter view; T3 scenario context block; T4 `/query` console; T6 announcement drafts (`docs/announce/`, nothing posted). T5 PMTiles dropped (research said no). **T2 pipeline-gas is HELD** for the maintainer.
-- **Final state, verified on a quiet machine after the last merge:** full Playwright suite **139 passed, 0 failed** (15.9 min); 923 Vitest; 306 pytest (9 skipped, network); lint, typecheck and `pnpm build` clean; `disruption_route.parquet` 521 rows, rebuild byte-identical.
-- Review ledgers: `docs/superpowers/research/{s5-review-findings,wave2-review-findings,final-review-findings}.md`.
+- Everything is on **`main`** and **live at https://energymap.marain.space**. The `post-launch-ux-scenarios` branch this file used to track landed on 2026-09-20; the most recent work (2026-09-21, `97c0688`…`9aa8c3c`) dropped the year slider from the UI and led every surface with the scenario question instead of the asset inventory — see `docs/superpowers/plans/2026-09-21-drop-year-slider.md` (now has an Outcome section) and `docs/history.md`'s last entry.
+- Three branches from the earlier push (`kaz-deu-partial-share`, `post-launch-ux-scenarios`, `year-control-and-coverage`) are stale local checkouts — `git branch --merged main` confirms all three are fully merged. Safe to delete locally whenever the maintainer wants (`git branch -d <name>`); nothing to recover from them.
+- Version 1.1.0 everywhere it's quoted (`package.json`, `CITATION.cff`, README, researcher docs, `llms.txt`). Catalog version 7.
+- Verification standard: full Playwright suite on a production build was **145 passed** for the vintage-disclosure work (`97c0688`…`f85c00c`); the final commit (`9aa8c3c`, dropping bracketed years from the four intro-card example questions) is a label-only change that shipped **without a fresh e2e run**, at the maintainer's direction — worth a spot-check next time the suite runs for any other reason.
 
 ## 2. Nothing is in flight
 
-All three reviews' findings are fixed and merged (`final-review-findings.md` was closed by two fix batches: LNG factor now 15.644 TWh/Mt on a GCV basis; 30-day recency floor on GIE storage; USA dropped from Suez; UZB/KGZ zeroed on the Turkish Straits (DEU was zeroed too, then reverted 2026-09-20 — see below); exporter-view CSV; camera key; URL edge cases; docs/README brought in line). Stale agent worktrees under `.claude/worktrees/` can be removed with `git worktree remove` once the maintainer is happy — every branch in them is merged.
-
-If a future session loses running agents: `git worktree list`; in each `agent-*` worktree run `git log --oneline post-launch-ux-scenarios..HEAD` and `git status --short`; commit uncommitted work as a labelled WIP, then start a fresh agent **inside that worktree** with the original brief. That is how T1 and T3 were recovered on 2026-09-19.
+No agents running, no open PRs, no uncommitted work. `git status --short` is clean.
 
 ## 3. First thing to do
 
-1. Confirm the state: `git status` (clean), `git log --oneline -3`, branch `post-launch-ux-scenarios`.
-2. Greet the maintainer with a short status and the decision list in §4 — that list is what blocks shipping; no engineering is outstanding.
-3. On their go-ahead: open a PR from `post-launch-ux-scenarios` to `main` (CI runs lint, typecheck, Vitest, build, ruff, pytest and Playwright on ubuntu — watch the scenario-panel specs, which are slow under software WebGL, and `a11y.spec.ts` first-visit, which timed out once under machine load). Merging deploys production.
-4. After deploy: `scripts/smoke/run.sh https://energymap.marain.space`, and add `/query` to that smoke script (not done yet).
+There is no forced next step. Likely next actions, roughly in order of how blocking they are:
 
-## 4. Decisions waiting for the maintainer
+1. **Announce.** `docs/announce/` (announcement, fact-check, outreach email, short posts) is drafted and re-verified against current data (2026-09-21) but still headed "DO NOT PUBLISH YET" — publishing is the maintainer's call. Before it goes out: the announcement's claim that Hormuz was effectively closed 2026-02-28 to 2026-04-07 has **no citation in the repo** (candidate: CRS R45281) — find and cite it, or cut the claim.
+2. **Scheduled refresh.** `scripts/refresh/monthly.sh` + `scripts/refresh/space.marain.energymap.refresh.plist` exist and are documented (`docs/refresh.md`) but the plist has never been loaded into launchd. Run `monthly.sh` by hand once first to confirm it works end to end before installing the plist.
+3. **Data-year judgement calls.** `disruption_route.data_year` (shipped 2026-09-21) is deliberately NULL except where a document states a year — but a few rows are judgement calls the maintainer should confirm or reverse, each a one-line change in `scripts/transform/build_disruption_routing.py`:
+   - Malacca's scenario headline currently reads as "2025 route shares" from only 10 of 108 rows actually dated that year.
+   - `suez_lng` / `bab_el_mandeb_lng` use the EIA article's 2018 traffic vintage as their data year, though the underlying "98% of LNG" sentence only says "in recent years" — arguably should be NULL instead.
+   - Keystone, Enbridge Mainline (2020) and CPC (2023) use each document's general data vintage, because the share sentences themselves carry no year.
+   - A few rows cite Argus and Reuters sources that were never fetched (paywalled) — their data years are inferred, not read off the document.
+4. **Kirkuk–Ceyhan.** Held — would need a year-bounded share (pipeline shut 2023-03 to 2025-09) and moving the shipped Hormuz IRQ share 0.90 → 0.87 in the same commit. Not started.
 
-1. **New scenario shares** (S6) are editorial — approve before they reach `main`. Includes two orchestrator calls to confirm or reverse: USA dropped from Suez; Turkish Straits zero pairs.
-2. **Kirkuk–Ceyhan** would need the shipped Hormuz IRQ share moved 0.90 → 0.87. Held.
-3. **Pipeline gas (T2)**: BACI unusable; Eurostat works for Europe but has the same hub problem and Austria/Moldova attribute no origin. Ship a partial Ukraine-transit scenario, or not?
-4. **Scenario camera never fits on load** (S1 agent's strengthening of the brief) — keep or relax.
-5. **`/query` posture**: every table queryable on screen; only export is licence-gated.
-6. **Exporter view** reuses the 0.1 %-of-world floor, so small high-share exporters are omitted.
-7. **Rename `production_crude_kbpd`** (it is total liquids) at the next EI refresh — breaks saved `?q=` links.
-8. **Scheduled refresh**: loading the launchd plist is the maintainer's action; first real run is untested end to end.
-9. **Announcement**: drafts only, headed DO NOT PUBLISH YET (the branch is not live). The 2026 Hormuz-closure sentence is in; re-read `docs/announce/fact-check.md` after the share decisions in item 1.
-10. Push `main` / open the PR.
+## 4. Decisions the maintainer has already made (don't re-litigate)
+
+- Going public: done (custom domain, analytics, downloads scoped to open licences).
+- Light-only UI: decided 2026-09-10, no dark theme.
+- DuckDB-WASM: kept, off the map's load path, used only by `/query`.
+- Year slider: removed 2026-09-21; `AppState.year`/`year=` stay for shareable pinned links.
+- Scenario-first framing: adopted 2026-09-21 per `docs/superpowers/briefs/2026-09-21-scenario-first-framing-recommendation.md` (brief: `docs/superpowers/briefs/2026-09-20-scenario-first-framing.md`).
 
 ## 5. Working rules that cost us time when ignored
 
-- Workers run Playwright on a private port, **one spec file per invocation, foreground, with `--global-timeout`** (`E2E_PORT=31xx`). A background run polled from a sleep loop hung for 3.5 h and kept other agents alive.
-- A finished agent that keeps re-notifying has a leftover background waiter — check its worktree is clean and merged, then `TaskStop` it.
-- Never trust an unrun spec, and never trust a research figure that has not been through an independent verifier: across three notes the verifiers found 22 wrong and 23 misapplied figures.
+- Workers run Playwright on a private port, **one spec file per invocation, foreground, with `--global-timeout`** (`E2E_PORT=31xx`). A background run polled from a sleep loop once hung for 3.5 h and kept other agents alive.
+- Never trust an unrun spec, and never trust a research figure that has not been through an independent verifier — three review passes on the post-launch UX work found 22 wrong and 23 misapplied figures between them.
 - `.claude/worktrees/` is excluded from eslint, tsc and git; merge worktree branches, don't copy files.
 - Stage explicit paths. No `git add -A` on the shared tree.
+- Pushing `main` deploys production — ask the maintainer first, every time.

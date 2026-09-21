@@ -62,6 +62,43 @@ def test_catalog_hash_and_size_match_disk(entry):
     )
 
 
+def _entry(entry_id: str) -> dict:
+    match = [e for e in ENTRIES if e["id"] == entry_id]
+    assert match, f"catalog has no entry {entry_id!r}"
+    return match[0]
+
+
+def _span(entry_id: str, layer: str | None = None) -> dict:
+    spans = _entry(entry_id).get("coverage") or []
+    if layer is not None:
+        spans = [s for s in spans if layer in (s.get("layers") or [layer])]
+    assert len(spans) == 1, f"{entry_id}: expected one coverage span for {layer!r}, got {spans}"
+    return spans[0]
+
+
+def test_baci_coverage_matches_the_trade_parquet():
+    """The app's TRADE_FIRST_YEAR/TRADE_LAST_YEAR/YEAR_MAX are read from this span.
+
+    `build_catalog` measures coverage from the file, so these can only diverge
+    when the catalog was not regenerated after a refresh — which is exactly the
+    case that would leave the UI stating a year the rows no longer end at.
+    """
+    years = pd.read_parquet(DATA / "trade_flow.parquet", columns=["year"])["year"]
+    span = _span("baci_2709")
+    assert (span["from"], span["through"]) == (str(years.min()), str(years.max()))
+
+
+@pytest.mark.parametrize(
+    "layer,prefix", [("reserves", "proved_reserves"), ("production", "production")]
+)
+def test_ei_coverage_matches_the_country_year_parquet(layer, prefix):
+    """RESERVES_LATEST_YEAR and YEAR_MIN come from these two spans."""
+    cys = pd.read_parquet(DATA / "country_year_series.parquet", columns=["metric", "year"])
+    years = cys.loc[cys["metric"].str.startswith(prefix), "year"]
+    span = _span("ei_country_year", layer)
+    assert (span["from"], span["through"]) == (str(years.min()), str(years.max()))
+
+
 def test_catalog_ids_unique_and_dates_normalised():
     ids = [e["id"] for e in ENTRIES]
     assert len(ids) == len(set(ids))

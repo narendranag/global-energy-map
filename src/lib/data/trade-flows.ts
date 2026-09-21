@@ -3,6 +3,7 @@ import { dataIso3 } from "@/lib/geo/iso3";
 import type { Commodity } from "@/lib/scenarios/types";
 import { cachedLoader } from "./cache";
 import { readParquet } from "./parquet";
+import { TRADE_FIRST_YEAR, TRADE_LAST_YEAR } from "@/lib/data-catalog/years";
 
 /**
  * BACI (CEPII) bilateral crude (HS 2709) + LNG (HS 271111) trade, aggregated
@@ -10,13 +11,12 @@ import { readParquet } from "./parquet";
  * `TradeFlowsLayer.tsx`'s "Trade flows (BACI)" arcs. This is the flow BACI
  * carries every scenario share on, and until now it was never drawn.
  *
- * BACI's coverage is 1995–2024 (mirrored as `TRADE_FIRST_YEAR`/
- * `TRADE_LAST_YEAR` in `src/lib/modes/index.ts`, the way `LNG_T3_FIRST_YEAR`
- * mirrors into that file for voyages); outside it `loadTradeFlows` resolves
- * to an empty pair list without reading the file.
+ * BACI's coverage comes from the catalog (`src/lib/data-catalog/years.ts`),
+ * not from a literal written here and mirrored into two other modules;
+ * outside it `loadTradeFlows` resolves to an empty pair list without reading
+ * the file.
  */
-export const TRADE_FIRST_YEAR = 1995;
-export const TRADE_LAST_YEAR = 2024;
+export { TRADE_FIRST_YEAR, TRADE_LAST_YEAR };
 
 export function tradeFlowsInRange(year: number): boolean {
   return year >= TRADE_FIRST_YEAR && year <= TRADE_LAST_YEAR;

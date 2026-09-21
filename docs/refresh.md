@@ -69,7 +69,7 @@ For every source: (1) check the publisher's page for a new release and read its 
 ### Energy Institute Statistical Review (annual, ~June)
 - Pin: set `release` to the new edition year, `as_of` to its publication date. The EI workbook URL changes every year — find the "all data" xlsx on the downloads page and set `download_url`. The site blocks scripted downloads (Cloudflare); if the ingest fails, download the workbook by hand into `data/raw/ei_statistical_review/`.
 - `build_country_year` reads sheet names and year columns; a new edition can rename sheets or add countries. Watch its output for unmapped country names (add them to `EI_NAME_TO_ISO3` in `scripts/common/iso3.py`).
-- Check whether reserves were updated this year (still 2020 as of the 2026 edition — checked 2026-09-17). `test_reserves_end_2020_and_non_negative` and the "reserves frozen after 2020" badge must be updated if they ever are.
+- Check whether reserves were updated this year (still 2020 as of the 2026 edition — checked 2026-09-17). `test_reserves_end_2020_and_non_negative` must be updated if they ever are; `RESERVES_LATEST_YEAR` and `YEAR_MIN` need no edit — they come from the EI entry's per-metric catalog `coverage` (reserves span / earliest year), guarded by `test_ei_coverage_matches_the_country_year_parquet`.
 - **Save the workbook as `EI-Stats-Review-ALL-data-<edition>.xlsx`.** Transforms take the lexicographically last match, so EI's own bare `EI-Stats-Review-ALL-data.xlsx` would outrank `...-2026.xlsx` and silently build the older edition.
 - **EI renames sheets between editions**, including trailing whitespace (`"Gas - Proved reserves history "` lost its trailing space in 2026). `_read_sheet` matches on the stripped name and lists the available sheets when one is genuinely missing.
 - `test_production_reaches_the_edition_year` derives the expected last year from the pin (`int(EI.release) - 1`), so a refresh does not need the test edited.
@@ -77,7 +77,8 @@ For every source: (1) check the publisher's page for a new release and read its 
 ### CEPII BACI (annual, ~January–February)
 - Pin: set `release` (e.g. `V202701`), `as_of`, and `download_url` (`BACI_HS92_<release>.zip`).
 - **The ingest range-reads the zip, so its byte offsets are release-specific**: re-derive `_ZIP_FILE_SIZE`, `_YEAR_ENTRIES` and the `_CC_*` constants in `scripts/ingest/baci.py` from the new archive's central directory, and add the new year to `_YEAR_ENTRIES`. The country-codes file is versioned (`country_codes_<release>.csv`).
-- After the build, check `test_trade_flow_codes_are_real_countries` (new BACI pseudo-codes go into `TRADE_ISO3_ALLOWLIST`) and bump `YEAR_MAX` (`src/lib/time/range.ts`) and `TRADE_LAST_YEAR` (`src/lib/modes/index.ts`) only if the app's year constants allow it — `TRADE_LAST_YEAR` is also the map's default reading year now that there is no year control.
+- After the build, check `test_trade_flow_codes_are_real_countries` (new BACI pseudo-codes go into `TRADE_ISO3_ALLOWLIST`).
+- **No year constant to bump.** `TRADE_FIRST_YEAR`, `TRADE_LAST_YEAR` and `YEAR_MAX` (and with them the map's default reading year, since there is no year control) are derived from the BACI entry's catalog `coverage` in `src/lib/data-catalog/years.ts`, which `build_catalog` measures from the parquet. Rebuild the catalog and the app follows; `test_baci_coverage_matches_the_trade_parquet` fails if the catalog was not regenerated, and the derivation throws at module load rather than falling back to a stale literal.
 
 ### GEM trackers (per release)
 
@@ -261,6 +262,7 @@ Each ingest runs as documented in the per-source sections above; the script read
 ### What it deliberately does NOT automate
 
 - **Annual pin bumps:** EI Statistical Review (`history_through_year` in January; reserves frozen check), BACI release + download URL, GEM GOGET/GGIT tracker releases (form-gated).
+  The app's year constants are no longer in this list: `YEAR_MIN`/`YEAR_MAX`, `RESERVES_LATEST_YEAR`, `TRADE_FIRST_YEAR`/`TRADE_LAST_YEAR` and `LNG_T3_FIRST_YEAR`/`LNG_T3_LAST_YEAR` all read catalog `coverage` (`src/lib/data-catalog/years.ts`). The EIA `history_through_year` pin stays manual — it is an ingest-side judgement about forecast vs history, not a statement of what the shipped data covers.
 - **PR merging:** the script opens (or updates) a PR and stops. A human reviews the data diff, runs spot checks, and merges.
 - **Pushing main:** the refresh branch never reaches `main` through git. The maintainer merges and deploys manually via `vercel --prod`.
 - **Deleting the local `refresh/<YYYY-MM>` branch** after it's merged — that's a manual `git branch -d` in the maintainer's own checkout once the PR lands; old month branches otherwise accumulate there (they're harmless, just clutter).

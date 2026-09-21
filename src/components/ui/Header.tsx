@@ -27,8 +27,8 @@ export function Header({ mode, onModeChange, pending, actions }: HeaderProps) {
           Global Energy Map
         </h1>
         <p className="hidden text-xs leading-snug text-slate-600 xl:block">
-          Oil &amp; gas infrastructure, trade and disruption scenarios — searchable, queryable,
-          1990–2024.
+          Who loses supply when a chokepoint closes — over the world&apos;s oil &amp; gas
+          infrastructure and trade.
         </p>
       </div>
       <div className="flex min-w-0 items-center gap-3 max-md:order-last max-md:w-full">

@@ -44,9 +44,9 @@ export const loadAllTradeFlows = cachedLoader(
 /**
  * B12: `cachedLoader`'s cache (`cache.ts`) is an unbounded `Map` — fine for
  * loaders keyed by a fixed path, but `loadCountryExposure` is keyed by
- * (year, commodity), so a long map-viewing session that scrubs the year
- * slider across many years builds up one entry per year × commodity visited,
- * each holding a full `ScenarioResult` per scenario, forever. A capacity-
+ * (year, commodity), so a long session that visits many different pinned-year
+ * links builds up one entry per year × commodity visited, each holding a
+ * full `ScenarioResult` per scenario, forever. A capacity-
  * bounded cache costs nothing (recomputing a scenario for a year the user
  * left is cheap — this only ever saves the *current* scrub from recomputing)
  * and removes the unbounded-growth risk outright.
@@ -93,8 +93,8 @@ export const _lruLoaderForTests = lruLoader;
  * The engine is called **without** refinery or LNG-terminal rows: the panel
  * only reads `byImporter`, and skipping the asset attribution keeps this to
  * a handful of passes over one year of BACI rows. Cached on (year,
- * commodity) — capped at 8 entries (B12) so scrubbing the year slider across
- * a long session cannot grow this without bound.
+ * commodity) — capped at 8 entries (B12) so visiting many pinned-year links
+ * across a long session cannot grow this without bound.
  */
 export const loadCountryExposure = lruLoader(
   8,

@@ -296,9 +296,9 @@ export const SHALE_OUTLINE_MIN_PX = 1;
 /**
  * Ramp position for a region's output, square-root scaled against the largest
  * value of that commodity across all regions and years. A fixed anchor makes
- * growth visible as the slider moves (the Permian darkening 2010 → 2024);
- * square root keeps the smaller regions distinguishable beside the Permian,
- * which alone is about half of US crude.
+ * growth visible across a pinned link's year (the Permian darkening 2010 →
+ * 2024); square root keeps the smaller regions distinguishable beside the
+ * Permian, which alone is about half of US crude.
  */
 export function shaleRampT(value: number, max: number): number {
   if (!Number.isFinite(value) || value <= 0 || !(max > 0)) return 0;

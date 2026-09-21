@@ -4,10 +4,11 @@ import { readParquet } from "./parquet";
 /**
  * EU gas storage fullness on the most recent gas day GIE has published.
  *
- * This layer is deliberately **independent of the year slider**. GIE publishes
- * daily and the slider is annual 1990–2024, so there is no honest mapping
- * between them; the layer always shows the latest reading and says so, rather
- * than pretending a 2015 slider position means anything here.
+ * This layer is deliberately **independent of the selected year**. GIE
+ * publishes daily and the map otherwise reads at an annual vintage, so there
+ * is no honest mapping between them; the layer always shows the latest
+ * reading and says so, rather than pretending a pinned historical year means
+ * anything here.
  */
 export interface GasStorageData {
   /** ISO date of the gas day these readings are from, e.g. "2026-09-17". */

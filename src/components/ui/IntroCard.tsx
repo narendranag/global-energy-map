@@ -125,54 +125,7 @@ export function IntroCard({ onPick }: IntroCardProps) {
           ×
         </button>
       </div>
-      <ul className="mt-2 list-disc space-y-1 pl-4 text-[13px] leading-snug text-slate-700">
-        <li>
-          <span className="font-medium text-slate-900">Hover</span> any country, pipeline or
-          terminal for its value, year and source.
-        </li>
-        <li>
-          <span className="font-medium text-slate-900">Slide through time</span>,{" "}
-          {HORIZON.timeline.from}–{HORIZON.timeline.through} — the badges in the Layers panel say
-          which layers respond.
-        </li>
-        <li>
-          <span className="font-medium text-slate-900">Pick a disruption</span> in Scenarios to see
-          which importers, refineries and LNG terminals are exposed.
-        </li>
-        <li>
-          <span className="font-medium text-slate-900">Search</span> for a country, pipeline or
-          terminal; select a country for its trade, suppliers and exposure — or write SQL against
-          the same files on the Query page.
-        </li>
-      </ul>
-      {HORIZON.beyond.length > 0 && (
-        <div className="mt-3 rounded border border-slate-200 bg-slate-50 p-2" data-testid="intro-coverage">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-600">
-            How current the data is
-          </p>
-          <p className="mt-1 text-[12px] leading-snug text-slate-700">
-            The timeline ends at {HORIZON.timeline.through}, the last year of reconciled bilateral
-            trade (BACI) that the scenarios are built on. These layers are newer and ignore the
-            slider:
-          </p>
-          <ul className="mt-1 space-y-0.5 text-[12px] leading-snug text-slate-700">
-            {HORIZON.beyond.map((b) => (
-              <li key={b.id} className="flex justify-between gap-2">
-                <span className="min-w-0 truncate">{b.label}</span>
-                <span className="shrink-0 tabular-nums font-medium text-slate-900">{b.through}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-1 text-[11px] leading-snug text-slate-600">
-            Full dates and update cadence on the{" "}
-            <a className="underline hover:text-slate-900" href="/methodology#how-current-each-layer-is">
-              Methodology
-            </a>{" "}
-            page.
-          </p>
-        </div>
-      )}
-      <p className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+      <p className="mt-2 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
         Try a question
       </p>
       <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -191,6 +144,37 @@ export function IntroCard({ onPick }: IntroCardProps) {
           </button>
         ))}
       </div>
+      <ul className="mt-3 list-disc space-y-1 pl-4 text-[13px] leading-snug text-slate-700">
+        <li>
+          <span className="font-medium text-slate-900">Ask a disruption question</span> — close
+          Hormuz, cut Druzhba, throttle a route to 40%: see which importers, exporters, refineries
+          and LNG terminals are exposed, and by how much.
+        </li>
+        <li>
+          <span className="font-medium text-slate-900">Every number says what year it is from</span>{" "}
+          — each layer shows its latest data, and a scenario lists the vintage of everything behind
+          its result.
+        </li>
+        <li>
+          <span className="font-medium text-slate-900">Hover</span> any country, pipeline or
+          terminal for its value, year and source.
+        </li>
+        <li>
+          <span className="font-medium text-slate-900">Search</span> for a country, pipeline or
+          terminal; select a country for its trade, suppliers and exposure — or write SQL against
+          the same files on the Query page.
+        </li>
+      </ul>
+      {HORIZON.beyond.length > 0 && (
+        <p className="mt-2 text-[12px] leading-snug text-slate-600" data-testid="intro-coverage">
+          Scenarios run on reconciled trade through {HORIZON.timeline.through};{" "}
+          {HORIZON.beyond.length} {HORIZON.beyond.length === 1 ? "layer carries" : "layers carry"}{" "}
+          newer data, to {HORIZON.beyond[0]?.through}.{" "}
+          <a className="underline hover:text-slate-900" href="/methodology#how-current-each-layer-is">
+            How current each layer is →
+          </a>
+        </p>
+      )}
       <div className="mt-3 flex justify-end">
         <button
           type="button"

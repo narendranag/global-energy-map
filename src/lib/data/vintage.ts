@@ -175,7 +175,7 @@ function shortLabel(label: string): string {
   return label.replace(/\s*\([^()]*\)\s*$/, "").trim();
 }
 
-/** One source whose data runs past the end of the year slider. */
+/** One source whose data runs past the map's default reading year. */
 export interface HorizonEntry {
   readonly id: string;
   readonly label: string;
@@ -192,15 +192,17 @@ export interface CoverageHorizon {
 }
 
 /**
- * What the year slider covers, and what the map holds beyond it.
+ * What "the latest year" covers (the map's default reading year, with no
+ * control to move it), and what the map holds beyond it.
  *
- * The slider stops at the last reconciled BACI year because the scenario
+ * The default stops at the last reconciled BACI year because the scenario
  * engine is anchored on bilateral trade, but several layers are more current
- * than that and deliberately ignore the slider (GIE is daily, Comtrade
- * monthly, EI production and EIA STEO run a year further). Saying only
- * "1990-2024" therefore tells a first-time reader something false about the
- * data, which is what this exists to prevent. Derived from the catalog, so a
- * refresh moves the sentence without anyone editing it.
+ * than that and are always shown at their own latest vintage regardless
+ * (GIE is daily, Comtrade monthly, EI production and EIA STEO run a year
+ * further). Saying only "1990-2024" therefore tells a first-time reader
+ * something false about the data, which is what this exists to prevent.
+ * Derived from the catalog, so a refresh moves the sentence without anyone
+ * editing it.
  */
 export function coverageHorizon(
   catalog: Catalog,

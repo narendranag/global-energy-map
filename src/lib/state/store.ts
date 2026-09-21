@@ -6,7 +6,7 @@
  * The URL is a *serialisation* of this store, not the store itself (R16):
  * changes land in memory synchronously and are mirrored to the address bar by
  * a debounced `history.replaceState` — no Next navigation, no RSC round-trip
- * per slider tick. React reads it through `useSyncExternalStore` (see
+ * per state change. React reads it through `useSyncExternalStore` (see
  * `useUrlState`); MapShell reads/writes the view imperatively.
  */
 import {

@@ -27,7 +27,7 @@ export function isEmbed(params: URLSearchParams): boolean {
   return params.get("embed") === "1";
 }
 
-/** True if an embed should also hide the year slider and commodity toggle. */
+/** True if an embed should also hide the commodity toggle. */
 export function embedControlsHidden(params: URLSearchParams): boolean {
   return params.get("controls") === "0";
 }

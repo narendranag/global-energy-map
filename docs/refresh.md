@@ -77,7 +77,7 @@ For every source: (1) check the publisher's page for a new release and read its 
 ### CEPII BACI (annual, ~January–February)
 - Pin: set `release` (e.g. `V202701`), `as_of`, and `download_url` (`BACI_HS92_<release>.zip`).
 - **The ingest range-reads the zip, so its byte offsets are release-specific**: re-derive `_ZIP_FILE_SIZE`, `_YEAR_ENTRIES` and the `_CC_*` constants in `scripts/ingest/baci.py` from the new archive's central directory, and add the new year to `_YEAR_ENTRIES`. The country-codes file is versioned (`country_codes_<release>.csv`).
-- After the build, check `test_trade_flow_codes_are_real_countries` (new BACI pseudo-codes go into `TRADE_ISO3_ALLOWLIST`) and extend the year slider range only if the app's year constants allow it.
+- After the build, check `test_trade_flow_codes_are_real_countries` (new BACI pseudo-codes go into `TRADE_ISO3_ALLOWLIST`) and bump `YEAR_MAX` (`src/lib/time/range.ts`) and `TRADE_LAST_YEAR` (`src/lib/modes/index.ts`) only if the app's year constants allow it — `TRADE_LAST_YEAR` is also the map's default reading year now that there is no year control.
 
 ### GEM trackers (per release)
 

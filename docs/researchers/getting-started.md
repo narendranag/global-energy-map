@@ -4,14 +4,14 @@ A guided tour of the interface at <https://energymap.marain.space>. For what the
 
 ## First load
 
-The map opens in **Infrastructure** mode, year **2020**, commodity **oil**, centred on the Middle East (longitude 40, latitude 25, zoom 2). 2020 is the default because it is the last year with a live reserves value.
+The map opens in **Infrastructure** mode, commodity **oil**, centred on the Middle East (longitude 40, latitude 25, zoom 2). There is no year control: every layer shows its own latest data — 2024 for infrastructure and scenarios, the last year of reconciled bilateral trade (BACI).
 
-On a first visit an introduction card offers four example questions. Each one sets the whole view (mode, year, commodity, scenario, layers):
+On a first visit an introduction card offers four example questions. Each one sets the whole view (mode, commodity, scenario, layers):
 
-- How exposed is Central Europe to a Druzhba cut? (2022)
+- How exposed is Central Europe to a Druzhba cut? (2024)
 - Who loses most if Hormuz closes? (2024, crude)
-- Where did Qatar's LNG go in 2023?
-- Which pipelines existed in 1995?
+- Who loses most if Suez closes? (2024, crude)
+- Where did Qatar's LNG go in 2024?
 
 All four are worked through in [Worked examples](worked-examples.md). The card does not come back once dismissed (the choice is kept in your browser's local storage).
 
@@ -33,7 +33,7 @@ Scenarios keeps the Reserves layer on because the exposure colours are drawn on 
 
 ## Commodity: oil or gas
 
-The Oil / Gas toggle (centred above the year slider) changes:
+The Oil / Gas toggle (bottom-centre) changes:
 
 - the reserves choropleth (proved oil reserves in billion barrels, or proved gas reserves in trillion cubic metres);
 - the scenarios offered (oil: all 11 — Hormuz, Malacca, Suez + SUMED, Bab el-Mandeb, Turkish Straits, Druzhba, Baku-Tbilisi-Ceyhan, CPC, Keystone, Enbridge Mainline, the ESPO pipeline's Skovorodino-Mohe spur; gas/LNG: Hormuz, Malacca, Suez + SUMED and Bab el-Mandeb only — the pipeline scenarios and Turkish Straits have no LNG route data);
@@ -41,35 +41,37 @@ The Oil / Gas toggle (centred above the year slider) changes:
 
 ## Layers and time-aware badges
 
-The Layers panel (top left) groups toggles under **Geology** (reserves, basins, US shale regions), **Oil** (extraction sites, oil pipelines, refineries, storage hubs, ports), **Gas** (gas pipelines, LNG terminals, LNG voyages, EU gas storage) and **Trade** (recent imports, trade flows). Each layer carries a badge saying how it responds to the year control; hover the badge for a one-line explanation.
+The Layers panel (top left) groups toggles under **Geology** (reserves, basins, US shale regions), **Oil** (extraction sites, oil pipelines, refineries, storage hubs, ports), **Gas** (gas pipelines, LNG terminals, LNG voyages, EU gas storage) and **Trade** (recent imports, trade flows). Each layer carries a badge stating its own data vintage — "to 2020", "as of 9 Apr 2025", "live" — derived from the catalog; hover the badge for a one-line explanation.
 
-| Layer | Badge | Meaning |
+| Layer | Badge (example) | Meaning |
 |---|---|---|
-| Reserves (country) | time: to 2020 | Yearly values 1990–2020; 2021–2024 show the 2020 value |
-| Basins | static | No dates in the source |
-| US shale regions | time: 2009–25 | Annual crude + gas production, Permian/Bakken/Eagle Ford/Haynesville/Appalachia; empty outside 2009–2025 |
-| Extraction sites | time: 32 % | Start year known for 32 % of sites; undated sites show in every year |
-| Oil pipelines | time: 64 % | Start year known for 64 %; undated lines show in every year |
-| Refineries | static | No commissioning dates |
-| Storage hubs | static | No dates; drawn from zoom 4 upward |
-| Ports | static | No dates; drawn from zoom 4 upward |
-| Gas pipelines | time: 74 % | Start year known for 74 % |
-| LNG terminals | time: 98 % | Start year known for 98 % |
-| LNG voyages | time: 2020–24 | Only exists for 2020–2024; empty in other years |
-| Gas storage (EU) | **not** slider-affected | Always the latest AGSI gas day, whatever year is selected; a country whose own feed has gone stale is dropped from the reading rather than shown as current |
-| Recent imports (Comtrade) | **not** slider-affected | Each country's own latest 12 reported months, regardless of the selected year |
-| Trade flows (BACI) | time: 1995–2024 | Empty outside BACI's coverage; world view draws only the largest 150 country pairs by volume, a focused country draws all of its own pairs above 0.1 % of its trade |
+| Reserves (country) | to 2020 | Yearly values 1990–2020; the layer shows the 2020 value regardless of any pinned link year after that |
+| Basins | as of *snapshot date* | No dates in the source; the panel's hover note still says so |
+| US shale regions | to 2025 | Annual crude + gas production, Permian/Bakken/Eagle Ford/Haynesville/Appalachia, from 2009 |
+| Extraction sites | as of *snapshot date* | Start year known for 32 % of sites (see the hover note); undated sites always show |
+| Oil pipelines | as of *snapshot date* | Start year known for 64 % (see the hover note); undated lines always show |
+| Refineries | as of *snapshot date* | No commissioning dates in the source |
+| Storage hubs | as of *snapshot date* | No dates; drawn from zoom 4 upward |
+| Ports | as of *snapshot date* | No dates; drawn from zoom 4 upward |
+| Gas pipelines | as of *snapshot date* | Start year known for 74 % (see the hover note) |
+| LNG terminals | as of *snapshot date* | Start year known for 97 % (see the hover note) |
+| LNG voyages | to 2024 | Only exists for 2020–2024 |
+| Gas storage (EU) | live | Always the latest AGSI gas day; a country whose own feed has gone stale is dropped from the reading rather than shown as current |
+| Recent imports (Comtrade) | live | Each country's own latest 12 reported months |
+| Trade flows (BACI) | to 2024 | Empty before BACI's 1995 start; world view draws only the largest 150 country pairs by volume, a focused country draws all of its own pairs above 0.1 % of its trade |
 
-A "partial" badge means the map **over-states** what existed in early years: every undated feature is drawn in every year. The Legend sits under the layer list and adds the exposure ramp while a scenario is active.
+The badge states the layer's own data vintage, not a fraction of rows dated — that detail is in the hover note. Coverage percentages describe rows that carry no vintage at all and are always shown, regardless of which year a pinned link asks for. The Legend sits under the layer list and adds the exposure ramp while a scenario is active.
 
-## The year control
+## There is no year control
 
-The slider at the bottom runs **1990–2024**. Use the arrows for ±1 year, the play button to step one year every 0.7 s (it stops at 2024), or the keyboard (←/→, Page Up/Down, Home/End) once the slider has focus.
+There used to be a year slider; it is gone. Nobody chooses a year — every layer shows its own latest data, and scenarios run on the latest reconciled trade year (2024 today). If you want to know how current any particular layer is, read its badge (above) or the "Data vintage" section of the Layers panel; if you want to know exactly what a scenario result is built on, open its "Data behind this result" disclosure (see [The scenario panel](#the-scenario-panel)).
+
+A link can still be **pinned to an older year** — `?year=2010`, or any link generated before this change — and it still renders exactly as it always did at that year: an amber "As of 2010 · View latest" chip appears at the bottom of the map, the vintage filter and the scenario engine both run at 2010, and "View latest" clears the pin back to the current data. This exists so a link is a citation: a URL copied today keeps showing today's numbers even after the next data refresh.
 
 Things to keep in mind:
 
-- **Reserves stop in 2020.** With the Reserves layer on and a year after 2020, an amber note beside the year reads "Reserves: 2020 value (latest in EI Statistical Review)". Nothing that changes on the choropleth after 2020 is a change in reserves.
-- **Scenario trade data start in 1995.** There is nothing to put at risk in 1990–1994.
+- **Reserves stop in 2020.** With the Reserves layer on and no pinned year (or a pinned year after 2020), an amber note beside the choropleth reads "Reserves: 2020 value (latest in EI Statistical Review)". Nothing that changes on the choropleth after 2020 is a change in reserves.
+- **Scenario trade data start in 1995.** A link pinned to 1990–1994 has nothing to put at risk.
 - **LNG voyages exist only for 2020–2024.** A voyage is shown in every year it is under way, so a December–January voyage appears in both years.
 
 ## Hovering: value, year and source
@@ -90,7 +92,7 @@ The panel's header carries the country's name and ISO3 code, **Zoom to** (fits t
 1. **Reserves and production** — proved reserves (billion barrels of oil, or trillion cubic metres of gas) and crude production in kb/d, each with an inline sparkline over the whole series and a dot on the selected year. The headline number is the value *at* that year; where the series stops earlier the panel says so in words ("2020 value — the Energy Institute has not refreshed reserves since") rather than showing a blank or carrying the last value forward silently. Each sparkline is announced to screen readers as a sentence: span, first and last value, low and high with their years.
 2. **Trade in the selected year** — total imports and exports (BACI, kb/d for crude or Mt for LNG), a sparkline of each over 1995–2024, and the top five suppliers and top five customers with their shares. **Every partner row is a button**: selecting one moves the panel to that country, so a supply chain can be walked upstream.
 3. **Exposure** — the country's share and volume at risk under *every* scenario that applies to the current commodity, computed on the same engine and the same cited route shares the scenario panel uses, highest first. Selecting a row activates that scenario on the map; the country panel stays open beside it.
-4. **Infrastructure, gas storage and recent imports** — counts and summed capacity of LNG terminals, refineries and extraction sites (with how many of them carry a capacity in the source); EU gas-storage fullness on GIE's latest gas day, which is independent of the year slider; and the country's latest 12-month Comtrade import window.
+4. **Infrastructure, gas storage and recent imports** — counts and summed capacity of LNG terminals, refineries and extraction sites (with how many of them carry a capacity in the source); EU gas-storage fullness on GIE's latest gas day, which is independent of the selected year; and the country's latest 12-month Comtrade import window.
 
 Every section ends with its own source and as-of line, taken from the data catalogue.
 
@@ -103,7 +105,7 @@ On a narrow screen the panel collapses to a **Country** button, below the Scenar
 In Scenarios mode (or whenever a scenario is set) a panel opens on the right. From top to bottom:
 
 1. **Scenario picker and description.** Eleven scenarios: Hormuz, Malacca, Suez + SUMED, Bab el-Mandeb and Turkish Straits (chokepoints); Druzhba, Baku-Tbilisi-Ceyhan, CPC, Keystone, Enbridge Mainline and the ESPO pipeline's Skovorodino-Mohe spur (pipelines). A second dropdown lets you close a **second scenario at the same time** — the two combine into a range (see below), never simple addition. Where BACI has a known gap the panel shows an amber note: Hormuz (oil, 2019 onwards) for Iranian crude, Malacca (oil, 2019 onwards) for Iranian crude via China, Druzhba (2022 onwards) for Belarus, and ESPO's spur (2022 onwards) for Russian crude reaching China by tanker.
-2. **Severity.** A second slider under the year control cuts only part of the route (5–100 %, default 100 = a full closure); every number in the panel scales with it. The context block labels the figure "at N % severity" whenever it is below 100.
+2. **Severity.** A slider cuts only part of the route (5–100 %, default 100 = a full closure); every number in the panel scales with it. The context block labels the figure "at N % severity" whenever it is below 100.
 3. **Metric definition.** "% at risk = share of each importer's *year* crude imports (BACI, by volume) routed through *route*", with the 0–100 % colour ramp. **How this is computed** expands to the steps the engine follows for the current scenario, commodity, year and severity.
 4. **Importers / Exporters view.** A toggle flips the panel and the map's shading to the *exporters'* side of the same cut — who loses the outlet, rather than who loses supply — with its own ranked list, its own CSV export and its own "Check a country" answers, captioned so it is never mistaken for the importer numbers.
 5. **Top importers (or exporters) at risk.** The six highest, then **Show all**. The **Share / Volume** toggle re-orders the list by percentage or by volume at risk. Volumes are in kb/d for crude (annual average, 7.33 barrels per tonne) and Mt per year for LNG. Ranking rules:
@@ -157,7 +159,7 @@ The address bar always reflects the current view, so you can bookmark or paste i
 | `focus` | ISO3 code | The selected country: outlines it and opens the country panel. A code we hold no polygon for is ignored. Written only while a country is selected, so older links are unchanged. |
 | `lon`, `lat` | decimal degrees | Longitude wrapped to −180…180; latitude clamped to ±85.05; two decimals kept. |
 | `z` | zoom 0–8 | Clamped; the data are not useful beyond zoom 8. |
-| `embed` | `1` | Embed mode: hides the header, intro card, phone banner and full footer behind a compact attribution bar. A view flag, not part of the shareable view above — "Copy link" never adds it, so a normal shared link is unaffected. Add `&controls=0` to also hide the year slider and commodity toggle. |
+| `embed` | `1` | Embed mode: hides the header, intro card, phone banner and full footer behind a compact attribution bar. A view flag, not part of the shareable view above — "Copy link" never adds it, so a normal shared link is unaffected. Add `&controls=0` to also hide the commodity toggle. |
 | `q` | base64url-encoded SQL | `/query` only: the SQL behind a result, shareable the same way a map view is. |
 
 Example (the Druzhba question):

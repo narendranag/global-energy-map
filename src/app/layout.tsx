@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 
 const SITE_NAME = "Global Energy Map";
 const SITE_DESCRIPTION =
-  "An interactive open-source map of the world's oil and gas system — reserves, extraction, pipelines, refining, LNG and trade — with chokepoint disruption scenarios.";
+  "Who loses supply when a chokepoint closes or a pipeline is cut? An open, inspectable model of oil and gas dependency: pick a disruption and see which importers, exporters, refineries and LNG terminals are exposed — over a map of the infrastructure and trade it is computed from.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://energymap.marain.space"),

@@ -87,7 +87,7 @@ export interface CountryTimeSeries {
   /** Value at the headline year, and the year it came from (may be earlier). */
   readonly value: number | null;
   readonly valueYear: number | null;
-  /** Index into `points` of `valueYear`, for the slider marker; -1 if none. */
+  /** Index into `points` of `valueYear`, for the sparkline marker; -1 if none. */
   readonly markerIndex: number;
   readonly min: { readonly year: number; readonly value: number } | null;
   readonly max: { readonly year: number; readonly value: number } | null;

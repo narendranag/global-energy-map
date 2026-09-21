@@ -1,6 +1,6 @@
 # Global Energy Map
 
-> Interactive map of the world's oil and gas system: reserves, extraction, pipelines, refineries, LNG terminals and voyages, storage and ports, 1990–2024. It runs disruption scenarios (Strait of Hormuz for crude and LNG, Druzhba, Baku–Tbilisi–Ceyhan, CPC) that show which importers, refineries and LNG terminals are exposed. It is built for energy-policy and IR/economics researchers. Every number traces to a cited public source.
+> Who loses supply when a chokepoint closes or a pipeline is cut? An open, inspectable model of oil and gas dependency: pick a disruption and see which importers, exporters, refineries and LNG terminals are exposed, by how much, and from which source — over a map of the infrastructure and trade it is computed from (reserves, extraction, pipelines, refineries, LNG terminals and voyages, storage and ports). Eleven disruption scenarios, from Hormuz and Malacca to Druzhba and Keystone. It is built for energy-policy and IR/economics researchers. Every number traces to a cited public source.
 
 The page renders client-side, so fetching the HTML gives no data. Build view links from URL parameters, and read the data files directly. Respect each file's licence: only files with `downloadable: true` in the catalog may be redistributed.
 
@@ -13,7 +13,7 @@ Built and maintained by Narendra Nag (https://narendranag.com) as a project of M
   - `mode`: infrastructure | flows | scenarios
   - `year`: 1990–2024
   - `commodity`: oil | gas
-  - `scenario`: hormuz | druzhba | btc | cpc
+  - `scenario`: hormuz | druzhba | btc | cpc | malacca | suez | bab_el_mandeb | turkish_straits | keystone | enbridge_mainline | espo_spur
   - `layers`: comma list of reserves, basins, extraction, pipelines, refineries, storage, ports, gas_pipelines, lng_terminals, lng_voyages
   - `lon`, `lat`, `z` (zoom 0–8)
 - Example: https://energymap.marain.space/?mode=scenarios&scenario=druzhba&commodity=oil&year=2022

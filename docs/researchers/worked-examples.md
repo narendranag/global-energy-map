@@ -4,6 +4,8 @@ Five research questions, each answered step by step on <https://energymap.marain
 
 Crude volumes are BACI tonnes converted at 7.33 barrels per tonne and shown as annual-average kb/d; LNG volumes are million tonnes (Mt). Percentages are "% at risk" as defined in [Scenario method](scenario-method.md).
 
+There is no year control on the map any more — every layer shows its own latest data by default. Several links below carry an explicit `year=` older than the current latest (2024); opening one still renders exactly the numbers below, and the map shows an amber "As of {year} · View latest" chip while you have it open. Click **View latest** (or drop `year=` from the URL) to see the same view at today's data instead.
+
 ---
 
 ## 1. How exposed is Central Europe to a Druzhba cut? (2022)
@@ -103,7 +105,7 @@ Japan, the second-largest LNG importer, is at 5.7 % (3.8 of 66.0 Mt).
 
 **Open:** <https://energymap.marain.space/?mode=infrastructure&year=1995&commodity=oil&layers=pipelines,gas_pipelines&lon=40&lat=45&z=2.5>
 
-Then change `year=1995` to `year=2024` (or press play from 1995) and compare.
+This link shows the "As of 1995 · View latest" chip. Change `year=1995` to `year=2024`, or click **View latest**, to compare — at the latest year the vintage filter hides nothing (every feature is drawn regardless of start year, since there is no way to reach a future year that would show it again), so this comparison only works at a pinned historical year.
 
 **What is drawn in 1995.**
 

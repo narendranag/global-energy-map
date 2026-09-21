@@ -82,7 +82,7 @@ export function issueUrl(error: AppError): string {
   const body = [
     "**What were you doing?**",
     "",
-    "<!-- e.g. switched to the gas scenario, moved the year slider -->",
+    "<!-- e.g. switched to the gas scenario, picked a disruption -->",
     "",
     "**Error**",
     "",

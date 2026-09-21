@@ -31,7 +31,8 @@ export const TIME_AWARE: Readonly<Record<LayerKey, TimeAwareLevel>> = {
   lng_terminals: "partial",
   lng_voyages: "yes",
   // Not "no": static means undated and shown in every year. This layer is
-  // dated and deliberately ignores the slider, which is a different claim.
+  // dated and deliberately always shows its own latest reading, which is a
+  // different claim.
   gas_storage: "live",
   shale_regions: "yes",
   recent_imports: "live",

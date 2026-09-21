@@ -4,7 +4,7 @@ This is the **current-state** methodology of Global Energy Map: for every map la
 
 ## At a glance
 
-| Layer | Source | As of | Features | Follows the year slider | Units |
+| Layer | Source | As of | Features | Vintage-filtered by a pinned `year=` link | Units |
 |---|---|---|---|---|---|
 | Reserves (country) | Energy Institute Statistical Review | 2026 edition | 1990–2020, country-year | Yes, to 2020; 2020 value shown for 2021–2024 | oil: billion bbl · gas: Tcm |
 | Basins | NETL GOGI | 2026-05-17 snapshot | 1,046 polygons | No | area km² |
@@ -57,9 +57,9 @@ Generated from the data catalog at build time, so it cannot drift from the files
 - **What the regions are:** EIA defines each region as a set of **counties**, not a geological outline, and its numbers are everything produced in those counties. We draw exactly that: the counties listed in EIA's Drilling Productivity Report workbook (`RegionCounties`), dissolved over US Census 1:20m county polygons. A region's edge is a county line, and it includes production from every formation beneath it.
 - **Assumption:** EIA moved the DPR into STEO in June 2024 and publishes no separate county list for the STEO regions, so we use the DPR's list for the five regions STEO kept (Anadarko and Niobrara now fall into STEO's "rest of Lower 48", which is not drawn). If EIA has since redrawn a region, our outline is out of date while the numbers are current.
 - **History only.** STEO series run 18 months into the future in the same series as history, with no flag between them. The build keeps annual values through **2025** — the last complete year before the September 2026 release — and fails if a series stops short of that. No forecast is on the map.
-- **Colour:** the slider year's crude output (oil view) or marketed gas output (gas view), square-root scaled against the largest value of that commodity in any region and year, so the Permian's growth shows as the slider moves. Before 2009 there is no EIA regional series and the regions draw as outlines only.
-- **Units:** crude in thousand barrels per day (STEO's million b/d × 1,000, matching the reserves layer's production figures); marketed gas in billion cubic feet per day as EIA publishes it. The tooltip also shows 2025, a year past the slider's end.
-- **Gaps:** US only — no open per-region production series exists elsewhere. Monthly values are ingested by EIA but not used; the slider is annual.
+- **Colour:** the active year's crude output (oil view) or marketed gas output (gas view) — the latest year by default, or the year of a pinned `year=` link — square-root scaled against the largest value of that commodity in any region and year, so the Permian's growth reads across years. Before 2009 there is no EIA regional series and the regions draw as outlines only.
+- **Units:** crude in thousand barrels per day (STEO's million b/d × 1,000, matching the reserves layer's production figures); marketed gas in billion cubic feet per day as EIA publishes it. The tooltip also shows 2025, a year past the default reading year.
+- **Gaps:** US only — no open per-region production series exists elsewhere. Monthly values are ingested by EIA but not used; the series is annual.
 
 ### Extraction sites
 
@@ -148,7 +148,7 @@ Generated from the data catalog at build time, so it cannot drift from the files
 
 - **Source:** Gas Infrastructure Europe, AGSI (storage) — daily, country level, 2020-01-01 to the latest published gas day. File `gie_daily.parquet`, which also carries ALSI LNG send-out and inventory (not drawn).
 - **What is drawn:** each country's storage fullness as AGSI reports it (gas in store as a % of working gas volume) on the **most recent gas day** in the file. Countries GIE does not cover are drawn as no data, not as empty.
-- **Time:** **not affected by the year slider.** The slider is annual and ends in 2024; this layer is a daily reading of the present, so it always shows the latest day, and its tooltip says which.
+- **Time:** **not affected by the selected year.** The map otherwise reads at an annual vintage (2024 by default, or an older year on a pinned link); this layer is a daily reading of the present, so it always shows the latest day, and its tooltip says which.
 - **Scale:** the ramp tops out at 100 % and clamps above it. About 3 % of readings exceed 100 % (a site filled beyond its declared working volume); rescaling to the maximum would pale every ordinary country.
 - **Gaps:** country level only. ALSI facility names match our LNG terminal names for only about 71 % of terminals, so terminal-level send-out is not joined.
 - **Licence:** free with registration, attribution "GIE AGSI / ALSI"; not an open licence, so view-only (see [Licences](#licences)).
@@ -159,7 +159,7 @@ Generated from the data catalog at build time, so it cannot drift from the files
 - **What is drawn:** each country's imports over **its own latest 12 reported months**, in the commodity selected (crude in the oil view, LNG in the gas view). Countries file months apart — Korea, France and Singapore stopped at December 2025 while most reach May 2026 — so the tooltip names each country's window, and a shared window would have drawn a filing delay as a collapse in imports.
 - **As reported, not reconciled.** These are the importer's own declarations. BACI, which the scenarios use, reconciles both sides of every flow and is annual to 2024; the tooltip shows the country's BACI figure beside the Comtrade one, and the two are never added together or swapped.
 - **Gaps:** China and Taiwan — the largest and tenth-largest crude importers in BACI 2024 — file no monthly reports to Comtrade and draw as no data. Comtrade publishes no zero rows, so a month with no cargo of the selected commodity looks identical to a month the country never reported at all — unless it filed the *other* code (crude or LNG) that month, which proves it was live. A month counts as reported if the country filed either code; a country with fewer than 12 such months in its window gets a lighter "incomplete" fill and the tooltip gives the partial total. Six LNG importers (Bulgaria, Colombia, Denmark, Kazakhstan, Romania, the USA) and nine crude importers count as complete on this rule that would not on cargo months alone; the tooltip says how many of the 12 months had a cargo. A complete total more than 2× off BACI is flagged in the tooltip; the largest such case by volume is Thailand's crude (117 Mt against BACI's 49 Mt for 2024).
-- **Time:** not affected by the year slider; it always shows the latest months.
+- **Time:** not affected by the selected year; it always shows the latest months.
 - **Licence:** UN Comtrade terms limit re-dissemination, so the layer is view-only and not downloadable.
 
 ### Trade flows (BACI)
@@ -181,14 +181,18 @@ Generated from the data catalog at build time, so it cannot drift from the files
 
 ## Time axis
 
-The slider runs **1990–2024**. Each layer behaves differently:
+There is no control that lets a visitor scrub through years. The map reads at the latest year each layer has: infrastructure and scenarios default to 2024 (the last reconciled year of bilateral trade, BACI), reserves stay frozen at 2020, and the live/monthly layers (gas storage, recent imports) always show their own most current reading, independent of everything else.
 
-- Reserves change until 2020, then hold the 2020 value (flagged on the map).
-- Pipelines, extraction sites and LNG terminals hide features whose start/commissioning year is after the selected year; undated features always show.
+`AppState.year` still exists and a link can still pin an older one (`?year=2010`): a shared link is a citation, and a URL copied today must keep showing today's numbers even after the next data refresh. A pinned historical link shows an "as of {year} · View latest" chip and behaves exactly as the old slider did at that position:
+
+- Reserves change until 2020, then hold the 2020 value (flagged on the map) for any pinned year after that.
+- Pipelines, extraction sites and LNG terminals hide features whose start/commissioning year is after the pinned year; undated features always show. At the latest year, nothing is hidden by vintage — a newly added feature dated after 2024 stays visible rather than vanishing with no way to reach a year that would show it again.
 - LNG voyages exist only for 2020–2024.
 - US shale regions have EIA data from 2009; earlier years draw outlines only.
-- Refineries, storage, ports and basins have no dates and are the same in every year — the map shows today's facilities on a 1990 background.
-- Scenario trade data (BACI) starts in **1995**; a scenario in 1990–1994 has no trade to put at risk. The Trade flows layer reads the same table and is likewise empty before 1995.
+- Refineries, storage, ports and basins have no dates and are the same regardless of the pinned year.
+- Scenario trade data (BACI) starts in **1995**; a scenario pinned to 1990–1994 has no trade to put at risk. The Trade flows layer reads the same table and is likewise empty before 1995.
+
+Every scenario result also lists, in a "Data behind this result" disclosure, the vintage of every dataset it is built from (trade year, route-share sources, asset rows), so the honesty the slider used to provide through the year axis is now provided per result instead.
 
 ## Disruption scenarios
 
@@ -203,7 +207,7 @@ share_at_risk      = at_risk(importer) / total imports(importer, year)
 
 `share(S, X, importer)` is the fraction of X's exports to that importer that moves through the route. A per-pair share wins over a per-exporter share; exporters with no share contribute nothing. The map colours each importer by `share_at_risk` (red is reserved for this), and the scenario panel ranks importers, refineries or LNG terminals.
 
-The map also marks **where** the disruption is: a closure glyph at the chokepoint, or — for a pipeline scenario — the route's own GEM features redrawn as a highlighted cut line with the glyph on it. The cut route is shown whether or not the pipelines layer is switched on and whatever the year slider says, because the route is the subject of the scenario rather than infrastructure you chose to see; its position and vintage still come from `pipelines.geojson` unchanged. Picking a scenario frames the disruption together with the eight importers losing the most volume; a link that already carries a camera (`lon`/`lat`/`z`) keeps it. Hovering a ranked row highlights its country or asset on the map, and clicking one selects the country (and puts it in the URL as `focus=`).
+The map also marks **where** the disruption is: a closure glyph at the chokepoint, or — for a pipeline scenario — the route's own GEM features redrawn as a highlighted cut line with the glyph on it. The cut route is shown whether or not the pipelines layer is switched on and whatever year is active, because the route is the subject of the scenario rather than infrastructure you chose to see; its position and vintage still come from `pipelines.geojson` unchanged. Picking a scenario frames the disruption together with the eight importers losing the most volume; a link that already carries a camera (`lon`/`lat`/`z`) keeps it. Hovering a ranked row highlights its country or asset on the map, and clicking one selects the country (and puts it in the URL as `focus=`).
 
 This is a **static first-order exposure measure**: what fraction of last year's supply moved through the route. It does not model rerouting, spare pipeline capacity, strategic stocks, price response, or substitution between suppliers.
 

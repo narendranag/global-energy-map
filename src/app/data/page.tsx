@@ -240,8 +240,10 @@ export default function DataPage() {
               header, intro card and phone banner and replaces the map footer with a one-line attribution bar
               that keeps the required licence credits (Global Energy Monitor, LNG-T3, NETL, Energy Institute,
               CEPII BACI, OpenStreetMap) visible, plus an &quot;Open full map&quot; link back to the same view.
-              The year slider and commodity toggle stay — they are how a reader interrogates the view — unless
-              you add <code className="font-mono text-[0.85em]">&amp;controls=0</code> for a static figure.
+              The commodity toggle stays — it is how a reader interrogates the view — unless you add{" "}
+              <code className="font-mono text-[0.85em]">&amp;controls=0</code> for a static figure; the
+              &quot;as of&quot; chip (for a link pinned to a past year) is always shown, since it is the caption
+              that makes the numbers on screen readable.
             </p>
             {/* A horizontally scrollable region has to be reachable by keyboard
                 (axe: scrollable-region-focusable), and a focusable element

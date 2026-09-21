@@ -15,9 +15,9 @@ Base URL: **https://energymap.marain.space** (the old `global-energy-map-one.ver
 | Param | Values | Default | Notes |
 |---|---|---|---|
 | `mode` | `infrastructure` \| `flows` \| `scenarios` | `infrastructure` | A preset. It only fills in what the other params leave out, so explicit params always win. |
-| `year` | integer 1990–2024 | 2020 | Clamped into range. Reserves are frozen at their 2020 value for later years; trade data starts in 1995; LNG voyages cover 2020–2024. |
+| `year` | integer 1990–2024 | 2024 (the latest reconciled trade year) | Clamped into range. There is no UI control for this any more — every layer shows its own latest data by default, and `year=` only matters to pin an older vintage (the map shows an "as of" chip). Reserves are frozen at their 2020 value for later years; trade data starts in 1995; LNG voyages cover 2020–2024. |
 | `commodity` | `oil` \| `gas` | `oil` | Selects the reserves metric and the trade product (HS 2709 crude / HS 271111 LNG). |
-| `scenario` | `hormuz` \| `druzhba` \| `btc` \| `cpc` | none | Hormuz works for both commodities (LNG uses LNG-specific shares). Druzhba, BTC and CPC are oil only. |
+| `scenario` | `hormuz` \| `malacca` \| `suez` \| `bab_el_mandeb` \| `turkish_straits` \| `druzhba` \| `btc` \| `cpc` \| `keystone` \| `enbridge_mainline` \| `espo_spur` | none | Hormuz, Malacca, Suez and Bab el-Mandeb work for both commodities (LNG uses LNG-specific shares). Turkish Straits and the six pipeline scenarios are oil only. |
 | `layers` | comma list of `reserves`, `basins`, `extraction`, `pipelines`, `refineries`, `storage`, `ports`, `gas_pipelines`, `lng_terminals`, `lng_voyages` | the mode's preset | `pipelines` is the oil network, including NGL lines. Storage and ports only draw from zoom 4. |
 | `lon`, `lat` | decimal degrees | 40, 25 | Map centre. |
 | `z` | 0–8 | 2 | Zoom, clamped to 8. |

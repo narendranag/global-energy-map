@@ -4,7 +4,7 @@ A case study for people building real software with agents. It is written from t
 
 ## What was built
 
-A public web app for energy researchers. It maps the world's hydrocarbon system (reserves, extraction, pipelines, refineries, LNG terminals and voyages, storage, ports) over 1990–2024 and runs disruption scenarios (Strait of Hormuz for crude and LNG, Druzhba, Baku–Tbilisi–Ceyhan, CPC). Everything is traceable to cited public sources.
+A public web app for energy researchers: pick a disruption — a chokepoint or a pipeline — and see which importers, exporters, refineries and LNG terminals are exposed, over a map of the world's hydrocarbon system (reserves, extraction, pipelines, refineries, LNG terminals and voyages, storage, ports). Eleven disruption scenarios today, from Hormuz and Malacca to Druzhba and Keystone. Everything is traceable to cited public sources.
 
 - **App:** Next.js 16 / React 19 / TypeScript strict, deck.gl inside MapLibre, Parquet read in the browser, no backend. About 8,800 lines of TypeScript. (Through launch the browser queried Parquet with DuckDB-WASM; on 2026-09-11 the load path moved to hyparquet and DuckDB came off it.)
 - **Data pipeline:** Python (uv) ingest and transform scripts, about 6,100 lines, producing 12 files (17 MB) under `public/data/` from GEM, NETL, the Energy Institute, CEPII BACI, LNG-T3, OpenStreetMap and Natural Earth. One command (`scripts/build_all.py`) rebuilds everything, and two runs give byte-identical output.

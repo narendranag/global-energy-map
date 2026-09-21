@@ -166,9 +166,8 @@ function PartnerList({
  * one is open so both can be read at once — the alternative, a second tab in
  * the scenario panel's slot, would make "how exposed is Japan, and to what"
  * a two-click toggle, which is exactly the comparison this panel exists for.
- * It ends above the year slider and the commodity toggle and scrolls
- * internally; on phones it collapses to a header button like the scenario
- * panel does.
+ * It ends above the commodity toggle and scrolls internally; on phones it
+ * collapses to a header button like the scenario panel does.
  *
  * Every number is loaded off the first-paint path (see `useCountryProfile`),
  * so a `?focus=` link paints the header immediately and fills in.
@@ -429,7 +428,8 @@ export function CountryPanel({
                 <span className="font-mono">{profile.gasStorage.percentFull.toFixed(1)}%</span>
               </div>
               <p className={NOTE}>
-                Latest gas day GIE has published — independent of the year slider.
+                Latest gas day GIE has published — this layer always shows the latest data,
+                independent of any pinned link year.
               </p>
             </Section>
           )}

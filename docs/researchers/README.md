@@ -8,10 +8,10 @@ The map is free, needs no account, and runs entirely in your browser: the Parque
 
 ## What the map can answer
 
-- **Where is the infrastructure, and roughly when was it built?** Oil and gas pipelines, refineries, LNG export and import terminals, extraction sites, storage sites, ports and petroleum basins, with a year control from 1990 to 2024. Some layers are dated (LNG terminals 98 %, gas pipelines 74 %, oil pipelines 64 %, extraction sites 22 %); others are present-day snapshots.
+- **Where is the infrastructure, and roughly when was it built?** Oil and gas pipelines, refineries, LNG export and import terminals, extraction sites, storage sites, ports and petroleum basins. Each layer shows its own latest data; a link can still pin an older year (1990–2024). Some layers are dated (LNG terminals 97 %, gas pipelines 74 %, oil pipelines 64 %, extraction sites 32 %); others are present-day snapshots.
 - **Who holds proved reserves?** Country-level oil and gas reserves, 1990–2020 (Energy Institute Statistical Review).
 - **Where did LNG cargoes go in 2020–2024?** AIS-derived voyage arcs from the LNG-T3 dataset — a sample of routes, not a census of trade.
-- **Who is exposed if a route closes?** Five disruption scenarios (Strait of Hormuz for crude, Strait of Hormuz for LNG, Druzhba, Baku–Tbilisi–Ceyhan, Caspian Pipeline Consortium) give, for any year 1995–2024, each importer's share of crude or LNG imports that moved through the route, and attribute that exposure to refineries or LNG import terminals.
+- **Who is exposed if a route closes?** Eleven disruption scenarios — chokepoints (Strait of Hormuz, Strait of Malacca, Suez + SUMED, Bab el-Mandeb, Turkish Straits) and pipelines (Druzhba, Baku–Tbilisi–Ceyhan, CPC, Keystone, Enbridge Mainline, the ESPO pipeline's Skovorodino-Mohe spur) — give, for any year 1995–2024, each importer's share of crude or LNG imports that moved through the route, and attribute that exposure to refineries or LNG import terminals.
 - **What exactly is behind a number?** Every hover shows the source and as-of date; every scenario lists the route shares it used with the document behind each; every view can be cited and most layers exported.
 - **Anything else the data can answer.** The [query console](query-console.md) runs SQL over the same Parquet tables, in your browser, so you are not limited to the questions the interface anticipated.
 

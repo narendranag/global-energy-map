@@ -57,7 +57,7 @@ Six shares were revised to source-derived values on 2026-09-10; the old values a
 
 ## Why route shares are static
 
-Each share comes from a document describing one period (mostly 2021–2025). The same share is applied to every year from 1995 to 2024, because no open source gives exporter-by-route splits year by year. The consequences are predictable and worth checking whenever you move the year:
+Each share comes from a document describing one period (mostly 2021–2025). The same share is applied to every year from 1995 to 2024, because no open source gives exporter-by-route splits year by year. The consequences are predictable and worth checking whenever you compare results across a different pinned `year=`:
 
 - **Routes that changed.** Kirkuk–Ceyhan was shut in 2023–24 (Iraq's true share was close to 1.0 then); Germany and Poland largely ended Russian pipeline crude after 2022, but the 0.47 still applies to whatever Russian volume BACI records.
 - **Routes that did not exist yet.** The GEM pipeline data give start years of 2006 for Baku–Tbilisi–Ceyhan, 2001 for the Caspian Pipeline and 2012 for the Habshan–Fujairah bypass, yet a BTC scenario for 1998 still applies 0.83 to Azerbaijan's exports, and a Hormuz scenario for 2005 still lets 35 % of UAE crude bypass the strait. Scenario years before a route opened are not meaningful.

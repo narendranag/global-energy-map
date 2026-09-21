@@ -69,9 +69,10 @@ export const DEFAULT_CAMERA_PADDING: CameraPadding = { top: 32, right: 32, botto
  *
  * The left layer panel is `w-72` (18rem) at `left-4`; the scenario panel
  * `min(26rem, 100%)` at `right-4`; the country panel 21rem, at `right-4`
- * alone or at `right-[26rem]` beside the scenario panel; the year slider and
- * commodity toggle occupy the bottom ~9rem. Callers say which panels are on
- * screen and get a padding that keeps the target clear of them.
+ * alone or at `right-[26rem]` beside the scenario panel; the commodity
+ * toggle (and, for a pinned-year link, the "as of" chip above it) occupy the
+ * bottom ~9rem. Callers say which panels are on screen and get a padding
+ * that keeps the target clear of them.
  */
 export function panelPadding(open: {
   readonly left?: boolean;

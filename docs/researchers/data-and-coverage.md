@@ -76,7 +76,7 @@ Layer by layer: where the data come from, how current and complete they are, wha
 
 - **Sources:** LNG-T3 (Zhou, C. 2026) primary, 305 terminals; GEM GGIT supplement, 7 terminals not matched by name or within 25 km of an LNG-T3 terminal in the same country.
 - **Coverage:** 312 terminals in 70 countries — 73 export (59 operating, 14 under construction) and 239 import (191 operating, 48 under construction). Capacity (Mtpa) for 310; commissioning year for 305 (97.8 %).
-- **Time:** terminals appear from their commissioning year. **28 terminals have a commissioning year after 2024** and are never drawn (the slider ends at 2024), though the Hormuz-LNG scenario still uses them for capacity-proxy splits.
+- **Time:** at the map's default (latest) reading year, every terminal is drawn regardless of its commissioning year — there is no year control to hide a newly commissioned terminal behind. **28 terminals have a commissioning year after 2024**; only a link pinned to an older year hides them, exactly as `isVisibleAtYear` always has. The Hormuz-LNG scenario uses them for capacity-proxy splits regardless.
 
 ### LNG voyages
 

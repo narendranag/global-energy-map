@@ -15,10 +15,14 @@ repository-code: "https://github.com/narendranag/global-energy-map"
 url: "https://energymap.marain.space"
 license: MIT
 abstract: >-
-  An interactive OSINT visualization of the world's hydrocarbon energy
-  system — reserves, extraction, transport, refining, and distribution —
-  built for academics, energy-policy researchers, and IR/economics
-  scholars who think in systems.
+  Who loses supply when a chokepoint closes or a pipeline is cut? An
+  open, inspectable model of oil and gas dependency: pick a disruption
+  and see which importers, exporters, refineries and LNG terminals are
+  exposed, by how much, and from which source — over a map of the
+  world's hydrocarbon energy system (reserves, extraction, transport,
+  refining and distribution) it is computed from. Built for academics,
+  energy-policy researchers, and IR/economics scholars who think in
+  systems.
 references:
   - type: dataset
     title: "Global Oil & Gas Extraction Tracker (GOGET)"

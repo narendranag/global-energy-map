@@ -16,7 +16,7 @@ export function escapeHtmlAttribute(value: string): string {
 }
 
 export interface EmbedSnippetOptions {
-  /** Hide the year slider and commodity toggle (`&controls=0`). Default false. */
+  /** Hide the commodity toggle (`&controls=0`). Default false. */
   readonly hideControls?: boolean;
   /** Accessible `<iframe title>`. Default "Global Energy Map". */
   readonly title?: string;

@@ -36,8 +36,8 @@ export interface UseAsyncOptions {
  * module-level (ideally `cachedLoader`-wrapped) function.
  *
  * Keeping the previous value while the next one loads avoids flashing a
- * layer off on every slider tick; `ready` tells the caller whether it is
- * current (the page's pending count / `data-ready` signal uses it).
+ * layer off on every rapid state change; `ready` tells the caller whether it
+ * is current (the page's pending count / `data-ready` signal uses it).
  */
 export function useAsync<A extends readonly (string | number)[], T>(
   load: (...args: A) => Promise<T>,

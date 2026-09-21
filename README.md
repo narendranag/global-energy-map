@@ -1,6 +1,6 @@
 # Global Energy Map
 
-An interactive map of the world's oil and gas system: reserves, extraction, pipelines, refineries, LNG terminals and voyages, storage and ports, 1990–2024. It includes disruption scenarios that show who is exposed when a chokepoint or pipeline is cut. It was built for energy-policy researchers and IR/economics scholars who think in systems, and every number on it traces to a cited public source.
+**Who loses supply when a chokepoint closes or a pipeline is cut?** An open, inspectable model of oil and gas dependency: pick a disruption and see which importers, exporters, refineries and LNG terminals are exposed, by how much, and from which source — over a map of the infrastructure and trade it is computed from (reserves, extraction, pipelines, refineries, LNG terminals and voyages, storage and ports). It was built for energy-policy researchers and IR/economics scholars who think in systems, and every number on it traces to a cited public source.
 
 **Live: https://energymap.marain.space**
 
@@ -8,7 +8,7 @@ Built and maintained by [Narendra Nag](https://narendranag.com) as a project of 
 
 ## What it answers
 
-- **What exists, and since when?** Pipelines, extraction sites and LNG terminals respond to the year slider, where their build year is known.
+- **What exists, and since when?** Pipelines, extraction sites and LNG terminals carry a build year where it is known; every layer shows its latest data, and a pinned `?year=` link shows the numbers as of that year with an "as of" chip.
 - **Who depends on a chokepoint?** Close the Strait of Hormuz, Malacca, Suez + SUMED or Bab el-Mandeb (each on the oil or gas/LNG axis), the Turkish Straits, or cut Druzhba, Baku–Tbilisi–Ceyhan, CPC, Keystone, the Enbridge Mainline or the ESPO pipeline's Skovorodino-Mohe spur — 11 scenarios, some closable together, at partial severity, and viewable from either side of the cut (who loses supply vs. who loses the outlet). The map shades each importer by the share of its imports routed through it, and ranks the refineries and LNG terminals most exposed.
 - **Where does LNG actually go?** 17,592 AIS-derived voyages, 2020–2024. Country-to-country crude and LNG trade flows draw as arcs, and a live EU gas-storage layer and a UN Comtrade "recent imports" layer extend a few of the numbers past BACI's own most recent year.
 - **Where did a number come from?** Hover anything for its value, unit, year and source. `/methodology` explains each layer, `/data` lists every file with its licence and checksum, and `/query` is a SQL console over the same files for anyone who wants to ask their own question.

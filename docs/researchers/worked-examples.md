@@ -42,7 +42,7 @@ By volume the order is Germany, Poland, Slovakia, Hungary, Czechia. The largest 
 
 **What to look at.** The ranked importers under both *Share* and *Volume*; the amber Iran note; the seven route shares.
 
-**Result, 2024.** 32 importers are ranked. 12,657 kb/d is at risk, 27.9 % of all crude imports recorded in BACI for 2024.
+**Result, 2024.** 31 importers are ranked. 12,635 kb/d is at risk, 27.9 % of all crude imports recorded in BACI for 2024.
 
 | By share | % at risk | At risk / total | | By volume | At risk | % at risk |
 |---|---|---|---|---|---|---|
@@ -89,7 +89,7 @@ With `commodity=gas` the Hormuz scenario uses its LNG shares (Qatar 100 %, UAE 1
 
 Japan, the second-largest LNG importer, is at 5.7 % (3.8 of 66.0 Mt).
 
-**Terminals.** Of the 239 LNG import terminals, 189 were in service in 2023; the other 50 were commissioned later or are still under construction and take no share. Of the 189, 105 are *measured* (they received qualifying LNG-T3 voyages in 2023), 78 are *no voyages* (their country is covered but they are not), and 6 are *capacity proxy*. 46 terminals are ranked, 44 of them measured. The top rows by capacity at risk are Incheon (South Korea, 44.8 %, 24.4 of 54.5 Mtpa), Pyeongtaek and Tongyoung (South Korea), Shandong (China) and Sodegaura (Japan).
+**Terminals.** Of the 240 LNG import terminals, 190 were in service in 2023; the other 50 were commissioned later or are still under construction and take no share. Of the 190, 105 are *measured* (they received qualifying LNG-T3 voyages in 2023), 78 are *no voyages* (their country is covered but they are not), and 7 are *capacity proxy*. 46 terminals are ranked, 44 of them measured. The top rows by capacity at risk are Incheon (South Korea, 44.8 %, 24.4 of 54.5 Mtpa), Pyeongtaek and Tongyoung (South Korea), Shandong (China) and Sodegaura (Japan).
 
 **How to read it.** A country's percentage comes from its **BACI** suppliers; a *measured* terminal's percentage comes from the **supplier mix of the voyages** LNG-T3 observed arriving there. The two can disagree: Sodegaura (Japan) shows 17.7 % although Japan as a whole is at 5.7 %. Treat the terminal split as indicative of *where within a country* the exposure sits, not as a second estimate of the country total.
 

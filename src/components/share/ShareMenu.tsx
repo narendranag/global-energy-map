@@ -218,16 +218,25 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
   }, [app, layers, commodity]);
 
   // The same naming the embed chip uses (finding 11): scenario, second
-  // scenario, severity, view — one helper so the two cannot drift.
+  // scenario, trade year, severity, view — one helper so the two cannot
+  // drift. With a scenario active the year is stated as what it is, the
+  // trade the result is computed on ("on 2024 trade"), rather than as a
+  // setting the reader picked — there is no year control any more. With no
+  // scenario it is still the plain year the visible layers are read at.
+  const scenarioActive = app?.scenario != null;
   const summary = [
-    String(year),
+    ...(scenarioActive ? [] : [String(year)]),
     commodity === "gas" ? "gas" : "oil",
-    ...scenarioSummaryParts({
-      scenario: app?.scenario ?? null,
-      scenario2: app?.scenario2 ?? null,
-      severity: app?.severity ?? 1,
-      view: app?.view ?? "importers",
-    }),
+    ...scenarioSummaryParts(
+      {
+        scenario: app?.scenario ?? null,
+        scenario2: app?.scenario2 ?? null,
+        severity: app?.severity ?? 1,
+        view: app?.view ?? "importers",
+      },
+      "no scenario",
+      { tradeYear: year },
+    ),
   ].join(" · ");
 
   const citeText =
@@ -357,7 +366,7 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
           />
         </div>
         <p className="mt-1 text-2xs text-ink-subtle">
-          Includes mode, year, commodity, scenario, layers and map position.
+          Includes mode, trade year, commodity, scenario, layers and map position.
         </p>
       </section>
 
@@ -372,7 +381,7 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
               setEmbedHideControls(e.target.checked);
             }}
           />
-          Static (hide the year slider and commodity toggle)
+          Static (hide the commodity toggle)
         </label>
         <pre
           tabIndex={0}

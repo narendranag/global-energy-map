@@ -10,6 +10,7 @@
  * a relay for a decision it has no part in.
  */
 import { countryBounds } from "@/lib/geo/bounds";
+import type { ExampleQuestion } from "@/lib/modes";
 import { FIT_MAX_ZOOM, type CameraPadding } from "@/lib/state";
 import { peekAppStore } from "@/lib/state/store";
 import { scenarioCameraPadding } from "./fit";
@@ -57,4 +58,19 @@ export function goToAsset(lon: number, lat: number): void {
   // in the way only when one is already open — which the store knows.
   const padding = scenarioCameraPadding(store?.getApp().focus != null);
   store?.requestCamera({ kind: "flyTo", lon, lat, zoom: ASSET_FLY_ZOOM, padding });
+}
+
+/**
+ * Apply an example question from inside the scenario panel — the same write
+ * `IntroCard`'s chips make through `page.tsx`, made here for the same reason
+ * the row actions above are: the store already owns `AppState`, and threading
+ * a callback through the page for a state change the page has no part in
+ * would make it a relay.
+ *
+ * The scenario camera needs nothing extra: the fit is keyed on *what is
+ * closed*, so a question that picks a scenario changes the key and frames the
+ * result exactly as the picker does.
+ */
+export function applyExample(q: ExampleQuestion): void {
+  peekAppStore()?.patch(q.state);
 }

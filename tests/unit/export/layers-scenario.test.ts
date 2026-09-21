@@ -233,6 +233,31 @@ describe("scenario CSV", () => {
     expect(csv).not.toContain("0.65"); // the crude share does not apply to LNG
   });
 
+  it("states the trade year and the vintage of every input it used", () => {
+    const shares: ShareCitation[] = [
+      { disruption_id: "druzhba", kind: "pipeline", exporter_iso3: "RUS", importer_iso3: "POL", share: 0.47, source_title: "IEA report", source_url: null, source_year: 2022, source_note: null },
+    ];
+    // `today` is injected, so these lines do not move with the calendar.
+    const csv = scenarioCsv(RESULT, { viewUrl: "https://x/", exported: "2026-09-10", catalog: CATALOG, shares, today: "2026-09-10" });
+    expect(csv).toContain("# Trade year: 2020 —");
+    expect(csv).toContain("# Data vintages: Trade 2020 · shares 2022");
+    // One line per input, naming what it is, who publishes it and how current
+    // it is — derived, so a data refresh moves it with no code change.
+    expect(csv).toMatch(/# {3}Trade flows \(.*\): run on 2020\./);
+    expect(csv).toMatch(/# {3}Route shares \(.*\): dated 2022\./);
+    expect(csv).toMatch(/# {3}Refineries \(.*\): as of /);
+  });
+
+  it("the trade-data citation line still comes first, and the shares line still says static across years", () => {
+    const csv = scenarioCsv(RESULT, { viewUrl: "https://x/", exported: "2026-09-10", catalog: CATALOG, shares: [], today: "2026-09-10" });
+    const header = csv.split("\n").filter((l) => l.startsWith("#"));
+    const trade = header.findIndex((l) => l.startsWith("# Trade data:"));
+    const year = header.findIndex((l) => l.startsWith("# Trade year:"));
+    expect(trade).toBeGreaterThan(-1);
+    expect(year).toBe(trade + 1);
+    expect(csv).toContain("; static across years):");
+  });
+
   it("T3: the scenario CSV never carries GIE gas-storage or Comtrade figures (view-only context, screen only)", () => {
     // scenarioRows/scenarioHeader take only a ScenarioResult + catalog/citation
     // context — neither GIE (gas storage) nor Comtrade (recent imports) data
@@ -332,6 +357,14 @@ describe("scenario CSV — exporter view", () => {
       "importer",
       "refinery",
     ]);
+  });
+
+  it("cites no asset vintage in the exporter file, which carries no asset rows", () => {
+    const imp = scenarioCsv(EXPORTER_RESULT, { ...ctx, today: "2026-09-19" });
+    const exp = scenarioCsv(EXPORTER_RESULT, { ...ctx, view: "exporters", today: "2026-09-19" });
+    expect(imp).toContain("#   Refineries (");
+    expect(exp).not.toContain("#   Refineries (");
+    expect(exp).toContain("# Trade year: 2020 —");
   });
 
   it("emits exporter rows, ranked by share, with zero-export codes dropped", () => {

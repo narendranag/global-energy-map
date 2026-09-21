@@ -6,7 +6,9 @@ import {
   hasRange,
   pctRange,
   routeRowsForDisplay,
+  scenarioAnnouncement,
   sharePct,
+  showsStaleBadge,
   sortImporters,
   tonnesToKbd,
   volumeRange,
@@ -176,5 +178,74 @@ describe("hasRange", () => {
   it("is true when any row in the list spans one", () => {
     const flat = { shareAtRisk: 0.5, atRiskQty: 50 };
     expect(hasRange([flat, row(0.2, 0.35, 2e6, 3.5e6)], "gas")).toBe(true);
+  });
+});
+
+
+describe("scenarioAnnouncement", () => {
+  const base = {
+    scenarioLabel: "Cut Druzhba pipeline",
+    severity: 1,
+    side: "importer" as const,
+    noun: "crude imports",
+    routeName: "the Druzhba pipeline",
+    result: {
+      year: 2022,
+      exposedCount: 14,
+      top: { name: "Slovakia", share: "38%" },
+    },
+  };
+
+  it("leads with the scenario and the trade year, then the finding", () => {
+    const a = scenarioAnnouncement(base);
+    expect(a.lead).toBe("Cut Druzhba pipeline — on 2022 trade:");
+    expect(a.detail).toBe("14 importers exposed; most exposed Slovakia, 38% of crude imports.");
+    expect(a.text).toBe(`${a.lead} ${a.detail}`);
+    // The two phrasings e2e keys on.
+    expect(a.text).toMatch(/Druzhba.*2022/);
+    expect(a.text).toMatch(/importers exposed; most exposed/);
+  });
+
+  it("names a partial closure in the lead", () => {
+    expect(scenarioAnnouncement({ ...base, severity: 0.5 }).lead).toBe(
+      "Cut Druzhba pipeline — on 2022 trade, 50% of the route cut:",
+    );
+  });
+
+  it("says exporters in the exporter view", () => {
+    const a = scenarioAnnouncement({ ...base, side: "exporter", noun: "crude exports" });
+    expect(a.detail).toBe("14 exporters exposed; most exposed Slovakia, 38% of crude exports.");
+  });
+
+  it("says nobody is exposed rather than naming a top of nothing", () => {
+    const a = scenarioAnnouncement({ ...base, result: { ...base.result, exposedCount: 0, top: null } });
+    expect(a.detail).toBe("no importer has crude imports routed through the Druzhba pipeline.");
+  });
+
+  it("is the computing line while the result is not current, and empty with no scenario", () => {
+    expect(scenarioAnnouncement({ ...base, result: null }).text).toBe("Computing exposure…");
+    expect(scenarioAnnouncement({ ...base, scenarioLabel: "" }).text).toBe("");
+  });
+});
+
+describe("showsStaleBadge", () => {
+  const latest = { tradeYear: 2024, latestTradeYear: 2024 };
+
+  it("never marks a row that is not stale", () => {
+    expect(showsStaleBadge({ role: "trade", stale: false }, latest)).toBe(false);
+    expect(showsStaleBadge({ role: "assets", stale: false }, latest)).toBe(false);
+  });
+
+  it("marks any stale row that is not the trade row", () => {
+    expect(showsStaleBadge({ role: "route_shares", stale: true }, latest)).toBe(true);
+    expect(showsStaleBadge({ role: "assets", stale: true }, latest)).toBe(true);
+    expect(showsStaleBadge({ role: "attribution", stale: true }, latest)).toBe(true);
+  });
+
+  it("withholds the marker from the latest annual trade release, but not from a pinned year", () => {
+    expect(showsStaleBadge({ role: "trade", stale: true }, latest)).toBe(false);
+    expect(
+      showsStaleBadge({ role: "trade", stale: true }, { tradeYear: 2010, latestTradeYear: 2024 }),
+    ).toBe(true);
   });
 });

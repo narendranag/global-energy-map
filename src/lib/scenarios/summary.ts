@@ -34,21 +34,42 @@ export function scenarioLabelOf(
 }
 
 /**
+ * How a result's trade year is *said*, everywhere it is said: the scenario
+ * headline in the panel, the citation summary and the embed chip.
+ *
+ * Nobody picks the year any more (there is no year control), so the number
+ * is no longer a setting the reader chose — it is a property of the data the
+ * answer is built on, and every place that prints it says so in the same
+ * words.
+ */
+export function tradeYearPhrase(year: number): string {
+  return `on ${year.toString()} trade`;
+}
+
+/**
  * Everything the scenario controls say, as display parts in a fixed order:
- * what is closed, how much of it, and which side is being listed. Each
- * modifier appears only when it is not the default, so a plain full closure
- * reads exactly as it did before T1.
+ * what is closed, which trade year it is computed on, how much of it, and
+ * which side is being listed. Each modifier appears only when it is not the
+ * default, so a plain full closure reads exactly as it did before T1.
  *
  * `noneLabel` is what stands in when no scenario is active — "no scenario"
  * in a citation, "Scenario" on a button.
+ *
+ * `tradeYear` is optional because the parts are also used where the year is
+ * already printed beside them; where it is given it follows the scenario
+ * label, and it is dropped with every other modifier when no scenario is
+ * active (a trade year describes a result, and there is none).
  */
 export function scenarioSummaryParts(
   s: ScenarioNaming,
   noneLabel = "no scenario",
+  opts: { readonly tradeYear?: number } = {},
 ): string[] {
+  const active = s.scenario !== null;
   return [
     scenarioLabelOf(s.scenario, s.scenario2) ?? noneLabel,
-    ...(s.scenario !== null && s.severity < 1 ? [`${severityPct(s.severity)} of the route cut`] : []),
-    ...(s.scenario !== null && s.view === "exporters" ? ["exporter view"] : []),
+    ...(active && opts.tradeYear !== undefined ? [tradeYearPhrase(opts.tradeYear)] : []),
+    ...(active && s.severity < 1 ? [`${severityPct(s.severity)} of the route cut`] : []),
+    ...(active && s.view === "exporters" ? ["exporter view"] : []),
   ];
 }

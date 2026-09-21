@@ -17,13 +17,23 @@ export interface ScenarioDef {
   /** `pipelines.geojson` `pipeline_id`s that make up this route, for map highlighting (S1). */
   readonly pipelineIds?: readonly string[];
   /**
-   * The years this scenario's share is meant to describe. Unset = static
-   * across the whole 1990–2024 slider, same as every scenario shipped today.
-   * Not yet consumed by any shipped scenario — added for a future
-   * year-bounded route (e.g. Kirkuk-Ceyhan, held pending this).
+   * The years this scenario's share is meant to describe. Unset = the share
+   * holds for every trade year we hold, which is true of every scenario
+   * shipped today. Not yet consumed by any shipped scenario — added for a
+   * future year-bounded route (e.g. Kirkuk-Ceyhan, held pending this).
    */
   readonly activeYears?: { readonly from?: number; readonly to?: number };
-  /** Shown in place of the scenario's numbers when the year falls outside `activeYears`. */
+  /**
+   * Shown in place of the scenario's numbers when the trade year the result
+   * runs on falls outside `activeYears`.
+   *
+   * Nobody picks that year any more: it is the latest reconciled trade year
+   * unless a link pins an earlier one. So this note explains why a scenario
+   * cannot be computed on the year the site *has* trade for — not a year the
+   * reader chose — and it is the place to say what the reader should do about
+   * it. No shipped scenario sets `activeYears`, so nothing renders it today;
+   * a scenario that needs it should say which years it describes and why.
+   */
   readonly inactiveNote?: string;
 }
 

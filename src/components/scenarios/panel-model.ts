@@ -12,9 +12,11 @@ import type {
 import {
   BARRELS_PER_TONNE_CRUDE,
   getScenario,
+  severityPct,
   type HowComputedOptions,
 } from "@/lib/scenarios/registry";
 import { scenarioIdsOf } from "@/lib/scenarios/shares";
+import { tradeYearPhrase } from "@/lib/scenarios/summary";
 import type { ScenarioView } from "@/lib/url-state/encode";
 import { groupIdenticalPairShares, pairLabel } from "@/lib/scenarios/share-groups";
 import { isUnsourced, type RouteCitation } from "@/lib/data/scenario-inputs";
@@ -266,4 +268,85 @@ export function howComputedOptionsFor(
     view: view === "exporters" ? "exporter" : "importer",
     hasInboundRoutes: routes?.some((r) => r.exporter_iso3 === null) ?? false,
   };
+}
+
+// ---------------------------------------------------------------------------
+// The headline, and which vintage rows earn an "old" marker
+// ---------------------------------------------------------------------------
+
+/**
+ * The scenario's answer in one sentence — the panel's headline *and* its
+ * `aria-live` announcement, which are now the same words rather than a
+ * visible number and a separate sentence for a screen reader.
+ *
+ * `lead` is the part set in bold ("Cut Druzhba pipeline — on 2022 trade:");
+ * `detail` is the finding. `text` is the two joined, which is what a test (or
+ * a reader who only hears it) sees.
+ *
+ * The year is stated as a property of the data, not of a control: nobody
+ * picks it any more, so "on 2022 trade" is the honest phrasing (the same one
+ * `scenarioSummaryParts` uses for the citation and the embed chip).
+ */
+export interface ScenarioAnnouncement {
+  readonly lead: string;
+  readonly detail: string;
+  readonly text: string;
+}
+
+export interface AnnouncementInput {
+  /** "Cut Druzhba pipeline", or both labels when two routes are closed. */
+  readonly scenarioLabel: string;
+  /** Null while the result for the current controls is still computing. */
+  readonly result: {
+    readonly year: number;
+    /** How many countries on the listed side are exposed at all. */
+    readonly exposedCount: number;
+    /** The most exposed one, or null when nothing is exposed. */
+    readonly top: { readonly name: string; readonly share: string } | null;
+  } | null;
+  /** Fraction of the route(s) cut, 0–1. */
+  readonly severity: number;
+  /** Which side the panel is listing. */
+  readonly side: "importer" | "exporter";
+  /** "crude imports" / "LNG exports" — the noun the share is a share of. */
+  readonly noun: string;
+  /** "the Strait of Hormuz", or both routes when two are closed. */
+  readonly routeName: string;
+}
+
+export function scenarioAnnouncement(input: AnnouncementInput): ScenarioAnnouncement {
+  const none = { lead: "", detail: "", text: "" };
+  if (input.scenarioLabel === "") return none;
+  if (input.result === null) {
+    return { lead: "", detail: "Computing exposure…", text: "Computing exposure…" };
+  }
+  const { year, exposedCount, top } = input.result;
+  const severityNote =
+    input.severity < 1 ? `, ${severityPct(input.severity)} of the route cut` : "";
+  const lead = `${input.scenarioLabel} — ${tradeYearPhrase(year)}${severityNote}:`;
+  const detail =
+    top === null
+      ? `no ${input.side} has ${input.noun} routed through ${input.routeName}.`
+      : `${exposedCount.toString()} ${input.side}s exposed; most exposed ${top.name}, ${top.share} of ${input.noun}.`;
+  return { lead, detail, text: `${lead} ${detail}` };
+}
+
+/**
+ * Whether a "Data behind this result" row gets the amber "old" marker.
+ *
+ * Every row that is past the staleness mark does — except the trade row of a
+ * result run on the latest reconciled trade year. Bilateral trade is an
+ * annual release: it is *always* more than the stale mark old by the time the
+ * next one lands, so an amber warning on every scenario the site can compute
+ * would cry wolf. The row still carries its note (which says how old the data
+ * is and when the publisher ships the next one); only the marker is withheld.
+ * A result pinned to an older year is a different matter — there really is
+ * newer trade the reader is not seeing — and it keeps the marker.
+ */
+export function showsStaleBadge(
+  row: { readonly role: string; readonly stale: boolean },
+  opts: { readonly tradeYear: number; readonly latestTradeYear: number },
+): boolean {
+  if (!row.stale) return false;
+  return row.role !== "trade" || opts.tradeYear < opts.latestTradeYear;
 }

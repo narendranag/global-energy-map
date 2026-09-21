@@ -2,6 +2,7 @@ import type { Catalog } from "@/lib/data-catalog/types";
 import { getScenario, routeKeyFor, severityPct } from "@/lib/scenarios/registry";
 import { groupIdenticalPairShares, pairLabel } from "@/lib/scenarios/share-groups";
 import { scenarioIdsOf } from "@/lib/scenarios/shares";
+import { scenarioVintage, type ScenarioVintageResult } from "@/lib/scenarios/vintage";
 import type { ScenarioResult } from "@/lib/scenarios/types";
 import { LNG_T3_FIRST_YEAR, LNG_T3_LAST_YEAR } from "@/lib/data/voyages";
 import type { ScenarioView } from "@/lib/url-state/encode";
@@ -65,6 +66,12 @@ export interface ScenarioExportContext {
    * is what every file exported before T1 was.
    */
   readonly view?: ScenarioView;
+  /**
+   * The date staleness is judged against, ISO. Injectable so a test's output
+   * is deterministic; defaults to the export date, which is today by
+   * construction (the file is written now).
+   */
+  readonly today?: string;
 }
 
 const round = (n: number, dp: number) => {
@@ -230,6 +237,34 @@ export function scenarioHeader(result: ScenarioResult, ctx: ScenarioExportContex
       ? `Trade data: ${baci.attribution ?? baci.source_name}, as of ${baci.as_of}. ${baci.license}. Cite: Gaulier, G., & Zignago, S. (2010). BACI: International Trade Database at the Product-Level. The 1994-2007 Version. CEPII Working Paper 2010-23. ${baci.source_url}`
       : "Trade data: CEPII BACI.",
   ];
+  // What the numbers are built on, and how current each part of it is — the
+  // same derivation as the panel's "Data behind this result" disclosure, from
+  // the same two inputs (the result and its route rows). It is structurally
+  // unable to carry the panel's context block (GIE storage, UN Comtrade): a
+  // `ScenarioResult` and a list of route citations cannot hold either.
+  const vintage = scenarioVintage(
+    // The exporter file has no asset rows (see the file comment), so it does
+    // not cite the asset sources either.
+    exporterView
+      ? ({
+          scenarioId: result.scenarioId,
+          commodity: result.commodity,
+          year: result.year,
+          ...(result.scenarioIds === undefined ? {} : { scenarioIds: result.scenarioIds }),
+        } satisfies ScenarioVintageResult)
+      : result,
+    shares,
+    { catalog: ctx.catalog, today: ctx.today ?? ctx.exported },
+  );
+  lines.push(
+    `Trade year: ${String(result.year)} — every figure below is that year's reconciled bilateral trade. There is no year control on the site; a link pinned to an earlier year keeps showing that year.`,
+    `Data vintages: ${vintage.summary}`,
+  );
+  for (const row of vintage.rows) {
+    const sources = row.sources.length > 0 ? ` (${row.sources.join(", ")})` : "";
+    lines.push(`  ${row.label}${sources}: ${row.through}.${row.note === null ? "" : ` ${row.note}`}`);
+  }
+  if (vintage.mismatchNote !== null) lines.push(`  ${vintage.mismatchNote}`);
   if (usesVoyages && lngT3 && !exporterView) {
     lines.push(`Terminal shares: ${lngT3.attribution ?? lngT3.source_name}, as of ${lngT3.as_of}. ${lngT3.source_url}`);
   }

@@ -12,6 +12,9 @@ import {
   type ScenarioDef,
 } from "@/lib/scenarios/registry";
 import { isCurrentScenarioResult } from "@/lib/scenarios/current";
+import { scenarioVintage } from "@/lib/scenarios/vintage";
+import { EXAMPLE_QUESTIONS, TRADE_LAST_YEAR } from "@/lib/modes";
+import { useToday } from "@/components/layers/useToday";
 import { useAssets } from "@/lib/data/assets";
 import { useCountryNames } from "@/lib/geo/useCountryNames";
 import { EXPOSURE_LEGEND_STOPS, gradientCss } from "@/lib/symbology";
@@ -23,7 +26,7 @@ import {
 import { scenarioCameraPadding } from "./fit";
 import { hoveredAssetId, hoveredIso3, useScenarioHover } from "./hover";
 import { RankedRow } from "./RankedRow";
-import { goToAsset, goToCountry } from "./row-actions";
+import { applyExample, goToAsset, goToCountry } from "./row-actions";
 import { ScenarioContext } from "./ScenarioContext";
 import { rankAssetsByCapacityAtRisk, rankImportersByShare, routeNamesOf, sideNoun } from "./overlay";
 import { useScenarioInputsFor } from "./useScenario";
@@ -39,7 +42,9 @@ import {
   pct,
   pctRange,
   routeRowsForDisplay,
+  scenarioAnnouncement,
   sharePct,
+  showsStaleBadge,
   sortImporters,
   volumeRange,
   type ImporterSort,
@@ -60,6 +65,13 @@ export interface ScenarioPanelProps {
   /** T1: which side of the cut the lists and the map describe. */
   readonly view: ScenarioView;
   readonly onViewChange: (view: ScenarioView) => void;
+  /**
+   * S7: `?embed=1`. The panel keeps everything needed to *read* the numbers
+   * and drops what only makes sense with the whole site around it — the
+   * empty state's example questions, which would navigate an embedded frame
+   * somewhere its host never asked for.
+   */
+  readonly embedded?: boolean;
 }
 
 interface AssetRow {
@@ -190,6 +202,7 @@ export function ScenarioPanel({
   onSeverityChange,
   view,
   onViewChange,
+  embedded = false,
 }: ScenarioPanelProps) {
   const uid = useId();
   const selectId = `${uid}-scenario`;
@@ -316,15 +329,44 @@ export function ScenarioPanel({
       : second === null
         ? def.label
         : `${def.label} + ${findScenario(second)?.label ?? second}`;
-  const severityNote = severity < 1 ? `, ${severityPct(severity)} of the route cut` : "";
-  const announcement =
-    def === undefined
-      ? ""
-      : current === null
-        ? "Computing exposure…"
-        : top === undefined
-          ? `${scenarioLabel}, ${current.year.toString()}${severityNote}: no ${side} has ${noun} routed through ${routesLabel}.`
-          : `${scenarioLabel}, ${current.year.toString()}${severityNote}: ${rankedImporters.length.toString()} ${side}s exposed; most exposed ${nameOf(top.iso3)}, ${pctRange(top)} of ${noun}.`;
+  // The panel's headline *and* its live-region announcement, in one string:
+  // what was asked, which trade year it is answered on, and the answer. Pure
+  // (`scenarioAnnouncement`), so the wording is unit-tested rather than
+  // asserted through the DOM.
+  const announcement = scenarioAnnouncement({
+    scenarioLabel,
+    severity,
+    side,
+    noun,
+    routeName: routesLabel,
+    result:
+      current === null
+        ? null
+        : {
+            year: current.year,
+            exposedCount: rankedImporters.length,
+            top: top === undefined ? null : { name: nameOf(top.iso3), share: pctRange(top) },
+          },
+  });
+
+  // What the numbers are built on, and how current each part of it is. Same
+  // two inputs as `howComputedOptionsFor` — the result on screen and the rows
+  // behind it — so the disclosure cannot describe a run the panel is not
+  // showing. `today` is the reader's, null until mounted (see `useToday`).
+  const today = useToday();
+  const vintage = useMemo(
+    () =>
+      current === null || today === null
+        ? null
+        : scenarioVintage(current, inputs?.routes ?? null, { today }),
+    [current, inputs, today],
+  );
+
+  /** Scenario mode's example questions, from the one list `IntroCard` reads. */
+  const examples = useMemo(
+    () => EXAMPLE_QUESTIONS.filter((q) => q.state.mode === "scenarios"),
+    [],
+  );
 
   // "Check a country": accept a country name (case-insensitive) or an ISO3 code.
   const countryOptions = useMemo(
@@ -358,11 +400,55 @@ export function ScenarioPanel({
       <h2 id={headingId} className="sr-only">
         Disruption scenario
       </h2>
-      {/* One short, always-mounted announcement per result (the lists below are
-          too long to read out on every sort or year change). */}
-      <p aria-live="polite" className="sr-only" data-testid="scenario-announcement">
-        {announcement}
+      {/*
+        One short, always-mounted line per result — the panel's headline and
+        its announcement at once. It used to be `sr-only`, with the finding
+        available only by reading the ranked list: a scenario that computes an
+        answer should say the answer. Mounted whether or not a scenario is
+        picked, so the live region is there before the result it announces;
+        with nothing to say it takes no space.
+      */}
+      <p
+        aria-live="polite"
+        data-testid="scenario-announcement"
+        className={
+          announcement.text === "" ? "sr-only" : "mb-2 text-sm leading-snug text-slate-800"
+        }
+      >
+        {announcement.lead !== "" && (
+          <strong className="font-semibold">{announcement.lead}</strong>
+        )}
+        {announcement.lead === "" ? announcement.detail : ` ${announcement.detail}`}
       </p>
+      {/*
+        With nothing picked the panel used to be a bare "None" dropdown: the
+        one mode whose whole point is a question showed no question. The
+        example questions are the same `EXAMPLE_QUESTIONS` the intro card
+        offers — one list, two readers — applied through the store, so
+        picking one here does exactly what picking it there does (including
+        the scenario camera fit, which keys on what is closed).
+      */}
+      {def === undefined && !embedded && (
+        <div className="mb-3" data-testid="scenario-empty">
+          <p className="text-sm font-medium leading-snug text-slate-800">
+            Who loses supply if a route closes?
+          </p>
+          <p className={`mt-1 ${NOTE}`}>Start with a question, or pick a route below.</p>
+          <ul className="mt-1.5 space-y-1">
+            {examples.map((q) => (
+              <li key={q.id}>
+                <button
+                  type="button"
+                  onClick={() => { applyExample(q); }}
+                  className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-left text-xs leading-snug text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-700"
+                >
+                  {q.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <label htmlFor={selectId} className={`mb-2 block ${HEADING}`}>
         Scenario
       </label>
@@ -494,6 +580,49 @@ export function ScenarioPanel({
               ))}
             </ul>
           </details>
+          {/*
+            What the answer is built on. Every date is derived (catalog
+            `coverage`/`as_of` and the route rows' own `source_year`), so a
+            data refresh moves this with no code change. Only ever rendered
+            for the result on screen — `current`, the same gate the numbers
+            above use.
+          */}
+          {vintage && (
+            <details className="mt-1" data-testid="scenario-vintage">
+              <summary className="cursor-pointer text-[11px] font-medium text-slate-700 hover:text-slate-900">
+                Data behind this result — {vintage.summary}
+              </summary>
+              <ul className="mt-1 space-y-1">
+                {vintage.rows.map((r) => (
+                  <li key={r.role}>
+                    <div className="flex items-baseline justify-between gap-2 text-[11px] leading-snug text-slate-700">
+                      <span className="min-w-0">
+                        {r.label}
+                        {r.sources.length > 0 && (
+                          <span className="text-slate-600"> — {r.sources.join(", ")}</span>
+                        )}
+                      </span>
+                      <span className="flex shrink-0 items-baseline gap-1">
+                        <span className="tabular-nums">{r.through}</span>
+                        {showsStaleBadge(r, {
+                          tradeYear: vintage.tradeYear,
+                          latestTradeYear: TRADE_LAST_YEAR,
+                        }) && (
+                          <span className="whitespace-nowrap rounded border border-amber-600 bg-amber-50 px-1 text-[11px] leading-4 text-amber-900">
+                            old
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    {r.note !== null && <p className={`mt-0.5 ${NOTE}`}>{r.note}</p>}
+                  </li>
+                ))}
+              </ul>
+              {vintage.mismatchNote !== null && (
+                <p className={`mt-1 ${NOTE}`}>{vintage.mismatchNote}</p>
+              )}
+            </details>
+          )}
         </div>
       )}
 

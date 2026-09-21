@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { scenarioLabelOf, scenarioSummaryParts } from "@/lib/scenarios/summary";
+import { scenarioLabelOf, scenarioSummaryParts, tradeYearPhrase } from "@/lib/scenarios/summary";
 import { getScenario } from "@/lib/scenarios/registry";
 
 const HORMUZ = getScenario("hormuz").label;
@@ -35,5 +35,21 @@ describe("scenarioSummaryParts", () => {
     const none = { scenario: null, scenario2: null, severity: 0.5, view: "exporters" } as const;
     expect(scenarioSummaryParts(none)).toEqual(["no scenario"]);
     expect(scenarioSummaryParts(none, "Scenario")).toEqual(["Scenario"]);
+  });
+
+  it("states the trade year right after the scenario, when it is given", () => {
+    expect(tradeYearPhrase(2024)).toBe("on 2024 trade");
+    expect(scenarioSummaryParts(base, "no scenario", { tradeYear: 2024 })).toEqual([
+      HORMUZ,
+      "on 2024 trade",
+    ]);
+    expect(
+      scenarioSummaryParts({ ...base, severity: 0.5 }, "no scenario", { tradeYear: 2010 }),
+    ).toEqual([HORMUZ, "on 2010 trade", "50% of the route cut"]);
+  });
+
+  it("omits the trade year with every other modifier when no scenario is active", () => {
+    const none = { scenario: null, scenario2: null, severity: 1, view: "importers" } as const;
+    expect(scenarioSummaryParts(none, "Scenario", { tradeYear: 2024 })).toEqual(["Scenario"]);
   });
 });

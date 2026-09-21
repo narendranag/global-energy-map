@@ -279,8 +279,9 @@ function HomeInner() {
   // being listed (finding 11), through the same helper ShareMenu's citation
   // summary uses.
   const scenarioChipSummary = [
-    ...scenarioSummaryParts({ scenario: scenarioId, scenario2, severity, view }, "Scenario"),
-    year.toString(),
+    ...scenarioSummaryParts({ scenario: scenarioId, scenario2, severity, view }, "Scenario", {
+      tradeYear: year,
+    }),
     commodity,
   ].join(" · ");
   // Collapse the phone-only scenario toggle at every width in embed mode
@@ -379,6 +380,7 @@ function HomeInner() {
                 onSeverityChange={setSeverity}
                 view={view}
                 onViewChange={setView}
+                embedded={embed}
               />
             </div>
           </>

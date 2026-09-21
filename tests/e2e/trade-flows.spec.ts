@@ -44,11 +44,11 @@ async function countArcPixels(page: Parameters<typeof mapBox>[0], match: (c: Rgb
 }
 
 test.describe("Trade flows (BACI)", () => {
-  test("boots from the URL: checkbox checked, badged with BACI's year range", async ({ page }) => {
+  test("boots from the URL: checkbox checked, badged with BACI's data vintage", async ({ page }) => {
     const errors = collectConsoleErrors(page);
     await gotoReady(page, "/?layers=trade_flows&commodity=oil&year=2024");
     await expect(page.getByLabel("Trade flows (BACI)", { exact: true })).toBeChecked();
-    await expect(page.getByTestId("time-badge-trade_flows")).toHaveText("time: 1995–2024");
+    await expect(page.getByTestId("time-badge-trade_flows")).toHaveText("to 2024");
     expect(errors).toEqual([]);
   });
 

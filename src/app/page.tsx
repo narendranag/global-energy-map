@@ -43,7 +43,12 @@ import { panelPadding, requestInitialFit } from "@/lib/state";
 import { embedControlsHidden, isEmbed } from "@/lib/url-state/embed";
 import { useUrlState } from "@/lib/url-state/useUrlState";
 
-/** First focusable control inside the scenario panel (its picker). */
+/**
+ * First focusable control inside the scenario panel. With a scenario picked
+ * that is the picker; with none it is the first example question, which the
+ * empty state puts above it (T4 of the 2026-09-21 drop-year-slider plan) —
+ * the first thing a reader entering Scenarios mode can act on either way.
+ */
 const SCENARIO_PICKER = "select, input, button, [tabindex]:not([tabindex='-1'])";
 
 function HomeInner() {

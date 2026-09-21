@@ -12,7 +12,6 @@ import {
   scenarioSelect,
   test,
   waitForReady,
-  yearSlider,
 } from "./helpers";
 
 test.setTimeout(SPEC_TIMEOUT);
@@ -65,8 +64,12 @@ test.describe("Scenarios", () => {
     await clickUntil(page.getByRole("tab", { name: "Scenarios" }), async () => {
       await expect(scenarioSelect(page)).toBeVisible({ timeout: 2_000 });
     });
-    // A tab click hands focus to the picker.
-    await expect(scenarioSelect(page)).toBeFocused();
+    // A tab click hands focus into the scenario panel — to its first control,
+    // which with nothing picked is the first example question (T4), not the
+    // picker below them.
+    await expect(
+      page.getByTestId("scenario-empty").getByRole("button").first(),
+    ).toBeFocused();
     await scenarioSelect(page).selectOption("hormuz");
     await expect(page.locator("ol li").filter({ hasText: /%/ }).first()).toBeVisible({
       timeout: RESULT_TIMEOUT,
@@ -352,12 +355,12 @@ test.describe("Scenarios — severity, combination, exporter view", () => {
     await expect(page.getByTestId("ranked-importers").locator("li").first()).toBeVisible({
       timeout: RESULT_TIMEOUT,
     });
-    // Move the year, which forces the store to rewrite the querystring.
-    await yearSlider(page).focus();
-    await page.keyboard.press("ArrowRight");
+    // Change the commodity, which forces the store to rewrite the querystring
+    // (the year slider, which used to do this, is gone).
+    await page.getByRole("button", { name: "Gas" }).click();
     await expect
-      .poll(() => new URL(page.url()).searchParams.get("year"), { timeout: 10_000 })
-      .toBe("2021");
+      .poll(() => new URL(page.url()).searchParams.get("commodity"), { timeout: 10_000 })
+      .toBe("gas");
     const params = new URL(page.url()).searchParams;
     expect(params.get("sev")).toBeNull();
     expect(params.get("scenario2")).toBeNull();

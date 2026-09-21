@@ -47,6 +47,25 @@ test.describe("axe: zero serious/critical violations", () => {
     expect(await seriousViolations(page)).toEqual([]);
   });
 
+  // The three pieces of UI the year slider's removal added: the visible
+  // scenario headline, the "Data behind this result" disclosure and the
+  // "as of" chip a pinned link shows.
+  test("/ pinned to an older year, with a scenario and its vintage disclosure", async ({ page }) => {
+    await gotoReady(page, "/?mode=scenarios&scenario=hormuz&year=2010&commodity=oil&layers=reserves");
+    await expect(page.getByTestId("as-of-chip")).toBeVisible();
+    await expect(page.getByTestId("scenario-announcement")).toBeVisible();
+    const vintage = page.getByTestId("scenario-vintage");
+    await expect(vintage).toBeVisible({ timeout: 60_000 });
+    await vintage.locator("summary").click();
+    expect(await seriousViolations(page)).toEqual([]);
+  });
+
+  test("/ in Scenarios with nothing picked (the empty state)", async ({ page }) => {
+    await gotoReady(page, "/?mode=scenarios&layers=reserves");
+    await expect(page.getByTestId("scenario-empty")).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+  });
+
   test("/methodology", async ({ page }) => {
     await page.goto("/methodology");
     await expect(page.getByRole("heading", { level: 1, name: "Methodology" })).toBeVisible();
@@ -110,10 +129,11 @@ test("controls have accessible names; the map region is labelled", async ({ page
   await expect(page.getByRole("checkbox", { name: "Refineries", includeHidden: true })).toHaveCount(1);
 
   await expect(page.getByRole("combobox", { name: "Scenario" })).toBeVisible();
-  await expect(page.getByRole("slider", { name: /^Year/ })).toBeVisible();
-  for (const name of ["Previous year", "Next year", "Play through years"]) {
-    await expect(page.getByRole("button", { name })).toBeVisible();
-  }
+  // The year slider and its transport buttons are gone; the only year
+  // affordance left is the "as of" chip a pinned link shows.
+  await expect(page.getByRole("slider", { name: /^Year/ })).toHaveCount(0);
+  await expect(page.getByTestId("as-of-chip").getByRole("status")).toBeVisible();
+  await expect(page.getByRole("button", { name: /^View latest/ })).toBeVisible();
   await expect(page.getByRole("group", { name: "Commodity" })).toBeVisible();
   await expect(page.getByRole("tablist", { name: "Mode" })).toBeVisible();
 
@@ -163,17 +183,19 @@ test("focus order runs header → panels → map", async ({ page }) => {
   const layers = at((k) => /^button:Layers\s*\d+ on/.test(k));
   const picker = at((k) => k.startsWith("select:"));
   const gas = at((k) => k === "button:Gas");
-  const slider = at((k) => k.startsWith("input:Year"));
+  // The year slider used to sit here; the "as of" chip's one button is what
+  // the bottom-centre slot holds now (this link is pinned to 2022).
+  const asOf = at((k) => k.startsWith("button:View latest"));
   const map = at((k) => k === "map");
 
-  const order = { share, dataLink, layers, picker, gas, slider, map };
+  const order = { share, dataLink, layers, picker, gas, asOf, map };
   for (const [name, idx] of Object.entries(order)) expect(idx, `${name} in ${seen.join(" | ")}`).toBeGreaterThanOrEqual(0);
   expect(share).toBeLessThan(dataLink);
   expect(dataLink).toBeLessThan(layers); // header before panels
   expect(layers).toBeLessThan(picker); // left panel, then the scenario panel
   expect(picker).toBeLessThan(gas); // then the bottom controls
-  expect(gas).toBeLessThan(slider);
-  expect(slider).toBeLessThan(map); // map last
+  expect(gas).toBeLessThan(asOf);
+  expect(asOf).toBeLessThan(map); // map last
 });
 
 test("the country panel sits between the scenario panel and the bottom controls", async ({
@@ -328,16 +350,16 @@ async function lowContrastText(page: Page): Promise<string[]> {
 test.describe("text contrast ≥ 4.5:1 with panels over a black map", () => {
   test.use({ showIntro: true });
 
-  test("Infrastructure: layers, legend (with a zoom-gated row), year, intro card", async ({ page }) => {
-    // The intro card only shows on a URL with no explicit state, so the card
-    // and the year note (which needs year > 2020) are checked on two loads.
+  test("Infrastructure: layers, legend (with a zoom-gated row), as-of chip, intro card", async ({ page }) => {
+    // The intro card only shows on a URL with no explicit state, and the
+    // "as of" chip only on one pinned to an older year, so two loads.
     await gotoReady(page, "/");
     await expect(page.getByTestId("intro-card")).toBeVisible();
     expect(await lowContrastText(page)).toEqual([]);
 
     await gotoReady(page, "/?layers=reserves,pipelines,refineries,storage&year=2023");
     await expect(page.getByTestId("intro-card")).toHaveCount(0);
-    await expect(page.getByTestId("year-note")).toBeVisible();
+    await expect(page.getByTestId("as-of-chip")).toBeVisible();
     expect(await lowContrastText(page)).toEqual([]);
   });
 

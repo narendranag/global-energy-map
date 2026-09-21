@@ -1,7 +1,7 @@
 // tests/e2e/embed.spec.ts — S7 embed mode (`?embed=1`, optional `&controls=0`):
 // chrome removed, attribution kept, embed=1 survives a URL rewrite, and a
 // page that iframes the app renders.
-import { SPEC_TIMEOUT, expect, gotoReady, test, yearSlider } from "./helpers";
+import { SPEC_TIMEOUT, expect, gotoReady, test } from "./helpers";
 
 test.setTimeout(SPEC_TIMEOUT);
 
@@ -66,15 +66,13 @@ test.describe("embed mode", () => {
     ).toBe(0);
   });
 
-  test("the year slider and commodity toggle still work in plain embed mode", async ({ page }) => {
+  test("the commodity toggle still works in plain embed mode", async ({ page }) => {
     await gotoReady(page, "/?embed=1");
-    await expect(yearSlider(page)).toBeVisible();
     await expect(page.getByRole("button", { name: "Oil" })).toBeVisible();
   });
 
-  test("&controls=0 hides the slider and commodity toggle", async ({ page }) => {
+  test("&controls=0 hides the commodity toggle", async ({ page }) => {
     await gotoReady(page, "/?embed=1&controls=0");
-    await expect(yearSlider(page)).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Oil" })).toHaveCount(0);
   });
 
@@ -129,12 +127,13 @@ test.describe("embed mode", () => {
   });
 
   test("embed=1 survives a year change (the store's debounced URL rewrite)", async ({ page }) => {
-    await gotoReady(page, "/?embed=1");
-    const slider = yearSlider(page);
-    await slider.fill("2018");
-    await slider.dispatchEvent("change");
-    await expect(page).toHaveURL(/year=2018/);
+    // "View latest" on the "as of" chip is the only thing that sets the year
+    // now; it must not drop the embed flag from the rewritten querystring.
+    await gotoReady(page, "/?embed=1&year=2018");
+    await page.getByTestId("as-of-view-latest").click();
+    await expect(page).toHaveURL(/year=2024/);
     await expect(page).toHaveURL(/embed=1/);
+    await expect(page.getByTestId("as-of-chip")).toHaveCount(0);
   });
 
   test("a page that iframes the app renders the embed inside it", async ({ page, baseURL }) => {

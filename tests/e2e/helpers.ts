@@ -167,15 +167,6 @@ export async function openLayers(page: Page, timeout = 30_000): Promise<void> {
   }).toPass({ timeout });
 }
 
-/**
- * The year slider. Named rather than `input[type="range"]`: T1 added a second
- * range input (the scenario severity slider), so the bare selector is no
- * longer unique whenever a scenario is active.
- */
-export function yearSlider(page: Page): Locator {
-  return page.getByRole("slider", { name: "Year" });
-}
-
 /** The scenario picker (rendered in Scenarios mode or while a scenario is active). */
 export function scenarioSelect(page: Page): Locator {
   return page.getByRole("combobox", { name: "Scenario" });

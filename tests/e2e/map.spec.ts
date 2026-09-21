@@ -13,7 +13,6 @@ import {
   SAUDI_POINTS,
   test,
   waitForReady,
-  yearSlider,
 } from "./helpers";
 
 test.setTimeout(SPEC_TIMEOUT);
@@ -75,7 +74,9 @@ test.describe("Map", () => {
     await expect(headerLink(page, "Data")).toHaveAttribute("href", "/data");
     await expect(page.locator("main")).toHaveAttribute("data-mode", "infrastructure");
 
-    await expect(yearSlider(page)).toBeVisible();
+    // The default view reads at the latest trade year, so there is no
+    // "as of" chip — the year slider it replaced is gone entirely.
+    await expect(page.getByTestId("as-of-chip")).toHaveCount(0);
     // No scenario picker outside Scenarios mode (and no scenario in the URL).
     await expect(page.getByRole("combobox", { name: "Scenario" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Oil" })).toHaveAttribute("aria-pressed", "true");

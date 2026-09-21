@@ -11,7 +11,6 @@ import {
   scenarioSelect,
   test,
   waitForReady,
-  yearSlider,
 } from "./helpers";
 
 test.setTimeout(SPEC_TIMEOUT);
@@ -76,7 +75,8 @@ test.describe("Modes", () => {
     await selectTab(page, "Flows");
     await expect(page.locator("main")).toHaveAttribute("data-mode", "flows");
     await expect(page.getByRole("button", { name: "Gas" })).toHaveAttribute("aria-pressed", "true");
-    await expect(yearSlider(page)).toHaveValue("2021");
+    // No year control: the link's 2021 shows as the "as of" chip.
+    await expect(page.getByTestId("as-of-chip")).toContainText("As of 2021");
     await expect(page).toHaveURL(/mode=flows/);
     expect(param(page, "layers")).toBe("gas_pipelines,lng_terminals,trade_flows");
     await expect(page.getByRole("button", { name: /^Layers\s*3 on$/ })).toHaveAttribute("aria-expanded", "false");
@@ -84,10 +84,15 @@ test.describe("Modes", () => {
     await expectLayers(page, ["gas_pipelines", "lng_terminals", "trade_flows"]);
     await waitForReady(page);
 
-    // Scenarios: the picker appears and takes focus; reserves carries the ramp.
+    // Scenarios: focus moves into the scenario panel and the picker appears,
+    // still on "None". With nothing picked the panel leads with the example
+    // questions (T4), so the first control focus lands on is the first
+    // question — not the picker, which now sits below them.
     await selectTab(page, "Scenarios");
     await expect(page.locator("main")).toHaveAttribute("data-mode", "scenarios");
-    await expect(scenarioSelect(page)).toBeFocused();
+    await expect(
+      page.getByTestId("scenario-empty").getByRole("button").first(),
+    ).toBeFocused();
     await expect(scenarioSelect(page)).toHaveValue("");
     await expect(page).toHaveURL(/mode=scenarios/);
     await expect.poll(() => param(page, "layers")).toBe("reserves,pipelines,refineries,lng_terminals");
@@ -124,7 +129,7 @@ test.describe("Modes", () => {
 
     await gotoReady(page, "/?mode=flows&year=2015&commodity=oil&layers=reserves");
     await expect(page.getByRole("tab", { name: "Flows" })).toHaveAttribute("aria-selected", "true");
-    await expect(yearSlider(page)).toHaveValue("2015");
+    await expect(page.getByTestId("as-of-chip")).toContainText("As of 2015");
     await expect(page.getByRole("button", { name: "Oil" })).toHaveAttribute("aria-pressed", "true");
     await expectLayers(page, ["reserves"]);
   });
@@ -135,11 +140,9 @@ test.describe("Modes", () => {
     await expect(page.getByRole("tab", { name: "Infrastructure" })).toHaveAttribute("aria-selected", "true");
     await expect(page.getByRole("button", { name: /^Layers\s*2 on$/ })).toBeVisible();
     await expectLayers(page, ["basins", "ports"]);
-    // basins and ports are both undated, so the year control collapses to its
-    // chip (see year-relevance.spec.ts). The state a shared link carries is
-    // unchanged - the year is still 2010 and still on screen - only the
-    // control's presentation differs, so this asserts the value, not the input.
-    await expect(page.getByTestId("year-value")).toHaveText("2010");
+    // The year a shared link carries is still on screen — as the "as of"
+    // chip, the only year affordance left (see as-of.spec.ts).
+    await expect(page.getByTestId("as-of-chip")).toContainText("As of 2010");
     // Nothing rewrote the shared layer set.
     await expect.poll(() => param(page, "layers")).toBe("basins,ports");
   });
@@ -170,20 +173,19 @@ test.describe("First-run intro card", () => {
   });
 
   // The card used to say only "1990-2024", which reads as "no data after
-  // 2024" when four layers run past the slider. These dates come from the
-  // catalog, so a refresh moves them with no edit to the card.
-  test("says how current the data is, beyond the timeline", async ({ page }) => {
+  // 2024" when several layers run past the trade year. The sentence is
+  // derived from the catalog, so a refresh moves it with no edit to the card.
+  test("says how current the data is, beyond the trade year", async ({ page }) => {
     await gotoReady(page, "/");
     const block = page.getByTestId("intro-coverage");
     await expect(block).toBeVisible();
-    await expect(block).toContainText("EU gas storage");
-    await expect(block).toContainText("Monthly crude + LNG imports");
-    // Dates newer than the slider's last year must be on screen.
+    await expect(block).toContainText("reconciled trade through 2024");
+    await expect(block).toContainText(/layers carry newer data, to /);
+    // A date newer than the trade year must be on screen.
     await expect(block).toContainText("2026");
-    await expect(block).toContainText("2025");
 
-    // The Methodology link must land on a real heading, not a dead anchor.
-    const link = block.getByRole("link", { name: "Methodology" });
+    // The link must land on a real heading, not a dead anchor.
+    const link = block.getByRole("link", { name: /How current each layer is/ });
     const href = await link.getAttribute("href");
     expect(href).toBe("/methodology#how-current-each-layer-is");
     await page.goto(href ?? "/methodology");
@@ -194,11 +196,13 @@ test.describe("First-run intro card", () => {
     // A bare / still shows the intro card (no explicit state params).
     await gotoReady(page, "/");
     const card = page.getByTestId("intro-card");
-    await clickUntil(card.getByTestId("example-qatar-lng-2023"), async () => {
+    await clickUntil(card.getByTestId("example-qatar-lng-2024"), async () => {
       await expect(card).toHaveCount(0, { timeout: 2_000 });
     });
     await expect(page.locator("main")).toHaveAttribute("data-mode", "flows");
-    await expect(yearSlider(page)).toHaveValue("2023");
+    // 2024 is the latest trade year, so no "as of" chip — the URL carries it.
+    await expect(page).toHaveURL(/year=2024/);
+    await expect(page.getByTestId("as-of-chip")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Gas" })).toHaveAttribute("aria-pressed", "true");
     await expect(page).toHaveURL(/mode=flows/);
     // Focused on Qatar so the trade-flows layer shows all of its LNG trade,

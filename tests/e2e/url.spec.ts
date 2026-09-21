@@ -10,7 +10,6 @@ import {
   setChecked,
   test,
   waitForReady,
-  yearSlider,
 } from "./helpers";
 
 test.setTimeout(SPEC_TIMEOUT);
@@ -23,7 +22,9 @@ test.describe("URL state", () => {
   test("a URL restores year, commodity, scenario and layers", async ({ page }) => {
     await gotoReady(page, "/?year=2015&commodity=gas&scenario=hormuz&layers=reserves,lng_terminals");
 
-    await expect(yearSlider(page)).toHaveValue("2015");
+    // There is no year control any more; a pinned year shows as the "as of"
+    // chip (see as-of.spec.ts), which is what proves the link's year decoded.
+    await expect(page.getByTestId("as-of-chip")).toContainText("As of 2015");
     await expect(page.getByRole("button", { name: "Gas" })).toHaveAttribute("aria-pressed", "true");
     // A URL without `mode` decodes as Infrastructure; its scenario still shows the panel.
     await expect(page.locator("main")).toHaveAttribute("data-mode", "infrastructure");
@@ -66,7 +67,7 @@ test.describe("URL state", () => {
   });
 
   test("a share link round-trips layers, year, scenario and view", async ({ page, context }) => {
-    await gotoReady(page, "/?mode=scenarios&layers=reserves,pipelines&year=2020");
+    await gotoReady(page, "/?mode=scenarios&layers=reserves,pipelines&year=2019");
     // Explicit `layers` beat the Scenarios preset (which would add refineries
     // and LNG terminals).
     await expect(page.getByLabel("Refineries")).not.toBeChecked();
@@ -76,10 +77,8 @@ test.describe("URL state", () => {
     await openLayers(page);
     await setChecked(page.getByLabel("Refineries"), true);
     await setChecked(page.getByLabel("Oil pipelines"), false);
-    const slider = yearSlider(page);
-    await slider.focus();
-    await page.keyboard.press("ArrowLeft");
-    await expect(slider).toHaveValue("2019");
+    // The year is no longer settable from the UI: it arrives on the link and
+    // must survive every other edit, which is what the round-trip checks.
     await scenarioSelect(page).selectOption("druzhba");
 
     // Pan the map: MapLibre's moveend writes the camera back to the store.
@@ -115,7 +114,7 @@ test.describe("URL state", () => {
     // Open the link in a fresh tab.
     const other = await context.newPage();
     await gotoReady(other, `/?${shared.toString()}`);
-    await expect(yearSlider(other)).toHaveValue("2019");
+    await expect(other.getByTestId("as-of-chip")).toContainText("As of 2019");
     await expect(other.locator("main")).toHaveAttribute("data-mode", "scenarios");
     await expect(scenarioSelect(other)).toHaveValue("druzhba");
     await expect(other.getByLabel("Refineries")).toBeChecked();
@@ -129,8 +128,10 @@ test.describe("URL state", () => {
   });
 
   // R16: URL state is written with history.replaceState, never router.replace,
-  // so a slider tick must not trigger a Next navigation or RSC fetch.
-  test("slider changes make no RSC or navigation requests", async ({ page }) => {
+  // so a state change must not trigger a Next navigation or RSC fetch. The
+  // year slider used to be the control this fired on; the layer toggles and
+  // the commodity selector write the URL through the same debounced path.
+  test("state changes make no RSC or navigation requests", async ({ page }) => {
     await gotoReady(page, "/?layers=reserves&year=2020");
 
     const offending: string[] = [];
@@ -146,14 +147,16 @@ test.describe("URL state", () => {
       if (req.isNavigationRequest() || isRsc(req)) offending.push(`${req.method()} ${req.url()}`);
     });
 
-    const slider = yearSlider(page);
-    await slider.focus();
-    for (const expected of ["2019", "2018", "2017"]) {
-      await page.keyboard.press("ArrowLeft");
-      await expect(slider).toHaveValue(expected);
-    }
+    await setChecked(page.getByLabel("Storage hubs"), true);
+    await setChecked(page.getByLabel("Ports", { exact: true }), true);
+    await page.getByRole("button", { name: "Gas" }).click();
+    await expect(page.getByRole("button", { name: "Gas" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
     // The debounced replaceState has landed …
-    await expect(page).toHaveURL(/year=2017/);
+    await expect(page).toHaveURL(/commodity=gas/);
+    await expect(page).toHaveURL(/layers=[^&]*ports/);
     await waitForReady(page);
     // … without any navigation or RSC round-trip.
     expect(offending).toEqual([]);

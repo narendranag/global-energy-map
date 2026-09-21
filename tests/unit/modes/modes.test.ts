@@ -3,7 +3,6 @@ import {
   applyMode,
   DEFAULT_APP_STATE,
   EXAMPLE_QUESTIONS,
-  FLOWS_DEFAULT_YEAR,
   layersOpenByDefault,
   MODE_DEFS,
   MODE_LAYERS,
@@ -41,10 +40,10 @@ describe("parseMode", () => {
 });
 
 describe("default state (D1)", () => {
-  it("is Infrastructure, oil, 2020, no scenario", () => {
+  it("is Infrastructure, oil, the latest trade year, no scenario", () => {
     expect(DEFAULT_APP_STATE).toMatchObject({
       mode: "infrastructure",
-      year: 2020,
+      year: TRADE_LAST_YEAR,
       commodity: "oil",
       scenario: null,
     });
@@ -128,7 +127,7 @@ describe("applyMode", () => {
     expect(applyMode({ ...custom, year: 2020 }, "flows").year).toBe(2020);
     expect(applyMode({ ...custom, year: 2024 }, "flows").year).toBe(2024);
     expect(applyMode({ ...custom, year: 1995 }, "flows").year).toBe(1995);
-    expect(applyMode({ ...custom, year: 1990 }, "flows").year).toBe(FLOWS_DEFAULT_YEAR);
+    expect(applyMode({ ...custom, year: 1990 }, "flows").year).toBe(TRADE_LAST_YEAR);
   });
 
   it("Flows clears the scenario", () => {
@@ -222,11 +221,27 @@ describe("EXAMPLE_QUESTIONS", () => {
     }
   });
 
-  it("the Druzhba and Hormuz questions set their scenario and year", () => {
+  it("the Druzhba, Hormuz and Suez questions set their scenario and the latest trade year", () => {
     const byId = new Map(EXAMPLE_QUESTIONS.map((q) => [q.id, q.state]));
-    expect(byId.get("druzhba-2022")).toMatchObject({ scenario: "druzhba", year: 2022, commodity: "oil" });
-    expect(byId.get("hormuz-2024")).toMatchObject({ scenario: "hormuz", year: 2024, commodity: "oil" });
-    expect(byId.get("qatar-lng-2023")).toMatchObject({ mode: "flows", year: 2023, commodity: "gas" });
-    expect(byId.get("pipelines-1995")).toMatchObject({ mode: "infrastructure", year: 1995 });
+    expect(byId.get("druzhba-2024")).toMatchObject({
+      scenario: "druzhba",
+      year: TRADE_LAST_YEAR,
+      commodity: "oil",
+    });
+    expect(byId.get("hormuz-2024")).toMatchObject({
+      scenario: "hormuz",
+      year: TRADE_LAST_YEAR,
+      commodity: "oil",
+    });
+    expect(byId.get("suez-2024")).toMatchObject({
+      scenario: "suez",
+      year: TRADE_LAST_YEAR,
+      commodity: "oil",
+    });
+    expect(byId.get("qatar-lng-2024")).toMatchObject({
+      mode: "flows",
+      year: TRADE_LAST_YEAR,
+      commodity: "gas",
+    });
   });
 });

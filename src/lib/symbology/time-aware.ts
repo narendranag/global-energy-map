@@ -1,10 +1,18 @@
 /**
- * Which layers respond to the year slider, and how completely (D9). The
- * layer panel renders these as badges; the numbers are the share of rows in
- * the *runtime* artifact that carry a vintage (rows without one are always
- * shown). Re-measure when a source is refreshed.
+ * Which layers are dated at all, and how completely (D9). The layer panel
+ * renders these as badges; `TIME_AWARE_COVERAGE`'s numbers are the share of
+ * rows in the *runtime* artifact that carry a vintage (rows without one are
+ * always shown) — surfaced only in the hover note now that there is no year
+ * control for the badge itself to describe responsiveness to. Re-measure the
+ * coverage numbers when a source is refreshed.
+ *
+ * `timeAwareLabel` states the layer's own DATA VINTAGE (decision 2026-09-21:
+ * drop the year slider) — "to 2020", "as of 9 Apr 2025", "live" — derived
+ * from the catalog via `src/lib/data/vintage.ts`'s `layerVintage`/
+ * `formatVintage`, never a hand-kept date.
  */
 import type { LayerState } from "@/components/layers/LayerPanel";
+import { layerVintage, formatVintage } from "@/lib/data/vintage";
 
 type LayerKey = keyof LayerState;
 
@@ -53,34 +61,40 @@ export const TIME_AWARE_COVERAGE: Readonly<Record<LayerKey, number | null>> = {
   trade_flows: null,
 };
 
-/** One-line explanation for a badge tooltip. */
+/**
+ * One-line explanation for a badge tooltip — describes the data itself (what
+ * fraction of rows carry a build/commission date, what period a series
+ * covers), not a control the reader operates.
+ */
 export const TIME_AWARE_NOTE: Readonly<Record<LayerKey, string>> = {
-  reserves: "Yearly values 1990–2020 (EI Statistical Review); 2021–2024 show the 2020 value.",
-  basins: "No dates in source — shown for every year.",
-  extraction: "Start year known for 32 % of sites; undated sites show in every year.",
-  pipelines: "Start year known for 64 % of oil pipelines; undated lines show in every year.",
-  refineries: "No commissioning dates in source — shown for every year.",
-  storage: "No dates in source — shown for every year.",
-  ports: "No dates in source — shown for every year.",
-  gas_pipelines: "Start year known for 74 % of gas pipelines; undated lines show in every year.",
-  lng_terminals: "Start year known for 97 % of terminals; undated terminals show in every year.",
-  lng_voyages: "Voyages observed 2020–2024 only (LNG-T3); hidden outside that range.",
-  gas_storage:
-    "GIE publishes daily; this layer always shows the latest gas day and ignores the year slider.",
-  shale_regions: "Annual output 2009 onward (EIA STEO history; forecasts excluded); no data before 2009.",
-  recent_imports: "Each country's latest 12 reported months (UN Comtrade); ignores the year slider.",
-  trade_flows: "Country-pair crude/LNG trade (BACI), 1995–2024 only; hidden outside that range.",
+  reserves: "Yearly values 1990–2020 (EI Statistical Review); no reserves data after 2020.",
+  basins: "No dates in source.",
+  extraction: "Start year known for 32 % of sites; undated sites carry no vintage.",
+  pipelines: "Start year known for 64 % of oil pipelines; undated lines carry no vintage.",
+  refineries: "No commissioning dates in source.",
+  storage: "No dates in source.",
+  ports: "No dates in source.",
+  gas_pipelines: "Start year known for 74 % of gas pipelines; undated lines carry no vintage.",
+  lng_terminals: "Start year known for 97 % of terminals; undated terminals carry no vintage.",
+  lng_voyages: "Voyages observed 2020–2024 only (LNG-T3).",
+  gas_storage: "GIE publishes daily; this layer always shows the latest gas day.",
+  shale_regions: "Annual output 2009 onward (EIA STEO history; forecasts excluded).",
+  recent_imports: "Each country's latest 12 reported months (UN Comtrade).",
+  trade_flows: "Country-pair crude/LNG trade (BACI), 1995–2024 only.",
 };
 
-/** Short badge text, e.g. "time: 64 %", "time: yes", "static". */
+/**
+ * Badge text: the layer's data vintage, e.g. "to 2020", "as of 9 Apr 2025",
+ * "live". Derived from the catalog (`layerVintage`/`formatVintage`), so a
+ * refreshed source moves the badge with no code change. `label` is passed as
+ * the key itself — `layerVintage` only uses it to stamp the returned record,
+ * never to format the badge text.
+ */
 export function timeAwareLabel(key: LayerKey): string {
-  const level = TIME_AWARE[key];
-  if (level === "live") return "live";
-  if (level === "no") return "static";
-  const cov = TIME_AWARE_COVERAGE[key];
-  if (level === "partial" && cov !== null) return `time: ${cov.toString()} %`;
-  if (key === "lng_voyages") return "time: 2020–24";
-  if (key === "trade_flows") return "time: 1995–2024";
-  if (key === "reserves") return "time: to 2020";
-  return "time: yes";
+  if (TIME_AWARE[key] === "live") return "live";
+  const v = layerVintage(key, key);
+  if (v !== null) return formatVintage(v);
+  // No catalog coverage/as_of found for this layer — should not happen for a
+  // shipped layer, but fail into something legible rather than "undefined".
+  return "static";
 }

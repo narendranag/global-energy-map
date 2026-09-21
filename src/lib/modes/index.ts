@@ -97,22 +97,21 @@ export const MODE_LAYERS: Readonly<Record<Mode, LayerState>> = {
 /** LNG-T3 voyage coverage (mirrors `src/lib/data/voyages.ts`). */
 export const FLOWS_FIRST_YEAR = 2020;
 export const FLOWS_LAST_YEAR = 2024;
-/**
- * Year Flows jumps to when the current year has no BACI trade data — the
- * latest BACI year (mirrors `TRADE_LAST_YEAR` / `src/lib/data/trade-flows.ts`).
- * Also LNG-T3's range end, though LNG-T3's own 2024 snapshot is thinner
- * (1,592 voyages vs 3,958 in 2023) — `lng_voyages` is off by default in this
- * preset, so that does not affect what Flows opens showing.
- */
-export const FLOWS_DEFAULT_YEAR = 2024;
 /** BACI trade coverage: scenarios have no trade data before this year (mirrors `src/lib/data/trade-flows.ts`). */
 export const TRADE_FIRST_YEAR = 1995;
 export const TRADE_LAST_YEAR = 2024;
 
-/** Default year on first load: the last year with a live reserves value. */
-export const DEFAULT_YEAR = 2020;
+/**
+ * Default year on first load: the latest reconciled trade year
+ * (`TRADE_LAST_YEAR`). There is no year control any more (decision 2 of
+ * `docs/superpowers/plans/2026-09-21-drop-year-slider.md`) — every layer
+ * shows its most current reading unless a link pins an earlier `year=`.
+ * Reserves is unaffected: `reservesDataYear` already caps at 2020 regardless
+ * of the selected year.
+ */
+export const DEFAULT_YEAR = TRADE_LAST_YEAR;
 
-/** The app's default state: Infrastructure mode, oil, 2020, no scenario, nothing focused. */
+/** The app's default state: Infrastructure mode, oil, the latest trade year, no scenario, nothing focused. */
 export const DEFAULT_APP_STATE: AppState = {
   mode: DEFAULT_MODE,
   year: DEFAULT_YEAR,
@@ -170,7 +169,7 @@ export function applyMode(state: AppState, mode: Mode): AppState {
         mode,
         layers,
         commodity: "gas",
-        year: inRange ? state.year : FLOWS_DEFAULT_YEAR,
+        year: inRange ? state.year : TRADE_LAST_YEAR,
         ...NO_SCENARIO,
       };
     }
@@ -232,26 +231,44 @@ function question(
 }
 
 export const EXAMPLE_QUESTIONS: readonly ExampleQuestion[] = [
-  question("druzhba-2022", "How exposed is Central Europe to a Druzhba cut? (2022)", "scenarios", {
-    year: 2022,
-    commodity: "oil",
-    scenario: "druzhba",
-  }),
-  question("hormuz-2024", "Who loses most if Hormuz closes? (2024, crude)", "scenarios", {
-    year: 2024,
-    commodity: "oil",
-    scenario: "hormuz",
-  }),
+  // Druzhba's sourceGapNote (fromYear: 2022) still fires at the latest year,
+  // so moving this example forward doesn't lose the honesty note it exists
+  // to show off.
+  question(
+    "druzhba-2024",
+    `How exposed is Central Europe to a Druzhba cut? (${String(TRADE_LAST_YEAR)})`,
+    "scenarios",
+    {
+      year: TRADE_LAST_YEAR,
+      commodity: "oil",
+      scenario: "druzhba",
+    },
+  ),
+  question(
+    "hormuz-2024",
+    `Who loses most if Hormuz closes? (${String(TRADE_LAST_YEAR)}, crude)`,
+    "scenarios",
+    {
+      year: TRADE_LAST_YEAR,
+      commodity: "oil",
+      scenario: "hormuz",
+    },
+  ),
+  question(
+    "suez-2024",
+    `Who loses most if Suez closes? (${String(TRADE_LAST_YEAR)}, crude)`,
+    "scenarios",
+    {
+      year: TRADE_LAST_YEAR,
+      commodity: "oil",
+      scenario: "suez",
+    },
+  ),
   // Focused so it shows every one of Qatar's flows (BACI trade_flows), not
   // just the pairs that make the world top 150 — the point of the focus view.
-  question("qatar-lng-2023", "Where did Qatar's LNG go in 2023?", "flows", {
-    year: 2023,
+  question("qatar-lng-2024", `Where did Qatar's LNG go in ${String(TRADE_LAST_YEAR)}?`, "flows", {
+    year: TRADE_LAST_YEAR,
     commodity: "gas",
     focus: "QAT",
-  }),
-  question("pipelines-1995", "Which pipelines existed in 1995?", "infrastructure", {
-    year: 1995,
-    commodity: "oil",
-    layers: only("pipelines", "gas_pipelines"),
   }),
 ];

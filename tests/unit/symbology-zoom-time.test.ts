@@ -11,6 +11,7 @@ import {
   timeAwareLabel,
   type LayerKey,
 } from "@/lib/symbology";
+import { layerVintage, formatVintage } from "@/lib/data/vintage";
 
 const KEYS = Object.keys(LEGEND) as LayerKey[];
 
@@ -85,10 +86,28 @@ describe("TIME_AWARE", () => {
     }
   });
 
-  it("badge labels", () => {
-    expect(timeAwareLabel("extraction")).toBe("time: 32 %");
-    expect(timeAwareLabel("refineries")).toBe("static");
-    expect(timeAwareLabel("lng_voyages")).toBe("time: 2020–24");
-    expect(timeAwareLabel("reserves")).toBe("time: to 2020");
+  it("badge labels state the layer's data vintage, not slider responsiveness", () => {
+    // Series, dated by when the data ends (catalog `coverage`).
+    expect(timeAwareLabel("reserves")).toBe("to 2020");
+    expect(timeAwareLabel("trade_flows")).toBe("to 2024");
+    expect(timeAwareLabel("lng_voyages")).toBe("to 31 Dec 2024");
+    // Snapshot layers (no `coverage`), dated by catalog `as_of`.
+    expect(timeAwareLabel("extraction")).toBe("as of 1 Mar 2026");
+    expect(timeAwareLabel("pipelines")).toBe("as of 9 Apr 2025");
+    // Multi-source layer: the newer of the two sources' as_of wins.
+    expect(timeAwareLabel("refineries")).toBe("as of 17 Sept 2026");
+    // Live layers ignore the catalog vintage and always read "live".
+    expect(timeAwareLabel("gas_storage")).toBe("live");
+    expect(timeAwareLabel("recent_imports")).toBe("live");
+  });
+
+  it("every layer's badge label matches formatVintage(layerVintage(key))", () => {
+    for (const k of KEYS) {
+      if (TIME_AWARE[k] === "live") continue;
+      const v = layerVintage(k, k);
+      expect(v).not.toBeNull();
+      if (v === null) continue;
+      expect(timeAwareLabel(k)).toBe(formatVintage(v));
+    }
   });
 });

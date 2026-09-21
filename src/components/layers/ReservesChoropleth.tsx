@@ -98,8 +98,11 @@ export const formatReservesTooltip: TooltipFormatter<ReservesFeature> = (f, ctx)
     p.value !== null
       ? `Proved ${c} reserves: ${formatReserves(p.value, c)} (${dataYear})`
       : `Proved ${c} reserves: no data in source (${dataYear})`,
-    ctx.year > RESERVES_LATEST_YEAR &&
-      `(latest in source; year selected: ${ctx.year.toString()})`,
+    // Stated on every hover, not just past the cut-off: with no year control
+    // the reader has no other way to learn that this ramp stops at 2020.
+    ctx.year >= RESERVES_LATEST_YEAR
+      ? `${RESERVES_LATEST_YEAR.toString()} is the latest reserves year in the source`
+      : `Shown as of ${ctx.year.toString()}; the source publishes reserves to ${RESERVES_LATEST_YEAR.toString()}`,
     sourceLine("reserves"),
     scenarioLine !== null && "",
     scenarioLine,

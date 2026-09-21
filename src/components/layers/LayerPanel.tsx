@@ -22,9 +22,9 @@ export interface LayerState {
   gas_pipelines: boolean;
   lng_terminals: boolean;
   lng_voyages: boolean;     // Phase 6
-  gas_storage: boolean;     // GIE AGSI — live, slider-independent
+  gas_storage: boolean;     // GIE AGSI — live, year-independent
   shale_regions: boolean;   // EIA STEO — US shale-region production, annual
-  recent_imports: boolean;  // UN Comtrade — latest 12 reported months, slider-independent
+  recent_imports: boolean;  // UN Comtrade — latest 12 reported months, year-independent
   trade_flows: boolean;     // BACI — country-pair crude/LNG arcs, year-keyed (1995–2024)
 }
 

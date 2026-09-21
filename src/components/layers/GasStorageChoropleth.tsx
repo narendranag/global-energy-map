@@ -97,9 +97,9 @@ export const formatGasStorageTooltip: TooltipFormatter<GasStorageFeature> = (f, 
       ? "Above 100 %: more gas in store than nominal working volume"
       : false,
     p.full_pct !== null && `Gas day: ${formatGasDay(p.gas_day)}`,
-    // Said explicitly because this layer ignores the slider the user is holding.
+    // Said explicitly because this layer ignores the year everything else reads at.
     p.full_pct !== null &&
-      `Live reading — not affected by the year slider (${ctx.year.toString()})`,
+      `Live reading — independent of the map’s data year (${ctx.year.toString()})`,
     sourceLine("gas_storage"),
   );
 };

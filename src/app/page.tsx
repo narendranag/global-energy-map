@@ -15,7 +15,7 @@ import { Header } from "@/components/ui/Header";
 import { IntroCard } from "@/components/ui/IntroCard";
 import { MapFooter } from "@/components/ui/MapFooter";
 import { PhoneBanner } from "@/components/ui/PhoneBanner";
-import { YearSlider } from "@/components/time-slider/YearSlider";
+import { AsOfChip } from "@/components/ui/AsOfChip";
 import { ScenarioPanel } from "@/components/scenarios/ScenarioPanel";
 import { useScenario } from "@/components/scenarios/useScenario";
 import { sideNoun } from "@/components/scenarios/overlay";
@@ -30,6 +30,7 @@ import {
   applyMode,
   DEFAULT_APP_STATE,
   layersOpenByDefault,
+  TRADE_LAST_YEAR,
   type ExampleQuestion,
   type Mode,
 } from "@/lib/modes";
@@ -41,8 +42,6 @@ import { activeScenarioIds, normalizeScenarioPair, type ScenarioView } from "@/l
 import { panelPadding, requestInitialFit } from "@/lib/state";
 import { embedControlsHidden, isEmbed } from "@/lib/url-state/embed";
 import { useUrlState } from "@/lib/url-state/useUrlState";
-import { RESERVES_LATEST_YEAR, YEAR_MAX, YEAR_MIN } from "@/lib/time/range";
-import { yearRelevance } from "@/lib/time/relevance";
 
 /** First focusable control inside the scenario panel (its picker). */
 const SCENARIO_PICKER = "select, input, button, [tabindex]:not([tabindex='-1'])";
@@ -61,7 +60,9 @@ function HomeInner() {
     layers,
   } = state;
 
-  const setYear = useCallback((y: number) => { setState({ year: y }); }, [setState]);
+  // The only year affordance left: a pinned `year=` link's way back to the
+  // latest data (decision 4). Nothing else sets the year any more.
+  const viewLatestYear = useCallback(() => { setState({ year: TRADE_LAST_YEAR }); }, [setState]);
   // Flipping the axis clears a scenario the new commodity does not model: it
   // has no route rows there and would render a confident 0 % (A1).
   const setCommodity = useCallback(
@@ -219,11 +220,6 @@ function HomeInner() {
     [deckLayers, scenarioMap.layers],
   );
 
-  const reservesNote =
-    layers.reserves && year > RESERVES_LATEST_YEAR
-      ? `Reserves: ${RESERVES_LATEST_YEAR.toString()} value (latest in EI Statistical Review)`
-      : undefined;
-
   // A shared `?focus=XXX` link frames its country — unless the link also
   // carries a camera (`lon`/`lat`/`z`), which always wins: an explicit view is
   // what the sharer chose to show. Load only; a later selection (a click, and
@@ -312,7 +308,7 @@ function HomeInner() {
       <div className="relative min-h-0 flex-1">
         {/*
           DOM order is focus order (header → intro → layers → scenario →
-          country → commodity → year → map): the map is
+          country → commodity → as-of chip → map): the map is
           last in the DOM and painted beneath the panels by its own z-0
           stacking context; every panel carries z-10 or higher.
 
@@ -321,7 +317,7 @@ function HomeInner() {
           banner or full footer, just a compact attribution bar. Any *new* UI
           added here (by another task) must default to hidden or collapsed in
           embed mode unless it is essential to reading the map — check `embed`
-          (and `hideControls` for the year slider / commodity toggle) before
+          (and `hideControls` for the commodity toggle) before
           assuming a panel should render.
         */}
         {!embed && <IntroCard onPick={pickExample} />}
@@ -357,8 +353,9 @@ function HomeInner() {
             </button>
             {/*
               The panel positions itself (absolute right-4 top-4); this slot
-              is its containing block. It ends above the commodity toggle and the
-              slider and scrolls, so a long result list never runs under them; on
+              is its containing block. It ends above the commodity toggle and
+              the "as of" chip and scrolls, so a long result list never runs
+              under them; on
               phones (and, in embed mode, at every width) it sits below the
               collapsed header button.
             */}
@@ -366,7 +363,7 @@ function HomeInner() {
               ref={scenarioSlotRef}
               data-testid="scenario-slot"
               className={
-                "pointer-events-none absolute bottom-40 right-0 top-0 z-20 w-[min(26rem,100%)] overflow-y-auto overscroll-contain " +
+                "pointer-events-none absolute bottom-28 right-0 top-0 z-20 w-[min(26rem,100%)] overflow-y-auto overscroll-contain " +
                 (collapseScenario ? "" : "max-md:top-10 ") +
                 (scenarioOpenOnPhone ? "" : collapseScenario ? "hidden" : "max-md:hidden")
               }
@@ -426,12 +423,12 @@ function HomeInner() {
               which is exactly what phones have always done. With no scenario
               panel there is room at every width from 768 px, so the old `md`
               breakpoint stands. Either way the slot ends above the commodity
-              toggle and the year slider and scrolls.
+              toggle and the "as of" chip and scrolls.
             */}
             <div
               data-testid="country-slot"
               className={
-                "pointer-events-none absolute bottom-40 top-0 z-20 w-[min(22rem,100%)] overflow-y-auto overscroll-contain " +
+                "pointer-events-none absolute bottom-28 top-0 z-20 w-[min(22rem,100%)] overflow-y-auto overscroll-contain " +
                 (showScenarioPanel
                   ? "max-[1099px]:right-0 max-[1099px]:top-24 min-[1100px]:right-[26rem] "
                   : "right-0 max-md:top-10 ") +
@@ -460,20 +457,14 @@ function HomeInner() {
           </>
         )}
         {!hideControls && (
-          <div className="pointer-events-none absolute bottom-32 left-1/2 z-10 -translate-x-1/2">
+          <div className="pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2">
             <CommoditySelector value={commodity} onChange={setCommodity} />
           </div>
         )}
-        {!hideControls && (
-          <YearSlider
-            min={YEAR_MIN}
-            max={YEAR_MAX}
-            value={year}
-            onChange={setYear}
-            note={reservesNote}
-            relevance={yearRelevance(layers, scenarioId !== null)}
-          />
-        )}
+        {/* Shown under `?embed=1` and with `controls=0` too: it is not a
+            control, it is the caption that says which year the numbers on
+            screen are. Absent at the latest year (the normal case). */}
+        <AsOfChip year={year} latestYear={TRADE_LAST_YEAR} onViewLatest={viewLatestYear} />
         {embed ? <EmbedAttributionBar state={state} /> : <MapFooter />}
         <div className="absolute inset-0 z-0">
           <MapShell layers={mapLayers} getTooltip={getTooltip} onPick={onPick} />

@@ -82,7 +82,7 @@ export interface MapLayers {
 /**
  * Data → deck layers for the whole map. Each source loads once (cached
  * loaders); every layer is a pure builder memoised on exactly the inputs it
- * reads, so a slider tick rebuilds only the time-aware layers and a scenario
+ * reads, so a year change rebuilds only the time-aware layers and a scenario
  * change only recolours. Hidden layers are not built, and their data is not
  * fetched until first shown.
  */
@@ -139,7 +139,7 @@ export function useMapLayers({
     [layers.reserves, reservesFc, reservesMax, overlay],
   );
 
-  // No year in the deps: this layer is deliberately slider-independent.
+  // No year in the deps: this layer is deliberately year-independent.
   const gasStorageFc = useMemo(
     () =>
       countries.data && gasStorage.data
@@ -151,7 +151,7 @@ export function useMapLayers({
     () => (layers.gas_storage && gasStorageFc ? buildGasStorageLayer(gasStorageFc) : null),
     [layers.gas_storage, gasStorageFc],
   );
-  // No year in the deps: the latest reported months, whatever the slider says.
+  // No year in the deps: the latest reported months, whatever the map's year.
   const recentImportsFc = useMemo(
     () =>
       countries.data && recentImports.data ? recentImportsFeatures(countries.data, recentImports.data) : null,
@@ -266,7 +266,7 @@ export function useMapLayers({
   // extraction, oil pipes, gas pipes, BACI trade-flow arcs, LNG voyage arcs,
   // refineries, storage, ports, LNG terminals, the search highlight ring. Gas storage sits under
   // reserves so that with both on, the reserves ramp — the one the year
-  // slider drives — stays legible on top. The pick layer is bottom-most so
+  // the year drives — stays legible on top. The pick layer is bottom-most so
   // every real layer wins the tooltip and the click above it; the focus
   // outline sits above the fills it frames and below the marks it must not
   // hide. Trade flows sit just under the LNG voyage arcs (coarser

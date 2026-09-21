@@ -20,7 +20,7 @@ export interface ShaleRegionYearProps extends ShaleRegionProps {
   readonly crude_kbpd: number | null;
   /** bcf/d in `year`. */
   readonly gas_bcfd: number | null;
-  /** Latest historical year in the data, and its values — may be past the slider's range. */
+  /** Latest historical year in the data, and its values — may be past the map's data year. */
   readonly latest_year: number;
   readonly latest_crude_kbpd: number | null;
   readonly latest_gas_bcfd: number | null;
@@ -60,7 +60,7 @@ export function shaleRegionFeatures(
 }
 
 /**
- * Region polygons filled by the selected commodity's output in the slider
+ * Region polygons filled by the selected commodity's output in the active
  * year, against a fixed all-years maximum. Beneath the point and line layers:
  * a region is a backdrop for the wells and pipes inside it.
  */
@@ -96,7 +96,7 @@ export const formatShaleRegionTooltip: TooltipFormatter<ShaleRegionFeature> = (f
           p.gas_bcfd !== null ? bcfd(p.gas_bcfd) : "n/a"
         }`
       : `${p.year.toString()}: no EIA data — the regional series start in ${p.first_year.toString()}`,
-    // The data runs a year past the slider; show it rather than hide it.
+    // The data can run a year past the map's data year; show it rather than hide it.
     p.latest_year !== p.year &&
       `${p.latest_year.toString()} (latest full year): crude ${
         p.latest_crude_kbpd !== null ? kbpd(p.latest_crude_kbpd) : "n/a"

@@ -4,6 +4,7 @@ import { buildExtractionLayer } from "@/components/layers/ExtractionPoints";
 import { buildLngTerminalsLayer } from "@/components/layers/LngTerminalsLayer";
 import { buildLngVoyagesLayer } from "@/components/layers/LngVoyagesLayer";
 import { buildPipelinesLayer, filterPipelines } from "@/components/layers/PipelinesLayer";
+import { TRADE_LAST_YEAR } from "@/lib/data/trade-flows";
 import { buildPortsLayer } from "@/components/layers/PortsLayer";
 import { buildRefineriesLayer } from "@/components/layers/RefineriesLayer";
 import { buildReservesLayer, reservesFeatures } from "@/components/layers/ReservesChoropleth";
@@ -161,9 +162,14 @@ describe("LNG terminals builder", () => {
         },
       ],
     ]);
-    const l = buildLngTerminalsLayer(rows, 2024, impacts);
+    // At the latest data year nothing is hidden by vintage (decision 5 of the
+    // drop-the-year-slider plan): a 2030 commissioning date would otherwise
+    // vanish for good, with no control left to scrub forward.
+    const l = buildLngTerminalsLayer(rows, TRADE_LAST_YEAR, impacts);
     expect(l.id).toBe("lng-terminals");
-    expect(dataLength(l)).toBe(2);
+    expect(dataLength(l)).toBe(3);
+    // A pinned historical link still shows what existed by its year.
+    expect(dataLength(buildLngTerminalsLayer(rows, 2010, impacts))).toBe(2);
     expect(call(l.props.getIcon, rows[1])).toBe("lng_export");
     expect(call(l.props.getColor, rows[0])).toEqual([...LNG_TERMINAL_COLOR]);
     expect(call(l.props.getColor, rows[2])).toEqual([...LNG_NO_COVERAGE_COLOR]);

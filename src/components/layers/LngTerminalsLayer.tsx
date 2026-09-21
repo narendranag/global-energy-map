@@ -2,7 +2,8 @@ import { IconLayer } from "@deck.gl/layers";
 import type { LngTerminalAsset } from "@/lib/data/assets";
 import { sourceLine } from "@/lib/data/sources";
 import type { LngImportImpact } from "@/lib/scenarios/types";
-import { isVisibleAtYear } from "@/lib/vintage/filter";
+import { isVisibleAsOf } from "@/lib/vintage/filter";
+import { TRADE_LAST_YEAR } from "@/lib/data/trade-flows";
 import {
   LNG_TERMINAL_SIZE,
   LNG_TRIANGLE_POINTS,
@@ -40,7 +41,7 @@ export function buildLngTerminalsLayer(
 ): IconLayer<LngTerminalAsset> {
   return new IconLayer<LngTerminalAsset>({
     id: LNG_TERMINALS_LAYER_ID,
-    data: rows.filter((r) => isVisibleAtYear(r.commissioned_year, year)),
+    data: rows.filter((r) => isVisibleAsOf(r.commissioned_year, year, TRADE_LAST_YEAR)),
     iconAtlas: ICON_ATLAS,
     iconMapping: ICON_MAPPING,
     getIcon: (d) => d.kind,

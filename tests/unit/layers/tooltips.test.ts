@@ -150,10 +150,16 @@ describe("layer tooltips", () => {
       expect(t).toMatch(/^Source: Energy Institute/m);
     });
 
-    it("no data in source; frozen-year note", () => {
+    it("no data in source; states the source's latest reserves year", () => {
       const t = formatReservesTooltip(ata, { ...CTX, year: 2023 }) ?? "";
       expect(t).toContain("no data in source (2020)");
-      expect(t).toContain("year selected: 2023");
+      expect(t).toContain("2020 is the latest reserves year in the source");
+    });
+
+    it("a pinned historical year says what it is showing", () => {
+      const t = formatReservesTooltip(ata, { ...CTX, year: 2005 }) ?? "";
+      expect(t).toContain("Shown as of 2005");
+      expect(t).toContain("publishes reserves to 2020");
     });
 
     it("scenario line with the BACI source", () => {

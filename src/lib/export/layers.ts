@@ -9,13 +9,14 @@ import {
   focusPairs,
   TOP_N_PAIRS,
   HS,
+  TRADE_LAST_YEAR,
   type TradeFlowsData,
 } from "@/lib/data/trade-flows";
 import type { PositionedVoyage } from "@/lib/data/voyages";
 import { SCENARIOS } from "@/lib/scenarios/registry";
 import type { Commodity, ScenarioId } from "@/lib/scenarios/types";
 import type { AppState } from "@/lib/url-state/encode";
-import { isVisibleAtYear } from "@/lib/vintage/filter";
+import { isVisibleAsOf } from "@/lib/vintage/filter";
 import type { CsvValue } from "./csv";
 import { entriesForTags } from "./citation";
 import { lineFeatures, pointFeatures, reprojectProps } from "./geojson";
@@ -152,7 +153,11 @@ const ASSET_COLUMNS = [
 const LNG_COLUMNS = [...ASSET_COLUMNS, "unit_count", "total_processed_bcm", "un_locode"] as const;
 
 function vintageFilter(year: number): string {
-  return `features in service by ${String(year)} (undated features included)`;
+  // At the latest data year the vintage filter hides nothing (`isVisibleAsOf`),
+  // so the header must not claim a cut-off the rows were never held to.
+  return year >= TRADE_LAST_YEAR
+    ? "all features (no vintage cut-off at the latest data year)"
+    : `features in service by ${String(year)} (undated features included)`;
 }
 
 /**
@@ -163,7 +168,7 @@ export function assetTable(
   rows: readonly Asset[],
   opts: { readonly year: number; readonly timeAware: boolean; readonly lng?: boolean },
 ): ExportTable {
-  const shown = opts.timeAware ? rows.filter((r) => isVisibleAtYear(r.commissioned_year, opts.year)) : rows;
+  const shown = opts.timeAware ? rows.filter((r) => isVisibleAsOf(r.commissioned_year, opts.year, TRADE_LAST_YEAR)) : rows;
   const columns: readonly string[] = opts.lng ? LNG_COLUMNS : ASSET_COLUMNS;
   const records = shown.map((r) => {
     const rec: Record<string, CsvValue> = {};
@@ -214,7 +219,7 @@ export function pipelineTable(
   const shown = features.filter(
     (f) =>
       (f.properties.commodity === "gas" ? "gas" : "crude") === group &&
-      isVisibleAtYear(f.properties.start_year, year),
+      isVisibleAsOf(f.properties.start_year, year, TRADE_LAST_YEAR),
   );
   // `capacity_kbpd` holds capacity in `capacity_unit` (bcm/y for gas): export it as `capacity`.
   const renamed = shown.map((f) => ({
@@ -252,7 +257,7 @@ export function basinTable(features: readonly Feature<Geometry, BasinLikeProps>[
 
 const SHALE_REGION_COLUMNS = ["region_id", "name", "counties", "year", "crude_kbpd", "gas_bcfd"] as const;
 
-/** One row per region for the slider year; geometry = the region outline. */
+/** One row per region for the active year; geometry = the region outline. */
 export function shaleRegionTable(features: readonly Feature<Geometry, Record<string, unknown>>[]): ExportTable {
   const fs = reprojectProps(features, SHALE_REGION_COLUMNS);
   return {

@@ -1,7 +1,8 @@
 import { ScatterplotLayer } from "@deck.gl/layers";
 import type { ExtractionAsset } from "@/lib/data/assets";
 import { sourceLine } from "@/lib/data/sources";
-import { isVisibleAtYear } from "@/lib/vintage/filter";
+import { isVisibleAsOf } from "@/lib/vintage/filter";
+import { TRADE_LAST_YEAR } from "@/lib/data/trade-flows";
 import {
   EXTRACTION_FILL,
   EXTRACTION_LINE,
@@ -27,7 +28,7 @@ export function buildExtractionLayer(
 ): ScatterplotLayer<ExtractionAsset> {
   return new ScatterplotLayer<ExtractionAsset>({
     id: EXTRACTION_LAYER_ID,
-    data: rows.filter((r) => isVisibleAtYear(r.commissioned_year, year)),
+    data: rows.filter((r) => isVisibleAsOf(r.commissioned_year, year, TRADE_LAST_YEAR)),
     getPosition: (d) => [d.lon, d.lat],
     getRadius: (d) => extractionRadius(d.capacity),
     radiusUnits: "meters",

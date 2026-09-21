@@ -13,6 +13,7 @@
  * (normal vision + protan/deutan simulation).
  */
 import type { LayerState } from "@/components/layers/LayerPanel";
+import { RESERVES_LATEST_YEAR } from "@/lib/time/range";
 import { isZoomGated, minZoomFor } from "./zoom";
 
 export type Rgb = readonly [number, number, number];
@@ -685,7 +686,13 @@ const GAS_STORAGE_LEGEND_STOPS: readonly Rgba[] = [0, 25, 50, 75, 100].map((p) =
  */
 export const LEGEND: Readonly<Record<LayerKey, readonly LegendItem[]>> = {
   reserves: [
-    { label: "Proved reserves, low → high (log)", swatch: { kind: "gradient", stops: RESERVES_LEGEND_STOPS } },
+    {
+      // The year is stated here because there is no year control any more: the
+      // EI Statistical Review has not published reserves since 2020, so this
+      // ramp is a 2020 reading whatever else on the map is newer.
+      label: `Proved reserves to ${String(RESERVES_LATEST_YEAR)}, low → high (log)`,
+      swatch: { kind: "gradient", stops: RESERVES_LEGEND_STOPS },
+    },
     { label: "No reserves data in source", swatch: { kind: "fill", color: RESERVES_NO_DATA_COLOR } },
   ],
   gas_storage: [

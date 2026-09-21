@@ -48,7 +48,7 @@ export function recentImportsFeatures(
 
 /**
  * Latest-12-months imports choropleth. Not year-filtered: like gas storage, it
- * shows the most recent data regardless of the slider, and its tooltip says so.
+ * shows the most recent data regardless of the map’s data year, and its tooltip says so.
  */
 export function buildRecentImportsLayer(
   fc: RecentImportsCollection,
@@ -102,7 +102,7 @@ export const formatRecentImportsTooltip: TooltipFormatter<RecentImportsFeature> 
     r.baciMt !== null ? `BACI ${p.baci_year.toString()} (reconciled, annual): ${mt(r.baciMt)}` : `BACI ${p.baci_year.toString()}: none recorded`,
     divergesFromBaci(r) && "More than 2× off BACI — likely a reporting or unit error; check before citing",
     "As reported by the importer, not reconciled; a different measurement from BACI",
-    `Latest reported months — not affected by the year slider (${ctx.year.toString()})`,
+    `Latest reported months — independent of the map’s data year (${ctx.year.toString()})`,
     sourceLine("trade_monthly"),
   );
 };

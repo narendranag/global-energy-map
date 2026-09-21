@@ -2,7 +2,8 @@ import { GeoJsonLayer } from "@deck.gl/layers";
 import type { Feature, FeatureCollection, Geometry, LineString, MultiLineString } from "geojson";
 import { cachedLoader, fetchJson } from "@/lib/data/cache";
 import { sourceLine } from "@/lib/data/sources";
-import { isVisibleAtYear } from "@/lib/vintage/filter";
+import { isVisibleAsOf } from "@/lib/vintage/filter";
+import { TRADE_LAST_YEAR } from "@/lib/data/trade-flows";
 import { PIPELINE_LINE_MIN_PX, pipelineColor, type PipelineCommodity } from "@/lib/symbology";
 import { formatCapacity, joinLines, orNa, type TooltipFormatter } from "./tooltip";
 
@@ -42,7 +43,11 @@ export function pipelineLayerGroup(featureCommodity: string): PipelineCommodity 
   return featureCommodity === "gas" ? "gas" : "crude";
 }
 
-/** Features of one pipeline layer group that existed by `year` (undated always show). */
+/**
+ * Features of one pipeline layer group, as of `year`: at the latest data
+ * year nothing is hidden by vintage, and a pinned historical year shows what
+ * existed by then (undated lines always show). See `isVisibleAsOf`.
+ */
 export function filterPipelines(
   fc: PipelineCollection,
   commodity: PipelineCommodity,
@@ -51,7 +56,9 @@ export function filterPipelines(
   return {
     ...fc,
     features: fc.features.filter(
-      (f) => pipelineLayerGroup(f.properties.commodity) === commodity && isVisibleAtYear(f.properties.start_year, year),
+      (f) =>
+        pipelineLayerGroup(f.properties.commodity) === commodity &&
+        isVisibleAsOf(f.properties.start_year, year, TRADE_LAST_YEAR),
     ),
   };
 }

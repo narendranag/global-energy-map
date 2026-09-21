@@ -9,7 +9,7 @@ import {
   type RecentImport,
   type RecentImportsData,
 } from "@/lib/data/recent-imports";
-import { sourceLine } from "@/lib/data/sources";
+import { sourceVintageLine } from "@/lib/data/section-vintage";
 import type { Commodity } from "@/lib/scenarios/types";
 import { COUNTRY_OUTLINE_COLOR, COUNTRY_OUTLINE_MIN_PX, recentImportsColor } from "@/lib/symbology";
 import { joinLines, type TooltipFormatter } from "./tooltip";
@@ -88,7 +88,7 @@ export const formatRecentImportsTooltip: TooltipFormatter<RecentImportsFeature> 
     return joinLines(
       `${p.name} (${p.iso3})`,
       `${what}: no monthly reports to UN Comtrade`,
-      sourceLine("trade_monthly"),
+      sourceVintageLine("trade_monthly"),
     );
   }
   return joinLines(
@@ -103,6 +103,6 @@ export const formatRecentImportsTooltip: TooltipFormatter<RecentImportsFeature> 
     divergesFromBaci(r) && "More than 2× off BACI — likely a reporting or unit error; check before citing",
     "As reported by the importer, not reconciled; a different measurement from BACI",
     `Latest reported months — independent of the map’s data year (${ctx.year.toString()})`,
-    sourceLine("trade_monthly"),
+    sourceVintageLine("trade_monthly"),
   );
 };

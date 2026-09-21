@@ -218,6 +218,18 @@ describe("countryCsv", () => {
     expect(csv).toContain(ctx.viewUrl);
   });
 
+  it("dates every section it ships, from the catalog and the export date", () => {
+    // One line per included section, so a reader of the file knows what
+    // period each block of rows describes without going back to the app.
+    expect(csv).toContain("Data vintages:");
+    expect(csv).toMatch(/#\s+trade: BACI \(CEPII\) · .*data to \d{4}/);
+    expect(csv).toMatch(/#\s+exposure: BACI \(CEPII\) · /);
+    expect(csv).toMatch(/#\s+LNG terminals: .+(as of|to) /);
+    // Deterministic: staleness is judged against the export date it states,
+    // never the clock, so re-exporting the same view is byte-identical.
+    expect(countryCsv(profile, ctx)).toBe(csv);
+  });
+
   it("puts the column header after the comments and before the rows", () => {
     const lines = csv.split("\n");
     const head = lines.findIndex((l) => !l.startsWith("#"));

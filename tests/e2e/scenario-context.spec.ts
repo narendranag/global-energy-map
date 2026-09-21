@@ -30,6 +30,11 @@ test.describe("Scenario context", () => {
     await expect(storage).toContainText("days of the at-risk LNG volume");
     // The honesty caveat must be present verbatim-ish, not just the numbers.
     await expect(storage).toContainText("not a forecast");
+    // The two figures sit side by side, so each names its own source and
+    // vintage — the BACI trade year is not the gas day GIE last published.
+    await expect(page.getByTestId("section-vintage-context-storage")).toContainText(
+      /at-risk volume: BACI \(CEPII\) to \d{4}.*gas in storage: Gas Infrastructure Europe to /,
+    );
   });
 
   test("the oil axis shows no storage block", async ({ page }) => {
@@ -57,6 +62,9 @@ test.describe("Scenario context", () => {
     if (text.includes("China")) {
       expect(text).toMatch(/no monthly reports/);
     }
+    await expect(page.getByTestId("section-vintage-context-recent")).toContainText(
+      /at-risk volume: BACI \(CEPII\) to \d{4}.*recent imports: UN Comtrade to /,
+    );
   });
 
   test("is hidden under ?embed=1", async ({ page }) => {

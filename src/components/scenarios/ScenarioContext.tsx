@@ -21,6 +21,9 @@ import {
   showsStorageContext,
   TWH_PER_MT_LNG,
 } from "./context-model";
+import { SectionVintageLine } from "@/components/ui/SectionVintage";
+import { useToday } from "@/components/layers/useToday";
+import { sectionVintage } from "@/lib/data/section-vintage";
 import { loadGasStorageByCountry } from "@/lib/data/gas-storage";
 import { loadRecentImports } from "@/lib/data/recent-imports";
 import { useAsync } from "@/lib/data/useAsync";
@@ -62,6 +65,25 @@ export function ScenarioContext({ result, view = "importers" }: ScenarioContextP
   const searchParams = useSearchParams();
   const embed = isEmbed(searchParams);
   const names = useCountryNames();
+  const today = useToday();
+  // Each block puts two sources side by side, so each states its own vintage:
+  // the scenario's BACI year is not the gas day GIE last published, nor the
+  // month Comtrade's window ends, and a reader comparing the two figures has
+  // to be able to see that from the block itself.
+  const storageVintage = sectionVintage(
+    [
+      { label: "at-risk volume", tag: "trade" },
+      { label: "gas in storage", tag: "gas_storage" },
+    ],
+    { year: result?.year ?? null, today },
+  );
+  const recentVintage = sectionVintage(
+    [
+      { label: "at-risk volume", tag: "trade" },
+      { label: "recent imports", tag: "trade_monthly" },
+    ],
+    { year: result?.year ?? null, today },
+  );
 
   const wantsStorage = result !== null && showsStorageContext(result);
   const storageState = useAsync(loadGasStorageByCountry, wantsStorage ? [] : null, NON_FATAL);
@@ -141,9 +163,10 @@ export function ScenarioContext({ result, view = "importers" }: ScenarioContextP
                 actually last. BACI exposure is annual for {result.year}; the storage reading is each
                 country&apos;s own latest published gas day, so the two dates differ. A country whose own
                 latest reading is more than 30 days behind GIE&apos;s most recent global day is not shown
-                here at all, so it is never mistaken for a current figure. Source: Gas Infrastructure
-                Europe AGSI, view-only (not downloadable).
+                here at all, so it is never mistaken for a current figure. View-only (not
+                downloadable).
               </p>
+              <SectionVintageLine info={storageVintage} id="context-storage" />
             </>
           )}
         </div>
@@ -184,6 +207,7 @@ export function ScenarioContext({ result, view = "importers" }: ScenarioContextP
                 second exposure computation (Comtrade is importer totals only, unreconciled). China and
                 Taiwan file no monthly reports. View-only, not downloadable.
               </p>
+              <SectionVintageLine info={recentVintage} id="context-recent" />
             </>
           )}
         </div>

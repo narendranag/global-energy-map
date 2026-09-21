@@ -1,6 +1,6 @@
 import { ScatterplotLayer } from "@deck.gl/layers";
 import type { StorageAsset } from "@/lib/data/assets";
-import { sourceLine } from "@/lib/data/sources";
+import { sourceVintageLine } from "@/lib/data/section-vintage";
 import { STORAGE_FILL, STORAGE_LINE, STORAGE_RADIUS } from "@/lib/symbology";
 import { formatCapacity, joinLines, orNa, type TooltipFormatter } from "./tooltip";
 
@@ -38,5 +38,5 @@ export const formatStorageTooltip: TooltipFormatter<StorageAsset> = (o) =>
     `Operator: ${orNa(o.operator)}`,
     `Status: ${orNa(o.status)}`,
     `Capacity: ${formatCapacity(o.capacity, o.capacity_unit ?? "bbl")}`,
-    sourceLine("storage", o.source),
+    sourceVintageLine("storage", o.source),
   );

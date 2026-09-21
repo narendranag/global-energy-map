@@ -14,6 +14,13 @@ import { panelPadding, useCamera } from "@/lib/state";
 import type { Commodity, ScenarioId } from "@/lib/scenarios/types";
 import { formatVolume, pct } from "@/components/scenarios/panel-model";
 import { Sparkline } from "./Sparkline";
+import { SectionVintageLine } from "@/components/ui/SectionVintage";
+import { useToday } from "@/components/layers/useToday";
+import {
+  formatYearSpan,
+  sectionVintage,
+  type SectionVintageInfo,
+} from "@/lib/data/section-vintage";
 import { isKeyboardClick, setFocusIntent, takeFocusIntent } from "./focus-intent";
 import { useCountryProfile } from "./useCountryProfile";
 import { exposureBaselineNote, type ScenarioAdjustment } from "./exposure-note";
@@ -22,7 +29,6 @@ const CATALOG = catalogJson as unknown as Catalog;
 
 const HEADING = "text-xs font-medium uppercase tracking-wide text-slate-600";
 const NOTE = "text-[11px] leading-snug text-slate-600";
-const SOURCE = "mt-1 text-[11px] leading-snug text-slate-600";
 const LINK =
   "rounded text-[11px] font-medium text-sky-800 underline decoration-dotted underline-offset-2 hover:text-sky-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-700";
 
@@ -50,14 +56,25 @@ export interface CountryPanelProps {
   readonly scenarioAdjusted?: ScenarioAdjustment | null;
 }
 
+/**
+ * One section of the panel, ending in the line that says where its numbers
+ * came from and when that data ends (`SectionVintageLine`). Every section
+ * that shows a number passes one: with no year control on screen, the
+ * vintage is the only thing telling a reader what period they are looking
+ * at, so it is part of the section, not an optional extra.
+ */
 function Section({
   label,
-  source,
+  vintage,
+  vintageId,
+  vintageExtra,
   children,
   testId,
 }: {
   label: string;
-  source?: string | null | undefined;
+  vintage?: SectionVintageInfo | null;
+  vintageId?: string;
+  vintageExtra?: string | null | undefined;
   children: React.ReactNode;
   testId?: string;
 }) {
@@ -65,7 +82,9 @@ function Section({
     <section className="mt-3 border-t border-slate-200 pt-2" aria-label={label} data-testid={testId}>
       <h3 className={`mb-1 ${HEADING}`}>{label}</h3>
       {children}
-      {source !== null && source !== undefined && source !== "" && <p className={SOURCE}>{source}</p>}
+      {vintage !== undefined && vintageId !== undefined && (
+        <SectionVintageLine info={vintage} id={vintageId} extra={vintageExtra} />
+      )}
     </section>
   );
 }
@@ -81,7 +100,14 @@ function Metric({ series }: { series: CountryTimeSeries }) {
         </span>
       </div>
       {series.staleNote !== null && <p className={NOTE}>{series.staleNote}</p>}
-      <Sparkline series={series} />
+      <Sparkline
+        series={series}
+        caption={
+          series.first && series.last
+            ? `${series.label} ${String(series.first.year)}–${String(series.last.year)} (latest data ${String(series.last.year)})`
+            : ""
+        }
+      />
     </div>
   );
 }
@@ -158,6 +184,60 @@ function PartnerList({
   );
 }
 
+/** Catalog tag behind each infrastructure row the profile reports. */
+const INFRA_TAG: Record<string, { readonly tag: string; readonly label: string }> = {
+  lng_import: { tag: "lng_terminals", label: "LNG terminals" },
+  lng_export: { tag: "lng_terminals", label: "LNG terminals" },
+  refinery: { tag: "refineries", label: "refineries" },
+  extraction_site: { tag: "extraction", label: "extraction sites" },
+};
+
+/**
+ * Every section's vintage line, derived from the bundled catalog — one place,
+ * so no section can date its numbers differently from the layer panel or a
+ * tooltip. `year` is passed wherever the section's numbers are read *at* a
+ * year, so the line says both when the data ends elsewhere.
+ */
+function sectionVintages(
+  profile: {
+    readonly infrastructure: readonly { readonly kind: string }[];
+    readonly reserves: unknown;
+    readonly production: unknown;
+  } | null,
+  year: number,
+  commodity: Commodity,
+  today: string | null,
+): Record<"reserves" | "trade" | "infrastructure" | "gasStorage" | "recentImports", SectionVintageInfo | null> {
+  const opts = { year, today, catalog: CATALOG };
+  const infraParts = [
+    ...new Map(
+      (profile?.infrastructure ?? [])
+        .map((i) => INFRA_TAG[i.kind])
+        .filter((t): t is { tag: string; label: string } => t !== undefined)
+        .map((t) => [t.tag, t]),
+    ).values(),
+  ];
+  return {
+    // Only what the section actually shows: a country with reserves but no
+    // production rows must not be told when production data it cannot see ends.
+    reserves: sectionVintage(
+      [
+        ...(profile?.reserves != null
+          ? [{ label: "reserves", tag: commodity === "gas" ? "reserves:gas" : "reserves" }]
+          : []),
+        ...(profile?.production != null ? [{ label: "production", tag: "production" }] : []),
+      ],
+      opts,
+    ),
+    trade: sectionVintage("trade", opts),
+    // Snapshots: no year to read them at, so none is stated.
+    infrastructure:
+      infraParts.length === 0 ? null : sectionVintage(infraParts, { today, catalog: CATALOG }),
+    gasStorage: sectionVintage("gas_storage", { today, catalog: CATALOG }),
+    recentImports: sectionVintage("trade_monthly", { today, catalog: CATALOG }),
+  };
+}
+
 /**
  * The country panel (S3): what a researcher reads when they select a country,
  * rather than what a tooltip can say while they hover it.
@@ -186,7 +266,10 @@ export function CountryPanel({
   const headingId = `${uid}-heading`;
   const headingRef = useRef<HTMLHeadingElement>(null);
   const camera = useCamera();
-  const { profile, errors } = useCountryProfile(iso3, year, commodity);
+  const { profile, errors, routeYears } = useCountryProfile(iso3, year, commodity);
+  // Null until mounted (prerender has no clock): staleness is judged against
+  // the reader's today, and the "old" marker appears on the first commit.
+  const today = useToday();
 
   // Keyboard-initiated selection moves focus here; a map click does not (it
   // would take the pointer user out of the map mid-gesture).
@@ -203,6 +286,7 @@ export function CountryPanel({
       ? null
       : exposureBaselineNote(scenarioAdjusted, profile.name);
   const trade = profile?.trade ?? null;
+  const vintages = sectionVintages(profile, year, commodity, today);
   const plan = profile === null ? null : countryCsvPlan(profile, CATALOG);
   const canExport = plan !== null && plan.included.length > 0;
 
@@ -292,7 +376,8 @@ export function CountryPanel({
           {(profile.reserves !== null || profile.production !== null) && (
             <Section
               label="Reserves and production"
-              source={profile.reserves?.source ?? profile.production?.source}
+              vintage={vintages.reserves}
+              vintageId="reserves"
               testId="country-reserves"
             >
               {profile.reserves !== null && <Metric series={profile.reserves} />}
@@ -304,7 +389,8 @@ export function CountryPanel({
           {trade !== null && (
             <Section
               label={`${noun} trade, ${String(year)}`}
-              source={trade.source}
+              vintage={vintages.trade}
+              vintageId="trade"
               testId="country-trade"
             >
               {trade.emptyYear ? (
@@ -364,7 +450,13 @@ export function CountryPanel({
           {profile.exposure.length > 0 && (
             <Section
               label={`Exposure, ${String(year)}`}
-              source={trade?.source}
+              vintage={vintages.trade}
+              vintageId="exposure"
+              vintageExtra={
+                routeYears === null
+                  ? "route shares dated in the scenario panel"
+                  : `route shares dated ${formatYearSpan(routeYears)}`
+              }
               testId="country-exposure"
             >
               <p className={`mb-1 ${NOTE}`}>
@@ -400,7 +492,12 @@ export function CountryPanel({
 
           {/* 4. Infrastructure, storage, recent imports --------------------- */}
           {profile.infrastructure.length > 0 && (
-            <Section label="Infrastructure" testId="country-infrastructure">
+            <Section
+              label="Infrastructure"
+              vintage={vintages.infrastructure}
+              vintageId="infrastructure"
+              testId="country-infrastructure"
+            >
               <ul className="space-y-1">
                 {profile.infrastructure.map((i) => (
                   <li key={i.kind}>
@@ -414,7 +511,6 @@ export function CountryPanel({
                         {String(i.withCapacity)} with capacity in the source
                       </p>
                     )}
-                    {i.source !== null && <p className={NOTE}>{i.source}</p>}
                   </li>
                 ))}
               </ul>
@@ -422,7 +518,12 @@ export function CountryPanel({
           )}
 
           {profile.gasStorage !== null && (
-            <Section label="Gas storage" source={profile.gasStorage.source} testId="country-storage">
+            <Section
+              label="Gas storage"
+              vintage={vintages.gasStorage}
+              vintageId="storage"
+              testId="country-storage"
+            >
               <div className="flex justify-between gap-2 text-xs">
                 <span>Full on {profile.gasStorage.gasDay}</span>
                 <span className="font-mono">{profile.gasStorage.percentFull.toFixed(1)}%</span>
@@ -437,7 +538,8 @@ export function CountryPanel({
           {profile.recentImports !== null && (
             <Section
               label="Recent imports"
-              source={profile.recentImports.source}
+              vintage={vintages.recentImports}
+              vintageId="recent"
               testId="country-recent"
             >
               <div className="flex justify-between gap-2 text-xs">

@@ -1,6 +1,6 @@
 import { ScatterplotLayer } from "@deck.gl/layers";
 import type { ExtractionAsset } from "@/lib/data/assets";
-import { sourceLine } from "@/lib/data/sources";
+import { sourceVintageLine } from "@/lib/data/section-vintage";
 import { isVisibleAsOf } from "@/lib/vintage/filter";
 import { TRADE_LAST_YEAR } from "@/lib/data/trade-flows";
 import {
@@ -51,5 +51,5 @@ export const formatExtractionTooltip: TooltipFormatter<ExtractionAsset> = (o) =>
     `Status: ${orNa(o.status)}`,
     `Capacity: ${formatCapacity(o.capacity, o.capacity_unit ?? "kboe/d", 1)}`,
     o.commissioned_year !== null && `Start year: ${o.commissioned_year.toString()}`,
-    sourceLine("extraction", o.source),
+    sourceVintageLine("extraction", o.source),
   );

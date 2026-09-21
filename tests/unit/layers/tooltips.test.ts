@@ -16,8 +16,14 @@ import { COUNTRIES, extraction, lngTerminal, pipeline, port, refinery, storage, 
 
 const CTX: TooltipContext = { year: 2020, commodity: "oil", scenario: null };
 
-/** Every tooltip names its source and the source's as-of date. */
-const SOURCE_LINE = /^Source: .+ \(as of \d{4}-\d{2}-\d{2}\)$/m;
+/**
+ * Every tooltip ends with its source *and* the vintage of that source's data
+ * — the period the rows cover where the catalog declares one, else the
+ * snapshot date (2026-09-21: no year control, so a number states its own
+ * vintage wherever it appears).
+ */
+const SOURCE_LINE =
+  /^Source: .+ · (data to .+ \(released \d{4}-\d{2}-\d{2}\)|snapshot as of .+)$/m;
 
 describe("formatCapacity", () => {
   it("formats value + unit and says 'not in source' when missing", () => {
@@ -40,7 +46,7 @@ describe("layer tooltips", () => {
     const t = formatRefineryTooltip(refinery("Chauk", { source: "OpenStreetMap (Overpass)" }), CTX) ?? "";
     expect(t).toContain("Refinery: Chauk");
     expect(t).toContain("Capacity: not in source");
-    expect(t).toMatch(/^Source: OpenStreetMap \(as of /m);
+    expect(t).toMatch(/^Source: OpenStreetMap · snapshot as of /m);
   });
 
   it("refinery: capacity with unit", () => {

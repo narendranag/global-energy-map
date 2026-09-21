@@ -13,7 +13,7 @@ import {
   type TradeFlowPair,
   type TradeFlowsData,
 } from "@/lib/data/trade-flows";
-import { sourceLine } from "@/lib/data/sources";
+import { sourceVintageLine } from "@/lib/data/section-vintage";
 import {
   TRADE_FLOW_WIDTH,
   tradeFlowMaxWidth,
@@ -122,6 +122,6 @@ export const formatTradeFlowTooltip: TooltipFormatter<TradeFlowArc> = (o, ctx) =
     // *quantified* trade, not of every reported flow.
     `Share of ${o.importer_iso3}'s quantified imports: ${pct(o.importerSharePct / 100)}`,
     `Share of ${o.exporter_iso3}'s quantified exports: ${pct(o.exporterSharePct / 100)}`,
-    sourceLine("trade"),
+    sourceVintageLine("trade"),
   );
 };

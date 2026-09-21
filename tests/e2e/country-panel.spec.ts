@@ -40,8 +40,11 @@ test.describe("country panel", () => {
     const first = suppliers.getByRole("button").first();
     await expect(first).toContainText(JAPAN_TOP_SUPPLIER.name);
     await expect(first).toContainText(JAPAN_TOP_SUPPLIER.iso3);
-    // Every section is dated and attributed from the catalog, never by hand.
-    await expect(page.getByTestId("country-trade")).toContainText(/Source: BACI \(CEPII\) \(as of /);
+    // Every section is dated and attributed from the catalog, never by hand:
+    // the source, and the year its data actually ends (not its release date).
+    await expect(page.getByTestId("section-vintage-trade")).toContainText(
+      /BACI \(CEPII\) · .*to \d{4}/,
+    );
 
     // Japan has no Energy Institute rows at all, so that section is absent
     // rather than showing zeroes.
@@ -60,7 +63,11 @@ test.describe("country panel", () => {
     const charts = reserves.getByRole("img");
     await expect(charts).toHaveCount(2);
     await expect(charts.first()).toHaveAttribute("aria-label", /Proved oil reserves, 1990–2020:/);
-    await expect(reserves).toContainText(/Source: Energy Institute/);
+    await expect(page.getByTestId("section-vintage-reserves")).toContainText(
+      /Energy Institute .*reserves to \d{4}.*production to \d{4}/,
+    );
+    // The sparkline captions state the span and the last year with data.
+    await expect(reserves).toContainText(/Proved oil reserves 1990–\d{4} \(latest data \d{4}\)/);
   });
 
   test("exposure lists every applicable scenario and activating one selects it", async ({ page }) => {
@@ -109,6 +116,27 @@ test.describe("country panel", () => {
     await page.getByRole("button", { name: /^Close Japan/ }).click();
     await expect.poll(() => focusParam(page), { timeout: 15_000 }).toBeNull();
     await expect(page.getByTestId("country-panel")).toHaveCount(0);
+  });
+
+  test("every section states the vintage of the data behind its numbers", async ({ page }) => {
+    // Japan: BACI trade, exposure to every oil scenario, and refineries +
+    // LNG terminals. Nothing here pins a date — the lines are catalog-derived,
+    // so a refresh must move them without touching this spec.
+    await gotoReady(page, "/?focus=JPN&year=2024&layers=reserves");
+    const dated = /(to \d{4}|to \w{3,4} \d{4}|(to|as of) \d{1,2} \w{3,4} \d{4})/;
+    // Japan has no Energy Institute rows, so that section is absent here —
+    // it is dated in the producer test above.
+    for (const id of ["trade", "exposure", "infrastructure"]) {
+      const line = page.getByTestId(`section-vintage-${id}`);
+      await expect(line, id).toBeVisible({ timeout: SECTION_TIMEOUT });
+      await expect(line, id).toContainText(dated);
+    }
+    // The exposure rows rest on two dated inputs, and say so.
+    await expect(page.getByTestId("section-vintage-exposure")).toContainText(/route shares dated/);
+    // Comtrade covers Japan, but the section only exists when it reports —
+    // when it does, it is dated like every other.
+    const recent = page.getByTestId("section-vintage-recent");
+    if ((await recent.count()) > 0) await expect(recent).toContainText(dated);
   });
 
   test("the CSV offer says what it must leave out, and why", async ({ page }) => {

@@ -3,7 +3,7 @@ import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson"
 import type { CountryCollection, CountryProps } from "@/lib/geo/countries";
 import { dataIso3 } from "@/lib/geo/iso3";
 import type { GasStorageData } from "@/lib/data/gas-storage";
-import { sourceLine } from "@/lib/data/sources";
+import { sourceVintageLine } from "@/lib/data/section-vintage";
 import {
   COUNTRY_OUTLINE_COLOR,
   COUNTRY_OUTLINE_MIN_PX,
@@ -100,6 +100,6 @@ export const formatGasStorageTooltip: TooltipFormatter<GasStorageFeature> = (f, 
     // Said explicitly because this layer ignores the year everything else reads at.
     p.full_pct !== null &&
       `Live reading — independent of the map’s data year (${ctx.year.toString()})`,
-    sourceLine("gas_storage"),
+    sourceVintageLine("gas_storage"),
   );
 };

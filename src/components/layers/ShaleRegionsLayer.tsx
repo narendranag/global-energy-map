@@ -8,7 +8,7 @@ import {
   type ShaleRegionData,
   type ShaleRegionProps,
 } from "@/lib/data/shale-regions";
-import { sourceLine } from "@/lib/data/sources";
+import { sourceVintageLine } from "@/lib/data/section-vintage";
 import { SHALE_OUTLINE, SHALE_OUTLINE_MIN_PX, shaleRegionColor } from "@/lib/symbology";
 import { joinLines, type TooltipFormatter } from "./tooltip";
 
@@ -102,6 +102,6 @@ export const formatShaleRegionTooltip: TooltipFormatter<ShaleRegionFeature> = (f
         p.latest_crude_kbpd !== null ? kbpd(p.latest_crude_kbpd) : "n/a"
       } · gas ${p.latest_gas_bcfd !== null ? bcfd(p.latest_gas_bcfd) : "n/a"}`,
     "Region = the counties EIA assigns to it, not a geological outline",
-    sourceLine("shale_regions"),
+    sourceVintageLine("shale_regions"),
   );
 };

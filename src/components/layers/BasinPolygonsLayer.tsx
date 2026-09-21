@@ -1,7 +1,7 @@
 import { GeoJsonLayer } from "@deck.gl/layers";
 import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { cachedLoader, fetchJson } from "@/lib/data/cache";
-import { sourceLine } from "@/lib/data/sources";
+import { sourceVintageLine } from "@/lib/data/section-vintage";
 import { BASIN_FILL, BASIN_LINE, BASIN_LINE_MIN_PX } from "@/lib/symbology";
 import { joinLines, orNa, type TooltipFormatter } from "./tooltip";
 
@@ -46,6 +46,6 @@ export const formatBasinTooltip: TooltipFormatter<BasinFeature> = (f) => {
     `Country: ${orNa(p.country_iso3)}`,
     `Area: ${typeof area === "number" && area > 0 ? `${area.toFixed(0)} km²` : "not in source"}`,
     `Region: ${orNa(p.region)}`,
-    sourceLine("basins"),
+    sourceVintageLine("basins"),
   );
 };

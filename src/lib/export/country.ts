@@ -3,6 +3,7 @@ import type { CountryProfile } from "@/lib/data/country-profile";
 import { SCENARIOS } from "@/lib/scenarios/registry";
 import { toCsv, type CsvValue } from "./csv";
 import { apaCitation, entriesForTags, sourceCitationLine } from "./citation";
+import { sectionVintage } from "@/lib/data/section-vintage";
 
 /**
  * "Download CSV" for the country panel: exactly the numbers the panel shows,
@@ -53,6 +54,26 @@ const EXPOSURE_SCENARIO_TAGS: readonly string[] = SCENARIOS.flatMap((s) => [
   `scenario:${s.id}`,
   ...(s.commodities.includes("gas") ? [`scenario:${s.id}-lng`] : []),
 ]);
+
+/**
+ * The tag whose vintage dates each section in the file header. A section can
+ * rest on several catalogued sources (exposure = BACI × every route-share
+ * table); the one named here is the series the numbers are read at, so the
+ * header states a date a reader can check the rows against rather than the
+ * newest date in a bundle.
+ */
+export const COUNTRY_SECTION_VINTAGE_TAGS: Readonly<Record<string, readonly string[]>> = {
+  reserves: ["reserves"],
+  "reserves (gas)": ["reserves:gas"],
+  production: ["production"],
+  trade: ["trade"],
+  exposure: ["trade"],
+  "LNG terminals": ["lng_terminals"],
+  "extraction sites": ["extraction"],
+  refineries: ["refineries"],
+  "gas storage": ["gas_storage"],
+  "recent imports": ["trade_monthly"],
+};
 
 /** Catalog `layers` tags behind each section of the panel. */
 export const COUNTRY_SECTION_TAGS: Readonly<Record<string, readonly string[]>> = {
@@ -268,6 +289,26 @@ export function countryCsvHeader(profile: CountryProfile, ctx: CountryCsvContext
     }
   }
   if (sources.length > 0) lines.push("Sources in this file:", ...sources);
+  // Every section states the vintage of the data behind it, from the same
+  // catalog-derived helper the panel's own section lines use — so the file a
+  // reader keeps says exactly what the screen they took it from said. `today`
+  // is the export date, never the clock, so re-exporting the same view on the
+  // same day is byte-identical.
+  const vintages = plan.included
+    .map((s) => {
+      const tags = COUNTRY_SECTION_VINTAGE_TAGS[s.section];
+      const v =
+        tags === undefined
+          ? null
+          : sectionVintage(tags.slice(), {
+              year: profile.year,
+              today: ctx.exported,
+              catalog: ctx.catalog,
+            });
+      return v === null ? null : `  ${s.section}: ${v.text}`;
+    })
+    .filter((l): l is string => l !== null);
+  if (vintages.length > 0) lines.push("Data vintages:", ...vintages);
   if (plan.excluded.length > 0) {
     lines.push(
       "Left out — shown in the app but not redistributable under its source's licence:",

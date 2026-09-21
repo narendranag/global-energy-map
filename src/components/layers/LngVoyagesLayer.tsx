@@ -1,6 +1,6 @@
 import { ArcLayer } from "@deck.gl/layers";
 import type { PositionedVoyage } from "@/lib/data/voyages";
-import { sourceLine } from "@/lib/data/sources";
+import { sourceVintageLine } from "@/lib/data/section-vintage";
 import type { LngImportImpact } from "@/lib/scenarios/types";
 import {
   VOYAGE_WIDTH,
@@ -54,6 +54,6 @@ export const formatLngVoyageTooltip: TooltipFormatter<PositionedVoyage> = (o) =>
     `Dates: ${o.start_date} → ${o.end_date}`,
     `Cargo: ${o.amount_cbm.toLocaleString("en-US")} cbm  (≈ ${mt.toFixed(3)} Mt)`,
     `Confidence: ${o.confidence_score.toString()}/5`,
-    sourceLine("lng_voyages"),
+    sourceVintageLine("lng_voyages"),
   );
 };

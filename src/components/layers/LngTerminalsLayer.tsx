@@ -1,6 +1,6 @@
 import { IconLayer } from "@deck.gl/layers";
 import type { LngTerminalAsset } from "@/lib/data/assets";
-import { sourceLine } from "@/lib/data/sources";
+import { sourceVintageLine } from "@/lib/data/section-vintage";
 import type { LngImportImpact } from "@/lib/scenarios/types";
 import { isVisibleAsOf } from "@/lib/vintage/filter";
 import { TRADE_LAST_YEAR } from "@/lib/data/trade-flows";
@@ -88,7 +88,7 @@ export const formatLngTerminalTooltip: TooltipFormatter<LngTerminalAsset> = (o, 
       o.total_processed_bcm > 0 &&
       `Total processed 2020–2024: ${o.total_processed_bcm.toFixed(0)} bcm`,
     o.un_locode !== null && o.un_locode.length > 0 && `UN/LOCODE: ${o.un_locode}`,
-    sourceLine("lng_terminals", o.source),
+    sourceVintageLine("lng_terminals", o.source),
     ...scenarioLines,
   );
 };

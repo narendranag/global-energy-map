@@ -1,6 +1,6 @@
 import { ScatterplotLayer } from "@deck.gl/layers";
 import type { RefineryAsset } from "@/lib/data/assets";
-import { sourceLine } from "@/lib/data/sources";
+import { sourceVintageLine } from "@/lib/data/section-vintage";
 import type { RefineryImpact } from "@/lib/scenarios/types";
 import {
   REFINERY_LINE,
@@ -54,7 +54,7 @@ export const formatRefineryTooltip: TooltipFormatter<RefineryAsset> = (o, ctx) =
     `Country: ${o.country_iso3}`,
     `Operator: ${orNa(o.operator)}`,
     `Capacity: ${formatCapacity(o.capacity, o.capacity_unit ?? "kbpd")}`,
-    sourceLine("refineries", o.source),
+    sourceVintageLine("refineries", o.source),
     ...scenarioLines,
   );
 };

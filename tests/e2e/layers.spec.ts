@@ -174,6 +174,12 @@ test.describe("Layer panel", () => {
         await page.mouse.move(position.x, position.y);
         try {
           await expect(page.locator("body")).toContainText("Basin:", { timeout: 2_000 });
+          // Every tooltip ends with its source and that data's vintage,
+          // derived from the catalog (no year control means the number has to
+          // date itself wherever it appears).
+          await expect(page.locator("body")).toContainText(
+            /Source: .+ · (data to .+\(released \d{4}-\d{2}-\d{2}\)|snapshot as of .+)/,
+          );
           return;
         } catch {
           // no basin under this point; try the next

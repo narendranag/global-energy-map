@@ -1,7 +1,7 @@
 import { GeoJsonLayer } from "@deck.gl/layers";
 import type { Feature, FeatureCollection, Geometry, LineString, MultiLineString } from "geojson";
 import { cachedLoader, fetchJson } from "@/lib/data/cache";
-import { sourceLine } from "@/lib/data/sources";
+import { sourceVintageLine } from "@/lib/data/section-vintage";
 import { isVisibleAsOf } from "@/lib/vintage/filter";
 import { TRADE_LAST_YEAR } from "@/lib/data/trade-flows";
 import { PIPELINE_LINE_MIN_PX, pipelineColor, type PipelineCommodity } from "@/lib/symbology";
@@ -98,6 +98,6 @@ export const formatPipelineTooltip: TooltipFormatter<PipelineFeature> = (f) => {
     `Operator: ${orNa(p.operator)}`,
     `Capacity: ${formatCapacity(p.capacity_kbpd, p.capacity_unit ?? (isGas ? "bcm/y" : "kbpd"))}`,
     p.start_year !== null && `Start year: ${p.start_year.toString()}`,
-    sourceLine(isGas ? "gas_pipelines" : "pipelines"),
+    sourceVintageLine(isGas ? "gas_pipelines" : "pipelines"),
   );
 };

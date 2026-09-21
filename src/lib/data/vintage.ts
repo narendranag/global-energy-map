@@ -1,6 +1,6 @@
 import type { LayerKey } from "@/lib/symbology";
 import { catalogEntriesFor } from "./sources";
-import type { Catalog, CoverageSpan } from "@/lib/data-catalog/types";
+import type { Catalog, CatalogEntry, CoverageSpan } from "@/lib/data-catalog/types";
 
 /**
  * Per-layer data vintage for the "Data vintage" panel section and the "old"
@@ -17,9 +17,11 @@ import type { Catalog, CoverageSpan } from "@/lib/data-catalog/types";
  * series carry catalog `coverage`; snapshot tables (assets, pipelines, basins)
  * have none, and for them the snapshot date is the right answer.
  */
-export interface LayerVintage {
-  readonly key: LayerKey;
-  readonly label: string;
+/**
+ * When a body of data ends, independent of which layer toggle shows it.
+ * `LayerVintage` is this plus the toggle's identity.
+ */
+export interface DataVintage {
   /** "series": dated by the last period its rows cover; "snapshot": by as_of. */
   readonly kind: "series" | "snapshot";
   /** Series only: last covered period at its grain ("2020", "2026-05", "2026-09-17"). */
@@ -27,6 +29,11 @@ export interface LayerVintage {
   readonly grain: CoverageSpan["grain"] | null;
   /** ISO date the data ends: last day of `through`, or the snapshot's as_of. */
   readonly dataEnd: string;
+}
+
+export interface LayerVintage extends DataVintage {
+  readonly key: LayerKey;
+  readonly label: string;
 }
 
 /** The catalog layer tag behind each toggle. */
@@ -80,8 +87,26 @@ export function layerVintage(
   label: string,
   catalog?: Catalog,
 ): LayerVintage | null {
-  const tag = CATALOG_TAG[key];
-  const entries = catalogEntriesFor(tag, catalog);
+  const v = vintageForTag(CATALOG_TAG[key], catalog);
+  return v === null ? null : { key, label, ...v };
+}
+
+/**
+ * The same reading for any catalog `layers` tag, not just a layer toggle —
+ * "trade", "production", "reserves:gas", "gas_storage". Every information
+ * surface that states a vintage (country-panel sections, tooltips, the
+ * country CSV header) goes through this, so none of them can date a number
+ * differently from the layer panel.
+ *
+ * `entries` narrows the scan to one catalog entry, which is what a tooltip
+ * on a multi-source layer needs: an OpenStreetMap refinery row is dated by
+ * the OSM extract, not by whichever of the layer's sources is newest.
+ */
+export function vintageForTag(
+  tag: string,
+  catalog?: Catalog,
+  entries: readonly CatalogEntry[] = catalogEntriesFor(tag, catalog),
+): DataVintage | null {
   let series: { span: CoverageSpan; end: string } | null = null;
   let snapshot: string | null = null;
   for (const e of entries) {
@@ -93,11 +118,9 @@ export function layerVintage(
     if (spans.length === 0 && (snapshot === null || e.as_of > snapshot)) snapshot = e.as_of;
   }
   if (series !== null) {
-    return { key, label, kind: "series", through: series.span.through, grain: series.span.grain, dataEnd: series.end };
+    return { kind: "series", through: series.span.through, grain: series.span.grain, dataEnd: series.end };
   }
-  if (snapshot !== null) {
-    return { key, label, kind: "snapshot", through: null, grain: null, dataEnd: snapshot };
-  }
+  if (snapshot !== null) return { kind: "snapshot", through: null, grain: null, dataEnd: snapshot };
   return null;
 }
 
@@ -122,7 +145,7 @@ export function monthsOld(dataEnd: string, today: string): number {
   return Math.max(0, months);
 }
 
-export function isStale(v: LayerVintage, today: string): boolean {
+export function isStale(v: DataVintage, today: string): boolean {
   return monthsOld(v.dataEnd, today) > STALE_AFTER_MONTHS;
 }
 
@@ -139,13 +162,13 @@ export function formatAsOf(iso: string): string {
 }
 
 /** "to 2020" · "to May 2026" · "to 17 Sep 2026" · "as of 9 Apr 2025". */
-export function formatVintage(v: LayerVintage): string {
+export function formatVintage(v: DataVintage): string {
   if (v.kind === "snapshot" || v.through === null || v.grain === null) return `as of ${formatAsOf(v.dataEnd)}`;
   return `to ${formatPeriod(v.through, v.grain)}`;
 }
 
 /** Hover text for the "old" marker: what is old, and by how much. */
-export function staleNote(v: LayerVintage, today: string): string {
+export function staleNote(v: DataVintage, today: string): string {
   const n = monthsOld(v.dataEnd, today);
   const what = v.kind === "series" ? `Data ends ${formatVintage(v).slice(3)}` : `Snapshot from ${formatAsOf(v.dataEnd)}`;
   return `${what}, ${n.toString()} months ago — older than the ${STALE_AFTER_MONTHS.toString()}-month mark.`;

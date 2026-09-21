@@ -1,6 +1,6 @@
 import { IconLayer } from "@deck.gl/layers";
 import type { PortAsset } from "@/lib/data/assets";
-import { sourceLine } from "@/lib/data/sources";
+import { sourceVintageLine } from "@/lib/data/section-vintage";
 import { ANCHOR_GLYPH, PORT_COLOR, PORT_SIZE, portSize } from "@/lib/symbology";
 import { formatCapacity, joinLines, orNa, type TooltipFormatter } from "./tooltip";
 
@@ -51,5 +51,5 @@ export const formatPortTooltip: TooltipFormatter<PortAsset> = (o) =>
     `Operator: ${orNa(o.operator)}`,
     `Status: ${orNa(o.status)}`,
     o.capacity !== null && `Capacity: ${formatCapacity(o.capacity, o.capacity_unit)}`,
-    sourceLine("ports", o.source),
+    sourceVintageLine("ports", o.source),
   );

@@ -153,3 +153,14 @@ describe("view citation", () => {
     expect(text).toContain("Required attributions:\n- Data: GEM, CC BY 4.0");
   });
 });
+
+describe("sourceCitationLine coverage", () => {
+  it("states what a series covers, not only when it was released", async () => {
+    const { sourceCitationLine } = await import("@/lib/export/citation");
+    const { BUNDLED_CATALOG } = await import("@/lib/data-catalog/bundled");
+    const series = BUNDLED_CATALOG.entries.find((e) => (e.coverage ?? []).length > 0);
+    const snapshot = BUNDLED_CATALOG.entries.find((e) => (e.coverage ?? []).length === 0);
+    expect(series && sourceCitationLine(series)).toMatch(/, data .+, as of /);
+    expect(snapshot && sourceCitationLine(snapshot)).not.toContain(", data ");
+  });
+});

@@ -2,6 +2,7 @@ import { cachedLoader } from "./cache";
 import { readParquet } from "./parquet";
 import { loadScenarioInputs } from "./scenario-inputs";
 import type { CountrySeriesRow, CountryTradeRow } from "./country-profile";
+import { routeSourceYearSpan, type YearSpan } from "./section-vintage";
 import { computeScenarioImpact } from "@/lib/scenarios/engine";
 import { SCENARIOS, isScenarioActive } from "@/lib/scenarios/registry";
 import type { Commodity, ScenarioId, ScenarioResult } from "@/lib/scenarios/types";
@@ -118,5 +119,29 @@ export const loadCountryExposure = lruLoader(
       }),
     );
     return new Map(entries);
+  },
+);
+
+/**
+ * When the documents behind the route shares of every scenario in this
+ * (year, commodity) were published — the second half of what an exposure row
+ * rests on, beside the BACI trade year.
+ *
+ * Free: `loadScenarioInputs` is itself cached per (id, year, commodity) and
+ * `loadCountryExposure` has already asked for exactly these, so this awaits
+ * the same promises and reads the `source_year` column they already carry.
+ * The span is derived by the pure `routeSourceYearSpan`; a scenario with no
+ * dated row simply contributes nothing.
+ */
+export const loadRouteYears = lruLoader(
+  8,
+  async (year: number, commodity: Commodity): Promise<YearSpan | null> => {
+    const defs = SCENARIOS.filter(
+      (s) => s.commodities.includes(commodity) && isScenarioActive(s, year),
+    );
+    const routes = await Promise.all(
+      defs.map(async (def) => (await loadScenarioInputs(def.id, year, commodity)).routes),
+    );
+    return routeSourceYearSpan(routes.flat());
   },
 );

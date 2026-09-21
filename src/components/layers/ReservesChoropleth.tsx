@@ -3,7 +3,7 @@ import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson"
 import type { CountryCollection, CountryProps } from "@/lib/geo/countries";
 import { dataIso3 } from "@/lib/geo/iso3";
 import type { ReservesData } from "@/lib/data/reserves";
-import { sourceLine } from "@/lib/data/sources";
+import { sourceVintageLine } from "@/lib/data/section-vintage";
 import { RESERVES_LATEST_YEAR } from "@/lib/time/range";
 import type { Commodity } from "@/lib/scenarios/types";
 import { importsNoun, type OverlayEntry } from "@/components/scenarios/overlay";
@@ -103,9 +103,9 @@ export const formatReservesTooltip: TooltipFormatter<ReservesFeature> = (f, ctx)
     ctx.year >= RESERVES_LATEST_YEAR
       ? `${RESERVES_LATEST_YEAR.toString()} is the latest reserves year in the source`
       : `Shown as of ${ctx.year.toString()}; the source publishes reserves to ${RESERVES_LATEST_YEAR.toString()}`,
-    sourceLine("reserves"),
+    sourceVintageLine("reserves"),
     scenarioLine !== null && "",
     scenarioLine,
-    scenarioLine !== null && sourceLine("trade"),
+    scenarioLine !== null && sourceVintageLine("trade"),
   );
 };

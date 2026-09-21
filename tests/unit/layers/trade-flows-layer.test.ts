@@ -100,7 +100,8 @@ describe("formatTradeFlowTooltip", () => {
     // of *quantified* trade, not all reported trade, and the tooltip says so.
     expect(t).toContain("CHN's quantified imports: 25.0%");
     expect(t).toContain("SAU's quantified exports: 40.0%");
-    expect(t).toMatch(/^Source: .+\(as of \d{4}-\d{2}-\d{2}\)$/m);
+    // Source and the vintage of the data behind the number, from the catalog.
+    expect(t).toMatch(/^Source: BACI \(CEPII\) · data to \d{4} \(released \d{4}-\d{2}-\d{2}\)$/m);
   });
 
   it("omits kb/d for LNG (gas is not measured in barrels)", () => {

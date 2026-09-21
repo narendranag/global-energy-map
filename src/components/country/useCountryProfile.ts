@@ -5,10 +5,12 @@ import {
   loadAllTradeFlows,
   loadCountryExposure,
   loadCountrySeries,
+  loadRouteYears,
 } from "@/lib/data/country-inputs";
 import { buildCountryProfile, type CountryProfile } from "@/lib/data/country-profile";
 import { loadGasStorage } from "@/lib/data/gas-storage";
 import { loadRecentImports } from "@/lib/data/recent-imports";
+import type { YearSpan } from "@/lib/data/section-vintage";
 import { useAsync, type AsyncState } from "@/lib/data/useAsync";
 import { useCountryNames } from "@/lib/geo/useCountryNames";
 import type { Commodity } from "@/lib/scenarios/types";
@@ -38,6 +40,13 @@ export interface CountryProfileState {
   readonly profile: CountryProfile | null;
   /** Sections whose loader rejected. Never escalated to the error panel (B7). */
   readonly errors: readonly CountryProfileSectionError[];
+  /**
+   * Publication years of the documents behind the exposure rows' route
+   * shares. Kept beside the profile rather than inside it: the profile is a
+   * pure function of already-loaded rows, and this is provenance about a
+   * second input the engine consumed and discarded.
+   */
+  readonly routeYears: YearSpan | null;
 }
 
 export function useCountryProfile(
@@ -64,6 +73,13 @@ export function useCountryProfile(
     NON_FATAL,
   );
   const recentState = useAsync(loadRecentImports, iso3 === null ? null : [commodity], NON_FATAL);
+  // Provenance only, never a number on screen: a failure here costs the
+  // exposure line its route-share years and nothing else.
+  const routeYearsState = useAsync(
+    loadRouteYears,
+    iso3 === null ? null : [year, commodity],
+    NON_FATAL,
+  );
 
   const { data: series } = seriesState;
   const { data: trade } = tradeState;
@@ -117,5 +133,6 @@ export function useCountryProfile(
     assets,
   ]);
 
-  return useMemo(() => ({ profile, errors }), [profile, errors]);
+  const routeYears = routeYearsState.ready ? routeYearsState.data : null;
+  return useMemo(() => ({ profile, errors, routeYears }), [profile, errors, routeYears]);
 }

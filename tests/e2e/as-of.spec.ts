@@ -101,12 +101,17 @@ test.describe("A scenario states the year it was run on", () => {
 
     const announcement = page.getByTestId("scenario-announcement");
     await expect(announcement).toBeVisible();
-    await expect(announcement).toContainText("on 2010 trade", { timeout: RESULT_TIMEOUT });
+    // Both vintages, always: the number is trade x route share.
+    await expect(announcement).toContainText("2010 trade, 2026 route shares", {
+      timeout: RESULT_TIMEOUT,
+    });
     await expect(announcement).toContainText(/importers exposed/);
 
     const vintage = page.getByTestId("scenario-vintage");
     await expect(vintage).toBeVisible();
-    await vintage.locator("summary").click();
+    // Open by default — maximum transparency: the reader collapses it, not
+    // the other way round.
+    await expect(vintage).toHaveAttribute("open", "");
     // The trade row of a result pinned to an older year carries the amber
     // "old" marker: there really is newer trade the reader is not seeing.
     const tradeRow = vintage.locator("li").filter({ hasText: "run on 2010" });
@@ -120,12 +125,11 @@ test.describe("A scenario states the year it was run on", () => {
       `/?mode=scenarios&scenario=hormuz&commodity=oil&year=${String(LATEST)}&layers=reserves`,
     );
     const announcement = page.getByTestId("scenario-announcement");
-    await expect(announcement).toContainText(`on ${String(LATEST)} trade`, {
+    await expect(announcement).toContainText(`${String(LATEST)} trade, 2026 route shares`, {
       timeout: RESULT_TIMEOUT,
     });
 
     const vintage = page.getByTestId("scenario-vintage");
-    await vintage.locator("summary").click();
     const tradeRow = vintage.locator("li").filter({ hasText: `run on ${String(LATEST)}` });
     await expect(tradeRow).toHaveCount(1);
     // Bilateral trade is an annual release: it is always past the staleness
@@ -153,5 +157,47 @@ test.describe("A scenario states the year it was run on", () => {
     await expect(page.getByTestId("ranked-importers").locator("li").first()).toBeVisible({
       timeout: RESULT_TIMEOUT,
     });
+  });
+});
+
+test.describe("A scenario states the vintage of its route shares too", () => {
+  // The headline number is (trade in year Y) x (a routing share documented in
+  // year D). Naming only Y let a 2019 routing read as current — these two
+  // tests are the two sides of that fix, on the site's own data: Suez's
+  // shares are one 2019 document, Hormuz's one 2026 document.
+  test("Suez: both years in the headline, and a visible caveat for the gap", async ({ page }) => {
+    await gotoReady(
+      page,
+      `/?mode=scenarios&scenario=suez&commodity=oil&year=${String(LATEST)}&layers=reserves`,
+    );
+    const announcement = page.getByTestId("scenario-announcement");
+    await expect(announcement).toContainText(`${String(LATEST)} trade, 2019 route shares`, {
+      timeout: RESULT_TIMEOUT,
+    });
+
+    // Under the headline, not inside the disclosure: it is about the number
+    // on screen, not about a footnote to it.
+    const caveat = page.getByTestId("scenario-vintage-caveat");
+    await expect(caveat).toBeVisible();
+    await expect(caveat).toContainText("2019 documents");
+    await expect(caveat).toContainText(String(LATEST));
+
+    // The disclosure is open without a click, and names the documents.
+    const vintage = page.getByTestId("scenario-vintage");
+    await expect(vintage).toHaveAttribute("open", "");
+    await expect(page.getByTestId("route-share-documents").first()).toBeVisible();
+    await expect(vintage).toContainText("publication year");
+  });
+
+  test("Hormuz: a two-year gap is not a mismatch, so no caveat", async ({ page }) => {
+    await gotoReady(
+      page,
+      `/?mode=scenarios&scenario=hormuz&commodity=oil&year=${String(LATEST)}&layers=reserves`,
+    );
+    await expect(page.getByTestId("scenario-announcement")).toContainText(
+      `${String(LATEST)} trade, 2026 route shares`,
+      { timeout: RESULT_TIMEOUT },
+    );
+    await expect(page.getByTestId("scenario-vintage-caveat")).toHaveCount(0);
   });
 });

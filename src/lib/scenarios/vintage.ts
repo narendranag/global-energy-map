@@ -56,6 +56,14 @@ export interface ScenarioVintage {
   readonly spreadYears: number;
   /** Set only when the spread is wide enough to change how a number reads. */
   readonly mismatchNote: string | null;
+  /**
+   * The one caveat that belongs *above* the fold: the headline number is
+   * trade × route share, so a wide gap between the trade year and the years
+   * of the documents the shares come from changes how the headline reads.
+   * See `shareGapNote`. The asset/attribution spread stays in `mismatchNote`
+   * inside the disclosure — it moves no headline figure.
+   */
+  readonly shareGapNote: string | null;
   /** One line: "Trade 2024 · shares 2021–23 · refineries 2026". */
   readonly summary: string;
 }
@@ -81,6 +89,60 @@ export interface RouteVintageRow {
 
 /** Spread at which the gap between two vintages changes how a number reads. */
 export const MISMATCH_SPREAD_YEARS = 3;
+
+/** Anything carrying a route share's publication year — the rows, or less. */
+export interface DatedRouteRow {
+  readonly source_year?: number | null;
+}
+
+/**
+ * The distinct publication years of the documents behind a run's route
+ * shares, oldest first. Undated rows are simply absent — `[]` means nothing
+ * in the run is dated, which is a different statement from "no routes".
+ *
+ * With two scenarios combined the caller passes both scenarios' rows, so the
+ * span covers both: the headline is one number built from all of them.
+ */
+export function routeShareYears(routes: readonly DatedRouteRow[] | null): number[] {
+  if (routes === null) return [];
+  return [
+    ...new Set(routes.map((r) => r.source_year).filter((y): y is number => typeof y === "number")),
+  ].sort((a, b) => a - b);
+}
+
+/**
+ * The caveat shown *under the headline* when the route shares are from a
+ * different era than the trade they are applied to.
+ *
+ * The headline number is (trade in year Y) × (a routing share documented in
+ * year D). When |Y − D| is wide enough, saying only "2024 trade" makes a
+ * 2019 routing read as current — which is the thing this note exists to
+ * stop. The test is the **widest** gap in the run, so a span that reaches
+ * back (Malacca's 2017–2026) trips it even though its newest document is
+ * current: one stale document in the mix is enough to move the number.
+ *
+ * Returns null when nothing is dated (the disclosure already says so) or
+ * when every document sits within `MISMATCH_SPREAD_YEARS` of the trade year.
+ */
+export function shareGapNote(
+  tradeYear: number,
+  routes: readonly DatedRouteRow[] | null,
+): string | null {
+  const years = routeShareYears(routes);
+  const first = years[0];
+  const last = years[years.length - 1];
+  if (first === undefined || last === undefined) return null;
+  const gap = Math.max(Math.abs(tradeYear - first), Math.abs(tradeYear - last));
+  if (gap < MISMATCH_SPREAD_YEARS) return null;
+  const from =
+    first === last
+      ? `${first.toString()} documents`
+      : `documents published ${first.toString()}–${last.toString()}`;
+  return (
+    `Route shares come from ${from}; trade is ${tradeYear.toString()}. ` +
+    "Routing that changed in between is not reflected."
+  );
+}
 
 /** The asset layer a commodity's attribution is drawn from. */
 function assetLayer(commodity: Commodity): LayerKey {
@@ -202,9 +264,7 @@ export function scenarioVintage(
     // trade table and the voyage table are tagged on the scenario too, but a
     // share never came from either of them.
     const routeEntries = entries.filter((e) => e.layers.every((l) => l.startsWith("scenario:")));
-    const years = [...new Set(routeRows.map((r) => r.source_year).filter((y): y is number => y !== null))].sort(
-      (a, b) => a - b,
-    );
+    const years = routeShareYears(routeRows);
     const first = years[0];
     const last = years[years.length - 1];
     const dated = first !== undefined && last !== undefined;
@@ -221,6 +281,13 @@ export function scenarioVintage(
       dataEnd,
       stale,
       note: joinNotes([
+        // What the year on a share actually is. `source_year` is the year the
+        // document was *published*; the routing it describes is usually a
+        // year or more older still, so a reader comparing it with the trade
+        // year is comparing a publication date with a data year.
+        dated
+          ? "Each year is the document's publication year; the routing it describes is usually a year or more older."
+          : null,
         undatedCount > 0
           ? `${undatedCount.toString()} of ${routeRows.length.toString()} shares are an analyst estimate with no published document behind them.`
           : null,
@@ -307,5 +374,12 @@ export function scenarioVintage(
       `The result is matched on ${tradeYear.toString()} trade, so anything newer is on the map but carries no volume.`;
   }
 
-  return { tradeYear, rows, spreadYears, mismatchNote, summary: summaryParts.join(" · ") };
+  return {
+    tradeYear,
+    rows,
+    spreadYears,
+    mismatchNote,
+    shareGapNote: shareGapNote(tradeYear, routeRows),
+    summary: summaryParts.join(" · "),
+  };
 }

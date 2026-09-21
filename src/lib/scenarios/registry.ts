@@ -244,6 +244,13 @@ export interface HowComputedOptions {
    * default text says; with them that sentence would be false.
    */
   readonly hasInboundRoutes?: boolean;
+  /**
+   * Publication years of the documents the active route shares come from,
+   * oldest first (`routeShareYears`). Empty = nothing dated, or not loaded.
+   * The step that describes the shares says when they were written: the
+   * headline figure is trade x share, so the share's vintage is half of it.
+   */
+  readonly shareYears?: readonly number[];
 }
 
 /**
@@ -282,9 +289,20 @@ export function howComputed(
               : ""
         }`
       : `Shares are set per exporter → importer pair (or per exporter where the pipeline serves all its buyers).`;
+  const years = options.shareYears ?? [];
+  const firstShareYear = years[0];
+  const lastShareYear = years[years.length - 1];
+  const shareVintage =
+    firstShareYear === undefined || lastShareYear === undefined
+      ? ""
+      : ` The shares in this run come from documents published ${
+          firstShareYear === lastShareYear
+            ? firstShareYear.toString()
+            : `${firstShareYear.toString()}\u2013${lastShareYear.toString()}`
+        }; they are static across years, so a ${year.toString()} result applies that routing to ${year.toString()} trade.`;
   const steps = [
     `Take ${year.toString()} bilateral ${noun} imports by volume (tonnes) from BACI (CEPII).`,
-    shareRule,
+    `${shareRule}${shareVintage}`,
     `An importer's volume at risk = Σ over its suppliers of (imports from that supplier × route share). % at risk = volume at risk ÷ its total ${noun} imports.`,
   ];
 

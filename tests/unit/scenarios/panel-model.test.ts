@@ -191,14 +191,15 @@ describe("scenarioAnnouncement", () => {
     routeName: "the Druzhba pipeline",
     result: {
       year: 2022,
+      routes: [{ source_year: 2022 }, { source_year: 2026 }],
       exposedCount: 14,
       top: { name: "Slovakia", share: "38%" },
     },
   };
 
-  it("leads with the scenario and the trade year, then the finding", () => {
+  it("leads with the scenario and BOTH vintages, then the finding", () => {
     const a = scenarioAnnouncement(base);
-    expect(a.lead).toBe("Cut Druzhba pipeline — on 2022 trade:");
+    expect(a.lead).toBe("Cut Druzhba pipeline — 2022 trade, 2022–2026 route shares:");
     expect(a.detail).toBe("14 importers exposed; most exposed Slovakia, 38% of crude imports.");
     expect(a.text).toBe(`${a.lead} ${a.detail}`);
     // The two phrasings e2e keys on.
@@ -206,10 +207,18 @@ describe("scenarioAnnouncement", () => {
     expect(a.text).toMatch(/importers exposed; most exposed/);
   });
 
-  it("names a partial closure in the lead", () => {
+  it("names a partial closure in the lead, after the vintages", () => {
     expect(scenarioAnnouncement({ ...base, severity: 0.5 }).lead).toBe(
-      "Cut Druzhba pipeline — on 2022 trade, 50% of the route cut:",
+      "Cut Druzhba pipeline — 2022 trade, 2022–2026 route shares, 50% of the route cut:",
     );
+  });
+
+  it("waits rather than flashing a trade-only phrase while the routes load", () => {
+    // The route years arrive with the citations, a moment after the result.
+    // Printing "2022 trade" and then "2022 trade, 2019 route shares" would
+    // state one vintage as if it were the whole answer.
+    const loading = scenarioAnnouncement({ ...base, result: { ...base.result, routes: null } });
+    expect(loading.text).toBe("Computing exposure…");
   });
 
   it("says exporters in the exporter view", () => {

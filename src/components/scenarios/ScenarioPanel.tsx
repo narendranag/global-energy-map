@@ -35,6 +35,7 @@ import {
   TOP_N,
   capacityAtRisk,
   coverageLabel,
+  distinctRouteDocuments,
   formatCapacity,
   formatVolume,
   hasRange,
@@ -317,6 +318,9 @@ export function ScenarioPanel({
     [inputs, current],
   );
   const unsourcedCount = routeRows.filter((r) => r.unsourced).length;
+  // The documents behind those rows, deduplicated — what the vintage
+  // disclosure lists under "Route shares".
+  const routeDocuments = useMemo(() => distinctRouteDocuments(routeRows), [routeRows]);
 
   // Most exposed by share, whichever sort the list uses.
   const top = rankedImporters.reduce<(typeof rankedImporters)[number] | undefined>(
@@ -344,6 +348,10 @@ export function ScenarioPanel({
         ? null
         : {
             year: current.year,
+            // Null while the citations load: the headline waits on
+            // "Computing exposure…" rather than printing a trade-only
+            // phrase that is about to gain a second vintage.
+            routes: inputs?.routes ?? null,
             exposedCount: rankedImporters.length,
             top: top === undefined ? null : { name: nameOf(top.iso3), share: pctRange(top) },
           },
@@ -420,6 +428,23 @@ export function ScenarioPanel({
         )}
         {announcement.lead === "" ? announcement.detail : ` ${announcement.detail}`}
       </p>
+      {/*
+        The one vintage caveat that belongs above the fold, because it is
+        about the headline number itself: that number is trade x route share,
+        and a share documented years away from the trade year makes the
+        headline read more current than it is. Derived in `shareGapNote` from
+        the rows themselves — no scenario is named, no year is typed here. The
+        asset/attribution spread stays inside the disclosure below: it moves
+        no headline figure.
+      */}
+      {vintage?.shareGapNote != null && (
+        <p
+          data-testid="scenario-vintage-caveat"
+          className="mb-2 text-[11px] leading-snug text-amber-900"
+        >
+          {vintage.shareGapNote}
+        </p>
+      )}
       {/*
         With nothing picked the panel used to be a bare "None" dropdown: the
         one mode whose whole point is a question showed no question. The
@@ -587,8 +612,14 @@ export function ScenarioPanel({
             for the result on screen — `current`, the same gate the numbers
             above use.
           */}
+          {/*
+            Open by default: maximum transparency was the decision, and the
+            vintages of the data behind a number are not a footnote to it. It
+            is still a `<details>`, so a reader who has seen it can collapse
+            it.
+          */}
           {vintage && (
-            <details className="mt-1" data-testid="scenario-vintage">
+            <details className="mt-1" data-testid="scenario-vintage" open>
               <summary className="cursor-pointer text-[11px] font-medium text-slate-700 hover:text-slate-900">
                 Data behind this result — {vintage.summary}
               </summary>
@@ -615,6 +646,35 @@ export function ScenarioPanel({
                       </span>
                     </div>
                     {r.note !== null && <p className={`mt-0.5 ${NOTE}`}>{r.note}</p>}
+                    {/*
+                      Which documents, not just how many years: the route
+                      shares are the half of the headline number that is not
+                      trade, and "dated 2017–2026" alone names nothing a
+                      reader could go and check. The list is derived from the
+                      same grouped rows the "Route shares used" section
+                      renders, so the two cannot cite different documents.
+                    */}
+                    {r.role === "route_shares" && routeDocuments.length > 0 && (
+                      <ul className="mt-0.5 space-y-0.5" data-testid="route-share-documents">
+                        {routeDocuments.map((d) => (
+                          <li key={`${d.title}-${(d.year ?? 0).toString()}`} className={NOTE}>
+                            {d.url ? (
+                              <a
+                                href={d.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sky-800 underline decoration-dotted underline-offset-2 hover:text-sky-950"
+                              >
+                                {d.title}
+                              </a>
+                            ) : (
+                              d.title
+                            )}
+                            {d.year !== null ? ` (${d.year.toString()})` : " (undated)"}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </li>
                 ))}
               </ul>

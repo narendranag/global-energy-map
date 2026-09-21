@@ -16,6 +16,7 @@ import { embedSnippet } from "@/lib/export/embed";
 import {
   apaCitation,
   bibtexCitation,
+  bundledSharesFor,
   entriesForTags,
   viewCitationText,
 } from "@/lib/export/citation";
@@ -218,12 +219,20 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
   }, [app, layers, commodity]);
 
   // The same naming the embed chip uses (finding 11): scenario, second
-  // scenario, trade year, severity, view — one helper so the two cannot
-  // drift. With a scenario active the year is stated as what it is, the
-  // trade the result is computed on ("on 2024 trade"), rather than as a
-  // setting the reader picked — there is no year control any more. With no
+  // scenario, data years, severity, view — one helper so the two cannot
+  // drift. With a scenario active the vintages are stated as what they are —
+  // the trade the result is computed on *and* the years of the documents its
+  // route shares come from ("2024 trade, 2019 route shares") — rather than as
+  // a setting the reader picked; there is no year control any more. With no
   // scenario it is still the plain year the visible layers are read at.
+  //
+  // The share years come from the bundled citation copy of the same rows the
+  // engine loads, so the citation can state them without waiting on a fetch.
   const scenarioActive = app?.scenario != null;
+  const scenarioShares = useMemo(
+    () => bundledSharesFor(app?.scenario ?? null, app?.scenario2 ?? null, commodity),
+    [app?.scenario, app?.scenario2, commodity],
+  );
   const summary = [
     ...(scenarioActive ? [] : [String(year)]),
     commodity === "gas" ? "gas" : "oil",
@@ -235,7 +244,7 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
         view: app?.view ?? "importers",
       },
       "no scenario",
-      { tradeYear: year },
+      { tradeYear: year, routes: scenarioShares },
     ),
   ].join(" · ");
 

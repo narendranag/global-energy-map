@@ -56,6 +56,9 @@ test.describe("axe: zero serious/critical violations", () => {
     await expect(page.getByTestId("scenario-announcement")).toBeVisible();
     const vintage = page.getByTestId("scenario-vintage");
     await expect(vintage).toBeVisible({ timeout: 60_000 });
+    // It is open by default now, so axe already sees its contents; collapsing
+    // and reopening checks the closed state too.
+    await vintage.locator("summary").click();
     await vintage.locator("summary").click();
     expect(await seriousViolations(page)).toEqual([]);
   });

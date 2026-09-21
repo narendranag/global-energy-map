@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
+  routeShareYears,
   scenarioVintage,
+  shareGapNote,
   type RouteVintageRow,
   type ScenarioVintageResult,
 } from "@/lib/scenarios/vintage";
@@ -277,5 +279,57 @@ describe("scenarioVintage", () => {
       ]);
       expect(v.rows.every((r) => r.dataEnd === "" || /^\d{4}-\d{2}-\d{2}$/.test(r.dataEnd))).toBe(true);
     });
+  });
+});
+
+/**
+ * The caveat that sits *under the headline*, because the headline number is
+ * trade x route share: a share documented years away from the trade year
+ * makes that number read more current than it is.
+ *
+ * The years here are the real shapes in `disruption_route.parquet` (Suez is
+ * one 2019 document, Hormuz one 2026 document, Malacca a 2017-2026 span) but
+ * the test states them itself, so a data refresh cannot make it lie.
+ */
+describe("shareGapNote", () => {
+  const TRADE = 2024;
+
+  it("fires for a Suez-like run: 2019 documents against 2024 trade", () => {
+    const note = shareGapNote(TRADE, [{ source_year: 2019 }, { source_year: 2019 }]);
+    expect(note).toContain("2019 documents");
+    expect(note).toContain("2024");
+    expect(note).toContain("Routing that changed in between is not reflected.");
+  });
+
+  it("stays quiet for a Hormuz-like run: a 2-year gap is not a mismatch", () => {
+    expect(shareGapNote(TRADE, [{ source_year: 2026 }])).toBeNull();
+    expect(shareGapNote(TRADE, [{ source_year: 2022 }, { source_year: 2026 }])).toBeNull();
+  });
+
+  it("fires on the widest gap in a span, not the newest document in it", () => {
+    // Malacca-like: one current document does not excuse a 2017 one that is
+    // still setting shares the headline multiplies by.
+    const note = shareGapNote(TRADE, [{ source_year: 2017 }, { source_year: 2026 }]);
+    expect(note).toContain("documents published 2017\u20132026");
+  });
+
+  it("says nothing when nothing is dated, or when there are no rows", () => {
+    expect(shareGapNote(TRADE, [{ source_year: null }])).toBeNull();
+    expect(shareGapNote(TRADE, [])).toBeNull();
+    expect(shareGapNote(TRADE, null)).toBeNull();
+  });
+});
+
+describe("routeShareYears", () => {
+  it("is the distinct publication years, oldest first, undated rows dropped", () => {
+    expect(
+      routeShareYears([
+        { source_year: 2026 },
+        { source_year: 2017 },
+        { source_year: 2026 },
+        { source_year: null },
+      ]),
+    ).toEqual([2017, 2026]);
+    expect(routeShareYears(null)).toEqual([]);
   });
 });

@@ -89,11 +89,15 @@ test.describe("embed mode", () => {
     await expect(page.getByRole("checkbox", { name: "Reserves (country)" })).toBeVisible();
   });
 
-  test("the scenario panel collapses to a one-line chip naming the scenario, year and commodity", async ({
+  test("the scenario panel collapses to a one-line chip naming the scenario, both data years and the commodity", async ({
     page,
   }) => {
     await gotoReady(page, "/?embed=1&scenario=hormuz&commodity=oil&year=2022");
-    const chip = page.getByRole("button", { name: /Hormuz.*2022.*oil/i });
+    // An embed's one line is all a reader has, and the number it labels is
+    // trade x route share — so it names the route shares' vintage too.
+    const chip = page.getByRole("button", {
+      name: /Hormuz.*2022 trade, 2026 route shares.*oil/i,
+    });
     await expect(chip).toBeVisible();
     await expect(page.getByTestId("scenario-slot")).toBeHidden();
     await chip.click();

@@ -37,6 +37,7 @@ import {
 import { getScenario } from "@/lib/scenarios/registry";
 import { isCurrentScenarioResult } from "@/lib/scenarios/current";
 import { scenarioSummaryParts } from "@/lib/scenarios/summary";
+import { bundledSharesFor } from "@/lib/export/citation";
 import type { Commodity, ScenarioId } from "@/lib/scenarios/types";
 import { activeScenarioIds, normalizeScenarioPair, type ScenarioView } from "@/lib/url-state/encode";
 import { panelPadding, requestInitialFit } from "@/lib/state";
@@ -283,9 +284,16 @@ function HomeInner() {
   // everything the panel would: both scenarios, the severity and the side
   // being listed (finding 11), through the same helper ShareMenu's citation
   // summary uses.
+  //
+  // It names both vintages too (trade *and* route shares): an embed's one
+  // line is all a reader has, and the number it labels is trade x share. The
+  // share years come from the bundled citation copy of the same rows the
+  // engine loads, so the chip never waits on a fetch and never prints a
+  // trade-only phrase that is about to change.
   const scenarioChipSummary = [
     ...scenarioSummaryParts({ scenario: scenarioId, scenario2, severity, view }, "Scenario", {
       tradeYear: year,
+      routes: bundledSharesFor(scenarioId, scenario2, commodity),
     }),
     commodity,
   ].join(" · ");

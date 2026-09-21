@@ -11,6 +11,7 @@
  * Pure, no React. Unit-tested in `tests/unit/scenarios/summary.test.ts`.
  */
 import { getScenario, severityPct } from "./registry";
+import { routeShareYears, type DatedRouteRow } from "./vintage";
 import type { ScenarioId } from "./types";
 import type { ScenarioView } from "@/lib/url-state/encode";
 
@@ -34,16 +35,38 @@ export function scenarioLabelOf(
 }
 
 /**
- * How a result's trade year is *said*, everywhere it is said: the scenario
- * headline in the panel, the citation summary and the embed chip.
+ * How the vintages behind a result are *said*, everywhere they are said: the
+ * scenario headline in the panel, the citation summary, the embed chip, the
+ * CSV header and the "how this is computed" disclosure.
  *
- * Nobody picks the year any more (there is no year control), so the number
- * is no longer a setting the reader chose — it is a property of the data the
- * answer is built on, and every place that prints it says so in the same
- * words.
+ * Nobody picks the year any more (there is no year control), so a year is no
+ * longer a setting the reader chose — it is a property of the data the answer
+ * is built on. And the headline number is not trade alone: it is trade ×
+ * route share, and the shares carry their own publication years (Suez 2019,
+ * Malacca 2017–2026). Naming only the trade year made a 2019-routing result
+ * read as current, so both are always named, in one place, in the same words.
+ *
+ * "2024 trade, 2019 route shares"
+ * "2024 trade, 2017–2026 route shares"   (an en dash; full years, never 2017–26)
+ * "2024 trade, undated route shares"     (rows exist, none carries a document year)
+ * "2024 trade"                           (routes not loaded yet — never a wrong year)
+ *
+ * `routes` is every route row behind the result, both scenarios' rows when
+ * two are combined. `null` means "not loaded": callers that can wait should
+ * wait rather than print a phrase that is about to change.
  */
-export function tradeYearPhrase(year: number): string {
-  return `on ${year.toString()} trade`;
+export function dataYearsPhrase(
+  tradeYear: number,
+  routes: readonly DatedRouteRow[] | null,
+): string {
+  const trade = `${tradeYear.toString()} trade`;
+  if (routes === null || routes.length === 0) return trade;
+  const years = routeShareYears(routes);
+  const first = years[0];
+  const last = years[years.length - 1];
+  if (first === undefined || last === undefined) return `${trade}, undated route shares`;
+  const span = first === last ? first.toString() : `${first.toString()}\u2013${last.toString()}`;
+  return `${trade}, ${span} route shares`;
 }
 
 /**
@@ -58,17 +81,22 @@ export function tradeYearPhrase(year: number): string {
  * `tradeYear` is optional because the parts are also used where the year is
  * already printed beside them; where it is given it follows the scenario
  * label, and it is dropped with every other modifier when no scenario is
- * active (a trade year describes a result, and there is none).
+ * active (a trade year describes a result, and there is none). `routes` goes
+ * with it: given both, the part names the route-share years too, through the
+ * same `dataYearsPhrase` the panel headline uses, so a citation and a chip
+ * cannot state a different vintage from the number they describe.
  */
 export function scenarioSummaryParts(
   s: ScenarioNaming,
   noneLabel = "no scenario",
-  opts: { readonly tradeYear?: number } = {},
+  opts: { readonly tradeYear?: number; readonly routes?: readonly DatedRouteRow[] | null } = {},
 ): string[] {
   const active = s.scenario !== null;
   return [
     scenarioLabelOf(s.scenario, s.scenario2) ?? noneLabel,
-    ...(active && opts.tradeYear !== undefined ? [tradeYearPhrase(opts.tradeYear)] : []),
+    ...(active && opts.tradeYear !== undefined
+      ? [dataYearsPhrase(opts.tradeYear, opts.routes ?? null)]
+      : []),
     ...(active && s.severity < 1 ? [`${severityPct(s.severity)} of the route cut`] : []),
     ...(active && s.view === "exporters" ? ["exporter view"] : []),
   ];

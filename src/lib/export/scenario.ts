@@ -3,6 +3,7 @@ import { getScenario, routeKeyFor, severityPct } from "@/lib/scenarios/registry"
 import { groupIdenticalPairShares, pairLabel } from "@/lib/scenarios/share-groups";
 import { scenarioIdsOf } from "@/lib/scenarios/shares";
 import { scenarioVintage, type ScenarioVintageResult } from "@/lib/scenarios/vintage";
+import { dataYearsPhrase } from "@/lib/scenarios/summary";
 import type { ScenarioResult } from "@/lib/scenarios/types";
 import { LNG_T3_FIRST_YEAR, LNG_T3_LAST_YEAR } from "@/lib/data/voyages";
 import type { ScenarioView } from "@/lib/url-state/encode";
@@ -257,9 +258,13 @@ export function scenarioHeader(result: ScenarioResult, ctx: ScenarioExportContex
     { catalog: ctx.catalog, today: ctx.today ?? ctx.exported },
   );
   lines.push(
-    `Trade year: ${String(result.year)} — every figure below is that year's reconciled bilateral trade. There is no year control on the site; a link pinned to an earlier year keeps showing that year.`,
+    // Both vintages, in the same words the panel headline uses: the figures
+    // below are trade x route share, and a file that named only the trade
+    // year let a 2019 routing read as current.
+    `Data years: ${dataYearsPhrase(result.year, shares)} — every figure below is that trade year's reconciled bilateral trade, routed by shares taken from the documents listed further down. There is no year control on the site; a link pinned to an earlier year keeps showing that year.`,
     `Data vintages: ${vintage.summary}`,
   );
+  if (vintage.shareGapNote !== null) lines.push(`  ${vintage.shareGapNote}`);
   for (const row of vintage.rows) {
     const sources = row.sources.length > 0 ? ` (${row.sources.join(", ")})` : "";
     lines.push(`  ${row.label}${sources}: ${row.through}.${row.note === null ? "" : ` ${row.note}`}`);

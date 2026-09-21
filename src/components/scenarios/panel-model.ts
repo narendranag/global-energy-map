@@ -16,7 +16,8 @@ import {
   type HowComputedOptions,
 } from "@/lib/scenarios/registry";
 import { scenarioIdsOf } from "@/lib/scenarios/shares";
-import { tradeYearPhrase } from "@/lib/scenarios/summary";
+import { dataYearsPhrase } from "@/lib/scenarios/summary";
+import { routeShareYears, type DatedRouteRow } from "@/lib/scenarios/vintage";
 import type { ScenarioView } from "@/lib/url-state/encode";
 import { groupIdenticalPairShares, pairLabel } from "@/lib/scenarios/share-groups";
 import { isUnsourced, type RouteCitation } from "@/lib/data/scenario-inputs";
@@ -243,6 +244,35 @@ export function routeRowsForDisplay(
     .sort((a, b) => b.share - a.share || a.key.localeCompare(b.key));
 }
 
+/** One cited document behind a run's route shares. */
+export interface RouteDocument {
+  readonly title: string;
+  readonly url: string;
+  /** Publication year, null where the row records none. */
+  readonly year: number | null;
+}
+
+/**
+ * The distinct documents behind a run's route shares, for the "Data behind
+ * this result" disclosure — which lists the sources, not the 138 rows.
+ *
+ * It reads the rows `routeRowsForDisplay` already grouped rather than
+ * regrouping the raw shares, so the disclosure and the "Route shares used"
+ * list can never cite different documents. Newest first, then by title; an
+ * undated document sorts last, where an unsourced estimate belongs.
+ */
+export function distinctRouteDocuments(rows: readonly RouteDisplayRow[]): RouteDocument[] {
+  const byKey = new Map<string, RouteDocument>();
+  for (const r of rows) {
+    if (r.unsourced || r.title === "") continue;
+    const key = `${r.title}|${(r.year ?? 0).toString()}`;
+    if (!byKey.has(key)) byKey.set(key, { title: r.title, url: r.url, year: r.year });
+  }
+  return [...byKey.values()].sort(
+    (a, b) => (b.year ?? 0) - (a.year ?? 0) || a.title.localeCompare(b.title),
+  );
+}
+
 /**
  * The options `howComputed` must be told about, **derived** from the result
  * the panel is showing and the rows it was computed from (review finding 2).
@@ -259,7 +289,7 @@ export function routeRowsForDisplay(
  */
 export function howComputedOptionsFor(
   result: { readonly scenarioId: ScenarioId; readonly scenarioIds?: readonly ScenarioId[]; readonly severity?: number } | null,
-  routes: readonly Pick<RouteRow, "exporter_iso3">[] | null,
+  routes: (readonly (Pick<RouteRow, "exporter_iso3"> & DatedRouteRow)[]) | null,
   view: ScenarioView,
 ): HowComputedOptions {
   return {
@@ -267,6 +297,9 @@ export function howComputedOptionsFor(
     combinedWith: result === null ? [] : scenarioIdsOf(result).map((id) => getScenario(id)),
     view: view === "exporters" ? "exporter" : "importer",
     hasInboundRoutes: routes?.some((r) => r.exporter_iso3 === null) ?? false,
+    // The share step says when its documents were written, from the rows
+    // themselves — the same derivation the headline phrase uses.
+    shareYears: routeShareYears(routes),
   };
 }
 
@@ -279,13 +312,14 @@ export function howComputedOptionsFor(
  * `aria-live` announcement, which are now the same words rather than a
  * visible number and a separate sentence for a screen reader.
  *
- * `lead` is the part set in bold ("Cut Druzhba pipeline — on 2022 trade:");
- * `detail` is the finding. `text` is the two joined, which is what a test (or
- * a reader who only hears it) sees.
+ * `lead` is the part set in bold ("Cut Druzhba pipeline — 2022 trade,
+ * 2022–2026 route shares:"); `detail` is the finding. `text` is the two
+ * joined, which is what a test (or a reader who only hears it) sees.
  *
- * The year is stated as a property of the data, not of a control: nobody
- * picks it any more, so "on 2022 trade" is the honest phrasing (the same one
- * `scenarioSummaryParts` uses for the citation and the embed chip).
+ * Both vintages are always named, through the one `dataYearsPhrase` the
+ * citation, the embed chip and the CSV header also use. The number is trade ×
+ * route share: naming only the trade year let a result routed on 2019
+ * documents read as current.
  */
 export interface ScenarioAnnouncement {
   readonly lead: string;
@@ -299,6 +333,13 @@ export interface AnnouncementInput {
   /** Null while the result for the current controls is still computing. */
   readonly result: {
     readonly year: number;
+    /**
+     * The route rows behind the result — both scenarios' when two are
+     * combined. Null while they are still loading, which keeps the headline
+     * on "Computing exposure…" rather than flashing a trade-only phrase that
+     * is about to gain a second vintage.
+     */
+    readonly routes: readonly DatedRouteRow[] | null;
     /** How many countries on the listed side are exposed at all. */
     readonly exposedCount: number;
     /** The most exposed one, or null when nothing is exposed. */
@@ -317,13 +358,13 @@ export interface AnnouncementInput {
 export function scenarioAnnouncement(input: AnnouncementInput): ScenarioAnnouncement {
   const none = { lead: "", detail: "", text: "" };
   if (input.scenarioLabel === "") return none;
-  if (input.result === null) {
+  if (input.result?.routes == null) {
     return { lead: "", detail: "Computing exposure…", text: "Computing exposure…" };
   }
-  const { year, exposedCount, top } = input.result;
+  const { year, routes, exposedCount, top } = input.result;
   const severityNote =
     input.severity < 1 ? `, ${severityPct(input.severity)} of the route cut` : "";
-  const lead = `${input.scenarioLabel} — ${tradeYearPhrase(year)}${severityNote}:`;
+  const lead = `${input.scenarioLabel} — ${dataYearsPhrase(year, routes)}${severityNote}:`;
   const detail =
     top === null
       ? `no ${input.side} has ${input.noun} routed through ${input.routeName}.`

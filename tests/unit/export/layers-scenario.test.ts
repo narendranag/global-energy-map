@@ -233,13 +233,16 @@ describe("scenario CSV", () => {
     expect(csv).not.toContain("0.65"); // the crude share does not apply to LNG
   });
 
-  it("states the trade year and the vintage of every input it used", () => {
+  it("states both data years and the vintage of every input it used", () => {
     const shares: ShareCitation[] = [
       { disruption_id: "druzhba", kind: "pipeline", exporter_iso3: "RUS", importer_iso3: "POL", share: 0.47, source_title: "IEA report", source_url: null, source_year: 2022, source_note: null },
     ];
     // `today` is injected, so these lines do not move with the calendar.
     const csv = scenarioCsv(RESULT, { viewUrl: "https://x/", exported: "2026-09-10", catalog: CATALOG, shares, today: "2026-09-10" });
-    expect(csv).toContain("# Trade year: 2020 —");
+    // Both vintages, in the panel headline's own words: the figures below are
+    // trade x route share, so a file naming only the trade year would let a
+    // 2022 routing read as current.
+    expect(csv).toContain("# Data years: 2020 trade, 2022 route shares —");
     expect(csv).toContain("# Data vintages: Trade 2020 · shares 2022");
     // One line per input, naming what it is, who publishes it and how current
     // it is — derived, so a data refresh moves it with no code change.
@@ -252,7 +255,7 @@ describe("scenario CSV", () => {
     const csv = scenarioCsv(RESULT, { viewUrl: "https://x/", exported: "2026-09-10", catalog: CATALOG, shares: [], today: "2026-09-10" });
     const header = csv.split("\n").filter((l) => l.startsWith("#"));
     const trade = header.findIndex((l) => l.startsWith("# Trade data:"));
-    const year = header.findIndex((l) => l.startsWith("# Trade year:"));
+    const year = header.findIndex((l) => l.startsWith("# Data years:"));
     expect(trade).toBeGreaterThan(-1);
     expect(year).toBe(trade + 1);
     expect(csv).toContain("; static across years):");
@@ -364,7 +367,7 @@ describe("scenario CSV — exporter view", () => {
     const exp = scenarioCsv(EXPORTER_RESULT, { ...ctx, view: "exporters", today: "2026-09-19" });
     expect(imp).toContain("#   Refineries (");
     expect(exp).not.toContain("#   Refineries (");
-    expect(exp).toContain("# Trade year: 2020 —");
+    expect(exp).toContain("# Data years: 2020 trade, 2022 route shares —");
   });
 
   it("emits exporter rows, ranked by share, with zero-export codes dropped", () => {

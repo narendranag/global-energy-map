@@ -2,10 +2,10 @@ import type { LngVoyageRow } from "@/lib/scenarios/types";
 import type { LngTerminalAsset } from "./assets";
 import { cachedLoader } from "./cache";
 import { readParquet } from "./parquet";
+import { LNG_T3_FIRST_YEAR, LNG_T3_LAST_YEAR } from "@/lib/data-catalog/years";
 
-/** LNG-T3 voyage coverage; outside it there are no voyage rows. */
-export const LNG_T3_FIRST_YEAR = 2020;
-export const LNG_T3_LAST_YEAR = 2024;
+/** LNG-T3 voyage coverage (catalog-derived); outside it there are no voyage rows. */
+export { LNG_T3_FIRST_YEAR, LNG_T3_LAST_YEAR };
 /** Voyages below this LNG-T3 confidence score (1–5) are not shown or counted. */
 export const MIN_VOYAGE_CONFIDENCE = 3;
 

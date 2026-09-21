@@ -1,11 +1,16 @@
+import { RESERVES_LATEST_YEAR, YEAR_MAX, YEAR_MIN } from "@/lib/data-catalog/years";
+
 /**
- * The app's time axis. Production, BACI trade and LNG-T3 voyages all run to
- * 2024; the EI Statistical Review stopped publishing proved reserves after
- * 2020, so the reserves choropleth freezes at that year.
+ * The app's time axis, derived from catalog `coverage` in
+ * `src/lib/data-catalog/years.ts` — never typed here. `YEAR_MIN` is the first
+ * EI country-year, `YEAR_MAX` the last reconciled BACI year, and
+ * `RESERVES_LATEST_YEAR` the last year EI publishes proved reserves for (it
+ * stopped in 2020 while production ran on), so the reserves choropleth
+ * freezes there.
+ *
+ * Re-exported from here so the ~dozen importers of this module are unchanged.
  */
-export const YEAR_MIN = 1990;
-export const YEAR_MAX = 2024;
-export const RESERVES_LATEST_YEAR = 2020;
+export { YEAR_MIN, YEAR_MAX, RESERVES_LATEST_YEAR };
 
 /** Round to an integer year and clamp into [YEAR_MIN, YEAR_MAX]. */
 export function clampYear(n: number): number {

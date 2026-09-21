@@ -3,6 +3,7 @@ import type { Commodity, ScenarioId } from "./types";
 // imports SCENARIOS from this file. A value import here would close that
 // cycle, so the two-line span format below is local rather than shared.
 import type { RouteYears } from "./vintage";
+import { LNG_T3_FIRST_YEAR, LNG_T3_LAST_YEAR } from "@/lib/data-catalog/years";
 
 export interface ScenarioDef {
   readonly id: ScenarioId;
@@ -228,8 +229,7 @@ export const SCENARIOS: readonly ScenarioDef[] = [
 ];
 
 /** First and last year LNG-T3 voyages cover (per-terminal attribution). */
-export const LNG_T3_FIRST_YEAR = 2020;
-export const LNG_T3_LAST_YEAR = 2024;
+export { LNG_T3_FIRST_YEAR, LNG_T3_LAST_YEAR };
 
 /** Mean crude conversion used for volume display (EI Statistical Review: 1 t ≈ 7.33 bbl). */
 export const BARRELS_PER_TONNE_CRUDE = 7.33;

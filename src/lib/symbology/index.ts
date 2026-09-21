@@ -13,7 +13,7 @@
  * (normal vision + protan/deutan simulation).
  */
 import type { LayerState } from "@/components/layers/LayerPanel";
-import { RESERVES_LATEST_YEAR } from "@/lib/time/range";
+import { RESERVES_LATEST_YEAR } from "@/lib/data-catalog/years";
 import { isZoomGated, minZoomFor } from "./zoom";
 
 export type Rgb = readonly [number, number, number];

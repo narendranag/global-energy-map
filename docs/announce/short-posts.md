@@ -28,7 +28,7 @@ Most energy maps show you infrastructure. This one also tells you what the data 
 
 Global Energy Map (energymap.marain.space) is an inspectable model of oil and gas dependency: eleven chokepoint and pipeline disruptions, modelled as exposure shares of a country's crude or LNG imports, sourced from CEPII's BACI trade data.
 
-Every scenario states two vintages in its own headline, not one — "Close Suez Canal + SUMED — 2024 trade, 2019 route shares" is the shape of it — with a flag when the routing document is three-plus years older than the trade, and a "Data behind this result" disclosure listing every input's vintage and source.
+Every scenario states two vintages in its own headline, not one — "Cut Druzhba pipeline — 2024 trade, 2021 route shares" is the shape of it — with a flag when the routing data is three-plus years older than the trade, and a "Data behind this result" disclosure listing every input's vintage and source.
 
 The same honesty runs through the numbers: Iranian crude is nearly invisible in the trade record after 2019 (sanctioned cargoes get relabelled), Russia→Belarus crude vanishes from 2022, reserves are frozen at 2020 because the Energy Institute hasn't republished them since. A "why 0%?" lookup gives a surprising absence an explanation, not a shrug.
 

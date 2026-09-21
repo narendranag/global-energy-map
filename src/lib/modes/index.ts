@@ -14,6 +14,12 @@
 import type { LayerState } from "@/components/layers/LayerPanel";
 import type { AppState } from "@/lib/url-state/encode";
 import type { ScenarioId } from "@/lib/scenarios/types";
+import {
+  LNG_T3_FIRST_YEAR,
+  LNG_T3_LAST_YEAR,
+  TRADE_FIRST_YEAR,
+  TRADE_LAST_YEAR,
+} from "@/lib/data-catalog/years";
 
 export type Mode = "infrastructure" | "flows" | "scenarios";
 
@@ -94,12 +100,15 @@ export const MODE_LAYERS: Readonly<Record<Mode, LayerState>> = {
   scenarios: only("reserves", "pipelines", "refineries", "lng_terminals"),
 };
 
-/** LNG-T3 voyage coverage (mirrors `src/lib/data/voyages.ts`). */
-export const FLOWS_FIRST_YEAR = 2020;
-export const FLOWS_LAST_YEAR = 2024;
-/** BACI trade coverage: scenarios have no trade data before this year (mirrors `src/lib/data/trade-flows.ts`). */
-export const TRADE_FIRST_YEAR = 1995;
-export const TRADE_LAST_YEAR = 2024;
+/**
+ * LNG-T3 voyage coverage and BACI trade coverage, both read from catalog
+ * `coverage` in `src/lib/data-catalog/years.ts` — these were three mirrored
+ * pairs of literals, and a refresh moved the data without moving them.
+ * Re-exported under their existing names so importers are unchanged.
+ */
+export const FLOWS_FIRST_YEAR = LNG_T3_FIRST_YEAR;
+export const FLOWS_LAST_YEAR = LNG_T3_LAST_YEAR;
+export { TRADE_FIRST_YEAR, TRADE_LAST_YEAR };
 
 /**
  * Default year on first load: the latest reconciled trade year

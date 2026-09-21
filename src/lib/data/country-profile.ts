@@ -19,6 +19,7 @@ import { sourceLine } from "./sources";
 import { RESERVES_METRIC } from "./reserves";
 import { dataIso3, polygonIso3 } from "@/lib/geo/iso3";
 import { YEAR_MAX, YEAR_MIN } from "@/lib/time/range";
+import { TRADE_FIRST_YEAR } from "@/lib/data-catalog/years";
 import { SCENARIOS, isScenarioActive, type ScenarioDef } from "@/lib/scenarios/registry";
 import type { Commodity, ScenarioId, ScenarioResult } from "@/lib/scenarios/types";
 
@@ -47,8 +48,8 @@ export interface CountryTradeRow {
 /** BACI HS codes, mirroring `scenario-inputs.ts`. */
 export const HS_BY_COMMODITY: Record<Commodity, string> = { oil: "2709", gas: "271111" };
 
-/** First year BACI covers (`src/lib/modes`: TRADE_FIRST_YEAR). */
-export const TRADE_FIRST_YEAR = 1995;
+/** First year BACI covers, from catalog coverage (`@/lib/data-catalog/years`). */
+export { TRADE_FIRST_YEAR };
 
 /**
  * Everything the profile is built from. Each field is whatever its loader

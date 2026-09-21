@@ -17,7 +17,7 @@ import {
 } from "@/lib/scenarios/registry";
 import { scenarioIdsOf } from "@/lib/scenarios/shares";
 import { dataYearsPhrase } from "@/lib/scenarios/summary";
-import { routeShareYears, type DatedRouteRow } from "@/lib/scenarios/vintage";
+import { routeYears, type DatedRouteRow } from "@/lib/scenarios/vintage";
 import type { ScenarioView } from "@/lib/url-state/encode";
 import { groupIdenticalPairShares, pairLabel } from "@/lib/scenarios/share-groups";
 import { isUnsourced, type RouteCitation } from "@/lib/data/scenario-inputs";
@@ -194,7 +194,10 @@ export interface RouteDisplayRow {
   readonly scenarioId: ScenarioId;
   readonly title: string;
   readonly url: string;
+  /** Publication year of the document. */
   readonly year: number | null;
+  /** Year of the flows it describes; null where none is stated. */
+  readonly dataYear: number | null;
   readonly note: string;
   readonly unsourced: boolean;
   /** Set when identical pair rows are listed as one entry: ["IRN→IRQ", …]. */
@@ -236,6 +239,7 @@ export function routeRowsForDisplay(
           title,
           url: r.source_url ?? "",
           year: r.source_year ?? null,
+          dataYear: r.data_year ?? null,
           note: r.source_note ?? "",
           unsourced: title === "" || isUnsourced({ source_title: title }),
         };
@@ -250,6 +254,12 @@ export interface RouteDocument {
   readonly url: string;
   /** Publication year, null where the row records none. */
   readonly year: number | null;
+  /**
+   * The years of the flows this document is quoted for, oldest first — one
+   * document can support a figure for one year and a structural carve-out
+   * for none, so this is a list, and `[]` means it states no data year here.
+   */
+  readonly dataYears: readonly number[];
 }
 
 /**
@@ -262,15 +272,43 @@ export interface RouteDocument {
  * undated document sorts last, where an unsourced estimate belongs.
  */
 export function distinctRouteDocuments(rows: readonly RouteDisplayRow[]): RouteDocument[] {
-  const byKey = new Map<string, RouteDocument>();
+  const byKey = new Map<string, { doc: RouteDocument; dataYears: Set<number> }>();
   for (const r of rows) {
     if (r.unsourced || r.title === "") continue;
     const key = `${r.title}|${(r.year ?? 0).toString()}`;
-    if (!byKey.has(key)) byKey.set(key, { title: r.title, url: r.url, year: r.year });
+    let entry = byKey.get(key);
+    if (entry === undefined) {
+      entry = {
+        doc: { title: r.title, url: r.url, year: r.year, dataYears: [] },
+        dataYears: new Set<number>(),
+      };
+      byKey.set(key, entry);
+    }
+    if (r.dataYear !== null) entry.dataYears.add(r.dataYear);
   }
-  return [...byKey.values()].sort(
-    (a, b) => (b.year ?? 0) - (a.year ?? 0) || a.title.localeCompare(b.title),
-  );
+  return [...byKey.values()]
+    .map(({ doc, dataYears }) => ({ ...doc, dataYears: [...dataYears].sort((a, b) => a - b) }))
+    .sort((a, b) => (b.year ?? 0) - (a.year ?? 0) || a.title.localeCompare(b.title));
+}
+
+/**
+ * How one document is dated under its own entry: "published 2026 · data 2025",
+ * or "published 2019 · data year not stated" where it never says which
+ * year's flows it describes (a structural row, or a figure with no year).
+ *
+ * The blanket sentence this replaces said every year on the list was a
+ * publication year, which stopped being true the moment a row could carry a
+ * data year of its own.
+ */
+export function routeDocumentDates(d: RouteDocument): string {
+  const published = d.year === null ? "undated" : `published ${d.year.toString()}`;
+  const first = d.dataYears[0];
+  const last = d.dataYears[d.dataYears.length - 1];
+  const data =
+    first === undefined || last === undefined
+      ? "data year not stated"
+      : `data ${first === last ? first.toString() : `${first.toString()}\u2013${last.toString()}`}`;
+  return `${published} \u00b7 ${data}`;
 }
 
 /**
@@ -297,9 +335,9 @@ export function howComputedOptionsFor(
     combinedWith: result === null ? [] : scenarioIdsOf(result).map((id) => getScenario(id)),
     view: view === "exporters" ? "exporter" : "importer",
     hasInboundRoutes: routes?.some((r) => r.exporter_iso3 === null) ?? false,
-    // The share step says when its documents were written, from the rows
+    // The share step says which year's routing it applied, from the rows
     // themselves — the same derivation the headline phrase uses.
-    shareYears: routeShareYears(routes),
+    shareYears: routeYears(routes),
   };
 }
 

@@ -190,9 +190,9 @@ describe("scenario CSV", () => {
   });
 
   it("header marks derived analysis and cites BACI and every route share", () => {
-    const unsourced: ShareCitation = { disruption_id: "cpc", kind: "pipeline", exporter_iso3: "RUS", importer_iso3: null, share: 0.035, source_title: "Analyst estimate (unsourced)", source_url: null, source_year: 2026, source_note: null };
+    const unsourced: ShareCitation = { disruption_id: "cpc", kind: "pipeline", exporter_iso3: "RUS", importer_iso3: null, share: 0.035, source_title: "Analyst estimate (unsourced)", source_url: null, source_year: 2026, data_year: null, source_note: null };
     const shares: ShareCitation[] = [
-      { disruption_id: "druzhba", kind: "pipeline", exporter_iso3: "RUS", importer_iso3: "POL", share: 0.47, source_title: "IEA report", source_url: "https://iea.example", source_year: 2022, source_note: null },
+      { disruption_id: "druzhba", kind: "pipeline", exporter_iso3: "RUS", importer_iso3: "POL", share: 0.47, source_title: "IEA report", source_url: "https://iea.example", source_year: 2022, data_year: null, source_note: null },
       unsourced,
     ];
     const csv = scenarioCsv(RESULT, { viewUrl: "https://x/?scenario=druzhba", exported: "2026-09-10", catalog: CATALOG, shares });
@@ -217,6 +217,7 @@ describe("scenario CSV", () => {
       source_title: "IEA",
       source_url: "https://iea.example",
       source_year: 2026,
+      data_year: null,
       source_note: importer === null ? null : "inside the Gulf",
     });
     const shares = [
@@ -227,7 +228,7 @@ describe("scenario CSV", () => {
     ];
     const gas: ScenarioResult = { ...RESULT, scenarioId: "hormuz", commodity: "gas" };
     const csv = scenarioCsv(gas, { viewUrl: "https://x/", exported: "2026-09-11", catalog: CATALOG, shares });
-    expect(csv).toContain("Route shares (disruption_route.parquet, 3 rows; static across years):");
+    expect(csv).toContain("Route shares (disruption_route.parquet, 3 rows; static across years).");
     expect(csv).toContain("#   ARE -> all importers: 1 — IEA (2026) https://iea.example");
     expect(csv).toContain("#   2 pairs (ARE -> KWT, QAT -> KWT): 0 — IEA (2026) https://iea.example");
     expect(csv).not.toContain("0.65"); // the crude share does not apply to LNG
@@ -235,19 +236,21 @@ describe("scenario CSV", () => {
 
   it("states both data years and the vintage of every input it used", () => {
     const shares: ShareCitation[] = [
-      { disruption_id: "druzhba", kind: "pipeline", exporter_iso3: "RUS", importer_iso3: "POL", share: 0.47, source_title: "IEA report", source_url: null, source_year: 2022, source_note: null },
+      { disruption_id: "druzhba", kind: "pipeline", exporter_iso3: "RUS", importer_iso3: "POL", share: 0.47, source_title: "IEA report", source_url: null, source_year: 2022, data_year: 2021, source_note: null },
     ];
     // `today` is injected, so these lines do not move with the calendar.
     const csv = scenarioCsv(RESULT, { viewUrl: "https://x/", exported: "2026-09-10", catalog: CATALOG, shares, today: "2026-09-10" });
     // Both vintages, in the panel headline's own words: the figures below are
     // trade x route share, so a file naming only the trade year would let a
     // 2022 routing read as current.
-    expect(csv).toContain("# Data years: 2020 trade, 2022 route shares —");
-    expect(csv).toContain("# Data vintages: Trade 2020 · shares 2022");
+    // The year stated for the shares is the year of the flows the document
+    // describes (2021), never the year it was published (2022).
+    expect(csv).toContain("# Data years: 2020 trade, 2021 route shares —");
+    expect(csv).toContain("# Data vintages: Trade 2020 · shares 2021");
     // One line per input, naming what it is, who publishes it and how current
     // it is — derived, so a data refresh moves it with no code change.
     expect(csv).toMatch(/# {3}Trade flows \(.*\): run on 2020\./);
-    expect(csv).toMatch(/# {3}Route shares \(.*\): dated 2022\./);
+    expect(csv).toMatch(/# {3}Route shares \(.*\): dated 2021\./);
     expect(csv).toMatch(/# {3}Refineries \(.*\): as of /);
   });
 
@@ -255,10 +258,13 @@ describe("scenario CSV", () => {
     const csv = scenarioCsv(RESULT, { viewUrl: "https://x/", exported: "2026-09-10", catalog: CATALOG, shares: [], today: "2026-09-10" });
     const header = csv.split("\n").filter((l) => l.startsWith("#"));
     const trade = header.findIndex((l) => l.startsWith("# Trade data:"));
+    // The shares line still says the shares are static across years, and now
+    // also says which of the two years each citation prints.
+    expect(header.some((l) => l.includes("; static across years)."))).toBe(true);
+    expect(header.some((l) => l.includes("(source_year, data_year)"))).toBe(true);
     const year = header.findIndex((l) => l.startsWith("# Data years:"));
     expect(trade).toBeGreaterThan(-1);
     expect(year).toBe(trade + 1);
-    expect(csv).toContain("; static across years):");
   });
 
   it("T3: the scenario CSV never carries GIE gas-storage or Comtrade figures (view-only context, screen only)", () => {
@@ -296,7 +302,7 @@ describe("scenario CSV", () => {
    */
   it("states the severity when it is not a full closure", () => {
     const shares: ShareCitation[] = [
-      { disruption_id: "druzhba", kind: "pipeline", exporter_iso3: "RUS", importer_iso3: "POL", share: 0.47, source_title: "IEA report", source_url: "https://iea.example", source_year: 2022, source_note: null },
+      { disruption_id: "druzhba", kind: "pipeline", exporter_iso3: "RUS", importer_iso3: "POL", share: 0.47, source_title: "IEA report", source_url: "https://iea.example", source_year: 2022, data_year: null, source_note: null },
     ];
     const half: ScenarioResult = { ...RESULT, severity: 0.5 };
     const csv = scenarioCsv(half, { viewUrl: "https://x/", exported: "2026-09-19", catalog: CATALOG, shares });
@@ -309,8 +315,8 @@ describe("scenario CSV", () => {
 
   it("lists every scenario, its own share rows, and says the figures are the low end", () => {
     const shares: ShareCitation[] = [
-      { disruption_id: "druzhba", kind: "pipeline", exporter_iso3: "RUS", importer_iso3: "POL", share: 0.47, source_title: "IEA report", source_url: "https://iea.example", source_year: 2022, source_note: null },
-      { disruption_id: "btc", kind: "pipeline", exporter_iso3: "AZE", importer_iso3: null, share: 0.83, source_title: "BP", source_url: "https://bp.example", source_year: 2024, source_note: null },
+      { disruption_id: "druzhba", kind: "pipeline", exporter_iso3: "RUS", importer_iso3: "POL", share: 0.47, source_title: "IEA report", source_url: "https://iea.example", source_year: 2022, data_year: null, source_note: null },
+      { disruption_id: "btc", kind: "pipeline", exporter_iso3: "AZE", importer_iso3: null, share: 0.83, source_title: "BP", source_url: "https://bp.example", source_year: 2024, data_year: null, source_note: null },
     ];
     const combined: ScenarioResult = { ...RESULT, scenarioIds: ["druzhba", "btc"] };
     const csv = scenarioCsv(combined, { viewUrl: "https://x/", exported: "2026-09-19", catalog: CATALOG, shares });
@@ -325,7 +331,7 @@ describe("scenario CSV", () => {
   });
 
   it("prints an inbound (importer-wide) row as a wildcard, never as null", () => {
-    const inbound: ShareCitation = { disruption_id: "hormuz", kind: "chokepoint", exporter_iso3: null, importer_iso3: "KWT", share: 0.9, source_title: "EIA", source_url: null, source_year: 2026, source_note: null };
+    const inbound: ShareCitation = { disruption_id: "hormuz", kind: "chokepoint", exporter_iso3: null, importer_iso3: "KWT", share: 0.9, source_title: "EIA", source_url: null, source_year: 2026, data_year: null, source_note: null };
     expect(shareCitationLine(inbound)).toBe("all exporters -> KWT: 0.9 — EIA (2026)");
   });
 });
@@ -346,7 +352,7 @@ describe("scenario CSV — exporter view", () => {
     rankedExporters: [],
   };
   const shares: ShareCitation[] = [
-    { disruption_id: "druzhba", kind: "pipeline", exporter_iso3: "RUS", importer_iso3: "POL", share: 0.47, source_title: "IEA report", source_url: "https://iea.example", source_year: 2022, source_note: null },
+    { disruption_id: "druzhba", kind: "pipeline", exporter_iso3: "RUS", importer_iso3: "POL", share: 0.47, source_title: "IEA report", source_url: "https://iea.example", source_year: 2022, data_year: null, source_note: null },
   ];
   const ctx = { viewUrl: "https://x/", exported: "2026-09-19", catalog: CATALOG, shares };
 
@@ -367,7 +373,8 @@ describe("scenario CSV — exporter view", () => {
     const exp = scenarioCsv(EXPORTER_RESULT, { ...ctx, view: "exporters", today: "2026-09-19" });
     expect(imp).toContain("#   Refineries (");
     expect(exp).not.toContain("#   Refineries (");
-    expect(exp).toContain("# Data years: 2020 trade, 2022 route shares —");
+    // Published 2022, no data year stated: the file says which year it has.
+    expect(exp).toContain("# Data years: 2020 trade, route shares published 2022 —");
   });
 
   it("emits exporter rows, ranked by share, with zero-export codes dropped", () => {

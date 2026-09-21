@@ -28,6 +28,7 @@ function inputs(commodity: "oil" | "gas"): ScenarioInputs {
         source_title: "",
         source_url: "",
         source_year: null,
+        data_year: null,
         source_note: "",
       },
     ],

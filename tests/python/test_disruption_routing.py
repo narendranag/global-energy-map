@@ -125,3 +125,74 @@ def test_no_duplicate_disruption_route_keys():
 def test_shares_are_in_unit_range():
     for r in all_rows():
         assert 0.0 <= r["share"] <= 1.0, r
+
+
+# ── data_year ───────────────────────────────────────────────────────────────
+# `source_year` is the year the cited document was *published*; `data_year` is
+# the year of the flows or routing it describes. A row gets one only where the
+# document (or the row's own note) states it: structural rows — the intra-Gulf
+# share-0 pairs, the physical-geography wildcards — and unsourced analyst
+# estimates carry NULL, with nothing implied. See the comment beside each
+# citation constant for where its data year comes from.
+#
+# (rows with a data year, rows without), per route-share set.
+EXPECTED_DATA_YEAR_COUNTS = {
+    "hormuz": (6, 43),
+    "hormuz_lng": (0, 14),
+    "druzhba": (5, 1),
+    "btc": (1, 0),
+    "cpc": (1, 1),
+    "malacca": (10, 98),
+    "malacca_lng": (0, 10),
+    "suez": (0, 138),
+    "suez_lng": (23, 0),
+    "bab_el_mandeb": (0, 138),
+    "bab_el_mandeb_lng": (23, 0),
+    "turkish_straits": (2, 5),
+    "keystone": (1, 0),
+    "enbridge_mainline": (1, 0),
+    "espo_spur": (0, 1),
+}
+
+
+def _counts_by_id(rows):
+    counts = {}
+    for r in rows:
+        dated, undated = counts.get(r["disruption_id"], (0, 0))
+        counts[r["disruption_id"]] = (
+            (dated + 1, undated) if r["data_year"] is not None else (dated, undated + 1)
+        )
+    return counts
+
+
+def test_every_row_carries_a_data_year_column():
+    for r in all_rows():
+        assert "data_year" in r, r
+        dy = r["data_year"]
+        assert dy is None or isinstance(dy, int), r
+
+
+def test_data_year_counts_per_route_set():
+    assert _counts_by_id(all_rows()) == EXPECTED_DATA_YEAR_COUNTS
+
+
+def test_data_year_never_postdates_its_document():
+    """A document cannot describe flows from after it was published."""
+    for r in all_rows():
+        if r["data_year"] is not None:
+            assert 1990 <= r["data_year"] <= r["source_year"], r
+
+
+def test_unsourced_rows_have_no_data_year():
+    """`source_year` keeps its 2026 default for compatibility; a row with no
+    document behind it has no data year to state."""
+    for r in all_rows():
+        if r["source_title"] == UNSOURCED:
+            assert r["data_year"] is None, r
+
+
+def test_structural_share_zero_rows_are_undated():
+    """The share-0 carve-outs are geography, not a dated measurement."""
+    for r in all_rows():
+        if r["share"] == 0.0:
+            assert r["data_year"] is None, r

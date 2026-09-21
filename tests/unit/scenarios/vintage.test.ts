@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
-  routeShareYears,
+  routeYears,
+  routeYearsPhrase,
   scenarioVintage,
   shareGapNote,
   type RouteVintageRow,
@@ -61,8 +62,12 @@ const FIXTURE: Catalog = {
 
 const TODAY = "2026-09-21";
 
-function route(source_year: number | null, source_title = "EIA report"): RouteVintageRow {
-  return { source_title, source_year };
+function route(
+  source_year: number | null,
+  source_title = "EIA report",
+  data_year: number | null = null,
+): RouteVintageRow {
+  return { source_title, source_year, data_year };
 }
 
 const OIL_ROUTES: RouteVintageRow[] = [route(2023), route(2021), route(2023)];
@@ -294,14 +299,54 @@ describe("scenarioVintage", () => {
 describe("shareGapNote", () => {
   const TRADE = 2024;
 
-  it("fires for a Suez-like run: 2019 documents against 2024 trade", () => {
-    const note = shareGapNote(TRADE, [{ source_year: 2019 }, { source_year: 2019 }]);
-    expect(note).toContain("2019 documents");
+  it("fires for a Suez-like run, and says the 2019 is a publication year", () => {
+    const note = shareGapNote(TRADE, [
+      { source_year: 2019, data_year: null },
+      { source_year: 2019, data_year: null },
+    ]);
+    expect(note).toContain("documents published 2019");
     expect(note).toContain("2024");
     expect(note).toContain("Routing that changed in between is not reflected.");
   });
 
+  it("says a dated run describes flows, not documents", () => {
+    const note = shareGapNote(TRADE, [
+      { source_year: 2022, data_year: 2018 },
+      { source_year: 2022, data_year: 2018 },
+    ]);
+    expect(note).toContain("Route shares describe 2018 flows");
+    expect(note).not.toContain("published");
+  });
+
+  it("measures the gap on the data year, not on the newer document that states it", () => {
+    // Published 2026, describing 2018 flows: dating it 2026 would hide an
+    // eight-year gap behind a current-looking publication date.
+    expect(shareGapNote(TRADE, [{ source_year: 2026, data_year: 2018 }])).toContain(
+      "describe 2018 flows",
+    );
+    // ...and the other way: a 2019 document describing 2023 flows is close.
+    expect(shareGapNote(TRADE, [{ source_year: 2025, data_year: 2023 }])).toBeNull();
+  });
+
+  it("says how many shares are dated only by publication, in a mixed run", () => {
+    const note = shareGapNote(TRADE, [
+      { source_year: 2026, data_year: 2025 },
+      { source_year: 2017, data_year: null },
+      { source_year: 2017, data_year: null },
+    ]);
+    expect(note).toContain("describe 2025 flows");
+    expect(note).toContain("2 more are dated only by their document's publication year (2017)");
+    // Druzhba's real shape is one such row, and "1 more are" is not English.
+    expect(
+      shareGapNote(TRADE, [
+        { source_year: 2022, data_year: 2021 },
+        { source_year: 2026, data_year: null },
+      ]),
+    ).toContain("1 more is dated only by their document's publication year (2026)");
+  });
+
   it("stays quiet for a Hormuz-like run: a 2-year gap is not a mismatch", () => {
+    expect(shareGapNote(TRADE, [{ source_year: 2026, data_year: 2025 }])).toBeNull();
     expect(shareGapNote(TRADE, [{ source_year: 2026 }])).toBeNull();
     expect(shareGapNote(TRADE, [{ source_year: 2022 }, { source_year: 2026 }])).toBeNull();
   });
@@ -320,16 +365,59 @@ describe("shareGapNote", () => {
   });
 });
 
-describe("routeShareYears", () => {
-  it("is the distinct publication years, oldest first, undated rows dropped", () => {
+describe("routeYears", () => {
+  it("keeps the two years apart: flows described, and publication of the rest", () => {
+    const y = routeYears([
+      { source_year: 2026, data_year: 2025 },
+      { source_year: 2025, data_year: 2023 },
+      { source_year: 2026, data_year: 2025 },
+      { source_year: 2017, data_year: null },
+      { source_year: null, data_year: null },
+    ]);
+    expect(y.data).toEqual([2023, 2025]);
+    expect(y.published).toEqual([2017]);
+    expect(y.datedCount).toBe(3);
+    expect(y.publishedOnlyCount).toBe(1);
+    // Best available date per row: data year where there is one, else the
+    // publication year. It is what a gap is measured on, never displayed.
+    expect(y.effective).toEqual([2017, 2023, 2025]);
+  });
+
+  it("drops an unsourced estimate entirely: it has no document to date", () => {
+    const y = routeYears([
+      { source_year: 2026, data_year: null, source_title: "Analyst estimate (unsourced)" },
+    ]);
+    expect(y).toEqual({
+      data: [],
+      published: [],
+      datedCount: 0,
+      publishedOnlyCount: 0,
+      effective: [],
+    });
+  });
+
+  it("is empty for no rows at all", () => {
+    expect(routeYears(null).effective).toEqual([]);
+    expect(routeYears([]).data).toEqual([]);
+  });
+});
+
+describe("routeYearsPhrase", () => {
+  it("says which of the two years it is showing, or nothing", () => {
+    expect(routeYearsPhrase(routeYears([{ source_year: 2026, data_year: 2025 }]))).toBe(
+      "dated 2025",
+    );
     expect(
-      routeShareYears([
-        { source_year: 2026 },
-        { source_year: 2017 },
-        { source_year: 2026 },
-        { source_year: null },
-      ]),
-    ).toEqual([2017, 2026]);
-    expect(routeShareYears(null)).toEqual([]);
+      routeYearsPhrase(
+        routeYears([
+          { source_year: 2026, data_year: 2025 },
+          { source_year: 2022, data_year: 2021 },
+        ]),
+      ),
+    ).toBe("dated 2021\u20132025");
+    expect(routeYearsPhrase(routeYears([{ source_year: 2019, data_year: null }]))).toBe(
+      "published 2019",
+    );
+    expect(routeYearsPhrase(routeYears([]))).toBeNull();
   });
 });

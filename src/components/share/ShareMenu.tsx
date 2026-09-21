@@ -222,7 +222,7 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
   // scenario, data years, severity, view — one helper so the two cannot
   // drift. With a scenario active the vintages are stated as what they are —
   // the trade the result is computed on *and* the years of the documents its
-  // route shares come from ("2024 trade, 2019 route shares") — rather than as
+  // route shares describe ("2024 trade, 2025 route shares") — rather than as
   // a setting the reader picked; there is no year control any more. With no
   // scenario it is still the plain year the visible layers are read at.
   //

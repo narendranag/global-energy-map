@@ -96,7 +96,12 @@ export function shareCitationLine(r: ShareCitation, pairs: readonly ShareCitatio
       : r.exporter_iso3 === null
         ? `all exporters -> ${r.importer_iso3 ?? "*"}`
         : `${r.exporter_iso3} -> ${r.importer_iso3 ?? "all importers"}`;
-  const src = r.source_title === UNSOURCED_TITLE ? UNSOURCED_TITLE : `${r.source_title} (${String(r.source_year)})`;
+  // Both years, publication first (it is what the old files carried), then
+  // the year of the flows the document describes where it states one. A
+  // structural row simply has no second year.
+  const dataYear = r.data_year ?? null;
+  const years = `${String(r.source_year)}${dataYear === null ? "" : `, data ${String(dataYear)}`}`;
+  const src = r.source_title === UNSOURCED_TITLE ? UNSOURCED_TITLE : `${r.source_title} (${years})`;
   const url = r.source_url ? ` ${r.source_url}` : "";
   return `${route}: ${String(r.share)} — ${src}${url}`;
 }
@@ -261,7 +266,7 @@ export function scenarioHeader(result: ScenarioResult, ctx: ScenarioExportContex
     // Both vintages, in the same words the panel headline uses: the figures
     // below are trade x route share, and a file that named only the trade
     // year let a 2019 routing read as current.
-    `Data years: ${dataYearsPhrase(result.year, shares)} — every figure below is that trade year's reconciled bilateral trade, routed by shares taken from the documents listed further down. There is no year control on the site; a link pinned to an earlier year keeps showing that year.`,
+    `Data years: ${dataYearsPhrase(result.year, shares)} — every figure below is that trade year's reconciled bilateral trade, routed by shares taken from the documents listed further down. A route-share year is the year of the flows the document describes (disruption_route.data_year), not when it was published; where no document states one, the line says "published" and gives the publication year instead. There is no year control on the site; a link pinned to an earlier year keeps showing that year.`,
     `Data vintages: ${vintage.summary}`,
   );
   if (vintage.shareGapNote !== null) lines.push(`  ${vintage.shareGapNote}`);
@@ -288,7 +293,9 @@ export function scenarioHeader(result: ScenarioResult, ctx: ScenarioExportContex
     );
   }
   lines.push(
-    `Route shares (disruption_route.parquet, ${String(shares.length)} rows; static across years):`,
+    `Route shares (disruption_route.parquet, ${String(shares.length)} rows; static across years).` +
+      " Each line ends with the document, its publication year and, where the document states one," +
+      " the year of the flows it describes (source_year, data_year):",
   );
   for (const { def: sdef, shares: rows } of perScenario) {
     if (ids.length > 1) lines.push(`  ${sdef.label}:`);

@@ -216,39 +216,10 @@ export function sourceVintageLine(
     : `Source: ${e.source_name} · snapshot ${formatVintage(v)}`;
 }
 
-/** The span of publication years across a set of cited rows. */
-export interface YearSpan {
-  readonly from: number;
-  readonly through: number;
-}
-
-/**
- * When the documents behind a set of route shares were published, from the
- * rows' own `source_year` column — never from the `disruption_route` entry's
- * `as_of`, which is the day the table was rebuilt.
- *
- * The scenario panel states this per scenario (`src/lib/scenarios/vintage.ts`);
- * this is the country panel's own cheap derivation over the rows its exposure
- * loader already holds, deliberately independent of it. Worth unifying if a
- * third caller appears.
- */
-export function routeSourceYearSpan(
-  rows: readonly { readonly source_year: number | null }[],
-): YearSpan | null {
-  let from: number | null = null;
-  let through: number | null = null;
-  for (const r of rows) {
-    const y = r.source_year;
-    if (y === null || !Number.isFinite(y)) continue;
-    if (from === null || y < from) from = y;
-    if (through === null || y > through) through = y;
-  }
-  return from === null || through === null ? null : { from, through };
-}
-
-/** "2019" or "2013–2025". */
-export function formatYearSpan(span: YearSpan): string {
-  return span.from === span.through
-    ? span.from.toString()
-    : `${span.from.toString()}–${span.through.toString()}`;
-}
+// The country panel used to derive its own span of route-share publication
+// years here (`routeSourceYearSpan`/`formatYearSpan`). With `data_year` there
+// were three reasons to unify it, so it is gone: `routeYears` /
+// `routeYearsPhrase` in src/lib/scenarios/vintage.ts are the one derivation,
+// and the country panel reads them through `loadRouteYears`. Two surfaces
+// cannot now date the same shares differently, or date them by different
+// columns.

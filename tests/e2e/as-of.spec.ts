@@ -101,8 +101,11 @@ test.describe("A scenario states the year it was run on", () => {
 
     const announcement = page.getByTestId("scenario-announcement");
     await expect(announcement).toBeVisible();
-    // Both vintages, always: the number is trade x route share.
-    await expect(announcement).toContainText("2010 trade, 2026 route shares", {
+    // Both vintages, always: the number is trade x route share. The share
+    // year is the year of the flows the documents describe (the IEA Hormuz
+    // pages are published 2026 and give 2025 routing), not their publication
+    // year.
+    await expect(announcement).toContainText("2010 trade, 2025 route shares", {
       timeout: RESULT_TIMEOUT,
     });
     await expect(announcement).toContainText(/importers exposed/);
@@ -125,7 +128,7 @@ test.describe("A scenario states the year it was run on", () => {
       `/?mode=scenarios&scenario=hormuz&commodity=oil&year=${String(LATEST)}&layers=reserves`,
     );
     const announcement = page.getByTestId("scenario-announcement");
-    await expect(announcement).toContainText(`${String(LATEST)} trade, 2026 route shares`, {
+    await expect(announcement).toContainText(`${String(LATEST)} trade, 2025 route shares`, {
       timeout: RESULT_TIMEOUT,
     });
 
@@ -161,42 +164,53 @@ test.describe("A scenario states the year it was run on", () => {
 });
 
 test.describe("A scenario states the vintage of its route shares too", () => {
-  // The headline number is (trade in year Y) x (a routing share documented in
+  // The headline number is (trade in year Y) x (a routing share describing
   // year D). Naming only Y let a 2019 routing read as current — these two
-  // tests are the two sides of that fix, on the site's own data: Suez's
-  // shares are one 2019 document, Hormuz's one 2026 document.
-  test("Suez: both years in the headline, and a visible caveat for the gap", async ({ page }) => {
+  // tests are the two sides of that fix, on the site's own data. Suez's
+  // shares are structural rows cited to a 2019 EIA article that never says
+  // which year's flows its figures are, so the headline says "published
+  // 2019" rather than passing that off as a data year; Hormuz's come from
+  // 2026 IEA pages that do say (2025 flows), so it names 2025.
+  test("Suez: the headline says the 2019 is a publication year, with a caveat for the gap", async ({ page }) => {
     await gotoReady(
       page,
       `/?mode=scenarios&scenario=suez&commodity=oil&year=${String(LATEST)}&layers=reserves`,
     );
     const announcement = page.getByTestId("scenario-announcement");
-    await expect(announcement).toContainText(`${String(LATEST)} trade, 2019 route shares`, {
-      timeout: RESULT_TIMEOUT,
-    });
+    await expect(announcement).toContainText(
+      `${String(LATEST)} trade, route shares published 2019`,
+      { timeout: RESULT_TIMEOUT },
+    );
 
     // Under the headline, not inside the disclosure: it is about the number
     // on screen, not about a footnote to it.
     const caveat = page.getByTestId("scenario-vintage-caveat");
     await expect(caveat).toBeVisible();
-    await expect(caveat).toContainText("2019 documents");
+    await expect(caveat).toContainText("documents published 2019");
     await expect(caveat).toContainText(String(LATEST));
 
     // The disclosure is open without a click, and names the documents.
     const vintage = page.getByTestId("scenario-vintage");
     await expect(vintage).toHaveAttribute("open", "");
     await expect(page.getByTestId("route-share-documents").first()).toBeVisible();
-    await expect(vintage).toContainText("publication year");
+    // Every document on the list is dated by both years, and says outright
+    // where it states none — the blanket "these are publication years"
+    // sentence is gone.
+    await expect(vintage).toContainText("published 2019 · data year not stated");
   });
 
-  test("Hormuz: a two-year gap is not a mismatch, so no caveat", async ({ page }) => {
+  test("Hormuz: the shares are dated by the flows they describe, and the gap is small", async ({ page }) => {
     await gotoReady(
       page,
       `/?mode=scenarios&scenario=hormuz&commodity=oil&year=${String(LATEST)}&layers=reserves`,
     );
     await expect(page.getByTestId("scenario-announcement")).toContainText(
-      `${String(LATEST)} trade, 2026 route shares`,
+      `${String(LATEST)} trade, 2025 route shares`,
       { timeout: RESULT_TIMEOUT },
+    );
+    // A 2026 page describing 2025 flows: both years are on the document row.
+    await expect(page.getByTestId("route-share-documents").first()).toContainText(
+      "published 2026 · data 2025",
     );
     await expect(page.getByTestId("scenario-vintage-caveat")).toHaveCount(0);
   });

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { groupIdenticalPairShares, pairLabel } from "@/lib/scenarios/share-groups";
 
-const cite = { source_title: "IEA", source_url: "https://iea.org", source_year: 2026, source_note: "inside" };
+const cite = { source_title: "IEA", source_url: "https://iea.org", source_year: 2026, data_year: null, source_note: "inside" };
 
 describe("groupIdenticalPairShares", () => {
   it("merges pair rows with the same share and citation, keeping first-row order", () => {
@@ -34,4 +34,16 @@ describe("groupIdenticalPairShares", () => {
     const groups = groupIdenticalPairShares(rows);
     expect(groups.map((g) => g.rows.map(pairLabel))).toEqual([["*→KWT"], ["IRQ→KWT"], ["*→BHR"]]);
   });
+});
+
+it("never merges two rows that cite the same document for different years", () => {
+  // One document can support a 2025 figure and a structural carve-out that
+  // describes no year; reading them as one entry would date both by one.
+  const rows = [
+    { exporter_iso3: "QAT", importer_iso3: "KWT", share: 0, ...cite, data_year: 2025 },
+    { exporter_iso3: "QAT", importer_iso3: "BHR", share: 0, ...cite, data_year: null },
+    { exporter_iso3: "QAT", importer_iso3: "ARE", share: 0, ...cite, data_year: 2025 },
+  ];
+  const groups = groupIdenticalPairShares(rows);
+  expect(groups.map((g) => g.rows.length)).toEqual([2, 1]);
 });

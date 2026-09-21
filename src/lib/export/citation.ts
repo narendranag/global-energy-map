@@ -44,7 +44,10 @@ export interface ShareCitation {
   readonly share: number;
   readonly source_title: string;
   readonly source_url: string | null;
+  /** Publication year of the document. */
   readonly source_year: number;
+  /** Year of the flows it describes; null on structural/unsourced rows. */
+  readonly data_year: number | null;
   readonly source_note: string | null;
 }
 

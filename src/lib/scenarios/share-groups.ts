@@ -7,6 +7,7 @@ export interface GroupableShare {
   readonly source_title?: string | null;
   readonly source_url?: string | null;
   readonly source_year?: number | null;
+  readonly data_year?: number | null;
   readonly source_note?: string | null;
 }
 
@@ -37,6 +38,9 @@ export function groupIdenticalPairShares<R extends GroupableShare>(
       r.source_title ?? "",
       r.source_url ?? "",
       r.source_year ?? null,
+      // Two rows citing the same document for different years are two
+      // different statements, so they never read as one entry.
+      r.data_year ?? null,
       r.source_note ?? "",
     ]);
     const group = byKey.get(key);

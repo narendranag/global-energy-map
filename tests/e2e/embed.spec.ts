@@ -96,7 +96,7 @@ test.describe("embed mode", () => {
     // An embed's one line is all a reader has, and the number it labels is
     // trade x route share — so it names the route shares' vintage too.
     const chip = page.getByRole("button", {
-      name: /Hormuz.*2022 trade, 2026 route shares.*oil/i,
+      name: /Hormuz.*2022 trade, 2025 route shares.*oil/i,
     });
     await expect(chip).toBeVisible();
     await expect(page.getByTestId("scenario-slot")).toBeHidden();

@@ -772,6 +772,10 @@ def scenario_share_rows(path: Path = DISRUPTION_ROUTE) -> list[dict[str, Any]]:
             "source_title": str(r.source_title),
             "source_url": text(r.source_url),
             "source_year": int(r.source_year),
+            # The year of the flows the share describes, where the document
+            # states one; null for structural and unsourced rows. Consumers
+            # state this and keep `source_year` as the secondary date.
+            "data_year": None if pd.isna(r.data_year) else int(r.data_year),
             "source_note": text(r.source_note),
         }
         for r in df.itertuples(index=False)

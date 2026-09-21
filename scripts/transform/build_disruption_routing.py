@@ -1,7 +1,7 @@
 """Build disruption_route.parquet — chokepoint + pipeline disruptions.
 
 Each row: (disruption_id, kind, exporter_iso3, importer_iso3, share, source,
-           source_title, source_url, source_year, source_note)
+           source_title, source_url, source_year, data_year, source_note)
 
 Share semantics:
 - chokepoint: fraction of exporter's seaborne crude that transits the chokepoint
@@ -13,7 +13,26 @@ share 0 for Hormuz trade that stays inside the Gulf.
 
 Citations (review R6, Phase 7 A6): every hand-set share carries the document
 that supports it (``source_title``/``source_url``/``source_year``) and a
-``source_note`` explaining how the number follows from that document. Shares
+``source_note`` explaining how the number follows from that document.
+
+Two years, not one (2026-09-21). ``source_year`` is the year the document was
+**published**; ``data_year`` is the year of the flows or routing it
+**describes**, which is what a reader comparing a share with a trade year
+actually needs. A row gets a ``data_year`` only where the document or the
+row's own note states one; where it does not, the column is NULL and nothing
+is implied. Three kinds of row are NULL by construction:
+
+* **structural rows** — the intra-Gulf share-0 pairs, and the
+  physical-geography wildcards (Suez, Bab el-Mandeb, Malacca's Gulf rows)
+  whose notes say in so many words that the share follows from geography
+  rather than from a measured flow. Geography has no year.
+* **capacity rows** — ESPO's spur share is design capacity, not metered flow.
+* **unsourced rows** — an analyst estimate has no document to date. Their
+  ``source_year`` keeps its 2026 default (unchanged, for compatibility).
+
+The comment beside each citation constant records where its data year comes
+from; ``_row(..., data_year=...)`` overrides it per row, because one document
+can support both a dated figure and a structural carve-out. Shares
 were set in Phase 1/2; the citations were researched afterwards (2026-09-10)
 and the shares were left unchanged at first; on 2026-09-10 the user approved
 updating the six that disagreed with their sources (IRQ, POL, DEU, CZE, AZE,
@@ -25,6 +44,7 @@ directly are marked ``source_title = UNSOURCED``.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import NamedTuple
 
 import pandas as pd
 import pyarrow as pa
@@ -38,66 +58,121 @@ UNSOURCED = "Analyst estimate (unsourced)"
 
 
 # ── Citations ───────────────────────────────────────────────────────────────
-IEA_HORMUZ = (
+class Citation(NamedTuple):
+    """A supporting document: what it is, where it is, when it was published,
+    and — where it says so — the year of the flows or routing it describes."""
+
+    title: str
+    url: str
+    year: int
+    data_year: int | None
+
+
+class _Inherit:
+    """Sentinel: this row takes its citation's data year."""
+
+
+INHERIT = _Inherit()
+
+# IEA: every flow figure on the page is labelled 2025 ("United Arab Emirates
+# 2.02", "Saudi Arabia 5.43" mb/d of crude oil in 2025), including the
+# "rely on the Strait" statement the no-bypass rows rest on.
+IEA_HORMUZ = Citation(
     "IEA, Strait of Hormuz (Oil security and emergency response)",
     "https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz",
     2026,
+    2025,
 )
-ARGUS_YANBU = (
+# Argus: the volumes quoted in the row notes are Kpler's 2025 flows.
+ARGUS_YANBU = Citation(
     "Argus Media, Yanbu gives Aramco limited option for rerouting crude (Kpler data)",
     "https://www.argusmedia.com/en/news-and-insights/latest-market-news/"
     "2798868-yanbu-gives-aramco-limited-option-for-rerouting-crude",
     2026,
+    2025,
 )
-IEA_RUSSIA_2022 = (
+# IEA: the import volumes the Druzhba branch split is derived from are the
+# report's November 2021 figures ("Poland imported 372 kb/d ... Nov 2021").
+IEA_RUSSIA_2022 = Citation(
     "IEA, Russian supplies to global energy markets — Oil market and Russian supply",
     "https://www.iea.org/reports/russian-supplies-to-global-energy-markets/"
     "oil-market-and-russian-supply-2",
     2022,
+    2021,
 )
-GEM_DRUZHBA = (
+# GEM.wiki: used only for the structural Belarus row (landlocked, refineries
+# fed by pipeline). No flow year is stated or needed.
+GEM_DRUZHBA = Citation(
     "Global Energy Monitor, Druzhba Oil Pipeline (GEM.wiki)",
     "https://www.gem.wiki/Druzhba_Oil_Pipeline",
     2026,
+    None,
 )
-EIA_CASPIAN = (
+# EIA (brief dated 6 Feb 2025): the CPC share sits in the brief's 2023
+# paragraph ("Kazakhstan's crude oil exports ... increased to 1.41 million
+# b/d in 2023. In 2023, Kazakhstan worked to diversify trade routes ... The
+# CPC carries about 80%"), and 2023 is the newest year the brief reports.
+EIA_CASPIAN = Citation(
     "EIA, Regional Analysis Brief: Caspian Sea",
     "https://www.eia.gov/international/content/analysis/regions_of_interest/caspian_sea/",
     2025,
+    2023,
 )
-KAZ_DEU_DRUZHBA = (
+# Reuters (2026) reports the halt; the share itself is the maintainer's
+# interim estimate, calibrated in its own note to BACI's 2023 (3.1 Mt) and
+# 2024 (4.3 Mt) KAZ->DEU volumes — "close to right for 2023-24".
+KAZ_DEU_DRUZHBA = Citation(
     "Reuters, 'Russia to halt Kazakhstan's oil flows to Germany via Druzhba, sources say'",
     "https://www.reuters.com/business/energy/russia-halt-kazakhstans-oil-flows-germany-via-druzhba-sources-say-2026-04-21",
     2026,
+    2024,
 )
-EIA_MALACCA = (
+# EIA id=32452 (Aug 2017): "Petroleum and other liquids transiting the Strait
+# of Malacca increased ... in 2016, reaching 16 million barrels per day".
+EIA_MALACCA = Citation(
     "EIA, World Oil Transit Chokepoints: Strait of Malacca",
     "https://www.eia.gov/todayinenergy/detail.php?id=32452",
     2017,
+    2016,
 )
-BERNAMA_MALACCA = (
+# Bernama, quoting EIA: every figure is 1H2025.
+BERNAMA_MALACCA = Citation(
     "Bernama, Strait of Malacca Keeps Top Spot as World's Largest Oil Transit Chokepoint "
     "(EIA data)",
     "https://garasi.bernama.com/quick-reads/"
     "strait-of-malacca-keeps-top-spot-as-worlds-largest-oil-transit-chokepoint",
     2026,
+    2025,
 )
-EIA_SUEZ_SUMED = (
+# EIA id=40152 (2019): the article's traffic figures describe 2018 (the 85%
+# northbound-composition figure is 2018 data — chokepoints.md verification).
+# The 98% northbound-LNG sentence the two LNG rows rest on carries no year of
+# its own, so 2018 is the article's data vintage rather than that sentence's
+# own label; the crude rows are structural and override this to NULL.
+EIA_SUEZ_SUMED = Citation(
     "EIA, The Suez Canal and SUMED Pipeline are critical chokepoints for oil and natural gas trade",
     "https://www.eia.gov/todayinenergy/detail.php?id=40152",
     2019,
+    2018,
 )
-CER_PIPELINE_SYSTEM = (
+# CER "Canada's Pipeline System 2021": the report's throughput data is 2020
+# (the Enbridge row's own derivation already uses the CER's 2020 vintage).
+# The two share sentences carry no year of their own.
+CER_PIPELINE_SYSTEM = Citation(
     "Canada Energy Regulator, Canada's Pipeline System 2021 "
     "(Crude Oil Pipeline Transportation System)",
     "https://www.cer-rec.gc.ca/en/data-analysis/facilities-we-regulate/"
     "canadas-pipeline-system/2021/crude-oil-pipeline-transportation-system.html",
     2021,
+    2020,
 )
-DOWNS_USCC_2019 = (
+# Downs (2019) gives ESPO *design capacity*, not a metered flow: there is no
+# year of routing to state, so the ESPO row is NULL.
+DOWNS_USCC_2019 = Citation(
     "Erica Downs, testimony to the U.S.-China Economic and Security Review Commission",
     "https://www.uscc.gov/sites/default/files/Downs_Testimony...pdf",
     2019,
+    None,
 )
 
 
@@ -108,11 +183,20 @@ def _row(
     importer_iso3: str | None,
     share: float,
     source: str,
-    citation: tuple[str, str, int] | None,
+    citation: Citation | None,
     note: str,
+    data_year: int | None | _Inherit = INHERIT,
 ) -> dict:
-    """Create a disruption route row. ``citation=None`` marks it unsourced."""
-    title, url, year = citation if citation else (UNSOURCED, "", 2026)
+    """Create a disruption route row. ``citation=None`` marks it unsourced.
+
+    ``data_year`` defaults to the citation's own (``None`` for an unsourced
+    row); pass it explicitly where this row is structural, or where the
+    document gives this row a different year from its headline figure.
+    """
+    title, url, year, cited_data_year = (
+        citation if citation else Citation(UNSOURCED, "", 2026, None)
+    )
+    resolved = cited_data_year if isinstance(data_year, _Inherit) else data_year
     return {
         "disruption_id": disruption_id,
         "kind": kind,
@@ -123,6 +207,7 @@ def _row(
         "source_title": title,
         "source_url": url,
         "source_year": year,
+        "data_year": resolved,
         "source_note": note,
     }
 
@@ -158,6 +243,9 @@ HORMUZ = [
         "the Mar 2023 shutdown; figure not from the cited source) bypass Hormuz, so 0.90 "
         "is the long-run share; ~1.0 in 2023-24 while that line was shut (shares are "
         "static across years). Was 1.00 before 2026-09-10.",
+        # No data year: 0.90 is explicitly a long-run blend of two regimes
+        # (Kirkuk-Ceyhan open and shut), not the routing of any one year.
+        data_year=None,
     ),
     _row("hormuz", "chokepoint", "KWT", None, 1.00, SRC_EIA, IEA_HORMUZ, _NO_BYPASS),
     _row("hormuz", "chokepoint", "QAT", None, 1.00, SRC_EIA, IEA_HORMUZ, _NO_BYPASS),
@@ -337,6 +425,8 @@ HORMUZ_LNG = [
         SRC_EIA,
         IEA_HORMUZ,
         _LNG_NO_BYPASS + " Ras Laffan (Qatar).",
+        # Structural (no LNG bypass exists), so no data year — see the note.
+        data_year=None,
     ),
     _row(
         "hormuz_lng",
@@ -348,6 +438,7 @@ HORMUZ_LNG = [
         IEA_HORMUZ,
         _LNG_NO_BYPASS + " Das Island (ADNOC Gas); the crude-only 0.65 share reflects "
         "the Fujairah oil bypass, which does not apply to LNG.",
+        data_year=None,
     ),
 ]
 
@@ -382,6 +473,8 @@ def _intra_gulf(disruption_id: str, exporters: list[dict]) -> list[dict]:
             SRC_EIA,
             IEA_HORMUZ,
             _INTRA_GULF_NOTE,
+            # Geography, not a measurement: the pair is share 0 in every year.
+            data_year=None,
         )
         for e in exporters
         for importer in GULF_COASTAL
@@ -439,12 +532,13 @@ def _region_rows(
     region: tuple[str, ...],
     share: float,
     source: str,
-    citation: tuple[str, str, int] | None,
+    citation: Citation | None,
     note: str,
+    data_year: int | None | _Inherit = INHERIT,
 ) -> list[dict]:
     """One chokepoint row per (exporter, importer) pair in the region."""
     return [
-        _row(disruption_id, "chokepoint", exp, imp, share, source, citation, note)
+        _row(disruption_id, "chokepoint", exp, imp, share, source, citation, note, data_year)
         for exp in exporters
         for imp in region
     ]
@@ -466,6 +560,10 @@ MALACCA = (
         "Arabia, the UAE, Kuwait and Iraq alone were 'nearly 60 percent' of Malacca crude. "
         "IDN excluded: Cilacap/Balongan-bound cargo reaches Indonesia via the Sunda/Lombok "
         "straits, not Malacca.",
+        # Structural (shortest route, no alternative): no data year. The
+        # 1H2025 composition figure in the note is corroboration, not the
+        # share; the share that *is* derived from it is the USA row below.
+        data_year=None,
     )
     + _region_rows(
         "malacca",
@@ -477,6 +575,7 @@ MALACCA = (
         "Structural: Gulf crude to South Asia crosses the Arabian Sea directly and never "
         "reaches the strait; India is absent from EIA/Bernama's Malacca destination "
         "breakdown (China 7.9 mb/d, Korea 2.4, Japan 2.1 in 1H2025).",
+        data_year=None,
     )
     + _region_rows(
         "malacca",
@@ -506,6 +605,9 @@ MALACCA_LNG = _region_rows(
     "third of Australian LNG loads on the east coast (Gladstone/Curtis Island) and sails the "
     "Coral/Philippine Sea, never approaching Malacca; the remainder (NW Shelf) routes via "
     "Lombok/Makassar/Ombai-Wetar, not this strait.",
+    # The EIA sentence is qualitative ("an important transit route"): it dates
+    # no flow, so this structural 1.00 carries no data year.
+    data_year=None,
 )
 
 # ── Suez Canal + SUMED pipeline ──────────────────────────────────────────────
@@ -541,6 +643,9 @@ SUEZ = _region_rows(
     "Jordan, Israel, Sudan) are not in the EUROPE_MED importer set this row uses, so their "
     "own Suez-transiting imports are out of scope for this scenario, not modelled as zero "
     "exposure.",
+    # Structural, and the note says so: this share does *not* rest on the
+    # EIA article's 2018 composition figure, so it takes no data year from it.
+    data_year=None,
 )
 
 SUEZ_LNG = _region_rows(
@@ -575,6 +680,9 @@ BAB_EL_MANDEB = _region_rows(
     "Red Sea littoral importers themselves (Egypt, Jordan, Israel, Sudan) are not in the "
     "EUROPE_MED importer set this row uses, so their own Bab el-Mandeb-transiting imports "
     "are out of scope for this scenario, not modelled as zero exposure.",
+    # Structural, on this row's own terms (it explicitly declines the EIA
+    # 2018 composition figure): no data year.
+    data_year=None,
 ) + _region_rows(
     "bab_el_mandeb",
     ("SAU",),
@@ -587,6 +695,9 @@ BAB_EL_MANDEB = _region_rows(
     "strait, though it still crosses Suez/SUMED (see the 'suez' scenario). Kpler 2025 "
     "(same figure already used for the Hormuz SAU row): ~0.76 mb/d of Saudi crude moves "
     "via the Red Sea, i.e. essentially all of Saudi Arabia's Europe-bound crude.",
+    # Structural carve-out (Yanbu is north of the strait): share 0 in every
+    # year, so the Kpler 2025 corroboration does not date it.
+    data_year=None,
 )
 
 BAB_EL_MANDEB_LNG = _region_rows(
@@ -640,6 +751,7 @@ TURKISH_STRAITS = [
         EIA_CASPIAN,
         "Structural: Bulgaria (Burgas/Lukoil Neftochim) is a Black Sea importer and never "
         "sees the Turkish Straits.",
+        data_year=None,
     ),
     _row(
         "turkish_straits",
@@ -651,6 +763,7 @@ TURKISH_STRAITS = [
         EIA_CASPIAN,
         "Structural: Romania (Constanta) is a Black Sea importer and never sees the Turkish "
         "Straits.",
+        data_year=None,
     ),
     _row(
         "turkish_straits",
@@ -662,6 +775,7 @@ TURKISH_STRAITS = [
         EIA_CASPIAN,
         "Structural: Kazakh crude to China moves by the Kazakhstan-China pipeline "
         "(Atasu-Alashankou), not by sea, so it never reaches Novorossiysk or the Straits.",
+        data_year=None,
     ),
     # INTERIM (2026-09-20, maintainer's call). Germany is the one Turkish
     # Straits buyer with a material overland alternative, so it gets a partial
@@ -826,6 +940,9 @@ def all_rows() -> list[dict]:
 def main() -> None:
     df = pd.DataFrame(all_rows())
     df["source_year"] = df["source_year"].astype("int32")
+    # Nullable: a structural or unsourced row has no data year (see module
+    # docstring). pandas' Int32 keeps the NULLs out of a float column.
+    df["data_year"] = df["data_year"].astype("Int32")
     OUT.parent.mkdir(parents=True, exist_ok=True)
     pq.write_table(
         pa.Table.from_pandas(df, preserve_index=False),
@@ -834,7 +951,11 @@ def main() -> None:
     )
     counts = df.groupby("disruption_id").size().to_dict()
     n_unsourced = int((df["source_title"] == UNSOURCED).sum())
-    print(f"wrote {OUT} rows={len(df)} per-scenario={counts} unsourced={n_unsourced}")
+    n_dated = int(df["data_year"].notna().sum())
+    print(
+        f"wrote {OUT} rows={len(df)} per-scenario={counts} "
+        f"unsourced={n_unsourced} with_data_year={n_dated}"
+    )
 
 
 if __name__ == "__main__":

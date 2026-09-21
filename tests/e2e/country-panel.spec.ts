@@ -132,7 +132,11 @@ test.describe("country panel", () => {
       await expect(line, id).toContainText(dated);
     }
     // The exposure rows rest on two dated inputs, and say so.
-    await expect(page.getByTestId("section-vintage-exposure")).toContainText(/route shares dated/);
+    // "dated <year>" = the year of the flows the documents describe (as
+    // against "published <year>", where none of them says).
+    await expect(page.getByTestId("section-vintage-exposure")).toContainText(
+      /route shares dated 20\d\d/,
+    );
     // Comtrade covers Japan, but the section only exists when it reports —
     // when it does, it is dated like every other.
     const recent = page.getByTestId("section-vintage-recent");

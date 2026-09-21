@@ -145,6 +145,10 @@ DISRUPTION_ROUTE_SCHEMA = pa.schema(
         ("source_title", _S),
         ("source_url", _S),
         ("source_year", pa.int32()),
+        # Nullable by design: the year of the flows the share describes, set
+        # only where the document says so (structural and unsourced rows are
+        # NULL). `source_year` above is the document's publication year.
+        ("data_year", pa.int32()),
         ("source_note", _S),
     ]
 )

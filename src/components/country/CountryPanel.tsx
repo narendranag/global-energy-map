@@ -16,11 +16,8 @@ import { formatVolume, pct } from "@/components/scenarios/panel-model";
 import { Sparkline } from "./Sparkline";
 import { SectionVintageLine } from "@/components/ui/SectionVintage";
 import { useToday } from "@/components/layers/useToday";
-import {
-  formatYearSpan,
-  sectionVintage,
-  type SectionVintageInfo,
-} from "@/lib/data/section-vintage";
+import { sectionVintage, type SectionVintageInfo } from "@/lib/data/section-vintage";
+import { routeYearsPhrase } from "@/lib/scenarios/vintage";
 import { isKeyboardClick, setFocusIntent, takeFocusIntent } from "./focus-intent";
 import { useCountryProfile } from "./useCountryProfile";
 import { exposureBaselineNote, type ScenarioAdjustment } from "./exposure-note";
@@ -453,9 +450,13 @@ export function CountryPanel({
               vintage={vintages.trade}
               vintageId="exposure"
               vintageExtra={
+                // Dated by the flows the documents describe where they say
+                // so ("dated 2025"), by when they were published where that
+                // is all they say ("published 2019") — never the one passed
+                // off as the other.
                 routeYears === null
                   ? "route shares dated in the scenario panel"
-                  : `route shares dated ${formatYearSpan(routeYears)}`
+                  : `route shares ${routeYearsPhrase(routeYears) ?? "undated"}`
               }
               testId="country-exposure"
             >

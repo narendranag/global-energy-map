@@ -2,9 +2,11 @@ import { describe, it, expect } from "vitest";
 import {
   capacityAtRisk,
   coverageLabel,
+  distinctRouteDocuments,
   formatVolume,
   hasRange,
   pctRange,
+  routeDocumentDates,
   routeRowsForDisplay,
   scenarioAnnouncement,
   sharePct,
@@ -96,6 +98,7 @@ describe("routeRowsForDisplay", () => {
       source_title: "EIA, Regional Analysis Brief: Caspian Sea",
       source_url: "https://www.eia.gov/",
       source_year: 2025,
+      data_year: 2023,
       source_note: "EIA: about 80%",
     },
     {
@@ -114,6 +117,7 @@ describe("routeRowsForDisplay", () => {
       title: "EIA, Regional Analysis Brief: Caspian Sea",
       url: "https://www.eia.gov/",
       year: 2025,
+      dataYear: 2023,
       unsourced: false,
     });
   });
@@ -191,7 +195,12 @@ describe("scenarioAnnouncement", () => {
     routeName: "the Druzhba pipeline",
     result: {
       year: 2022,
-      routes: [{ source_year: 2022 }, { source_year: 2026 }],
+      // Druzhba's shape: 2022/2026 documents describing 2021 flows and one
+      // structural row that describes none.
+      routes: [
+        { source_year: 2022, data_year: 2021 },
+        { source_year: 2026, data_year: null },
+      ],
       exposedCount: 14,
       top: { name: "Slovakia", share: "38%" },
     },
@@ -199,7 +208,7 @@ describe("scenarioAnnouncement", () => {
 
   it("leads with the scenario and BOTH vintages, then the finding", () => {
     const a = scenarioAnnouncement(base);
-    expect(a.lead).toBe("Cut Druzhba pipeline — 2022 trade, 2022–2026 route shares:");
+    expect(a.lead).toBe("Cut Druzhba pipeline — 2022 trade, 2021 route shares:");
     expect(a.detail).toBe("14 importers exposed; most exposed Slovakia, 38% of crude imports.");
     expect(a.text).toBe(`${a.lead} ${a.detail}`);
     // The two phrasings e2e keys on.
@@ -209,7 +218,7 @@ describe("scenarioAnnouncement", () => {
 
   it("names a partial closure in the lead, after the vintages", () => {
     expect(scenarioAnnouncement({ ...base, severity: 0.5 }).lead).toBe(
-      "Cut Druzhba pipeline — 2022 trade, 2022–2026 route shares, 50% of the route cut:",
+      "Cut Druzhba pipeline — 2022 trade, 2021 route shares, 50% of the route cut:",
     );
   });
 
@@ -256,5 +265,52 @@ describe("showsStaleBadge", () => {
     expect(
       showsStaleBadge({ role: "trade", stale: true }, { tradeYear: 2010, latestTradeYear: 2024 }),
     ).toBe(true);
+  });
+});
+
+describe("distinctRouteDocuments + routeDocumentDates", () => {
+  const row = (
+    key: string,
+    title: string,
+    year: number | null,
+    dataYear: number | null,
+  ) => ({
+    key,
+    scenarioId: "hormuz" as const,
+    exporter: "QAT",
+    importer: null,
+    pairs: null,
+    share: 1,
+    title,
+    url: title === "" ? "" : "https://example.test",
+    year,
+    dataYear,
+    note: "",
+    unsourced: title === "",
+  });
+
+  it("gathers every data year one document is quoted for, under one entry", () => {
+    // The real Hormuz shape: one IEA page behind a 2025 figure and behind 42
+    // structural share-0 pairs that describe no year at all.
+    const docs = distinctRouteDocuments([
+      row("a", "IEA, Strait of Hormuz", 2026, 2025),
+      row("b", "IEA, Strait of Hormuz", 2026, null),
+      row("c", "EIA, Suez and SUMED", 2019, null),
+    ]);
+    expect(docs).toHaveLength(2);
+    expect(docs[0]).toMatchObject({ title: "IEA, Strait of Hormuz", year: 2026, dataYears: [2025] });
+    expect(docs[1]).toMatchObject({ title: "EIA, Suez and SUMED", year: 2019, dataYears: [] });
+  });
+
+  it("dates each document by both years, and says when it states no data year", () => {
+    expect(routeDocumentDates({ title: "x", url: "", year: 2026, dataYears: [2025] })).toBe(
+      "published 2026 · data 2025",
+    );
+    expect(routeDocumentDates({ title: "x", url: "", year: 2019, dataYears: [] })).toBe(
+      "published 2019 · data year not stated",
+    );
+    expect(routeDocumentDates({ title: "x", url: "", year: 2026, dataYears: [2018, 2025] })).toBe(
+      "published 2026 · data 2018–2025",
+    );
   });
 });

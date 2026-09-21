@@ -10,7 +10,7 @@ import {
 import { buildCountryProfile, type CountryProfile } from "@/lib/data/country-profile";
 import { loadGasStorage } from "@/lib/data/gas-storage";
 import { loadRecentImports } from "@/lib/data/recent-imports";
-import type { YearSpan } from "@/lib/data/section-vintage";
+import type { RouteYears } from "@/lib/scenarios/vintage";
 import { useAsync, type AsyncState } from "@/lib/data/useAsync";
 import { useCountryNames } from "@/lib/geo/useCountryNames";
 import type { Commodity } from "@/lib/scenarios/types";
@@ -41,12 +41,13 @@ export interface CountryProfileState {
   /** Sections whose loader rejected. Never escalated to the error panel (B7). */
   readonly errors: readonly CountryProfileSectionError[];
   /**
-   * Publication years of the documents behind the exposure rows' route
-   * shares. Kept beside the profile rather than inside it: the profile is a
-   * pure function of already-loaded rows, and this is provenance about a
-   * second input the engine consumed and discarded.
+   * How the documents behind the exposure rows' route shares are dated — by
+   * the year of the flows they describe where they say so, else by when they
+   * were published. Kept beside the profile rather than inside it: the
+   * profile is a pure function of already-loaded rows, and this is provenance
+   * about a second input the engine consumed and discarded.
    */
-  readonly routeYears: YearSpan | null;
+  readonly routeYears: RouteYears | null;
 }
 
 export function useCountryProfile(

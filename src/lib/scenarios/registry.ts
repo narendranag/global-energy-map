@@ -1,4 +1,8 @@
 import type { Commodity, ScenarioId } from "./types";
+// Type-only, deliberately: `vintage.ts` reaches `export/layers.ts`, which
+// imports SCENARIOS from this file. A value import here would close that
+// cycle, so the two-line span format below is local rather than shared.
+import type { RouteYears } from "./vintage";
 
 export interface ScenarioDef {
   readonly id: ScenarioId;
@@ -245,12 +249,13 @@ export interface HowComputedOptions {
    */
   readonly hasInboundRoutes?: boolean;
   /**
-   * Publication years of the documents the active route shares come from,
-   * oldest first (`routeShareYears`). Empty = nothing dated, or not loaded.
-   * The step that describes the shares says when they were written: the
-   * headline figure is trade x share, so the share's vintage is half of it.
+   * How the active route shares are dated (`routeYears`): the years of the
+   * flows the documents describe, and separately the publication years of
+   * the rows that state none. The step that describes the shares says which
+   * year's routing it applied: the headline figure is trade x share, so the
+   * share's vintage is half of it.
    */
-  readonly shareYears?: readonly number[];
+  readonly shareYears?: RouteYears;
 }
 
 /**
@@ -289,17 +294,30 @@ export function howComputed(
               : ""
         }`
       : `Shares are set per exporter → importer pair (or per exporter where the pipeline serves all its buyers).`;
-  const years = options.shareYears ?? [];
-  const firstShareYear = years[0];
-  const lastShareYear = years[years.length - 1];
+  // Which routing was applied, and from when. A document's publication year
+  // is not the year of the flows it describes, so the two are said apart:
+  // "describe 2025 routing" where the documents say so, "published 2019"
+  // where that is all they say.
+  const span = (ys: readonly number[]): string => {
+    const first = ys[0];
+    const last = ys[ys.length - 1];
+    if (first === undefined || last === undefined) return "";
+    return first === last ? first.toString() : `${first.toString()}\u2013${last.toString()}`;
+  };
+  const years = options.shareYears;
+  const describes = span(years?.data ?? []);
+  const publishedOnly = span(years?.published ?? []);
+  const staticNote = ` they are static across years, so a ${year.toString()} result applies that routing to ${year.toString()} trade.`;
   const shareVintage =
-    firstShareYear === undefined || lastShareYear === undefined
-      ? ""
-      : ` The shares in this run come from documents published ${
-          firstShareYear === lastShareYear
-            ? firstShareYear.toString()
-            : `${firstShareYear.toString()}\u2013${lastShareYear.toString()}`
-        }; they are static across years, so a ${year.toString()} result applies that routing to ${year.toString()} trade.`;
+    describes !== ""
+      ? ` The shares in this run describe ${describes} routing${
+          publishedOnly === ""
+            ? ""
+            : `, apart from some dated only by their document's publication year (${publishedOnly})`
+        };${staticNote}`
+      : publishedOnly !== ""
+        ? ` The shares in this run come from documents published ${publishedOnly}, which do not say which year's flows they describe;${staticNote}`
+        : "";
   const steps = [
     `Take ${year.toString()} bilateral ${noun} imports by volume (tonnes) from BACI (CEPII).`,
     `${shareRule}${shareVintage}`,

@@ -188,6 +188,15 @@ def test_disruption_route_rows_are_cited():
     for col in ("source_title", "source_note"):
         assert dr[col].notna().all() and (dr[col].str.strip() != "").all(), col
     assert dr["source_year"].notna().all()
+    # `data_year` is nullable by design: structural and unsourced rows carry no
+    # data year. Where it is set it is a real year and never postdates the
+    # document that states it.
+    assert "data_year" in dr.columns
+    dated = dr[dr["data_year"].notna()]
+    assert (dated["data_year"] >= 1990).all()
+    assert (dated["data_year"] <= dated["source_year"]).all()
+    assert dr.loc[dr["source_title"] == UNSOURCED, "data_year"].isna().all()
+    assert len(dated) == 73
     sourced = dr[dr["source_title"] != UNSOURCED]
     assert sourced["source_url"].str.startswith("https://").all()
 
@@ -296,3 +305,30 @@ def test_trade_flow_unit_values_are_plausible_or_imputed():
         f"SELECT count(*) FROM read_parquet('{trade}') WHERE qty_imputed AND qty_reported IS NULL"
     ).fetchone()[0]
     assert imputed == 0
+
+
+def test_disruption_route_is_unchanged_apart_from_data_year():
+    """Adding `data_year` must not have moved a single other value.
+
+    The committed copy at HEAD is the before-picture: every other column, in
+    row order, must still be byte-for-byte what it was. This is the local
+    form of the byte-identical-rebuild rule for a file whose schema changed.
+    """
+    import io
+    import subprocess
+
+    blob = subprocess.run(
+        ["git", "show", "HEAD:public/data/disruption_route.parquet"],
+        cwd=Path(__file__).resolve().parents[2],
+        capture_output=True,
+        check=True,
+    ).stdout
+    before = pd.read_parquet(io.BytesIO(blob))
+    after = pd.read_parquet(DATA / "disruption_route.parquet")
+    assert list(after.columns) == [
+        *list(before.columns)[: list(before.columns).index("source_year") + 1],
+        "data_year",
+        *list(before.columns)[list(before.columns).index("source_year") + 1 :],
+    ]
+    assert len(after) == len(before) == 522
+    pd.testing.assert_frame_equal(after[before.columns], before)

@@ -19,7 +19,9 @@ import type { Commodity, LngImportImpact, ScenarioId, ScenarioResult } from "./t
  * Everything here is derived: the catalog entries come from the scenario's own
  * `scenario:<id>` layer tags (the same mapping the CSV citation header uses),
  * their dates from catalog `coverage`/`as_of` through the shared `layerVintage`
- * helpers, and the route-share dates from the rows' own `source_year` columns —
+ * helpers, and the route-share dates from the rows' own `data_year` column
+ * (the year of the flows the document describes), falling back to
+ * `source_year` (when it was published) only where a row states none —
  * never from the `disruption_route` entry's `as_of`, which is the day the
  * *table* was rebuilt and says nothing about how old the cited documents are.
  * No year, date or source name is written down in this file; a data refresh
@@ -81,33 +83,110 @@ export type ScenarioVintageResult = Pick<ScenarioResult, "scenarioId" | "commodi
   readonly byLngImport?: readonly { readonly coverage: LngImportImpact["coverage"] }[];
 };
 
-/** The two `disruption_route` citation columns that date a share. */
+/** The `disruption_route` citation columns that date a share. */
 export interface RouteVintageRow {
   readonly source_title: string;
   readonly source_year: number | null;
+  readonly data_year?: number | null;
 }
 
 /** Spread at which the gap between two vintages changes how a number reads. */
 export const MISMATCH_SPREAD_YEARS = 3;
 
-/** Anything carrying a route share's publication year — the rows, or less. */
+/** Anything carrying a route share's two years — the rows, or less. */
 export interface DatedRouteRow {
+  /** The year the cited document was **published**. */
   readonly source_year?: number | null;
+  /** The year of the flows or routing it **describes**; null where unstated. */
+  readonly data_year?: number | null;
+  /** Present so an unsourced estimate can be told apart from a dated row. */
+  readonly source_title?: string | null;
+}
+
+/** `source_title` of a row no document supports (build_disruption_routing.py). */
+const UNSOURCED_TITLE = "Analyst estimate (unsourced)";
+
+/**
+ * The two ways a route share can be dated, counted and listed.
+ *
+ * `disruption_route` carries both years: `data_year` is the year of the flows
+ * the document describes, `source_year` the year it was published. The second
+ * is not a substitute for the first — a 2026 document describing 2025 flows
+ * is not 2026 routing — so they are kept apart here, and every surface says
+ * which one it is showing.
+ *
+ * A row with no document behind it (an analyst estimate) contributes neither:
+ * its `source_year` is a 2026 default the pipeline keeps for compatibility,
+ * not a publication date, and quoting it as one would invent provenance.
+ *
+ * With two scenarios combined the caller passes both scenarios' rows: the
+ * headline is one number built from all of them.
+ */
+export interface RouteYears {
+  /** Distinct years of the flows the shares describe, oldest first. */
+  readonly data: readonly number[];
+  /** Distinct publication years of rows that state no data year. */
+  readonly published: readonly number[];
+  /** How many rows state the year of the flows they describe. */
+  readonly datedCount: number;
+  /** How many are dated only by their document's publication year. */
+  readonly publishedOnlyCount: number;
+  /**
+   * Data year where the row has one, else its publication year — the best
+   * available date per row, and what a gap against the trade year is
+   * measured on. Never shown as "the route-share years": it mixes the two.
+   */
+  readonly effective: readonly number[];
+}
+
+const sortedUnique = (ys: readonly number[]): number[] => [...new Set(ys)].sort((a, b) => a - b);
+
+export function routeYears(routes: readonly DatedRouteRow[] | null): RouteYears {
+  const data: number[] = [];
+  const published: number[] = [];
+  const effective: number[] = [];
+  for (const r of routes ?? []) {
+    if (r.source_title === UNSOURCED_TITLE) continue;
+    const dy = typeof r.data_year === "number" ? r.data_year : null;
+    const py = typeof r.source_year === "number" ? r.source_year : null;
+    if (dy !== null) {
+      data.push(dy);
+      effective.push(dy);
+    } else if (py !== null) {
+      published.push(py);
+      effective.push(py);
+    }
+  }
+  return {
+    data: sortedUnique(data),
+    published: sortedUnique(published),
+    datedCount: data.length,
+    publishedOnlyCount: published.length,
+    effective: sortedUnique(effective),
+  };
+}
+
+/** "2025" or "2018–2025"; "" for an empty list. */
+export function yearSpan(years: readonly number[]): string {
+  const first = years[0];
+  const last = years[years.length - 1];
+  if (first === undefined || last === undefined) return "";
+  return first === last ? first.toString() : `${first.toString()}–${last.toString()}`;
 }
 
 /**
- * The distinct publication years of the documents behind a run's route
- * shares, oldest first. Undated rows are simply absent — `[]` means nothing
- * in the run is dated, which is a different statement from "no routes".
+ * How a set of route shares is dated, in two words: "dated 2025" where the
+ * documents say which year's flows they describe, "published 2019" where all
+ * we know is when they were written. Null when neither is known.
  *
- * With two scenarios combined the caller passes both scenarios' rows, so the
- * span covers both: the headline is one number built from all of them.
+ * A mixed run reads as "dated …": the rows that state no data year state
+ * nothing, and folding a publication year into a data-year span would quietly
+ * present one as the other. Those rows are disclosed by count instead.
  */
-export function routeShareYears(routes: readonly DatedRouteRow[] | null): number[] {
-  if (routes === null) return [];
-  return [
-    ...new Set(routes.map((r) => r.source_year).filter((y): y is number => typeof y === "number")),
-  ].sort((a, b) => a - b);
+export function routeYearsPhrase(y: RouteYears): string | null {
+  if (y.data.length > 0) return `dated ${yearSpan(y.data)}`;
+  if (y.published.length > 0) return `published ${yearSpan(y.published)}`;
+  return null;
 }
 
 /**
@@ -128,19 +207,27 @@ export function shareGapNote(
   tradeYear: number,
   routes: readonly DatedRouteRow[] | null,
 ): string | null {
-  const years = routeShareYears(routes);
-  const first = years[0];
-  const last = years[years.length - 1];
+  const y = routeYears(routes);
+  const first = y.effective[0];
+  const last = y.effective[y.effective.length - 1];
   if (first === undefined || last === undefined) return null;
   const gap = Math.max(Math.abs(tradeYear - first), Math.abs(tradeYear - last));
   if (gap < MISMATCH_SPREAD_YEARS) return null;
-  const from =
-    first === last
-      ? `${first.toString()} documents`
-      : `documents published ${first.toString()}–${last.toString()}`;
+  const tail = `trade is ${tradeYear.toString()}. Routing that changed in between is not reflected.`;
+  // Which year is being compared with the trade year is the whole point: a
+  // document's publication year is not the year of the flows it describes,
+  // and a note that blurred the two would be the thing it exists to prevent.
+  if (y.data.length === 0) {
+    return `Route shares come from documents published ${yearSpan(y.published)}; ${tail}`;
+  }
+  if (y.publishedOnlyCount === 0) {
+    return `Route shares describe ${yearSpan(y.data)} flows; ${tail}`;
+  }
+  const n = y.publishedOnlyCount;
   return (
-    `Route shares come from ${from}; trade is ${tradeYear.toString()}. ` +
-    "Routing that changed in between is not reflected."
+    `Route shares describe ${yearSpan(y.data)} flows, and ${n.toString()} more ` +
+    `${n === 1 ? "is" : "are"} dated only by their document's publication year ` +
+    `(${yearSpan(y.published)}); ${tail}`
   );
 }
 
@@ -264,39 +351,46 @@ export function scenarioVintage(
     // trade table and the voyage table are tagged on the scenario too, but a
     // share never came from either of them.
     const routeEntries = entries.filter((e) => e.layers.every((l) => l.startsWith("scenario:")));
-    const years = routeShareYears(routeRows);
-    const first = years[0];
-    const last = years[years.length - 1];
-    const dated = first !== undefined && last !== undefined;
+    const years = routeYears(routeRows);
+    // The row is dated by the flows its documents describe where they say so,
+    // and only falls back to publication years when none of them does.
+    const dating = years.data.length > 0 ? years.data : years.published;
+    const last = dating[dating.length - 1];
+    const dated = last !== undefined;
     const dataEnd = dated ? periodEnd(last.toString(), "year") : "";
-    const undatedCount = routeRows.filter((r) => r.source_year === null).length;
+    const undatedCount = routeRows.filter(
+      (r) => r.source_year === null || r.source_title === UNSOURCED_TITLE,
+    ).length;
     const stale = staleFor(dataEnd, today);
     rows.push({
       role: "route_shares",
       label: "Route shares",
       sources: sourceNames(routeEntries),
-      through: dated
-        ? `dated ${first === last ? last.toString() : `${first.toString()}–${last.toString()}`}`
-        : "no publication date recorded",
+      through: routeYearsPhrase(years) ?? "no date recorded",
       dataEnd,
       stale,
       note: joinNotes([
-        // What the year on a share actually is. `source_year` is the year the
-        // document was *published*; the routing it describes is usually a
-        // year or more older still, so a reader comparing it with the trade
-        // year is comparing a publication date with a data year.
-        dated
-          ? "Each year is the document's publication year; the routing it describes is usually a year or more older."
+        // What the year on a share actually is. Where the documents say which
+        // year's flows they describe, that is the year shown; where they do
+        // not, all that is left is when they were published, and the routing
+        // is usually a year or more older than that.
+        years.data.length > 0
+          ? "Each year is the year of the flows the document describes, not when it was published."
+          : years.published.length > 0
+            ? "These are publication years: the documents do not say which year's flows they describe, and the routing is usually a year or more older."
+            : null,
+        years.data.length > 0 && years.publishedOnlyCount > 0
+          ? `${years.publishedOnlyCount.toString()} of ${routeRows.length.toString()} shares state only when their document was published: either the document never says which year's flows its figure is, or the share is structural — a route a cargo must physically take, which has no year at all.`
           : null,
         undatedCount > 0
           ? `${undatedCount.toString()} of ${routeRows.length.toString()} shares are an analyst estimate with no published document behind them.`
           : null,
         stale && dated
-          ? `The most recent supporting document is from ${last.toString()}; route shares change with sanctions, new bypass capacity and rerouting.`
+          ? `${years.data.length > 0 ? `The newest routing any of these documents describes is ${last.toString()}` : `The most recent supporting document is from ${last.toString()}`}; route shares change with sanctions, new bypass capacity and rerouting.`
           : null,
       ]),
     });
-    if (dated) summaryParts.push(`shares ${shortYearRange(first, last)}`);
+    if (dated) summaryParts.push(`shares ${shortYearRange(dating[0] ?? last, last)}`);
   }
 
   // --- attributed assets --------------------------------------------------

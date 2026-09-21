@@ -243,6 +243,10 @@
         "type": "INTEGER"
       },
       {
+        "name": "data_year",
+        "type": "INTEGER"
+      },
+      {
         "name": "source_note",
         "type": "VARCHAR"
       }

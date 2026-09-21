@@ -59,6 +59,14 @@ function ScenarioSharesTable() {
             <th scope="col" className="border-b border-slate-300 py-1.5 pr-4 font-semibold">Scenario</th>
             <th scope="col" className="border-b border-slate-300 py-1.5 pr-4 font-semibold">Exporter → importer</th>
             <th scope="col" className="border-b border-slate-300 py-1.5 pr-4 text-right font-semibold">Share</th>
+            {/*
+              Two years, and they are not the same thing: the year of the
+              flows the document describes, and the year it was published
+              (which follows the source name in the last column). A structural
+              row — geography, not a measurement — has no data year, and says
+              so with an em dash rather than borrowing the publication year.
+            */}
+            <th scope="col" className="border-b border-slate-300 py-1.5 pr-4 text-right font-semibold">Data year</th>
             <th scope="col" className="border-b border-slate-300 py-1.5 pr-4 font-semibold">Source and derivation</th>
           </tr>
         </thead>
@@ -78,6 +86,9 @@ function ScenarioSharesTable() {
                 <td className="border-t border-panel-border py-2 pr-4 text-right whitespace-nowrap font-mono tabular-nums text-ink">
                   {pct(r.share)}
                 </td>
+                <td className="border-t border-panel-border py-2 pr-4 text-right whitespace-nowrap font-mono tabular-nums text-ink-muted">
+                  {r.data_year ?? "—"}
+                </td>
                 <td className="border-t border-panel-border py-2 pr-4">
                   {unsourced ? (
                     <span className="font-semibold text-amber-800">{UNSOURCED_TITLE}</span>
@@ -88,7 +99,7 @@ function ScenarioSharesTable() {
                   ) : (
                     r.source_title
                   )}{" "}
-                  <span className="text-ink-subtle">({r.source_year})</span>
+                  <span className="text-ink-subtle">(published {r.source_year})</span>
                   {r.source_note && <p className="mt-1 text-xs leading-snug text-ink-subtle">{r.source_note}</p>}
                   {pairs && <p className="mt-1 font-mono text-xs leading-snug text-ink-subtle">{pairs.join(", ")}</p>}
                 </td>

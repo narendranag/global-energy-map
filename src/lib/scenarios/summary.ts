@@ -11,7 +11,7 @@
  * Pure, no React. Unit-tested in `tests/unit/scenarios/summary.test.ts`.
  */
 import { getScenario, severityPct } from "./registry";
-import { routeShareYears, type DatedRouteRow } from "./vintage";
+import { routeYears, yearSpan, type DatedRouteRow } from "./vintage";
 import type { ScenarioId } from "./types";
 import type { ScenarioView } from "@/lib/url-state/encode";
 
@@ -42,14 +42,20 @@ export function scenarioLabelOf(
  * Nobody picks the year any more (there is no year control), so a year is no
  * longer a setting the reader chose — it is a property of the data the answer
  * is built on. And the headline number is not trade alone: it is trade ×
- * route share, and the shares carry their own publication years (Suez 2019,
- * Malacca 2017–2026). Naming only the trade year made a 2019-routing result
- * read as current, so both are always named, in one place, in the same words.
+ * route share, and the shares carry their own years.
  *
- * "2024 trade, 2019 route shares"
- * "2024 trade, 2017–2026 route shares"   (an en dash; full years, never 2017–26)
- * "2024 trade, undated route shares"     (rows exist, none carries a document year)
- * "2024 trade"                           (routes not loaded yet — never a wrong year)
+ * The year named for the shares is the year of the flows the documents
+ * *describe* (`data_year`), not the year they were published: the Hormuz
+ * pages published in 2026 describe 2025 routing, and printing 2026 claimed a
+ * currency the data does not have. Where no document behind a run states a
+ * data year the phrase says so in as many words, rather than passing a
+ * publication year off as one.
+ *
+ * "2024 trade, 2025 route shares"            (the documents describe 2025 flows)
+ * "2024 trade, 2018–2025 route shares"       (an en dash; full years, never 2018–25)
+ * "2024 trade, route shares published 2019"  (no document states a data year)
+ * "2024 trade, undated route shares"         (rows exist, none carries any year)
+ * "2024 trade"                               (routes not loaded yet — never a wrong year)
  *
  * `routes` is every route row behind the result, both scenarios' rows when
  * two are combined. `null` means "not loaded": callers that can wait should
@@ -61,12 +67,17 @@ export function dataYearsPhrase(
 ): string {
   const trade = `${tradeYear.toString()} trade`;
   if (routes === null || routes.length === 0) return trade;
-  const years = routeShareYears(routes);
-  const first = years[0];
-  const last = years[years.length - 1];
-  if (first === undefined || last === undefined) return `${trade}, undated route shares`;
-  const span = first === last ? first.toString() : `${first.toString()}\u2013${last.toString()}`;
-  return `${trade}, ${span} route shares`;
+  const years = routeYears(routes);
+  // A mixed run is named by the years its documents actually state; the rows
+  // that state only a publication year are disclosed by count elsewhere
+  // (`shareGapNote`, the "Data behind this result" row) and never folded into
+  // this span — that would print a publication year as a data year, which is
+  // the thing `data_year` exists to stop.
+  if (years.data.length > 0) return `${trade}, ${yearSpan(years.data)} route shares`;
+  if (years.published.length > 0) {
+    return `${trade}, route shares published ${yearSpan(years.published)}`;
+  }
+  return `${trade}, undated route shares`;
 }
 
 /**

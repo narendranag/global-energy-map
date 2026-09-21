@@ -36,6 +36,7 @@ import {
   capacityAtRisk,
   coverageLabel,
   distinctRouteDocuments,
+  routeDocumentDates,
   formatCapacity,
   formatVolume,
   hasRange,
@@ -607,7 +608,8 @@ export function ScenarioPanel({
           </details>
           {/*
             What the answer is built on. Every date is derived (catalog
-            `coverage`/`as_of` and the route rows' own `source_year`), so a
+            `coverage`/`as_of` and the route rows' own `data_year`, falling
+            back to `source_year` where a document states none), so a
             data refresh moves this with no code change. Only ever rendered
             for the result on screen — `current`, the same gate the numbers
             above use.
@@ -649,7 +651,7 @@ export function ScenarioPanel({
                     {/*
                       Which documents, not just how many years: the route
                       shares are the half of the headline number that is not
-                      trade, and "dated 2017–2026" alone names nothing a
+                      trade, and "dated 2018–2025" alone names nothing a
                       reader could go and check. The list is derived from the
                       same grouped rows the "Route shares used" section
                       renders, so the two cannot cite different documents.
@@ -670,7 +672,8 @@ export function ScenarioPanel({
                             ) : (
                               d.title
                             )}
-                            {d.year !== null ? ` (${d.year.toString()})` : " (undated)"}
+                            {" "}
+                            <span className="text-slate-600">({routeDocumentDates(d)})</span>
                           </li>
                         ))}
                       </ul>

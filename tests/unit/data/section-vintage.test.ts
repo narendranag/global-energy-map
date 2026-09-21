@@ -1,7 +1,5 @@
 import { describe, it, expect } from "vitest";
 import {
-  formatYearSpan,
-  routeSourceYearSpan,
   sectionVintage,
   shortSource,
   sourceVintageLine,
@@ -151,17 +149,9 @@ describe("sourceVintageLine", () => {
   });
 });
 
-describe("routeSourceYearSpan", () => {
-  it("spans the publication years of the cited rows, ignoring undated ones", () => {
-    expect(
-      routeSourceYearSpan([{ source_year: 2023 }, { source_year: null }, { source_year: 2019 }]),
-    ).toEqual({ from: 2019, through: 2023 });
-    expect(routeSourceYearSpan([{ source_year: null }])).toBeNull();
-    expect(routeSourceYearSpan([])).toBeNull();
-    expect(formatYearSpan({ from: 2019, through: 2019 })).toBe("2019");
-    expect(formatYearSpan({ from: 2019, through: 2023 })).toBe("2019–2023");
-  });
-});
+// `routeSourceYearSpan`/`formatYearSpan` lived here until `data_year` gave a
+// third caller a reason to unify them. The one derivation is now `routeYears`
+// / `routeYearsPhrase` in src/lib/scenarios/vintage.ts, tested there.
 
 /**
  * Against the real bundled catalog: structure only, never a date — a refresh

@@ -47,7 +47,15 @@ export interface RouteCitation {
   readonly source_title: string;
   /** "" when unsourced. */
   readonly source_url: string;
+  /** The year the document was **published**. */
   readonly source_year: number | null;
+  /**
+   * The year of the flows or routing the document **describes** — null where
+   * it states none, and on structural rows (geography has no year) and
+   * unsourced estimates. This is the year every surface states; the
+   * publication year is the secondary one.
+   */
+  readonly data_year: number | null;
   readonly source_note: string;
 }
 
@@ -73,7 +81,7 @@ export { routeKeyFor };
 
 const ROUTE_COLUMNS = [
   "disruption_id", "kind", "exporter_iso3", "importer_iso3", "share",
-  "source_title", "source_url", "source_year", "source_note",
+  "source_title", "source_url", "source_year", "data_year", "source_note",
 ] as const;
 
 /**
@@ -89,6 +97,7 @@ interface RouteFileRow {
   readonly source_title: string | null;
   readonly source_url: string | null;
   readonly source_year: number | null;
+  readonly data_year: number | null;
   readonly source_note: string | null;
 }
 
@@ -98,6 +107,7 @@ function toRouteShareRow(r: RouteFileRow, scenarioId: ScenarioId): RouteShareRow
     source_title: r.source_title ?? "",
     source_url: r.source_url ?? "",
     source_year: r.source_year,
+    data_year: r.data_year,
     source_note: r.source_note ?? "",
   };
   // "Everything, everywhere" is not a route (see resolveScenarioShare).

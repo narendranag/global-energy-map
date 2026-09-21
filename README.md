@@ -52,7 +52,7 @@ See [data and coverage](docs/researchers/data-and-coverage.md).
 ## Data, licences and citation
 
 - **Downloads.** Openly licensed files (CC BY 4.0, public domain, Etalab 2.0) are downloadable from [`/data`](https://energymap.marain.space/data) and from the map's Share menu. The Energy Institute series and the mixed-licence asset table are view-only; `assets_open.parquet` is the downloadable asset table without the OpenStreetMap rows. Per-source terms and the attribution lines to keep are in [`LICENSE-DATA.md`](LICENSE-DATA.md) (plain language, not legal advice).
-- **Cite the map:** Nag, N. (2026). *Global Energy Map* (Version 1.0.0) [Computer software]. https://energymap.marain.space. See [`CITATION.cff`](CITATION.cff) or GitHub's "Cite this repository". To cite a specific view with its source dates, use Share → Cite this view.
+- **Cite the map:** Nag, N. (2026). *Global Energy Map* (Version 1.1.0) [Computer software]. https://energymap.marain.space. See [`CITATION.cff`](CITATION.cff) or GitHub's "Cite this repository". To cite a specific view with its source dates, use Share → Cite this view.
 - **Code licence:** MIT ([`LICENSE`](LICENSE)).
 - **Terms and privacy:** [`/terms`](https://energymap.marain.space/terms) (not advice, no warranty, attribution and acceptable use) and [`/privacy`](https://energymap.marain.space/privacy) (no accounts or cookies; cookieless Vercel analytics; OpenFreeMap tiles). Sources: [`docs/legal/`](docs/legal/).
 

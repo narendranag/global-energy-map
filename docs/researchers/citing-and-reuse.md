@@ -4,11 +4,11 @@ How to cite the map and a specific view, how to credit the underlying sources, w
 
 ## Citing the map
 
-The citation metadata live in [`CITATION.cff`](../../CITATION.cff) (version 1.0.0, released 2026-09-09). GitHub's "Cite this repository" button reads the same file.
+The citation metadata live in [`CITATION.cff`](../../CITATION.cff) (version 1.1.0, released 2026-09-20). GitHub's "Cite this repository" button reads the same file.
 
 **APA 7**
 
-> Nag, N. (2026). *Global Energy Map* (Version 1.0.0) [Computer software]. https://energymap.marain.space
+> Nag, N. (2026). *Global Energy Map* (Version 1.1.0) [Computer software]. https://energymap.marain.space
 
 **BibTeX** (biblatex `@software`; tools without it treat it as `@misc`)
 
@@ -17,7 +17,7 @@ The citation metadata live in [`CITATION.cff`](../../CITATION.cff) (version 1.0.
   author  = {Nag, Narendra},
   title   = {{Global Energy Map}},
   year    = {2026},
-  version = {1.0.0},
+  version = {1.1.0},
   url     = {https://energymap.marain.space}
 }
 ```
@@ -33,7 +33,7 @@ Because the map is interactive, cite the **view** you are describing, with the d
 
 An example of the reference line for a view:
 
-> Nag, N. (2026). *Global Energy Map* (Version 1.0.0) [Computer software]. Retrieved September 11, 2026, from https://energymap.marain.space/?mode=scenarios&year=2024&commodity=oil&scenario=hormuz&layers=reserves,pipelines,refineries,lng_terminals&lon=80&lat=22&z=2.5
+> Nag, N. (2026). *Global Energy Map* (Version 1.1.0) [Computer software]. Retrieved September 11, 2026, from https://energymap.marain.space/?mode=scenarios&year=2024&commodity=oil&scenario=hormuz&layers=reserves,pipelines,refineries,lng_terminals&lon=80&lat=22&z=2.5
 
 For figures you publish, also state the scenario, year and commodity in the caption, and — for scenario numbers — attach or archive the **scenario table** CSV (below), because the URL reproduces the view but not a frozen copy of the data.
 

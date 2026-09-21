@@ -1,6 +1,6 @@
 {
   "name": "global-energy-map",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "scripts": {
     "copy-duckdb": "node scripts/copy-duckdb.mjs",

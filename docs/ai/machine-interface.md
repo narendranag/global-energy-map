@@ -120,7 +120,7 @@ This is exposure accounting, not a market model: no price response, rerouting, s
 
 ## 5. Citing and attribution rules an agent must follow
 
-- **Cite the map:** Nag, N. (2026). *Global Energy Map* (Version 1.0.0) [Computer software]. https://energymap.marain.space. `CITATION.cff` and the Share → Cite menu give APA and BibTeX.
+- **Cite the map:** Nag, N. (2026). *Global Energy Map* (Version 1.1.0) [Computer software]. https://energymap.marain.space. `CITATION.cff` and the Share → Cite menu give APA and BibTeX.
 - **Cite the sources behind any number:** use each catalog entry's `attribution` line. GEM and LNG-T3 (CC BY 4.0) require visible attribution. BACI asks for Gaulier & Zignago (2010).
 - **Respect `downloadable`.** Don't redistribute view-only files.
 - **Carry the caveats with the numbers:**

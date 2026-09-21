@@ -50,6 +50,6 @@ The scenario set covers eleven disruptions over fifteen oil/gas route-share sets
 
 ## Citing it, and finding what's wrong with it
 
-Cite the map: Nag, N. (2026). *Global Energy Map* (Version 1.0.0) [Computer software]. https://energymap.marain.space — or use Share → Cite this view for a reference to the exact scenario, year and layers you're looking at, with every source behind it listed. `CITATION.cff` has the full reference list.
+Cite the map: Nag, N. (2026). *Global Energy Map* (Version 1.1.0) [Computer software]. https://energymap.marain.space — or use Share → Cite this view for a reference to the exact scenario, year and layers you're looking at, with every source behind it listed. `CITATION.cff` has the full reference list.
 
 If you find an error — in a number, a source, or a claim about what the data shows — [open an issue](https://github.com/narendranag/global-energy-map/issues); the map's own error panel pre-fills one for you. I'd rather hear about a wrong figure from a researcher than have it sit uncorrected on a public map.

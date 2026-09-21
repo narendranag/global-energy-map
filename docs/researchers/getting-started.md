@@ -8,9 +8,9 @@ The map opens in **Infrastructure** mode, commodity **oil**, centred on the Midd
 
 On a first visit an introduction card offers four example questions. Each one sets the whole view (mode, commodity, scenario, layers):
 
-- How exposed is Central Europe to a Druzhba cut? (2024)
-- Who loses most if Hormuz closes? (2024, crude)
-- Who loses most if Suez closes? (2024, crude)
+- How exposed is Central Europe to a Druzhba cut?
+- Who loses most if Hormuz closes? (crude)
+- Who loses most if Suez closes? (crude)
 - Where did Qatar's LNG go in 2024?
 
 All four are worked through in [Worked examples](worked-examples.md). The card does not come back once dismissed (the choice is kept in your browser's local storage).

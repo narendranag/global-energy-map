@@ -245,7 +245,7 @@ export const EXAMPLE_QUESTIONS: readonly ExampleQuestion[] = [
   // to show off.
   question(
     "druzhba-2024",
-    `How exposed is Central Europe to a Druzhba cut? (${String(TRADE_LAST_YEAR)})`,
+    "How exposed is Central Europe to a Druzhba cut?",
     "scenarios",
     {
       year: TRADE_LAST_YEAR,
@@ -255,7 +255,7 @@ export const EXAMPLE_QUESTIONS: readonly ExampleQuestion[] = [
   ),
   question(
     "hormuz-2024",
-    `Who loses most if Hormuz closes? (${String(TRADE_LAST_YEAR)}, crude)`,
+    "Who loses most if Hormuz closes? (crude)",
     "scenarios",
     {
       year: TRADE_LAST_YEAR,
@@ -265,7 +265,7 @@ export const EXAMPLE_QUESTIONS: readonly ExampleQuestion[] = [
   ),
   question(
     "suez-2024",
-    `Who loses most if Suez closes? (${String(TRADE_LAST_YEAR)}, crude)`,
+    "Who loses most if Suez closes? (crude)",
     "scenarios",
     {
       year: TRADE_LAST_YEAR,

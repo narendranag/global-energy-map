@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { AppErrorBoundary } from "@/components/errors/AppErrorBoundary";
 import { GlobalErrorListener } from "@/components/errors/GlobalErrorListener";
 import { AUTHOR_NAME, AUTHOR_URL, PRACTICE_NAME } from "@/components/ui/provenance";
@@ -52,8 +53,10 @@ export default function RootLayout({
         <AppErrorBoundary>{children}</AppErrorBoundary>
         <GlobalErrorListener />
         {/* Vercel Web Analytics: cookieless page views; a no-op until enabled
-            in the Vercel project. No other trackers. */}
+            in the Vercel project. */}
         <Analytics />
+        {/* Google Analytics 4, production host only; see docs/legal/privacy.md. */}
+        <GoogleAnalytics />
       </body>
     </html>
   );

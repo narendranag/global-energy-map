@@ -27,7 +27,7 @@ test.describe("Legal and provenance", () => {
   test("/privacy renders from docs/legal/privacy.md", async ({ page }) => {
     await page.goto("/privacy");
     await expect(page.getByRole("heading", { level: 1, name: "Privacy" })).toBeVisible();
-    await expect(page.locator("main")).toContainText("no cookies");
+    await expect(page.locator("main")).toContainText("never receives the SQL");
     await expect(page.locator('a[href="mailto:privacy.officer@marain.space"]').first()).toBeVisible();
     await expectProvenance(page.getByTestId("site-footer"));
   });

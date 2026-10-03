@@ -9,7 +9,7 @@
 
 1. Read `CLAUDE.md` first. Its conventions are binding (pure layer builders, symbology module, hardcoded data paths, generated catalog, append-only `LAYER_KEYS`, a11y contrast, light-only).
 2. **Wave 0 runs on the shared tree: do not commit or stage; report changed files.** Wave 2+ workers run in their **own git worktree** and commit there in small commits with explanatory bodies; the orchestrator merges.
-3. In a worktree: `pnpm install --frozen-lockfile`; Python work also needs `uv sync` and `ln -s /Users/narendranag/ai/_projects/global-energy-map/data data` if `data/` is absent (raw inputs are gitignored).
+3. In a worktree: `pnpm install --frozen-lockfile`; Python work also needs `uv sync` and `ln -s /Users/narendranag/projects/global-energy-map/data data` if `data/` is absent (raw inputs are gitignored).
 4. Gates a worker must pass before reporting: `pnpm lint`, `pnpm typecheck`, `pnpm test`; Python work adds `uv run ruff check`, `uv run ruff format --check`, `uv run python -m pytest tests/python`. **Workers do not run Playwright** (one port, CPU-bound); they write/adjust specs and the orchestrator runs e2e at each wave boundary.
 5. Any change under `public/data/` goes through `uv run python -m scripts.build_all` (or `--only <step>` + `--from build_catalog`) so the catalog hash moves with the bytes, and must be byte-identical on rerun.
 6. **Every number written into code or docs is verified against its source or the data first.** Scenario shares carry a citation per row (`source_title`/`source_url`/`source_year`/`source_note`); a share no document supports is marked `UNSOURCED`, never invented.

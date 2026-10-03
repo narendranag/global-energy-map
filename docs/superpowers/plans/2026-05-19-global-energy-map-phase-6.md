@@ -34,7 +34,7 @@ Actual implementation diverged from this plan's estimates in a few places, all d
 - [x] **Step 1: Verify you're on the phase-6 branch with the spec present**
 
 ```bash
-cd /Users/narendranag/ai/_projects/global-energy-map
+cd /Users/narendranag/projects/global-energy-map
 git branch --show-current
 git log --oneline -3
 ls docs/superpowers/specs/2026-05-19-global-energy-map-phase-6-design.md
@@ -74,7 +74,7 @@ Expected: 5 CSV files (`LNG_terminal.csv`, `LNG_tanker.csv`, `LNG_tanker_voyage.
 - [x] **Step 2: Enumerate the universe of country names referenced**
 
 ```bash
-cd /Users/narendranag/ai/_projects/global-energy-map
+cd /Users/narendranag/projects/global-energy-map
 uv run python << 'EOF'
 import pandas as pd
 PROBE = "/tmp/lng-t3-probe"

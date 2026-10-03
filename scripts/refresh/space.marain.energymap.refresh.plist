@@ -33,7 +33,7 @@
     <string>staff</string>
 
     <key>WorkingDirectory</key>
-    <string>/Users/narendranag/ai/_projects/global-energy-map</string>
+    <string>/Users/narendranag/projects/global-energy-map</string>
 
     <key>EnvironmentVariables</key>
     <dict>
@@ -57,7 +57,7 @@
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>/Users/narendranag/ai/_projects/global-energy-map/scripts/refresh/monthly.sh</string>
+        <string>/Users/narendranag/projects/global-energy-map/scripts/refresh/monthly.sh</string>
     </array>
 
     <key>StandardOutPath</key>

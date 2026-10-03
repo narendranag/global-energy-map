@@ -204,5 +204,5 @@ See `docs/superpowers/plans/2026-05-15-global-energy-map-phase-1.md`.
 ## Reusable Patterns From Sibling Projects
 
 - Lint/test/CI config: copy from `~/ai/org-spine` (Next 15, pnpm 10, ES2022, strict TS, flat ESLint, Vitest + Playwright).
-- CLI/automation patterns for periodic refresh: model after `~/ai/calendars`.
+- CLI/automation patterns for periodic refresh: model after `~/ai/_personal/calendars`.
 - New stack — Deck.gl + DuckDB-WASM + PMTiles — has no sibling precedent; establish conventions as we build.

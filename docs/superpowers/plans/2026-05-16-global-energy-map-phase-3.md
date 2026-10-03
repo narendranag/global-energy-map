@@ -19,7 +19,7 @@
 - [ ] **Step 1: Branch from latest main**
 
 ```bash
-cd /Users/narendranag/ai/global-energy-map
+cd /Users/narendranag/ai/_projects/global-energy-map
 git checkout main && git pull
 git checkout -b phase-3
 ```

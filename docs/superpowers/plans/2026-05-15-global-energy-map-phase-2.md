@@ -24,7 +24,7 @@ Carries Phase 1's review carryover: deduplicate the `NAME_TO_ISO3` dicts duplica
 - [ ] **Step 1: Create branch from main**
 
 ```bash
-cd /Users/narendranag/ai/global-energy-map
+cd /Users/narendranag/ai/_projects/global-energy-map
 git checkout main && git pull
 git checkout -b phase-2
 ```

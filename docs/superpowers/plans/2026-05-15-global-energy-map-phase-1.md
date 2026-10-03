@@ -20,7 +20,7 @@
 - [ ] **Step 1: Init via create-next-app with the chosen flags**
 
 ```bash
-cd /Users/narendranag/ai/global-energy-map
+cd /Users/narendranag/ai/_projects/global-energy-map
 pnpm dlx create-next-app@latest . \
   --typescript --tailwind --eslint --app --src-dir --import-alias "@/*" \
   --use-pnpm --no-turbopack

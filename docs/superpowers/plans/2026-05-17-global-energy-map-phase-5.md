@@ -19,7 +19,7 @@
 - [ ] **Step 1: Verify you're on the phase-5 branch with spec + data-sources doc present**
 
 ```bash
-cd /Users/narendranag/ai/global-energy-map
+cd /Users/narendranag/ai/_projects/global-energy-map
 git branch --show-current
 git log --oneline -3
 ls docs/superpowers/specs/2026-05-17-global-energy-map-phase-5-design.md

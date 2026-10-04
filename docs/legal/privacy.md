@@ -5,7 +5,7 @@
 ## The short version
 
 - There are no accounts, no sign-up and no forms.
-- We count visits with two analytics tools: Vercel Web Analytics, which is cookieless, and Google Analytics, which sets first-party cookies. We see aggregate reports, not individuals.
+- We count visits with two analytics tools: Vercel Web Analytics, which is cookieless, and Google Analytics, which sets first-party cookies only if you press Allow on the cookie banner. We see aggregate reports, not individuals.
 - Google Analytics never receives the SQL you write in the query console.
 - Your browser fetches map tiles from OpenFreeMap, a third party, which sees your IP address like any web server does.
 - The map remembers one thing on your device: that you closed the intro card.
@@ -26,16 +26,17 @@ The analytics script is served from this site's own domain. Browsers and extensi
 
 ### Analytics (Google Analytics)
 
-We also use [Google Analytics 4](https://support.google.com/analytics/answer/6004245), from Google, to understand how people find and use the map: which pages and scenarios are opened, how visitors arrive, and how they scroll and click through to other sites. Your browser loads Google's script from `www.googletagmanager.com` and sends these events to Google's servers (`google-analytics.com`), with your IP address, browser and device details, the page address and the referring site. Google Analytics does not log or store IP addresses, and derives only an approximate location from them.
+We also use [Google Analytics 4](https://support.google.com/analytics/answer/6004245), from Google, to understand how people find and use the map: which pages and scenarios are opened, how visitors arrive, and how they scroll and click through to other sites. Your browser loads Google's script from `www.googletagmanager.com` (Google Tag Manager, which starts Google Analytics) and sends these events to Google's servers (`google-analytics.com`), with your IP address, browser and device details, the page address and the referring site. Google Analytics does not log or store IP addresses, and derives only an approximate location from them.
 
-Google Analytics sets first-party cookies named `_ga` and `_ga_YMXRSFHM6R` on this site. They hold a random identifier so that repeat visits can be counted, and they expire after two years. They are not used for advertising: Google signals and ads personalisation are not enabled, and the data is not linked to any Google Ads account.
+Google Analytics sets no cookies until you allow it. The first time you visit, a banner asks; until you press **Allow**, Google Tag Manager runs with analytics storage denied, and if you press **Decline** it stays that way. You can change your mind at any time with **Cookie settings** in the page footer, which asks again. Once you allow it, Google Analytics sets first-party cookies named `_ga` and `_ga_YMXRSFHM6R` on this site. They hold a random identifier so that repeat visits can be counted, and they expire after two years. They are not used for advertising: Google signals and ads personalisation are not enabled, and the data is not linked to any Google Ads account.
 
 Two limits protect what the map does in your browser:
 
+- A few actions are reported as events, each with a short label and nothing you typed: opening a scenario (its name), selecting a country (its code), picking a search result (the result's name, not the text typed), downloading a file (its name), and copying the link, embed code or citation (which one).
 - The map's address bar holds your view settings (mode, layers, year, scenario). A page view reports the address when you arrive on a page, so Google Analytics can see which scenario you opened. It never sees anything you type.
 - The query console writes your SQL into its address. If you open `/query` directly, Google Analytics is not loaded at all. If you reach it from the map, the visit is reported as `/query` with everything after the `?` removed, so your SQL is never sent.
 
-Google processes this data under its [privacy policy](https://policies.google.com/privacy) and may do so on servers outside Singapore, including in the United States. You can block Google Analytics with any content blocker or with Google's [opt-out browser add-on](https://tools.google.com/dlpage/gaoptout), and the map works the same without it.
+Google processes this data under its [privacy policy](https://policies.google.com/privacy) and may do so on servers outside Singapore, including in the United States. You can also block Google Analytics with any content blocker or with Google's [opt-out browser add-on](https://tools.google.com/dlpage/gaoptout), and the map works the same without it.
 
 ### Basemap tiles (OpenFreeMap)
 
@@ -43,7 +44,7 @@ The background map (coastlines, place names, roads) comes from [OpenFreeMap](htt
 
 ### Data files and fonts
 
-All other files, including the energy datasets, the map's code and its fonts, are served from this site. There are no advertising or social-media scripts; the one script from another site is Google Analytics.
+All other files, including the energy datasets, the map's code and its fonts, are served from this site. There are no advertising or social-media scripts; the one script from another site is Google Tag Manager, which loads Google Analytics.
 
 ### Query console (`/query`)
 
@@ -51,7 +52,7 @@ The query console runs [DuckDB](https://duckdb.org) compiled to WebAssembly **in
 
 ## What stays on your device
 
-- **Analytics cookies.** Google Analytics' `_ga` and `_ga_YMXRSFHM6R` cookies, described above. Clearing your browser's cookies for this site removes them.
+- **Analytics choice and cookies.** Your Allow or Decline answer, stored as `consent` in local storage, and, only if you allowed it, Google Analytics' `_ga` and `_ga_YMXRSFHM6R` cookies, described above. Clearing your browser's cookies for this site removes them.
 
 - **Intro card.** When you close the "What this map can answer" card, the site stores `gem.intro.dismissed.v1 = 1` in your browser's local storage so it does not reappear. Clearing your browser's site data removes it.
 - **Map state in the address bar.** The current view (mode, layers, year, scenario, map position) is written into the page URL so you can bookmark or share it. A shared link contains only these view settings.

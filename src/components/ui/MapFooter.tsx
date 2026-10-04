@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CookieSettingsLink } from "@/components/analytics/CookieSettingsLink";
 import { AUTHOR_NAME, AUTHOR_URL, PRACTICE_URL } from "./provenance";
 
 const LICENSE_DATA_URL = "https://github.com/narendranag/global-energy-map/blob/main/LICENSE-DATA.md";
@@ -45,6 +46,7 @@ export function MapFooter() {
         Privacy
       </Link>{" "}
       ·{" "}
+      <CookieSettingsLink className={LINK} after=" · " />
       {/* Keep this the footer's last focusable element: the a11y e2e focuses the
           last "Methodology" link and expects Tab to land on the map canvas. */}
       <Link href="/methodology#licences" className={LINK}>

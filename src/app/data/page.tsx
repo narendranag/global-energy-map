@@ -115,6 +115,7 @@ function EntryRow({ e, tenants }: { e: CatalogEntry; tenants: readonly CatalogEn
           <a
             href={dataUrl(e.path)}
             download={fileName(e.path)}
+            data-analytics-download
             className="inline-block whitespace-nowrap rounded border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-ink hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-700"
             data-testid={`download-${e.id}`}
           >

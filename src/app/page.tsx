@@ -24,6 +24,7 @@ import { useScenarioCamera } from "@/components/scenarios/useScenarioCamera";
 import { scenarioCameraPadding } from "@/components/scenarios/fit";
 import { setMapHoverCountry } from "@/components/scenarios/hover";
 import { ShareMenu } from "@/components/share/ShareMenu";
+import { track } from "@/components/analytics/track";
 import { EmbedAttributionBar } from "@/components/ui/EmbedAttributionBar";
 import { useAssets } from "@/lib/data/assets";
 import {
@@ -81,7 +82,8 @@ function HomeInner() {
   // "Druzhba" means Druzhba, not Druzhba + Malacca (which nobody asked for).
   const setScenarioId = useCallback(
     (id: ScenarioId | null) =>
-      { setState(id === null
+      { if (id !== null) track("select_content", { content_type: "scenario", scenario: id });
+        setState(id === null
         ? { scenario: null, scenario2: null, severity: 1, view: "importers" }
         : { scenario: id, scenario2: null }); },
     [setState],
@@ -109,7 +111,10 @@ function HomeInner() {
   // country is a click on *that* and leaves the selection alone —
   // `countryFromPick` decides by layer id, not by the object's shape.
   const setFocus = useCallback(
-    (iso3: string | null) => { setState({ focus: iso3 }); },
+    (iso3: string | null) => {
+      if (iso3 !== null) track("view_item", { item_type: "country", country_iso3: iso3 });
+      setState({ focus: iso3 });
+    },
     [setState],
   );
   const onPick = useCallback(
@@ -167,6 +172,7 @@ function HomeInner() {
 
   const pickExample = useCallback(
     (q: ExampleQuestion) => {
+      if (q.state.scenario != null) track("select_content", { content_type: "scenario", scenario: q.state.scenario });
       setState(q.state);
       if (q.state.mode === "scenarios") setScenarioOpenOnPhone(true);
     },

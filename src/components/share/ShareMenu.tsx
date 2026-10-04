@@ -31,6 +31,7 @@ import {
   type LayerKey,
 } from "@/lib/export/layers";
 import { scenarioCsv, scenarioFilename } from "@/lib/export/scenario";
+import { downloadParams, track } from "@/components/analytics/track";
 import { CopyButton } from "./CopyButton";
 import { loadLayerTable } from "./layer-data";
 
@@ -292,7 +293,9 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
         countryNames: names,
         view: scenarioSide,
       });
-      downloadText(scenarioFilename(scenario, scenarioSide), csv, "text/csv");
+      const file = scenarioFilename(scenario, scenarioSide);
+      downloadText(file, csv, "text/csv");
+      track("file_download", downloadParams(file, "scenario_table"));
       setStatus(
         scenarioSide === "exporters"
           ? "Scenario table (exporters) downloaded."
@@ -317,17 +320,13 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
       // A3: crude and LNG pairs would otherwise share one filename.
       const commoditySuffix = key === "trade_flows" ? TRADE_FLOW_COMMODITY_LABEL[commodity] : undefined;
       if (ext === "csv") {
-        downloadText(
-          layerFilename(key, year, "csv", commoditySuffix),
-          layerCsv(st, table, ctx),
-          "text/csv",
-        );
+        const file = layerFilename(key, year, "csv", commoditySuffix);
+        downloadText(file, layerCsv(st, table, ctx), "text/csv");
+        track("file_download", downloadParams(file, "layer"));
       } else {
-        downloadText(
-          layerFilename(key, year, "geojson", commoditySuffix),
-          layerGeoJson(st, table, ctx),
-          "application/geo+json",
-        );
+        const file = layerFilename(key, year, "geojson", commoditySuffix);
+        downloadText(file, layerGeoJson(st, table, ctx), "application/geo+json");
+        track("file_download", downloadParams(file, "layer"));
       }
       setStatus(`${st.label}: ${String(table.rows.length)} rows downloaded (${ext.toUpperCase()}).`);
     } catch (err: unknown) {
@@ -371,6 +370,7 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
             label="Copy link"
             onCopied={() => {
               setStatus("Link copied.");
+              track("share", { method: "copy_link", content_type: "map_view" });
             }}
           />
         </div>
@@ -409,6 +409,7 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
             label="Copy embed code"
             onCopied={() => {
               setStatus("Embed code copied.");
+              track("share", { method: "copy_embed", content_type: "map_view" });
             }}
           />
         </div>
@@ -461,6 +462,7 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
             label="Copy citation"
             onCopied={() => {
               setStatus("Citation copied.");
+              track("share", { method: "copy_citation", content_type: "map_view" });
             }}
           />
         </div>

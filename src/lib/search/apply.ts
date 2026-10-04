@@ -5,6 +5,7 @@
  * `useCamera()` for movement — so search needs no new state of its own
  * beyond the transient highlight (`highlight.ts`).
  */
+import { track } from "@/components/analytics/track";
 import type { LayerState } from "@/components/layers/LayerPanel";
 import type { Camera } from "@/lib/state/useCamera";
 import { panelPadding } from "@/lib/state/camera";
@@ -26,10 +27,13 @@ function scenarioPanelOpen(): boolean {
  */
 export function selectSearchItem(item: SearchItem, camera: Camera): void {
   const t = item.target;
+  // The name of the result picked, never the text typed.
+  track("search", { search_term: item.name });
   const padding = panelPadding({ right: scenarioPanelOpen() });
 
   if (t.action === "country") {
     setSearchHighlight(null);
+    track("view_item", { item_type: "country", country_iso3: t.iso3 });
     peekAppStore()?.patch({ focus: t.iso3 });
     void camera.fitCountry(t.iso3, { padding });
     return;

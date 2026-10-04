@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CookieSettingsLink } from "@/components/analytics/CookieSettingsLink";
 import { AUTHOR_NAME, AUTHOR_URL, PRACTICE_NAME, PRACTICE_URL, SOURCE_URL } from "./provenance";
 
 const LINK = "text-sky-800 underline underline-offset-2 hover:text-sky-950";
@@ -46,6 +47,7 @@ export function SiteFooter() {
         <Link href="/privacy" className={LINK}>
           Privacy
         </Link>
+        <CookieSettingsLink className={LINK} />
         <Link href="/methodology#licences" className={LINK}>
           Data licences
         </Link>

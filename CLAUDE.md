@@ -36,7 +36,7 @@ A public web app that lets serious analysts interrogate global energy dependenci
 - **Google Analytics 4** (property 556124311, `G-YMXRSFHM6R`, added 2026-09-27) via `src/components/analytics/GoogleAnalytics.tsx`: loads only on `energymap.marain.space`, sends one page view per pathname (the stream's history-change page views, site search, form and video events are switched off, because `replaceState` fires on every slider tick), and never sends `/query`'s SQL — a visit that starts on `/query` never loads it, and `/query` is reported without its query string. `docs/legal/privacy.md` describes exactly this; change both together. Reports are readable through the `google-analytics` MCP server
 - `.github/workflows/smoke.yml` runs after each successful deployment against the public alias (per-deployment `*.vercel.app` URLs sit behind Vercel login; previews need `VERCEL_AUTOMATION_BYPASS_SECRET`)
 - Vercel Blob (or Cloudflare R2 if size demands) for any data exceeding ~25 MB single-file / ~100 MB total. Not in use for **runtime** data — the largest sidecar (pipelines.geojson) is ~8 MB after merging line fragments and simplifying (Phase 5, Phase 10).
-- **Cloudflare R2 bucket `global-energy-map-raw`** archives build inputs that can no longer be fetched from their publisher (GEM GOIT/GGIT snapshots, GOGET workbooks, the Cloudflare-gated EI workbook). Build-time only; the app never reads it. `MANIFEST.md` in the bucket lists every key with its sha256. Credentials are the `R2_*` vars in `~/.config/secrets.env`.
+- **Cloudflare R2 bucket `global-energy-map-raw`** archives build inputs that can no longer be fetched from their publisher (GEM GOIT/GGIT snapshots, GOGET workbooks, the Cloudflare-gated EI workbook). Build-time only; the app never reads it. `MANIFEST.md` in the bucket lists every key with its sha256. Credentials are the `R2_*` vars in the sops store.
 
 ## Repo layout
 
@@ -140,7 +140,7 @@ For a researcher-facing inventory (with coverage gaps, evaluated-and-rejected so
 | Coal (mines + plants) | _deferred (post-launch)_ | GEM CC BY 4.0 (when integrated) | Coal sector / cross-commodity scenarios are a post-launch candidate |
 | Tankers / AIS | _deferred (post-launch)_ | TankerMap free for live; paid for historical | Own brainstorm — AIS sourcing is the gating decision |
 
-API keys live in `~/.config/secrets.env` (e.g., `TAVILY_API_KEY`, `EXA_API_KEY`, `GIE_API_KEY`, the `R2_*` archive credentials). The EIA API key is registered separately; add to `~/.config/secrets.env` as `EIA_API_KEY` before any EIA work. BACI (the trade-flow source) does not require a key. Never commit secrets.
+API keys live in the sops store, read with `secrets exec --only NAME,… --` (e.g., `TAVILY_API_KEY`, `EXA_API_KEY`, `GIE_API_KEY`, the `R2_*` archive credentials). The EIA API key is registered separately; add to the sops store with `secrets set env.eia_api_key` before any EIA work. BACI (the trade-flow source) does not require a key. Never commit secrets.
 
 ## Common commands
 

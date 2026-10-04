@@ -83,7 +83,7 @@ def _api_key() -> str:
     if not key:
         raise SystemExit(
             "GIE_API_KEY is not set. Register free at https://agsi.gie.eu/account "
-            "and add it to ~/.config/secrets.env."
+            "and add it to the sops store (`secrets set env.gie_api_key`)."
         )
     return key
 

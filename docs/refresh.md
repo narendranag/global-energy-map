@@ -43,7 +43,7 @@ Some build inputs can no longer be downloaded from their publisher: GEM emptied 
 This is build-time only — the app never reads the bucket, and nothing in `public/data/` depends on it.
 
 ```bash
-set -a; . ~/.config/secrets.env; set +a
+eval "$(secrets env --only R2_ACCESS_KEY_ID,R2_SECRET_ACCESS_KEY)"
 export AWS_ACCESS_KEY_ID="$R2_ACCESS_KEY_ID" AWS_SECRET_ACCESS_KEY="$R2_SECRET_ACCESS_KEY" AWS_DEFAULT_REGION=auto
 
 # what is archived
@@ -127,7 +127,7 @@ Range-GETs every pinned file download and fails on a dead URL. Skipped by defaul
 ### UN Comtrade (monthly, backfills)
 
 ```bash
-set -a; . ~/.config/secrets.env; set +a          # COMTRADE_API_KEY
+eval "$(secrets env --only COMTRADE_API_KEY)"
 uv run python -m scripts.ingest.comtrade_monthly --to $(date -v-3m +%Y%m)
 uv run python -m scripts.build_all
 ```
@@ -144,7 +144,7 @@ uv run python -m scripts.build_all
 A rolling daily feed, so there is no "release" — the pin is the last gas day ingested, and a refresh is just re-running with a later `--to`.
 
 ```bash
-set -a; . ~/.config/secrets.env; set +a          # GIE_API_KEY
+eval "$(secrets env --only GIE_API_KEY)"
 uv run python -m scripts.ingest.gie_daily --to $(date +%F) --force
 uv run python -m scripts.build_all --only build_gie_daily && uv run python -m scripts.build_all --from build_catalog
 ```
@@ -158,7 +158,7 @@ uv run python -m scripts.build_all --only build_gie_daily && uv run python -m sc
 ### EIA STEO shale regions (monthly release)
 
 ```bash
-set -a; . ~/.config/secrets.env; set +a          # EIA_API_KEY (falls back to the shared DEMO_KEY)
+eval "$(secrets env --only EIA_API_KEY)"   # falls back to the shared DEMO_KEY
 uv run python -m scripts.ingest.eia_steo --force
 uv run python -m scripts.build_all --only build_shale_regions && uv run python -m scripts.build_all --from build_catalog
 ```
@@ -262,7 +262,7 @@ The whole run happens in a `git worktree` under `~/Library/Caches/global-energy-
 - **UN Comtrade:** Crude + LNG imports (monthly, backfills). Comtrade months arrive thin and backfill over roughly six months, so a plain re-run without `--force` would never pick up revisions to months already on disk. The script runs `--from <6 months ago> --to <last full month> --force` — forcing only a rolling 7-month window, not the whole series, since each call costs ~50s and the API rate-limits.
 - **EIA STEO:** US shale-region production (annual pin, monthly release cadence). `--force` also refetches the static DPR county list and Census counties files every run — a few extra small requests, not worth a separate flag.
 
-Each ingest runs as documented in the per-source sections above; the script reads API keys from `~/.config/secrets.env` and fails clearly if they are missing (checked before the worktree is created).
+Each ingest runs as documented in the per-source sections above; the script reads API keys from the sops store (`secrets env --only …`) and fails clearly if they are missing (checked before the worktree is created).
 
 ### What it deliberately does NOT automate
 

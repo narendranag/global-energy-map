@@ -118,15 +118,12 @@ log "Worktree: $WORKTREE_DIR"
 CURRENT_STEP="load-secrets"
 if [[ $DRY_RUN -eq 0 ]]; then
   set +u
-  # shellcheck source=/dev/null
-  set -a
-  source "$HOME/.config/secrets.env"
-  set +a
+  eval "$(secrets env --only GIE_API_KEY,COMTRADE_API_KEY,EIA_API_KEY)"
   set -u
 
   for key in GIE_API_KEY COMTRADE_API_KEY EIA_API_KEY; do
     if [[ -z "${!key:-}" ]]; then
-      fail "$key not set in ~/.config/secrets.env"
+      fail "$key not set (check the sops store: secrets env --only $key)"
     fi
   done
 else

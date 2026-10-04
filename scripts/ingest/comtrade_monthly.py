@@ -55,7 +55,7 @@ def _api_key() -> str:
     if not key:
         raise SystemExit(
             "COMTRADE_API_KEY is not set. Subscribe (free) at "
-            "https://comtradedeveloper.un.org/ and add it to ~/.config/secrets.env."
+            "https://comtradedeveloper.un.org/ and add it to the sops store (`secrets set env.comtrade_api_key`)."
         )
     return key
 

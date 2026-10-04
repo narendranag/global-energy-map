@@ -1,0 +1,20 @@
+# Global Energy Map documentation
+
+> Index of the documentation for Global Energy Map, an open model of oil and gas dependency, with links to the guides, runbooks and dated records.
+
+The Markdown files are the source of truth.
+Read AGENTS.md first for conventions.
+
+## Documents
+
+- [01 Overview](01-overview.md): What Global Energy Map is, the ideas behind it, what is in and out of scope, and where the other documents live.
+
+## Machine-readable data
+
+- [Manifest](data/manifest.json): every document with its metadata, dependencies and section anchors
+- [Glossary](data/glossary.json): terms and definitions
+
+## Optional
+
+- [AGENTS.md](AGENTS.md): conventions for agents reading or editing these documents
+- [index.html](index.html): all documents as one static page for people

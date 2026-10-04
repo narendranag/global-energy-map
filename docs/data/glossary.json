@@ -1,0 +1,30 @@
+[
+  {
+    "term": "Scenario",
+    "definition": "A named disruption, such as Hormuz closed or Druzhba cut, whose exposure is computed per importing country"
+  },
+  {
+    "term": "Exposure",
+    "definition": "The share of an importer's supply that moves through the disrupted route; accounting, not a market model (no prices or rerouting)"
+  },
+  {
+    "term": "Vintage",
+    "definition": "The year a layer's data describes, stated wherever a number is shown"
+  },
+  {
+    "term": "Catalog",
+    "definition": "`public/data/catalog.json`: every data file with source, licence, as-of date, rows, bytes and checksum"
+  },
+  {
+    "term": "BACI",
+    "definition": "CEPII's reconciled bilateral trade data, the base for country-to-country crude and LNG flows"
+  },
+  {
+    "term": "LNG-T3",
+    "definition": "The LNG terminal and AIS voyage dataset used to split country totals across terminals"
+  },
+  {
+    "term": "View-only",
+    "definition": "A data file that may be shown but not redistributed, because of its licence"
+  }
+]

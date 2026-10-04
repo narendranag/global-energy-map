@@ -1,0 +1,109 @@
+{
+  "title": "Global Energy Map documentation",
+  "summary": "Index of the documentation for Global Energy Map, an open model of oil and gas dependency, with links to the guides, runbooks and dated records.",
+  "source_of_truth": "markdown",
+  "documents": [
+    {
+      "id": "index",
+      "title": "Global Energy Map documentation",
+      "order": 0,
+      "summary": "Index of the documentation for Global Energy Map, an open model of oil and gas dependency, with links to the guides, runbooks and dated records.",
+      "status": "stable",
+      "updated": "2026-10-04",
+      "audience": [
+        "everyone"
+      ],
+      "depends_on": [],
+      "related": [
+        "overview"
+      ],
+      "defines": [],
+      "answers": [
+        "Which document covers which topic?",
+        "What do the core terms mean?",
+        "Where are the machine-readable versions of these documents?"
+      ],
+      "file": "README.md",
+      "sections": [
+        {
+          "level": 2,
+          "title": "Reading order",
+          "anchor": "reading-order"
+        },
+        {
+          "level": 2,
+          "title": "Guides and runbooks",
+          "anchor": "guides-and-runbooks"
+        },
+        {
+          "level": 2,
+          "title": "Dated records",
+          "anchor": "dated-records"
+        },
+        {
+          "level": 2,
+          "title": "Terms used throughout",
+          "anchor": "terms-used-throughout"
+        },
+        {
+          "level": 2,
+          "title": "Ways to read these documents",
+          "anchor": "ways-to-read-these-documents"
+        }
+      ]
+    },
+    {
+      "id": "overview",
+      "title": "Overview",
+      "order": 1,
+      "summary": "What Global Energy Map is, the ideas behind it, what is in and out of scope, and where the other documents live.",
+      "status": "stable",
+      "updated": "2026-10-04",
+      "audience": [
+        "everyone"
+      ],
+      "depends_on": [
+        "index"
+      ],
+      "related": [],
+      "defines": [
+        "scenario",
+        "exposure",
+        "vintage"
+      ],
+      "answers": [
+        "What is Global Energy Map for?",
+        "What does it deliberately not do?",
+        "Where do I read about methodology, data refresh or the machine interface?"
+      ],
+      "file": "01-overview.md",
+      "sections": [
+        {
+          "level": 2,
+          "title": "What it is",
+          "anchor": "what-it-is"
+        },
+        {
+          "level": 2,
+          "title": "The ideas behind it",
+          "anchor": "the-ideas-behind-it"
+        },
+        {
+          "level": 2,
+          "title": "Scope",
+          "anchor": "scope"
+        },
+        {
+          "level": 2,
+          "title": "Where to read next",
+          "anchor": "where-to-read-next"
+        },
+        {
+          "level": 2,
+          "title": "What stays hard",
+          "anchor": "what-stays-hard"
+        }
+      ]
+    }
+  ]
+}

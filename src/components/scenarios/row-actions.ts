@@ -9,6 +9,7 @@
  * design. Adding two more props to `ScenarioPanel` for it would make the page
  * a relay for a decision it has no part in.
  */
+import { track } from "@/components/analytics/track";
 import { countryBounds } from "@/lib/geo/bounds";
 import type { ExampleQuestion } from "@/lib/modes";
 import { FIT_MAX_ZOOM, type CameraPadding } from "@/lib/state";
@@ -20,6 +21,7 @@ export const ASSET_FLY_ZOOM = 8;
 
 /** Select a country (URL `focus=`), exactly as a click on the map does. */
 export function focusCountry(iso3: string): void {
+  track("view_item", { item_type: "country", country_iso3: iso3 });
   peekAppStore()?.patch({ focus: iso3 });
 }
 
@@ -72,5 +74,6 @@ export function goToAsset(lon: number, lat: number): void {
  * result exactly as the picker does.
  */
 export function applyExample(q: ExampleQuestion): void {
+  if (q.state.scenario != null) track("select_content", { content_type: "scenario", scenario: q.state.scenario });
   peekAppStore()?.patch(q.state);
 }

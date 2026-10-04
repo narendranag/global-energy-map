@@ -26,12 +26,13 @@ The analytics script is served from this site's own domain. Browsers and extensi
 
 ### Analytics (Google Analytics)
 
-We also use [Google Analytics 4](https://support.google.com/analytics/answer/6004245), from Google, to understand how people find and use the map: which pages and scenarios are opened, how visitors arrive, and how they scroll and click through to other sites. Your browser loads Google's script from `www.googletagmanager.com` and sends these events to Google's servers (`google-analytics.com`), with your IP address, browser and device details, the page address and the referring site. Google Analytics does not log or store IP addresses, and derives only an approximate location from them.
+We also use [Google Analytics 4](https://support.google.com/analytics/answer/6004245), from Google, to understand how people find and use the map: which pages and scenarios are opened, how visitors arrive, and how they scroll and click through to other sites. Your browser loads Google's script from `www.googletagmanager.com` (Google Tag Manager, which starts Google Analytics) and sends these events to Google's servers (`google-analytics.com`), with your IP address, browser and device details, the page address and the referring site. Google Analytics does not log or store IP addresses, and derives only an approximate location from them.
 
 Google Analytics sets first-party cookies named `_ga` and `_ga_YMXRSFHM6R` on this site. They hold a random identifier so that repeat visits can be counted, and they expire after two years. They are not used for advertising: Google signals and ads personalisation are not enabled, and the data is not linked to any Google Ads account.
 
 Two limits protect what the map does in your browser:
 
+- A few actions are reported as events, each with a short label and nothing you typed: opening a scenario (its name), selecting a country (its code), picking a search result (the result's name, not the text typed), downloading a file (its name), and copying the link, embed code or citation (which one).
 - The map's address bar holds your view settings (mode, layers, year, scenario). A page view reports the address when you arrive on a page, so Google Analytics can see which scenario you opened. It never sees anything you type.
 - The query console writes your SQL into its address. If you open `/query` directly, Google Analytics is not loaded at all. If you reach it from the map, the visit is reported as `/query` with everything after the `?` removed, so your SQL is never sent.
 
@@ -43,7 +44,7 @@ The background map (coastlines, place names, roads) comes from [OpenFreeMap](htt
 
 ### Data files and fonts
 
-All other files, including the energy datasets, the map's code and its fonts, are served from this site. There are no advertising or social-media scripts; the one script from another site is Google Analytics.
+All other files, including the energy datasets, the map's code and its fonts, are served from this site. There are no advertising or social-media scripts; the one script from another site is Google Tag Manager, which loads Google Analytics.
 
 ### Query console (`/query`)
 

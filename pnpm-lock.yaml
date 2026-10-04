@@ -22,7 +22,7 @@ importers:
         version: 1.33.1-dev45.0
       '@vercel/analytics':
         specifier: ^2.0.1
-        version: 2.0.1(next@16.2.6(@babel/core@7.29.7)(@playwright/test@1.60.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+        version: 2.0.1(next@16.2.6(@babel/core@7.29.7)(@playwright/test@1.63.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
       apache-arrow:
         specifier: ^21.1.0
         version: 21.1.0
@@ -40,7 +40,7 @@ importers:
         version: 18.0.12
       next:
         specifier: 16.2.6
-        version: 16.2.6(@babel/core@7.29.7)(@playwright/test@1.60.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        version: 16.2.6(@babel/core@7.29.7)(@playwright/test@1.63.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react:
         specifier: 19.2.4
         version: 19.2.4
@@ -50,10 +50,10 @@ importers:
     devDependencies:
       '@axe-core/playwright':
         specifier: ^4.13.0
-        version: 4.13.0(playwright-core@1.60.0)
+        version: 4.13.0(playwright-core@1.63.0)
       '@playwright/test':
-        specifier: ^1.60.0
-        version: 1.60.0
+        specifier: ^1.63.0
+        version: 1.63.0
       '@tailwindcss/postcss':
         specifier: ^4.3.0
         version: 4.3.0
@@ -690,9 +690,9 @@ packages:
   '@oxc-project/types@0.130.0':
     resolution: {integrity: sha512-ibD2usx9JRu7f5pu2tMKMI4cpA4NgXJQoYRP4pQ7Pxmn1l6k/53qWtQWZayhYy3X4QZkt90Ot+mJEaeXouio6Q==}
 
-  '@playwright/test@1.60.0':
-    resolution: {integrity: sha512-O71yZIbAh/PxDMNGns37GHBIfrVkEVyn+AXyIa5dOTfb4/xNvRWV+Vv/NMbNCtODB/pO7vLlF2OTmMVLhmr7Ag==}
-    engines: {node: '>=18'}
+  '@playwright/test@1.63.0':
+    resolution: {integrity: sha512-oxMK4vllB9RK5NQ2l1pq1IfOf2AvnEuj/vYGDj0H2nMtmtZpKtCwt/l00GEO6xjGfpBNAvjovvYdCm50dRQkpQ==}
+    engines: {node: '>=20'}
     hasBin: true
 
   '@probe.gl/env@4.1.1':
@@ -1790,11 +1790,6 @@ packages:
     resolution: {integrity: sha512-dKx12eRCVIzqCxFGplyFKJMPvLEWgmNtUrpTiJIR5u97zEhRG8ySrtboPHZXx7daLxQVrl643cTzbab2tkQjxg==}
     engines: {node: '>= 0.4'}
 
-  fsevents@2.3.2:
-    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
-    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
-    os: [darwin]
-
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -2420,14 +2415,14 @@ packages:
     resolution: {integrity: sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A==}
     engines: {node: '>=12'}
 
-  playwright-core@1.60.0:
-    resolution: {integrity: sha512-9bW6zvX/m0lEbgTKJ6YppOKx8H3VOPBMOCFh2irXFOT4BbHgrx5hPjwJYLT40Lu+4qtD36qKc/Hn56StUW57IA==}
-    engines: {node: '>=18'}
+  playwright-core@1.63.0:
+    resolution: {integrity: sha512-rYCsBF/M5HjUch52bbtVONEFjv6Xu8sm8h72dNlR5bzIE1fvC/bxgspzkjSfU+MweEMmPM8KJebG6nnyxo5mCg==}
+    engines: {node: '>=20'}
     hasBin: true
 
-  playwright@1.60.0:
-    resolution: {integrity: sha512-hheHdokM8cdqCb0lcE3s+zT4t4W+vvjpGxsZlDnikarzx8tSzMebh3UiFtgqwFwnTnjYQcsyMF8ei2mCO/tpeA==}
-    engines: {node: '>=18'}
+  playwright@1.63.0:
+    resolution: {integrity: sha512-+7ziBLidS4NaNCdt57SUDT+wYmmd5fmiQejUic/kb+YsYSCPyOOE9sebzMjNmQrsnNpDJqd4WHvV/8lfKfUDUg==}
+    engines: {node: '>=20'}
     hasBin: true
 
   possible-typed-array-names@1.1.0:
@@ -2990,10 +2985,10 @@ snapshots:
 
   '@asamuzakjp/nwsapi@2.3.9': {}
 
-  '@axe-core/playwright@4.13.0(playwright-core@1.60.0)':
+  '@axe-core/playwright@4.13.0(playwright-core@1.63.0)':
     dependencies:
       axe-core: 4.13.0
-      playwright-core: 1.60.0
+      playwright-core: 1.63.0
 
   '@babel/code-frame@7.29.7':
     dependencies:
@@ -3562,9 +3557,9 @@ snapshots:
 
   '@oxc-project/types@0.130.0': {}
 
-  '@playwright/test@1.60.0':
+  '@playwright/test@1.63.0':
     dependencies:
-      playwright: 1.60.0
+      playwright: 1.63.0
 
   '@probe.gl/env@4.1.1': {}
 
@@ -3945,9 +3940,9 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.12.2':
     optional: true
 
-  '@vercel/analytics@2.0.1(next@16.2.6(@babel/core@7.29.7)(@playwright/test@1.60.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)':
+  '@vercel/analytics@2.0.1(next@16.2.6(@babel/core@7.29.7)(@playwright/test@1.63.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)':
     optionalDependencies:
-      next: 16.2.6(@babel/core@7.29.7)(@playwright/test@1.60.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      next: 16.2.6(@babel/core@7.29.7)(@playwright/test@1.63.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react: 19.2.4
 
   '@vitejs/plugin-react@6.0.2(vite@8.0.13(@types/node@20.19.41)(jiti@2.7.0))':
@@ -4727,9 +4722,6 @@ snapshots:
     dependencies:
       is-callable: 1.2.7
 
-  fsevents@2.3.2:
-    optional: true
-
   fsevents@2.3.3:
     optional: true
 
@@ -5220,7 +5212,7 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  next@16.2.6(@babel/core@7.29.7)(@playwright/test@1.60.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+  next@16.2.6(@babel/core@7.29.7)(@playwright/test@1.63.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
       '@next/env': 16.2.6
       '@swc/helpers': 0.5.15
@@ -5239,7 +5231,7 @@ snapshots:
       '@next/swc-linux-x64-musl': 16.2.6
       '@next/swc-win32-arm64-msvc': 16.2.6
       '@next/swc-win32-x64-msvc': 16.2.6
-      '@playwright/test': 1.60.0
+      '@playwright/test': 1.63.0
       sharp: 0.34.5
     transitivePeerDependencies:
       - '@babel/core'
@@ -5347,13 +5339,11 @@ snapshots:
 
   picomatch@4.0.4: {}
 
-  playwright-core@1.60.0: {}
+  playwright-core@1.63.0: {}
 
-  playwright@1.60.0:
+  playwright@1.63.0:
     dependencies:
-      playwright-core: 1.60.0
-    optionalDependencies:
-      fsevents: 2.3.2
+      playwright-core: 1.63.0
 
   possible-typed-array-names@1.1.0: {}
 

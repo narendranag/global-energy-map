@@ -48,6 +48,7 @@ These keep their original paths. The app, its tests, `public/llms.txt` and GitHu
 
 Plans, specs, research and hand-offs stay as written, under `superpowers/` and `research/`.
 
+- [GA4 + Tag Manager go-live hand-off, 2026-10-04](HANDOFF-2026-10-04-analytics.md)
 - [Session hand-off, 2026-09-21](superpowers/HANDOFF.md)
 - [Original design, 2026-05-15](superpowers/specs/2026-05-15-global-energy-map-design.md)
 - [Refactor and redesign review, 2026-09-10](superpowers/specs/2026-09-10-refactor-redesign-review.md)

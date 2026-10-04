@@ -6,12 +6,13 @@
 
 ## Now
 
+- [ ] **Take GA4 + Tag Manager live** — follow docs/HANDOFF-2026-10-04-analytics.md (branch analytics-gtm): consent, Preview, merge, deploy, publish (ask Narendra) #analytics
+
 ## Next
 
 - [ ] Announce: `docs/announce/` is drafted and re-verified (2026-09-21) but headed "DO NOT PUBLISH YET"; publishing is the maintainer's call #launch
 - [ ] Scheduled refresh: run `scripts/refresh/monthly.sh` by hand once, then load `scripts/refresh/space.marain.energymap.refresh.plist` into launchd (see `docs/refresh.md`) #data
 - [ ] Data-year judgement calls in `scripts/transform/build_disruption_routing.py` (Malacca headline year, Suez/Bab el-Mandeb LNG 2018 vintage, Keystone/Enbridge/CPC vintages, Argus/Reuters rows inferred): confirm or reverse each #data
-- [ ] Decide on GA4 + Tag Manager (analytics.yaml proposed in the brains-standard run) #analytics
 
 ## Later
 
@@ -24,5 +25,7 @@
 - [ ] EIA API key: add to the sops store (`secrets set env.eia_api_key`) before any EIA work #data
 
 ## Done
+
+- [x] GA4 + Tag Manager set up from analytics.yaml (2026-10-04): container GTM-PT8ZNQ7Z, version 2 saved and not published; site code on branch analytics-gtm
 
 - [x] Brain brought to the claude-computer standard (2026-10-04): TASKS.md, DECISIONS.md, justfile, .editorconfig, `docs/` index and overview, fleet pointer in CLAUDE.md

@@ -1,0 +1,70 @@
+# analytics.yaml — GA4 + Google Tag Manager for the Global Energy Map. Source of truth: `analytics setup` and
+# `analytics sync` apply it and write the IDs below. Marketing events only; there is no in-app product analytics here.
+# Guide: ~/claude-computer/docs/DEV-GUIDELINES.md, "Analytics". Never put anything the visitor typed in a
+# parameter (the query console's SQL above all); docs/legal/privacy.md describes what is sent.
+project: Global Energy Map
+domain: energymap.marain.space
+ga:
+  account: accounts/324788655
+  property: properties/556124311
+  stream: properties/556124311/dataStreams/15854508944
+  measurement_id: G-YMXRSFHM6R
+events:
+  # Fired by src/components/analytics/GoogleAnalytics.tsx on each client-side route change after the first
+  # (the Google tag sends the first page view itself): page_view with the address, /query without its query string.
+  - name: page_view
+    params: [page_location]
+  # Fired when a file is saved: Share / cite > Download (scenario table, layer CSV or GeoJSON), and the Download
+  # links on /data. download_kind: scenario_table | layer | dataset.
+  - name: file_download
+    key_event: true
+    params: [file_name, file_extension, download_kind]
+  # Fired when a visitor picks a disruption scenario: the scenario picker, or an example question that sets one.
+  # Not for a scenario that merely arrives in a shared link. content_type is always scenario.
+  - name: select_content
+    key_event: true
+    params: [content_type, scenario]
+  # Fired when a visitor copies the view link, the embed code or a citation from Share / cite.
+  # method: copy_link | copy_embed | copy_citation
+  - name: share
+    params: [method, content_type]
+  # Fired when a visitor picks a result in the header search box. search_term is the name of the picked
+  # country or asset, never the text typed.
+  - name: search
+    params: [search_term]
+  # Fired when a visitor selects a country (map click, search or a ranked row), which opens its profile.
+  - name: view_item
+    params: [item_type, country_iso3]
+custom_dimensions:
+  - parameter: download_kind
+    name: Download kind
+  - parameter: scenario
+    name: Scenario
+  - parameter: method
+    name: Share method
+  - parameter: country_iso3
+    name: Country viewed
+funnels:
+  explore:
+    steps: [page_view, select_content, file_download]
+    open: true
+reports:
+  acquisition:
+    dimensions: [sessionDefaultChannelGroup, sessionSource]
+    metrics: [sessions, totalUsers, keyEvents]
+  landing-pages:
+    dimensions: [landingPage]
+    metrics: [sessions, keyEvents]
+  downloads:
+    event: file_download
+    dimensions: ["customEvent:download_kind"]
+    metrics: [eventCount, totalUsers]
+  scenarios:
+    event: select_content
+    dimensions: ["customEvent:scenario"]
+    metrics: [eventCount, totalUsers]
+gtm:
+  account: accounts/211176835
+  container: accounts/211176835/containers/266042329
+  public_id: GTM-PT8ZNQ7Z
+  workspace: accounts/211176835/containers/266042329/workspaces/2

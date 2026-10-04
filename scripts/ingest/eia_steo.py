@@ -59,7 +59,8 @@ def _api_key() -> str:
         return key
     print(
         "EIA_API_KEY is not set — using the shared, rate-limited DEMO_KEY. Register free at "
-        "https://www.eia.gov/opendata/register.php and add it to the sops store (`secrets set env.eia_api_key`).",
+        "https://www.eia.gov/opendata/register.php and add it "
+        "to the sops store (`secrets set env.eia_api_key`).",
         file=sys.stderr,
     )
     return "DEMO_KEY"

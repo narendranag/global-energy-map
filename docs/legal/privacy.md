@@ -1,6 +1,6 @@
 # Privacy
 
-**Effective 27 September 2026.** This policy covers the Global Energy Map at [energymap.marain.space](https://energymap.marain.space). The site is built and run by [Narendra Nag](https://narendranag.com) as a project of [Marain](https://marain.space), his operator's practice. Marain's own site has [its own privacy policy](https://marain.space/privacy).
+**Effective 4 October 2026.** This policy covers the Global Energy Map at [energymap.marain.space](https://energymap.marain.space). The site is built and run by [Narendra Nag](https://narendranag.com) as a project of [Marain](https://marain.space), his operator's practice. Marain's own site has [its own privacy policy](https://marain.space/privacy).
 
 ## The short version
 

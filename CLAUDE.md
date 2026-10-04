@@ -4,6 +4,11 @@
 >
 > Status: Phases 1–10 + post-launch follow-ups shipped (live at https://energymap.marain.space; the old https://global-energy-map-one.vercel.app address permanently redirects there). See `docs/superpowers/specs/2026-05-15-global-energy-map-design.md` for the full design and `docs/superpowers/plans/` for per-phase plans.
 
+This brain follows the fleet's standard: how projects are built is in
+`~/claude-computer/docs/DEV-GUIDELINES.md` (secrets, docs, analytics, tasks), and the tools on the PATH
+are in `~/claude-computer/claude-global/CLAUDE.md`. Start with `TASKS.md` (what's next), then
+`docs/llms.txt` and `docs/01-overview.md`.
+
 ## One-liner
 
 A public web app that lets serious analysts interrogate global energy dependencies as inspectable, time-varying, scenario-testable structure.
@@ -228,6 +233,22 @@ CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typec
 - **Terminal name is the runtime join key** between `lng_voyage.parquet` and LNG terminal rows (never `asset_id`); `build_lng_terminals.py` asserts `(country_iso3, name)` uniqueness and `build_lng_voyages.py` asserts every `to_terminal` resolves.
 - **Country-pair arcs (Trade flows, S2) need an anchor point per country, not a polygon join.** `src/lib/geo/country-anchors.ts` gives every ISO3 in `NATURAL_EARTH_ISO3` and `EXTRA_COUNTRY_NAMES` one lon/lat (a polygon's representative point, hand-overridden where that point is nowhere near where energy actually loads or lands — the US Gulf Coast, western Russia, Alberta, and similarly AUS/NOR/CHL/IDN/MYS/FRA — plus a capital point for BACI codes with no 1:110m polygon). World view draws only the largest `TOP_N_PAIRS` (150) by volume for legibility (`src/lib/data/trade-flows.ts` states the coverage this buys, re-measure if BACI's shape changes materially); a `focus` selection instead draws every one of that country's pairs above `FOCUS_MIN_SHARE` (0.1% of its own total trade) — full detail for the one country being asked about, not a filtered slice of the world view.
 - **Embed mode (S7).** `?embed=1` (optionally `&controls=0`) is a *view* flag, decoded straight from `URLSearchParams` in `src/lib/url-state/embed.ts` — deliberately not part of `AppState`, so it never rides along in a normal "Copy link" and every pre-embed link is unaffected. `page.tsx` reads it once (`isEmbed`/`embedControlsHidden`) and hides the header, intro card, phone banner and full footer behind an `EmbedAttributionBar` (keeps every licence-required credit + an "Open full map" link); the commodity toggle stays unless `controls=0` and the "as of" chip (`AsOfChip`, for a pinned-year link) always stays — it is not a control, it is the caption that makes the numbers on screen readable; `LayerPanel`'s `embedded` prop collapses it to a "Legend" toggle at every width; the scenario panel collapses to a one-line chip, which names the *whole* scenario (both scenarios, severity, view) through `scenarioSummaryParts` in `src/lib/scenarios/summary.ts` — the same helper behind ShareMenu's citation summary, so the two cannot drift. Because the store's debounced `history.replaceState` rebuilds the querystring from `AppState` + `MapView` on every write, `createAppStore` separately captures `embed`/`controls` (`extractEmbedParams`) and re-appends them to every write, or a year change inside an embed would silently drop the flag. New chrome added to `page.tsx` must default to hidden/collapsed under `embed` unless essential to reading the map. ShareMenu's "Copy embed code" builds the `<iframe>` snippet (`src/lib/export/embed.ts`), HTML-attribute-escaped.
+
+## Fleet conventions
+
+- **Tasks:** `TASKS.md` with `## Now / ## Next / ## Later / ## Done`; `tasks-sync` copies them to the
+  vault. Decisions go in `DECISIONS.md` (`- [<host>] [YYYY-MM-DD] <decision> — <why>`), append-only.
+- **justfile:** `just setup | test | lint | run | build`; `just lint` mirrors CI and checks the docs.
+  Playwright e2e stays `pnpm test:e2e`. After any edit to Python, run `just lint` (ruff E501 has broken CI before).
+- **Docs:** `docs/README.md`, `docs/01-overview.md` and `docs/AGENTS.md` follow the documentation standard;
+  rebuild with `docs-build docs` after changing them, and never edit `docs/index.html`, `docs/llms.txt` or
+  `docs/data/`. The guides beside them (`methodology.md`, `refresh.md`, `legal/`, …) keep their paths: the app,
+  tests and `public/llms.txt` point at them.
+- **Analytics:** the site sends GA4 page views from `src/components/analytics/GoogleAnalytics.tsx`. A move to
+  GA4 + Tag Manager via `analytics.yaml` is a pending decision (see `TASKS.md`); never `analytics publish`
+  without asking Narendra.
+- **Deploys:** Vercel deploys every push to `main`, docs and brain files included.
+- **Secrets:** from the fleet's sops store with `secrets exec --only NAME,… -- <cmd>`; never in a file.
 
 ## Workflow
 

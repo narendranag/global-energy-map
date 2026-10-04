@@ -24,7 +24,7 @@ From the fleet session on 2026-10-04 (claude-computer). Read this, then `analyti
 
 ## What to do, in order
 
-1. **Consent first — decide before going live.** The site has no cookie banner and never has; GA already runs without one (the privacy page says it sets `_ga` cookies). Visitors come from the EU and UK, and the guidelines put GTM consent mode and a banner before GA goes live there. Ask Narendra: add a banner, or accept the current state. If a banner is added, set Consent Mode default `denied` before the GTM snippet and have the banner call `gtag('consent', 'update', …)` (the `gtag` helper in `track.ts` pushes it onto the data layer).
+1. **Consent — done: banner.** `ConsentBanner` and Consent Mode (default `denied` for everyone, set in `GoogleTagManager.tsx` before the container loads; a stored choice in localStorage `consent` is replayed). Allow/Decline call `gtag('consent', 'update', …)`; "Cookie settings" in the footers asks again. No banner on /query, previews, dev or in `?embed=1`.
 2. **Test locally, then in GTM Preview:** the container only loads on `energymap.marain.space`, so for Preview temporarily set `PRODUCTION_HOST` to `localhost` in `GoogleTagManager.tsx` (do not commit it), run `pnpm dev`, then GTM → Preview → connect to `http://localhost:3000`. Use a scenario, a download, a share copy, a search and a country click; check each GA4 tag fires with its parameters. Then GA → Admin → DebugView.
 3. **Merge** `analytics-gtm` into `main` (ask Narendra).
 4. **Deploy:** Vercel deploys every push to `main`.

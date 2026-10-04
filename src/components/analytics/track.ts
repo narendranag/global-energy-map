@@ -20,10 +20,22 @@ declare global {
 export type AnalyticsParams = Readonly<Record<string, string | number | boolean>>;
 
 let active = false;
+const listeners = new Set<() => void>();
 
 /** Called by `GoogleTagManager` once it has decided whether this visit is measured. */
 export function setAnalyticsActive(value: boolean): void {
+  if (active === value) return;
   active = value;
+  for (const fn of listeners) fn();
+}
+
+/** For `useSyncExternalStore`: does this visit load Google Tag Manager (and so show the cookie controls)? */
+export const isMeasured = (): boolean => active;
+export function subscribeMeasured(fn: () => void): () => void {
+  listeners.add(fn);
+  return () => {
+    listeners.delete(fn);
+  };
 }
 
 /** Push an event on the data layer, if this visit is measured. */

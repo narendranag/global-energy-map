@@ -2,6 +2,7 @@
 import Script from "next/script";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { ConsentBanner } from "./ConsentBanner";
 import { downloadParams, gtag, setAnalyticsActive, track } from "./track";
 
 /** The container defined by `analytics.yaml` (it holds the Google tag for G-YMXRSFHM6R). */
@@ -10,8 +11,15 @@ const PRODUCTION_HOST = "energymap.marain.space";
 
 const isQuery = (path: string) => path === "/query" || path.startsWith("/query/");
 
+/**
+ * Consent Mode, before the container loads: everything denied for every visitor,
+ * then a stored choice (localStorage `consent`) replayed. Ads storage stays denied.
+ */
+const CONSENT_DEFAULT = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',wait_for_update:500});try{var c=localStorage.getItem('consent');if(c==='granted'||c==='denied')gtag('consent','update',{analytics_storage:c})}catch(e){}`;
+
 /** The standard Tag Manager snippet, run once the page is interactive. */
-const LOADER = `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${GTM_ID}');`;
+const GTM_SNIPPET = `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${GTM_ID}');`;
+const LOADER = CONSENT_DEFAULT + GTM_SNIPPET;
 
 /**
  * Google Analytics 4 through Google Tag Manager, on the production host only
@@ -23,6 +31,9 @@ const LOADER = `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Da
  * `/query` writes the user's SQL into the address bar, which must never reach
  * Google: a visit that starts on /query never loads the container at all, and
  * one that arrives there from the map reports the page without its query string.
+ *
+ * Consent Mode starts denied (see `CONSENT_DEFAULT`); `ConsentBanner` asks once.
+ * It is not shown inside an embed (`?embed=1`), which therefore stays denied.
  *
  * There is no `<noscript>` iframe: it cannot honour those two rules, and the
  * map does nothing without JavaScript anyway.
@@ -74,5 +85,10 @@ export function GoogleTagManager() {
   }, [enabled]);
 
   if (!enabled) return null;
-  return <Script id="gtm" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: LOADER }} />;
+  return (
+    <>
+      <Script id="gtm" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: LOADER }} />
+      <ConsentBanner />
+    </>
+  );
 }

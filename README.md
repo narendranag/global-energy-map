@@ -37,6 +37,7 @@ What it deliberately doesn't do: price responses, rerouting, strategic stocks, o
 | US shale-region production (Permian, Bakken, Eagle Ford, Haynesville, Appalachia), 2009–2025 | 170 country/region-years | EIA Short-Term Energy Outlook (public domain) |
 | EU gas storage + LNG send-out, daily, 2020– | 188,767 rows, 22 countries | GIE AGSI / ALSI (view only) |
 | Recent monthly crude + LNG imports, 2025–2026 | 8,839 rows | UN Comtrade (view only) |
+| Daily chokepoint transits (Hormuz, Malacca, Suez, Bab el-Mandeb, Bosporus), 2019– | 14,205 rows | IMF PortWatch; vessel data Kpler, UN Global Platform (view only) |
 | Bilateral crude (HS 2709) and LNG (HS 271111) trade, 1995–2024 | 53,727 country-pair-years | CEPII BACI (Etalab Open Licence 2.0) |
 | Scenario route shares, 11 scenarios (15 oil/gas route-share sets) | 522 rows, each with a citation (plus 54 intra-Gulf Hormuz pairs and 3 Turkish-Straits pairs set to 0) | EIA / IEA and operator reports |
 

@@ -377,6 +377,38 @@ NATURAL_EARTH = SourcePin(
     ingest="",
 )
 
+# ── IMF PortWatch: daily chokepoint transits ────────────────────────────────
+# AIS-derived daily vessel counts and capacity per maritime chokepoint, built
+# by the IMF with the University of Oxford from Kpler and UN Global Platform
+# vessel data. Shown view-only beside the chokepoint scenarios as observed
+# traffic, never folded into an exposure figure. The IMF was asked on
+# 2026-10-15 for permission to show it (see docs/02-odp-energy-context-spike.md);
+# the maintainer chose to ship it view-only meanwhile.
+PORTWATCH = SourcePin(
+    key="portwatch",
+    name="IMF PortWatch — daily chokepoint transits",
+    # A rolling daily feed revised weekly, so the pin is the retrieval date.
+    release="2026-10-15",
+    as_of="2026-10-15",
+    licence=(
+        "IMF data terms (attribution required); vessel data from Kpler and the "
+        "UN Global Platform; commercial redistribution by IMF permission"
+    ),
+    landing_url="https://portwatch.imf.org/",
+    terms_url="https://www.imf.org/en/about/copyright-and-terms",
+    cadence="weekly, Tuesdays 9 AM ET; recent days are revised",
+    raw_dir=Path("data/raw/portwatch"),
+    ingest="portwatch_chokepoints",
+    # An ArcGIS FeatureServer query endpoint, not a file: it answers only real
+    # queries, so the liveness test does not range-GET it.
+    download_url=(
+        "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services/"
+        "Daily_Chokepoints_Data/FeatureServer/0/query"
+    ),
+    extra={"series_start": "2019-01-01"},
+)
+
+
 ALL: tuple[SourcePin, ...] = (
     EI,
     BACI,
@@ -386,6 +418,7 @@ ALL: tuple[SourcePin, ...] = (
     GEM_GGIT,
     GEM_ROUTES,
     GIE,
+    PORTWATCH,
     EIA_STEO,
     EIA_DPR_COUNTIES,
     CENSUS_COUNTIES,

@@ -10,7 +10,6 @@
 
 ## Next
 
-- [ ] Announce: the Hormuz fall is real (maintainer, 2026-10-15) but the draft's closure window (28 Feb–7 Apr 2026) ends too early — PortWatch shows ~1 tanker/day from March through 11 Oct 2026; revise the dates and cite #launch
 - [ ] Await IMF reply on PortWatch + PCPS (sent to copyright@imf.org 2026-10-15); JODI request sent to jodinfo@ief.org 2026-10-15 #data
 - [ ] Announce: `docs/announce/` is drafted and re-verified (2026-09-21) but headed "DO NOT PUBLISH YET"; publishing is the maintainer's call #launch
 - [ ] Scheduled refresh: run `scripts/refresh/monthly.sh` by hand once, then load `scripts/refresh/space.marain.energymap.refresh.plist` into launchd (see `docs/refresh.md`) #data
@@ -18,7 +17,6 @@
 
 ## Later
 
-- [ ] Chokepoint traffic context: direct IMF PortWatch ingest (no ODP) → view-only `ScenarioContext` row, once the IMF says yes (see `docs/02-odp-energy-context-spike.md`) #data
 - [ ] Kirkuk–Ceyhan: held; needs a year-bounded share (pipeline shut 2023-03 to 2025-09) and the shipped Hormuz IRQ share moved 0.90 → 0.87 in the same commit #data
 - [ ] Inbound Hormuz exposure (needs an importer-wide route wildcard)
 - [ ] Pipelines as PMTiles
@@ -29,6 +27,8 @@
 
 ## Done
 
+- [x] Chokepoint traffic context (2026-10-15): IMF PortWatch daily transits, direct ingest, view-only in the scenario panel's Context block — shipped before the IMF replied, at the maintainer's call
+- [x] Announcement Hormuz sentence (2026-10-15): cites CRS R45281 and EIA STEO Aug 2026; says "strikes", not "invasion" (no source found for a ground invasion)
 - [x] ODP spike (2026-10-15): merged to main at the maintainer's call — code and synthetic fixture only, no provider data (`docs/02-odp-energy-context-spike.md`)
 - [x] GA4 + Tag Manager set up from analytics.yaml (2026-10-04): container GTM-PT8ZNQ7Z, version 2 saved and not published; site code on branch analytics-gtm
 

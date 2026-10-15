@@ -1,6 +1,6 @@
 {
   "version": 7,
-  "generated_at": "2026-09-19T00:00:00+00:00",
+  "generated_at": "2026-10-15T00:00:00+00:00",
   "entries": [
     {
       "id": "comtrade_monthly",
@@ -30,6 +30,35 @@
       "rows": 8839,
       "bytes": 149892,
       "sha256": "141876459b714362e0a39a2e6b602a3aef1472f0ec07f783f0b37102bd927de3"
+    },
+    {
+      "id": "chokepoint_transits",
+      "label": "Daily chokepoint transits (AIS-observed)",
+      "path": "/data/chokepoint_transits.parquet",
+      "format": "parquet",
+      "source_name": "IMF PortWatch",
+      "source_url": "https://portwatch.imf.org/",
+      "license": "IMF data terms, attribution required; vessel data from Kpler and the UN Global Platform",
+      "as_of": "2026-10-15",
+      "cadence": "weekly, Tuesdays 9 AM ET; recent days are revised",
+      "coverage": [
+        {
+          "from": "2019-01-01",
+          "through": "2026-10-11",
+          "grain": "day"
+        }
+      ],
+      "layers": [
+        "chokepoint_transits"
+      ],
+      "attribution": "Sources: Kpler; UN Global Platform; IMF PortWatch (portwatch.imf.org)",
+      "runtime": true,
+      "redistributable": false,
+      "downloadable": false,
+      "download_note": "IMF PortWatch builds these counts from Kpler and UN Global Platform vessel data, which the IMF's terms leave to their owners, so the series is shown in the app and not offered for download; get it from https://portwatch.imf.org/.",
+      "rows": 14205,
+      "bytes": 122004,
+      "sha256": "8712b3120724ec48ba36fe8809aaa2690bcc20dadd0f0de9bb8d0a1b49329c3c"
     },
     {
       "id": "gie_daily",

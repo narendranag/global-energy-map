@@ -1,8 +1,8 @@
 "use client";
 /**
- * T3: the scenario panel's "Context" block — ties the two live, view-only
- * layers (EU gas storage, UN Comtrade recent imports) to the active
- * scenario's own result. Mounted with one line at the bottom of
+ * T3: the scenario panel's "Context" block — ties the live, view-only
+ * sources (IMF PortWatch chokepoint transits, EU gas storage, UN Comtrade
+ * recent imports) to the active scenario's own result. Mounted with one line at the bottom of
  * `ScenarioPanel.tsx`; everything else (loaders, model, markup) lives here so
  * that file's footprint stays a single import + a single mount.
  *
@@ -19,11 +19,14 @@ import {
   buildStorageContextRows,
   contextCaption,
   showsStorageContext,
+  showsTransitContext,
+  transitScenarioIds,
   TWH_PER_MT_LNG,
 } from "./context-model";
 import { SectionVintageLine } from "@/components/ui/SectionVintage";
 import { useToday } from "@/components/layers/useToday";
 import { sectionVintage } from "@/lib/data/section-vintage";
+import { loadChokepointTransits } from "@/lib/data/chokepoint-transits";
 import { loadGasStorageByCountry } from "@/lib/data/gas-storage";
 import { loadRecentImports } from "@/lib/data/recent-imports";
 import { useAsync } from "@/lib/data/useAsync";
@@ -61,6 +64,15 @@ function fmtPct(n: number): string {
   return `${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}%`;
 }
 
+function fmtPerDay(n: number): string {
+  return n.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
+
+function fmtChange(n: number): string {
+  const rounded = Math.round(n);
+  return `${rounded > 0 ? "+" : rounded < 0 ? "−" : "±"}${Math.abs(rounded).toLocaleString("en-US")}%`;
+}
+
 export function ScenarioContext({ result, view = "importers" }: ScenarioContextProps) {
   const searchParams = useSearchParams();
   const embed = isEmbed(searchParams);
@@ -85,6 +97,11 @@ export function ScenarioContext({ result, view = "importers" }: ScenarioContextP
     { year: result?.year ?? null, today },
   );
 
+  const transitVintage = sectionVintage("chokepoint_transits", { today });
+
+  const wantsTransits = result !== null && showsTransitContext(result);
+  const transitsState = useAsync(loadChokepointTransits, wantsTransits ? [] : null, NON_FATAL);
+
   const wantsStorage = result !== null && showsStorageContext(result);
   const storageState = useAsync(loadGasStorageByCountry, wantsStorage ? [] : null, NON_FATAL);
 
@@ -100,13 +117,22 @@ export function ScenarioContext({ result, view = "importers" }: ScenarioContextP
     return buildStorageContextRows(result, storageState.data).slice(0, CONTEXT_TOP_N);
   }, [result, storageState.data]);
 
+  const transitRows = useMemo(() => {
+    if (result === null || transitsState.data === null) return [];
+    const transits = transitsState.data;
+    return transitScenarioIds(result, transits).flatMap((id) => {
+      const summary = transits.get(id);
+      return summary === undefined ? [] : [summary];
+    });
+  }, [result, transitsState.data]);
+
   const recentRows = useMemo(() => {
     if (result === null || recentState.data === null) return [];
     return buildRecentImportsContextRows(result, recentState.data, CONTEXT_TOP_N);
   }, [result, recentState.data]);
 
   if (embed || result === null) return null;
-  if (!wantsStorage && !wantsRecent) return null;
+  if (!wantsTransits && !wantsStorage && !wantsRecent) return null;
 
   const nameOf = (iso3: string): string => names?.get(iso3) ?? iso3;
   const caption = contextCaption(result, view);
@@ -115,13 +141,63 @@ export function ScenarioContext({ result, view = "importers" }: ScenarioContextP
     <section className="mt-3 border-t border-slate-200 pt-3" aria-label="Context" data-testid="scenario-context">
       <h3 className={`mb-1 ${HEADING}`}>Context</h3>
       <p className={`mb-2 ${NOTE}`}>
-        View-only figures from two live layers, shown beside this scenario&apos;s own result as a
+        View-only figures from live sources, shown beside this scenario&apos;s own result as a
         check — never a recomputed exposure.
       </p>
       {caption !== null && (
         <p className={`mb-2 ${NOTE}`} data-testid="scenario-context-caption">
           {caption}
         </p>
+      )}
+
+      {wantsTransits && (
+        <div className="mb-3" data-testid="scenario-context-transits">
+          <h4 className="mb-1 text-[11px] font-medium text-slate-700">Observed chokepoint traffic</h4>
+          {transitsState.error !== null ? (
+            <p className={NOTE} data-testid="scenario-context-transits-error">
+              Could not load chokepoint traffic data.
+            </p>
+          ) : transitRows.length === 0 ? (
+            <p className={NOTE}>{transitsState.ready ? "No observed traffic for this chokepoint." : "Loading…"}</p>
+          ) : (
+            <>
+              <ul className="space-y-1.5">
+                {transitRows.map((t) => (
+                  <li key={t.scenarioId} className="text-xs">
+                    <div className="flex justify-between gap-2">
+                      <span className="min-w-0 truncate font-medium">{t.chokepoint}</span>
+                      <span className="shrink-0 font-mono text-[11px] text-slate-600">
+                        {fmtPerDay(t.recent.tankersPerDay)} tankers/day
+                        {t.tankerChangePct !== null ? ` (${fmtChange(t.tankerChangePct)})` : ""}
+                      </span>
+                    </div>
+                    <p className={NOTE}>
+                      {t.recent.from}–{t.recent.through}: {fmtPerDay(t.recent.tankersPerDay)} tankers and{" "}
+                      {fmtPerDay(t.recent.allPerDay)} vessels of all types a day
+                      {t.yearEarlier !== null ? (
+                        <>
+                          , against {fmtPerDay(t.yearEarlier.tankersPerDay)} tankers and{" "}
+                          {fmtPerDay(t.yearEarlier.allPerDay)} vessels a day over the same days a year
+                          earlier.
+                        </>
+                      ) : (
+                        "; too few days were reported a year earlier to compare."
+                      )}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+              <p className={`mt-1 ${NOTE}`}>
+                AIS-observed transits from IMF PortWatch (sources: Kpler; UN Global Platform; IMF
+                PortWatch). A ship sailing with its transponder off is not counted, and in a conflict
+                many do, so these are a lower bound on real traffic. This is observed traffic, shown
+                beside the scenario: it does not change the exposure figures above, which model the
+                closure on {result.year} trade. View-only (not downloadable).
+              </p>
+              <SectionVintageLine info={transitVintage} id="context-transits" />
+            </>
+          )}
+        </div>
       )}
 
       {wantsStorage && (

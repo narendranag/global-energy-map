@@ -284,6 +284,18 @@ Country-level daily storage fullness, gas in store, working volume, LNG send-out
 
 ---
 
+### IMF PortWatch — daily chokepoint transits
+
+- **URL:** https://portwatch.imf.org/ (public ArcGIS FeatureServer `Daily_Chokepoints_Data`, no key)
+- **License:** IMF data terms (https://www.imf.org/en/about/copyright-and-terms), attribution "Sources: Kpler; UN Global Platform; IMF PortWatch (portwatch.imf.org)". The vessel data are Kpler's and the UN Global Platform's, which the IMF's terms leave to their owners, so view-only. Permission to show it was asked of copyright@imf.org on 2026-10-15; the maintainer chose to ship it view-only meanwhile, as an academic, non-commercial project.
+- **As-of:** rolling; PortWatch publishes weekly (Tuesdays 9 AM ET) and revises recent days
+- **Where it lands:** `chokepoint_transits.parquet` (daily, 2019-01-01 on, for Hormuz, Malacca, Suez, Bab el-Mandeb and the Bosporus)
+- **Layers/scenarios using it:** the scenario panel's Context block for those five chokepoint scenarios — never an input to exposure
+
+AIS-observed: a ship sailing with its transponder off is not counted. Since US and Israeli strikes on Iran began on 28 February 2026 (CRS R45281) many tankers have run dark, so from March 2026 the Hormuz count (about 1 tanker a day) is a lower bound; multi-source trackers (Kpler, Vortexa) reported about 10 vessels a day in September. Found through the OpenBB ODP spike (`docs/02-odp-energy-context-spike.md`); the ingest calls PortWatch directly.
+
+---
+
 ### UN Comtrade — monthly crude + LNG imports (as reported)
 
 - **URL:** https://comtradeplus.un.org/ (free key, `COMTRADE_API_KEY`)

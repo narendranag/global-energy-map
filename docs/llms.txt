@@ -8,6 +8,7 @@ Read AGENTS.md first for conventions.
 ## Documents
 
 - [01 Overview](01-overview.md): What Global Energy Map is, the ideas behind it, what is in and out of scope, and where the other documents live.
+- [02 Spike: energy-price and flow context through OpenBB ODP](02-odp-energy-context-spike.md): A one-day trial of OpenBB's Open Data Platform (V5, free providers) as a source of price, production, stock and chokepoint-traffic context for the map — what worked, each provider's licence, refresh cadence, and the recommendation not to merge it as is.
 
 ## Machine-readable data
 

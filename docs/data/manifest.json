@@ -104,6 +104,69 @@
           "anchor": "what-stays-hard"
         }
       ]
+    },
+    {
+      "id": "odp-energy-context-spike",
+      "title": "Spike: energy-price and flow context through OpenBB ODP",
+      "order": 2,
+      "summary": "A one-day trial of OpenBB's Open Data Platform (V5, free providers) as a source of price, production, stock and chokepoint-traffic context for the map — what worked, each provider's licence, refresh cadence, and the recommendation not to merge it as is.",
+      "status": "provisional",
+      "updated": "2026-10-15",
+      "audience": [
+        "maintainer"
+      ],
+      "depends_on": [
+        "overview"
+      ],
+      "related": [],
+      "defines": [
+        "odp",
+        "portwatch"
+      ],
+      "answers": [
+        "Can ODP's free providers supply price and flow context for the map?",
+        "Which of those series may the public repo or site redistribute?",
+        "How fresh is each series, and how often does it change?",
+        "Should the spike be merged?"
+      ],
+      "file": "02-odp-energy-context-spike.md",
+      "sections": [
+        {
+          "level": 2,
+          "title": "Recommendation",
+          "anchor": "recommendation"
+        },
+        {
+          "level": 2,
+          "title": "What was run",
+          "anchor": "what-was-run"
+        },
+        {
+          "level": 3,
+          "title": "What the data showed",
+          "anchor": "what-the-data-showed"
+        },
+        {
+          "level": 2,
+          "title": "Licences and attribution",
+          "anchor": "licences-and-attribution"
+        },
+        {
+          "level": 2,
+          "title": "Refresh cadence",
+          "anchor": "refresh-cadence"
+        },
+        {
+          "level": 2,
+          "title": "Against the explore note's spike design",
+          "anchor": "against-the-explore-notes-spike-design"
+        },
+        {
+          "level": 2,
+          "title": "If the maintainer wants to go further",
+          "anchor": "if-the-maintainer-wants-to-go-further"
+        }
+      ]
     }
   ]
 }

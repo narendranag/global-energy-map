@@ -111,6 +111,7 @@ tr:last-child td { border-bottom: 0; }
       <nav class="docs" aria-label="Documents">
 <a href="#index" data-doc="index"><span class="num">&nbsp;</span>Home</a>
 <a href="#overview" data-doc="overview"><span class="num">01</span>Overview</a>
+<a href="#odp-energy-context-spike" data-doc="odp-energy-context-spike"><span class="num">02</span>Spike: energy-price and flow context through OpenBB ODP</a>
       </nav>
       <p class="side-title">Machine-readable</p>
       <div class="machine">
@@ -158,6 +159,12 @@ follow-ups are shipped.</p>
 <td>What the map is, the ideas behind it, scope, and where everything
 else lives</td>
 <td>Everyone</td>
+</tr>
+<tr>
+<td><a href="#odp-energy-context-spike">02 ODP spike</a></td>
+<td>Trial of OpenBB ODP for price and chokepoint-traffic context;
+licences; recommendation</td>
+<td>Maintainer</td>
 </tr>
 </tbody>
 </table></div>
@@ -229,6 +236,9 @@ published)</td>
 <p>Plans, specs, research and hand-offs stay as written, under
 <code>superpowers/</code> and <code>research/</code>.</p>
 <ul>
+<li><a href="#odp-energy-context-spike">Spike: energy-price and
+flow context through OpenBB ODP, 2026-10-15</a> (branch
+<code>spike/odp-energy-prices</code>, not merged)</li>
 <li><a href="HANDOFF-2026-10-04-analytics.md">GA4 + Tag Manager go-live
 hand-off, 2026-10-04</a></li>
 <li><a href="superpowers/HANDOFF.md">Session hand-off,
@@ -394,7 +404,405 @@ href="commercial-data-options.md">Commercial data options</a>.</p>
 </article>
     <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><a href="#overview-what-it-is">What it is</a><a href="#overview-the-ideas-behind-it">The ideas behind it</a><a href="#overview-scope">Scope</a><a href="#overview-where-to-read-next">Where to read next</a><a href="#overview-what-stays-hard">What stays hard</a></nav>
   </div>
-  <footer class="pager"><a class="prev" href="#index">&larr; Global Energy Map documentation</a><span></span></footer>
+  <footer class="pager"><a class="prev" href="#index">&larr; Global Energy Map documentation</a><a class="next" href="#odp-energy-context-spike">Spike: energy-price and flow context through OpenBB ODP &rarr;</a></footer>
+</section>
+
+<section class="doc" id="odp-energy-context-spike" data-title="Spike: energy-price and flow context through OpenBB ODP">
+  <header class="doc-meta">
+    <div class="chips"><span class="chip status-provisional">provisional</span><span class="chip">maintainer</span></div>
+    <p class="summary">A one-day trial of OpenBB&#x27;s Open Data Platform (V5, free providers) as a source of price, production, stock and chokepoint-traffic context for the map — what worked, each provider&#x27;s licence, refresh cadence, and the recommendation not to merge it as is.</p>
+    <p class="meta-line">Updated 2026-10-15 &middot; Source <a href="02-odp-energy-context-spike.md">02-odp-energy-context-spike.md</a> &middot; Read first: <a href="#overview">Overview</a></p>
+  </header>
+  <div class="doc-grid">
+    <article><h1
+id="odp-energy-context-spike-spike-energy-price-and-flow-context-through-openbb-odp">Spike:
+energy-price and flow context through OpenBB ODP</h1>
+<p>Branch <code>spike/odp-energy-prices</code>, run on <code>mini</code>
+on 2026-10-15. Prompted by the explore note
+<code>~/projects/explore/open-data-platform/open-data-platform.md</code>.
+Its best use case was "energy price context for global-energy-map" (EIA
+and JODI series beside the map's volumes), scored 3/5.</p>
+<h2 id="odp-energy-context-spike-recommendation">Recommendation</h2>
+<p><strong>Don't merge the branch as is. Keep it, and take one thing
+forward.</strong></p>
+<ul>
+<li><strong>ODP works, but it isn't what makes the data usable.</strong>
+It reached all four free sources in an afternoon with no paid key. But
+each source is a single HTTP endpoint, and the project already has a
+direct EIA client (<code>scripts/ingest/eia_steo.py</code>). ODP saves
+the client code and costs a ~700 MB dependency. V5 is two weeks old
+(2026-09-30), from a steward that changed hands in September.</li>
+<li><strong>Licensing is the wall, as it was for paid data</strong>
+(<code>commercial-data-options.md</code>). Every price and traffic
+series here rests on vendor data: Refinitiv, Argus or Kpler. None
+qualifies as downloadable under <code>LICENSE-DATA.md</code>. Showing
+them view-only needs a yes from the IMF first, and from the IEF for
+JODI.</li>
+<li><strong>The find worth keeping is IMF PortWatch's daily chokepoint
+transits.</strong> It is observed traffic, by day, at exactly the
+chokepoints the scenarios model. It shows Hormuz tanker transits falling
+from about 50 a day to about 1 a day from March 2026. That is the
+context the scenario panel lacks. Pursue it as a <strong>direct</strong>
+ingest, with no ODP, shown view-only through the existing
+<code>ScenarioContext</code> pattern, after asking <a
+href="mailto:copyright@imf.org" target="_blank" rel="noopener">copyright@imf.org</a>.</li>
+</ul>
+<p>Keep ODP on <code>mini</code> as a discovery tool. That is how
+PortWatch was found.</p>
+<h2 id="odp-energy-context-spike-what-was-run">What was run</h2>
+<ul>
+<li><strong>Install:</strong> <code>uv add --group odp openbb</code>.
+This is an opt-in dependency group, so CI's
+<code>uv sync --locked</code> never installs it. It took 14 s and
+brought in openbb 5.0.0 and openbb-core 2.0.1, with 19 providers
+including <code>jodi</code>, <code>us_eia</code>, <code>imf</code>.
+pandas 3.0.3, pyarrow and duckdb stayed at their pins.</li>
+<li><strong>Script:</strong>
+<code>scripts/ingest/odp_energy_context.py</code>. It pulls four sources
+from 2019-01-01 and normalises them into one long table:
+<code>source, series_id, iso3, scenario_id, date, frequency, value, unit</code>.
+Rows carry <code>iso3</code> for the country panel or
+<code>scenario_id</code> for the scenario panel. Raw frames go to
+<code>data/raw/odp/</code> and the table to
+<code>data/derived/odp/energy_context.parquet</code>, both gitignored.
+The full pull took about 2 min, 95 s of it PortWatch, and produced
+51,893 rows.</li>
+<li><strong><code>latest_vs_trailing()</code></strong> is how the map
+would use a series: the latest value against its trailing mean. From the
+real pull:
+<ul>
+<li>Brent averaged $102/bbl in September 2026 (IMF), 28% above its
+12-month mean.</li>
+<li>Hormuz tanker transits were 1 a day on 11 Oct.</li>
+<li>Saudi crude was 8,135 kb/d in July 2026, 9% below its 12-month
+mean.</li>
+</ul></li>
+<li><strong>Tests:</strong>
+<code>tests/python/test_odp_energy_context.py</code>, 9 tests on a
+<strong>synthetic</strong> fixture
+(<code>tests/python/fixtures/odp/</code>). It keeps the real columns,
+codes, names and dates, but every value is invented, because no series
+here is cleanly redistributable. The tests need neither ODP nor the
+network.</li>
+<li><strong>Incidental fix:</strong> the <code>odp</code> group installs
+plotly, whose <code>.venv/.../plotly.min.js</code> exhausted ESLint's
+heap. <code>.venv/</code> is now in <code>eslint.config.mjs</code>'s
+ignores. That fix is worth keeping whatever happens to the spike.</li>
+</ul>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Source (ODP call)</th>
+<th>Series</th>
+<th>Key</th>
+<th>Latest point on 15 Oct</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IMF PCPS (<code>obb.imf.indicators</code>, <code>PCPS::…</code>,
+<code>transform="USD"</code>)</td>
+<td>Brent, WTI, Dubai, Henry Hub, EU gas, Asia LNG, Australian coal,
+monthly</td>
+<td>none</td>
+<td>Sep 2026</td>
+<td>✅ 651 rows</td>
+</tr>
+<tr>
+<td>EIA (<code>obb.eia.petroleum.prices.spot_prices</code>,
+<code>…natural_gas_spot_and_futures_prices</code>)</td>
+<td>Brent <code>RBRTE</code>, WTI <code>RWTC</code>, Henry Hub
+<code>RNGWHHD</code>, daily</td>
+<td><code>EIA_API_KEY</code>, else EIA's public
+<code>DEMO_KEY</code></td>
+<td>6 Oct 2026</td>
+<td>✅ 5,855 rows on <code>DEMO_KEY</code></td>
+</tr>
+<tr>
+<td>JODI (<code>obb.jodi.oil.production</code> / <code>.stocks</code>,
+<code>obb.jodi.gas.production</code>)</td>
+<td>crude production (kb/d), crude stocks (kbbl), gas production
+(million m³), 13 countries</td>
+<td>none</td>
+<td>Jul 2026</td>
+<td>✅ with gaps (below)</td>
+</tr>
+<tr>
+<td>IMF PortWatch (<code>obb.imf.chokepoint_volume</code>)</td>
+<td>daily transits (all vessels, tankers) and tanker capacity, for
+Hormuz, Malacca, Suez, Bab el-Mandeb, Bosporus</td>
+<td>none</td>
+<td>11 Oct 2026</td>
+<td>✅ 14,205 rows per field</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="odp-energy-context-spike-what-the-data-showed">What the data
+showed</h3>
+<ul>
+<li><p><strong>Same name, different instrument.</strong></p>
+<ul>
+<li>WTI from EIA (daily, averaged to a month) and IMF agree within 1% in
+every month.</li>
+<li><strong>Brent and Henry Hub do not.</strong> Brent was 46% apart in
+April 2020 and 12% apart in April and September 2026. Henry Hub was more
+than 2% apart in 56 of 93 months.</li>
+<li>EIA's figures are physical spot prices. IMF's appear to be benchmark
+or futures-based averages; its documentation names Refinitiv and Argus.
+In a crisis month the spread between the two is the story itself. The
+map must name one and say which.</li>
+</ul></li>
+<li><p><strong>JODI has gaps the map would have to state.</strong></p>
+<ul>
+<li>The UAE returned nothing for any series, and Qatar has no crude
+production.</li>
+<li>Russia's crude production stops in March 2023, Iraq's crude in March
+2024.</li>
+<li>India runs to March 2026; the rest run to July 2026.</li>
+<li>A misspelt country fails loudly: JODI calls Korea
+<code>south_korea</code>, and the guard caught it.</li>
+</ul></li>
+<li><p><strong>PortWatch tanker transits, monthly mean per
+day:</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Month</th>
+<th>Hormuz</th>
+<th>Malacca</th>
+<th>Suez</th>
+<th>Bab el-Mandeb</th>
+<th>Bosporus</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2025-09</td>
+<td>49.8</td>
+<td>84.5</td>
+<td>16.0</td>
+<td>11.0</td>
+<td>23.5</td>
+</tr>
+<tr>
+<td>2026-02</td>
+<td>43.5</td>
+<td>85.6</td>
+<td>17.4</td>
+<td>13.8</td>
+<td>18.8</td>
+</tr>
+<tr>
+<td>2026-03</td>
+<td>0.9</td>
+<td>76.0</td>
+<td>16.9</td>
+<td>15.0</td>
+<td>22.6</td>
+</tr>
+<tr>
+<td>2026-09</td>
+<td>1.1</td>
+<td>70.4</td>
+<td>15.6</td>
+<td>8.0</td>
+<td>14.4</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Caution for the announcement draft:</strong></p>
+<ul>
+<li>The draft dates the Hormuz closure 28 Feb–7 Apr 2026, but
+PortWatch's AIS-derived count stays near zero through 11 Oct.</li>
+<li>AIS can be switched off or spoofed, so this is not proof of a
+continuing closure. The claim still needs a citation before it is
+published.</li>
+</ul></li>
+</ul>
+<h2 id="odp-energy-context-spike-licences-and-attribution">Licences and
+attribution</h2>
+<p>Read 2026-10-15 from each provider's own pages. This is not legal
+advice.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Terms</th>
+<th>Attribution</th>
+<th>Third-party carve-out</th>
+<th>Fit with <code>LICENSE-DATA.md</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>EIA</strong></td>
+<td>Public domain (US Government): "You may use and/or distribute any of
+our data" (eia.gov/about/copyrights_reuse.php)</td>
+<td>"Source: U.S. Energy Information Administration
+(<release date>)"</td>
+<td>Yes: spot prices are "Refinitiv, an LSEG business". Material
+licensed by companies "requires the written permission of the copyright
+owners"</td>
+<td>Lowest risk; still not cleanly downloadable for
+<code>RBRTE</code>/<code>RWTC</code></td>
+</tr>
+<tr>
+<td><strong>IMF PCPS</strong></td>
+<td>IMF data terms (imf.org/en/about/copyright-and-terms): may
+"download, extract, copy, create derivative works, publish, distribute".
+Bulk automated download needs permission</td>
+<td>"Source: International Monetary Fund, Primary Commodity Prices,
+<link>"; state material transformation</td>
+<td>Yes: "Some statistical products may incorporate information from
+third parties". PCPS documentation names Refinitiv (Brent, Dubai, WTI,
+TTF, Henry Hub) and Argus (Australian coal, Asia LNG)</td>
+<td>View-only at most; ask <a
+href="mailto:copyright@imf.org" target="_blank" rel="noopener">copyright@imf.org</a></td>
+</tr>
+<tr>
+<td><strong>IMF PortWatch</strong></td>
+<td>No licence on its own FAQ. "Commercial redistribution": contact <a
+href="mailto:copyright@imf.org" target="_blank" rel="noopener">copyright@imf.org</a>. A "CC BY 4.0"
+seen in search results comes from the HDX mirror's site footer, not the
+IMF</td>
+<td>"Sources: Kpler; UN Global Platform; IMF PortWatch
+(portwatch.imf.org)."</td>
+<td>Vessel data is Kpler's</td>
+<td>View-only at most; ask <a
+href="mailto:copyright@imf.org" target="_blank" rel="noopener">copyright@imf.org</a></td>
+</tr>
+<tr>
+<td><strong>JODI</strong></td>
+<td><strong>No terms page</strong>
+(<code>/about-jodi/terms-of-use.aspx</code> returns 404). The user guide
+asks for a citation and expects "derivative work"</td>
+<td>"International Energy Forum (IEF). Joint Organizations Data
+Initiative (JODI) Database. JODI Oil and Gas World Databases: <a
+href="http://www.jodidata.org" target="_blank" rel="noopener">www.jodidata.org</a>, Accessed
+<date>."</td>
+<td>Data are national submissions</td>
+<td>Unknown; ask the IEF before showing</td>
+</tr>
+</tbody>
+</table></div>
+<p>ODP itself is Apache-2.0 (V5), so it adds no copyleft. Its data keeps
+each provider's own terms; ODP "does not host or serve data".</p>
+<p><strong>What this branch commits:</strong> code, and a fixture with
+invented values. <strong>No provider data.</strong></p>
+<h2 id="odp-energy-context-spike-refresh-cadence">Refresh cadence</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Publisher cadence</th>
+<th>Lag seen on 15 Oct 2026</th>
+<th>Map cadence it would need</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EIA spot</td>
+<td>Weekly release; daily values</td>
+<td>9 days (6 Oct)</td>
+<td>Monthly is enough for context</td>
+</tr>
+<tr>
+<td>IMF PCPS</td>
+<td>Monthly</td>
+<td>about 2 weeks (September present)</td>
+<td>Monthly</td>
+</tr>
+<tr>
+<td>JODI</td>
+<td>Monthly, around the 20th; most reporters M-1</td>
+<td>about 3 months (July)</td>
+<td>Monthly</td>
+</tr>
+<tr>
+<td>PortWatch</td>
+<td>Weekly, Tuesdays 9 AM ET, with revisions</td>
+<td>4 days (11 Oct)</td>
+<td>Weekly to monthly. Pull a trailing window, because revisions rewrite
+recent days</td>
+</tr>
+</tbody>
+</table></div>
+<p>Any of these would ride the planned monthly refresh
+(<code>scripts/refresh/monthly.sh</code>). Only PortWatch argues for
+weekly. <strong><code>DEMO_KEY</code> is not documented by EIA
+anywhere.</strong> A scheduled job needs a registered free EIA key in
+the sops store; the existing task covers it, and it is the maintainer's
+to set.</p>
+<h2
+id="odp-energy-context-spike-against-the-explore-notes-spike-design">Against
+the explore note's spike design</h2>
+<p>The note's spike measured operator minutes per question across two
+arms, for a backtesting goal. Adapted to this project:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Threshold</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Setup</td>
+<td>under 45 min</td>
+<td>✅ about 15 min, including discovering the endpoint names</td>
+</tr>
+<tr>
+<td>Series answered with no paid key or sign-up</td>
+<td>all four</td>
+<td>✅ 4 of 4 (EIA on <code>DEMO_KEY</code>)</td>
+</tr>
+<tr>
+<td>Error or empty rate</td>
+<td>≤ 10% of calls</td>
+<td>✅ 0 failed calls after fixing two ODP key spellings
+(<code>bab_el-mandeb_strait</code>, <code>south_korea</code>); JODI's
+absent countries are publisher gaps, not errors</td>
+</tr>
+<tr>
+<td>Answer agreement</td>
+<td>within 1%</td>
+<td>⚠️ WTI yes; Brent and Henry Hub no (different instruments,
+above)</td>
+</tr>
+<tr>
+<td>Saves time over direct scripts</td>
+<td>yes</td>
+<td>❌ marginal: one endpoint per source, and the existing EIA client
+already exists</td>
+</tr>
+</tbody>
+</table></div>
+<p>Verdict on ODP for this project: <strong>watch</strong>. It is a good
+exploration tool and an unnecessary production dependency.</p>
+<h2
+id="odp-energy-context-spike-if-the-maintainer-wants-to-go-further">If
+the maintainer wants to go further</h2>
+<ol type="1">
+<li>Email <a href="mailto:copyright@imf.org" target="_blank" rel="noopener">copyright@imf.org</a> about
+showing PortWatch chokepoint transits view-only on a public,
+non-commercial site, with the attribution above. The same mail can ask
+about PCPS.</li>
+<li>If yes: a direct PortWatch ingest (its ArcGIS endpoint, no ODP) into
+<code>public/data/chokepoint_transits.parquet</code>, view-only in the
+catalog, read by a <code>ScenarioContext</code> row: "Tanker transits
+through Hormuz: 1/day in the last 30 days vs 50/day a year earlier". It
+would be a second figure beside the scenario's own number, never folded
+into it.</li>
+<li>Prices only if a reader asks for them, from EIA (public domain)
+rather than PCPS, naming the instrument.</li>
+</ol>
+</article>
+    <nav class="toc" aria-label="On this page"><div class="toc-title">On this page</div><a href="#odp-energy-context-spike-recommendation">Recommendation</a><a href="#odp-energy-context-spike-what-was-run">What was run</a><a href="#odp-energy-context-spike-licences-and-attribution">Licences and
+attribution</a><a href="#odp-energy-context-spike-refresh-cadence">Refresh cadence</a></nav>
+  </div>
+  <footer class="pager"><a class="prev" href="#overview">&larr; Overview</a><span></span></footer>
 </section>
   </main>
 </div>

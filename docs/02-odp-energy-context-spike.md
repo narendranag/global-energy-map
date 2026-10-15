@@ -22,6 +22,8 @@ Branch `spike/odp-energy-prices`, run on `mini` on 2026-10-15. Prompted by the e
 
 ## Recommendation
 
+**Follow-up (2026-10-15): PortWatch shipped.** At the maintainer's direction, and without waiting for the IMF's reply, chokepoint transits went live as a direct ingest (`scripts/ingest/portwatch_chokepoints.py`, no ODP), view-only, in the scenario panel's Context block. See `docs/methodology.md` → Scenario context.
+
 **Decision (maintainer, 2026-10-15): merged.** As an academic, non-commercial project the map takes the leeway that gives it: the spike's code is on `main`, the data stays out of the repo, and permission for showing PortWatch on the site is being asked of the IMF. The spike's own recommendation, kept below for the record, was not to merge it as is.
 
 The spike's reasoning:
@@ -72,7 +74,8 @@ Keep ODP on `mini` as a discovery tool. That is how PortWatch was found.
 
   **Caution for the announcement draft:**
   - The draft dates the Hormuz closure 28 Feb–7 Apr 2026, but PortWatch's AIS-derived count stays near zero through 11 Oct.
-  - The maintainer confirms the fall is real (2026-10-15). The draft's end date needs revisiting, and the claim still needs a citation before it is published.
+  - The maintainer confirms the fall is real (2026-10-15). The draft now cites CRS R45281 (closure declared days after US-Israeli strikes began on 28 February 2026, never fully reopened) and EIA STEO August 2026.
+  - Multi-source trackers that also see AIS-dark ships (Kpler, Vortexa) reported about 10 vessels a day in September 2026, so PortWatch's count is a lower bound and is shown as one.
 
 ## Licences and attribution
 

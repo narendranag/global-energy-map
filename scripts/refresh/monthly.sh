@@ -239,6 +239,11 @@ log "Starting data ingests..."
 run_step "GIE ingest" \
   uv run python -m scripts.ingest.gie_daily --to "$(date +%F)" --force
 
+# IMF PortWatch (daily chokepoint transits; no key). The whole series is
+# refetched every run because PortWatch revises recent days weekly.
+run_step "PortWatch ingest" \
+  uv run python -m scripts.ingest.portwatch_chokepoints
+
 # UN Comtrade (monthly crude + LNG imports). Comtrade months arrive thin and
 # backfill over roughly six months, so --force is needed to pick up revisions
 # to months already on disk (see docs/refresh.md). Bound the forced window to

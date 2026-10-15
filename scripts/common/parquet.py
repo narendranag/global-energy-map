@@ -80,6 +80,18 @@ GIE_DAILY_SCHEMA = pa.schema(
     ]
 )
 
+CHOKEPOINT_TRANSITS_SCHEMA = pa.schema(
+    [
+        ("scenario_id", _S),
+        ("chokepoint", _S),
+        ("date", pa.date32()),
+        ("transits_all", pa.int64()),
+        ("transits_tanker", pa.int64()),
+        ("tanker_capacity_t", pa.float64()),
+        ("source", _S),
+    ]
+)
+
 SHALE_REGION_YEAR_SCHEMA = pa.schema(
     [
         ("region_id", _S),
@@ -206,6 +218,7 @@ SCHEMAS: dict[str, pa.Schema] = {
     "assets_open.parquet": ASSETS_SCHEMA,  # open subset (scripts.transform.build_assets_open)
     "country_year_series.parquet": COUNTRY_YEAR_SCHEMA,
     "gie_daily.parquet": GIE_DAILY_SCHEMA,
+    "chokepoint_transits.parquet": CHOKEPOINT_TRANSITS_SCHEMA,
     "shale_region_year.parquet": SHALE_REGION_YEAR_SCHEMA,
     "trade_flow.parquet": TRADE_FLOW_SCHEMA,
     "comtrade_monthly.parquet": COMTRADE_MONTHLY_SCHEMA,
@@ -231,6 +244,7 @@ REQUIRED: dict[str, tuple[str, ...]] = {
     "assets_open.parquet": _ASSETS_REQUIRED,
     "country_year_series.parquet": ("iso3", "year", "metric", "value", "unit", "source"),
     "gie_daily.parquet": ("iso3", "gas_day", "metric", "value", "unit", "source"),
+    "chokepoint_transits.parquet": ("scenario_id", "chokepoint", "date", "transits_all", "source"),
     "shale_region_year.parquet": ("region_id", "year", "metric", "value", "unit", "source"),
     "trade_flow.parquet": ("year", "importer_iso3", "exporter_iso3", "hs_code", "source"),
     "comtrade_monthly.parquet": ("month", "importer_iso3", "exporter_iso3", "hs_code", "source"),

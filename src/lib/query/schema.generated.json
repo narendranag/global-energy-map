@@ -141,6 +141,36 @@
         "type": "VARCHAR"
       }
     ],
+    "/data/chokepoint_transits.parquet": [
+      {
+        "name": "scenario_id",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "chokepoint",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "date",
+        "type": "DATE"
+      },
+      {
+        "name": "transits_all",
+        "type": "BIGINT"
+      },
+      {
+        "name": "transits_tanker",
+        "type": "BIGINT"
+      },
+      {
+        "name": "tanker_capacity_t",
+        "type": "DOUBLE"
+      },
+      {
+        "name": "source",
+        "type": "VARCHAR"
+      }
+    ],
     "/data/comtrade_monthly.parquet": [
       {
         "name": "month",

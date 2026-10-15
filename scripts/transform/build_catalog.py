@@ -120,6 +120,34 @@ REGISTRY: list[dict[str, Any]] = [
         "attribution": "Data: UN Comtrade",
     },
     {
+        "id": "chokepoint_transits",
+        "label": "Daily chokepoint transits (AIS-observed)",
+        "path": "/data/chokepoint_transits.parquet",
+        "format": "parquet",
+        "source_name": "IMF PortWatch",
+        "source_url": pins.PORTWATCH.landing_url,
+        "license": (
+            "IMF data terms, attribution required; vessel data from Kpler and the "
+            "UN Global Platform"
+        ),
+        "as_of": pins.PORTWATCH.as_of,
+        "cadence": pins.PORTWATCH.cadence,
+        # Its own tag, read only by the scenario panel's Context block: observed
+        # traffic beside a scenario, never an input to the exposure figure.
+        "coverage": [{"column": "date", "grain": "day"}],
+        "layers": ["chokepoint_transits"],
+        # IMF terms allow reuse with attribution but carve out third-party
+        # data, and the vessel data are Kpler's: view-only (LICENSE-DATA.md).
+        "redistributable": False,
+        "download_note": (
+            "IMF PortWatch builds these counts from Kpler and UN Global Platform "
+            "vessel data, which the IMF's terms leave to their owners, so the "
+            "series is shown in the app and not offered for download; get it "
+            "from https://portwatch.imf.org/."
+        ),
+        "attribution": "Sources: Kpler; UN Global Platform; IMF PortWatch (portwatch.imf.org)",
+    },
+    {
         "id": "gie_daily",
         "label": "EU gas storage + LNG terminal daily series",
         "path": "/data/gie_daily.parquet",

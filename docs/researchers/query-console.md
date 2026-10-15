@@ -21,6 +21,7 @@ One table per Parquet file the site ships, named after the file. The sidebar bes
 | `country_year_series` | 4,836 | Energy Institute reserves and crude production by country and year (view-only) |
 | `gie_daily` | 188,767 | European gas storage and LNG send-out, daily from 2020 (view-only) |
 | `comtrade_monthly` | 8,839 | UN Comtrade monthly crude and LNG imports (view-only) |
+| `chokepoint_transits` | 14,205 | IMF PortWatch daily vessel and tanker transits for the five modelled chokepoints, 2019 onward; AIS-observed, a lower bound (view-only) |
 | `shale_region_year` | 170 | EIA US shale-region crude and gas production, 2009 onward |
 
 Map geometry — pipelines, basins, country outlines — ships as GeoJSON, not Parquet, and is not queryable here.

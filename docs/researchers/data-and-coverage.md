@@ -18,6 +18,7 @@ Layer by layer: where the data come from, how current and complete they are, wha
 | LNG voyages | LNG-T3 | 2026-04-01 | 17,592 | 2020–2024 only | m³ of LNG |
 | Scenario trade | CEPII BACI HS92, V202601 | 2026-01 | 53,727 pair-years | 1995–2024 | tonnes (+ USD) |
 | Route shares | EIA / IEA / Argus (Kpler) / GEM | 2026-09-11 | 72 (18 shares + 54 intra-Gulf share-0 pairs) | static | fraction |
+| Chokepoint transits | IMF PortWatch (vessel data Kpler, UN Global Platform) | 2026-10-15 | 14,205 | daily, 2019 to latest; ignores the year | vessels/day, tonnes |
 | Country polygons | Natural Earth 1:110m | 2024-10-01 | 177 | static | — |
 
 "Dated" means the row carries a start or commissioning year; undated rows are drawn in **every** year.
@@ -108,6 +109,7 @@ Layer by layer: where the data come from, how current and complete they are, wha
 7. **BACI suppresses Iran.** Iranian crude exports are near zero in 2023–2024 and far below mid-2010s levels from 2019. Exposure of Iran's buyers is understated.
 8. **BACI loses Russia → Belarus from 2022.** No Russian crude into Belarus is recorded for 2022–2024, so Druzhba results from 2022 omit Belarus entirely.
 9. **BACI starts in 1995.** Scenarios for 1990–1994 have no trade data.
+10. **Chokepoint traffic is AIS-observed.** PortWatch counts only ships broadcasting AIS. Since US and Israeli strikes on Iran began on 28 February 2026, many tankers in the Gulf have sailed dark, so its Hormuz count (about 1 tanker a day) sits well below multi-source trackers' (about 10 vessels a day in September 2026). Read it as a lower bound, and as context beside a scenario, never as an exposure input.
 10. **Route shares are static and some routes are younger than the data.** A share applies unchanged to 1995–2024 (see [Scenario method](scenario-method.md#why-route-shares-are-static)).
 11. **NETL duplicates are merged, not eliminated.** 2,272 raw NETL refinery rows became 1,075; a few duplicates with conflicting capacities remain.
 12. **Geometry is simplified.** Pipelines at about 500 m and basins at about 1 km; country polygons at 1:110m. Do not measure lengths or areas from the map.

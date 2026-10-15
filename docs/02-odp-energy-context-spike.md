@@ -101,7 +101,7 @@ ODP itself is Apache-2.0 (V5), so it adds no copyleft. Its data keeps each provi
 | JODI | Monthly, around the 20th; most reporters M-1 | about 3 months (July) | Monthly |
 | PortWatch | Weekly, Tuesdays 9 AM ET, with revisions | 4 days (11 Oct) | Weekly to monthly. Pull a trailing window, because revisions rewrite recent days |
 
-Any of these would ride the planned monthly refresh (`scripts/refresh/monthly.sh`). Only PortWatch argues for weekly. **`DEMO_KEY` is not documented by EIA anywhere.** A scheduled job needs a registered free EIA key in the sops store; the existing task covers it, and it is the maintainer's to set.
+Any of these would ride the planned monthly refresh (`scripts/refresh/monthly.sh`). Only PortWatch argues for weekly. **`DEMO_KEY` is not documented by EIA anywhere.** A scheduled job uses the registered EIA key already in the sops store (`EIA_API_KEY`), never `DEMO_KEY`.
 
 ## Against the explore note's spike design
 

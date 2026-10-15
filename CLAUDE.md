@@ -146,7 +146,7 @@ For a researcher-facing inventory (with coverage gaps, evaluated-and-rejected so
 | Coal (mines + plants) | _deferred (post-launch)_ | GEM CC BY 4.0 (when integrated) | Coal sector / cross-commodity scenarios are a post-launch candidate |
 | Tankers / AIS | _deferred (post-launch)_ | TankerMap free for live; paid for historical | Own brainstorm — AIS sourcing is the gating decision |
 
-API keys live in the sops store, read with `secrets exec --only NAME,… --` (e.g., `TAVILY_API_KEY`, `EXA_API_KEY`, `GIE_API_KEY`, the `R2_*` archive credentials). The EIA API key is registered separately; add to the sops store with `secrets set env.eia_api_key` before any EIA work. BACI (the trade-flow source) does not require a key. Never commit secrets.
+API keys live in the sops store, read with `secrets exec --only NAME,… --` (e.g., `TAVILY_API_KEY`, `EXA_API_KEY`, `GIE_API_KEY`, the `R2_*` archive credentials). The EIA API key is in the store as `env.eia_api_key` (read as `EIA_API_KEY`; `scripts/refresh/monthly.sh` already asks for it). BACI (the trade-flow source) does not require a key. Never commit secrets.
 
 ## Common commands
 

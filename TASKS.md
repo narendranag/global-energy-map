@@ -23,10 +23,10 @@
 - [ ] Daily-throughput tooltip, and a vintage filter on scenario inputs (both deferred at Phase 8)
 - [ ] Coal sector (GEM mines and plants) and cross-commodity scenarios #data
 - [ ] Tankers / AIS: its own brainstorm; sourcing is the gating decision (`docs/research/2026-05-19-tanker-ais-sources.md`) #data
-- [ ] EIA API key: add to the sops store (`secrets set env.eia_api_key`) before any EIA work #data
 
 ## Done
 
+- [x] EIA API key: already in the sops store as `env.eia_api_key` (confirmed by name 2026-10-15)
 - [x] Chokepoint traffic context (2026-10-15): IMF PortWatch daily transits, direct ingest, view-only in the scenario panel's Context block — shipped before the IMF replied, at the maintainer's call
 - [x] Announcement Hormuz sentence (2026-10-15): cites CRS R45281 and EIA STEO Aug 2026; says "strikes", not "invasion" (no source found for a ground invasion)
 - [x] ODP spike (2026-10-15): merged to main at the maintainer's call — code and synthetic fixture only, no provider data (`docs/02-odp-energy-context-spike.md`)

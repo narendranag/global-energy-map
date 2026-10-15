@@ -746,9 +746,9 @@ recent days</td>
 <p>Any of these would ride the planned monthly refresh
 (<code>scripts/refresh/monthly.sh</code>). Only PortWatch argues for
 weekly. <strong><code>DEMO_KEY</code> is not documented by EIA
-anywhere.</strong> A scheduled job needs a registered free EIA key in
-the sops store; the existing task covers it, and it is the maintainer's
-to set.</p>
+anywhere.</strong> A scheduled job uses the registered EIA key already
+in the sops store (<code>EIA_API_KEY</code>), never
+<code>DEMO_KEY</code>.</p>
 <h2
 id="odp-energy-context-spike-against-the-explore-notes-spike-design">Against
 the explore note's spike design</h2>

@@ -11,7 +11,7 @@
 ## Next
 
 - [ ] Announce: the Hormuz fall is real (maintainer, 2026-10-15) but the draft's closure window (28 Feb–7 Apr 2026) ends too early — PortWatch shows ~1 tanker/day from March through 11 Oct 2026; revise the dates and cite #launch
-- [ ] Permission email to copyright@imf.org (PortWatch transits, PCPS prices, view-only on the site): drafted in Gmail once the merge deployed; the maintainer sends. JODI/IEF to follow #data
+- [ ] Await IMF reply on PortWatch + PCPS (sent to copyright@imf.org 2026-10-15); JODI request drafted in Gmail to jodinfo@ief.org, unsent #data
 - [ ] Announce: `docs/announce/` is drafted and re-verified (2026-09-21) but headed "DO NOT PUBLISH YET"; publishing is the maintainer's call #launch
 - [ ] Scheduled refresh: run `scripts/refresh/monthly.sh` by hand once, then load `scripts/refresh/space.marain.energymap.refresh.plist` into launchd (see `docs/refresh.md`) #data
 - [ ] Data-year judgement calls in `scripts/transform/build_disruption_routing.py` (Malacca headline year, Suez/Bab el-Mandeb LNG 2018 vintage, Keystone/Enbridge/CPC vintages, Argus/Reuters rows inferred): confirm or reverse each #data

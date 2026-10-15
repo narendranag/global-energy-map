@@ -6,13 +6,12 @@
 
 ## Now
 
-- [ ] **ODP spike: merge or not** — branch `spike/odp-energy-prices`, write-up `docs/02-odp-energy-context-spike.md`. Recommendation: don't merge as is; keep the `.venv/` ESLint ignore; take PortWatch forward as a direct ingest. Owner's call #data
 - [ ] **Take GA4 + Tag Manager live** — follow docs/HANDOFF-2026-10-04-analytics.md (branch analytics-gtm): consent, Preview, merge, deploy, publish (ask Narendra) #analytics
 
 ## Next
 
-- [ ] Announce: before publishing, re-check the Hormuz-closure dates (28 Feb–7 Apr 2026) — IMF PortWatch shows Hormuz tanker transits at ~1/day from March through 11 Oct 2026 (ODP spike) #launch
-- [ ] Ask copyright@imf.org whether PortWatch chokepoint transits (and PCPS prices) may be shown view-only on the site; ask the IEF the same for JODI (maintainer sends) #data
+- [ ] Announce: the Hormuz fall is real (maintainer, 2026-10-15) but the draft's closure window (28 Feb–7 Apr 2026) ends too early — PortWatch shows ~1 tanker/day from March through 11 Oct 2026; revise the dates and cite #launch
+- [ ] Permission email to copyright@imf.org (PortWatch transits, PCPS prices, view-only on the site): drafted in Gmail once the merge deployed; the maintainer sends. JODI/IEF to follow #data
 - [ ] Announce: `docs/announce/` is drafted and re-verified (2026-09-21) but headed "DO NOT PUBLISH YET"; publishing is the maintainer's call #launch
 - [ ] Scheduled refresh: run `scripts/refresh/monthly.sh` by hand once, then load `scripts/refresh/space.marain.energymap.refresh.plist` into launchd (see `docs/refresh.md`) #data
 - [ ] Data-year judgement calls in `scripts/transform/build_disruption_routing.py` (Malacca headline year, Suez/Bab el-Mandeb LNG 2018 vintage, Keystone/Enbridge/CPC vintages, Argus/Reuters rows inferred): confirm or reverse each #data
@@ -30,6 +29,7 @@
 
 ## Done
 
+- [x] ODP spike (2026-10-15): merged to main at the maintainer's call — code and synthetic fixture only, no provider data (`docs/02-odp-energy-context-spike.md`)
 - [x] GA4 + Tag Manager set up from analytics.yaml (2026-10-04): container GTM-PT8ZNQ7Z, version 2 saved and not published; site code on branch analytics-gtm
 
 - [x] Brain brought to the claude-computer standard (2026-10-04): TASKS.md, DECISIONS.md, justfile, .editorconfig, `docs/` index and overview, fleet pointer in CLAUDE.md

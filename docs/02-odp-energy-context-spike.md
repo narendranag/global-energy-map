@@ -22,7 +22,9 @@ Branch `spike/odp-energy-prices`, run on `mini` on 2026-10-15. Prompted by the e
 
 ## Recommendation
 
-**Don't merge the branch as is. Keep it, and take one thing forward.**
+**Decision (maintainer, 2026-10-15): merged.** As an academic, non-commercial project the map takes the leeway that gives it: the spike's code is on `main`, the data stays out of the repo, and permission for showing PortWatch on the site is being asked of the IMF. The spike's own recommendation, kept below for the record, was not to merge it as is.
+
+The spike's reasoning:
 
 - **ODP works, but it isn't what makes the data usable.** It reached all four free sources in an afternoon with no paid key. But each source is a single HTTP endpoint, and the project already has a direct EIA client (`scripts/ingest/eia_steo.py`). ODP saves the client code and costs a ~700 MB dependency. V5 is two weeks old (2026-09-30), from a steward that changed hands in September.
 - **Licensing is the wall, as it was for paid data** (`commercial-data-options.md`). Every price and traffic series here rests on vendor data: Refinitiv, Argus or Kpler. None qualifies as downloadable under `LICENSE-DATA.md`. Showing them view-only needs a yes from the IMF first, and from the IEF for JODI.
@@ -70,7 +72,7 @@ Keep ODP on `mini` as a discovery tool. That is how PortWatch was found.
 
   **Caution for the announcement draft:**
   - The draft dates the Hormuz closure 28 Feb–7 Apr 2026, but PortWatch's AIS-derived count stays near zero through 11 Oct.
-  - AIS can be switched off or spoofed, so this is not proof of a continuing closure. The claim still needs a citation before it is published.
+  - The maintainer confirms the fall is real (2026-10-15). The draft's end date needs revisiting, and the claim still needs a citation before it is published.
 
 ## Licences and attribution
 

@@ -6,16 +6,20 @@
 
 ## Now
 
+- [ ] **ODP spike: merge or not** — branch `spike/odp-energy-prices`, write-up `docs/02-odp-energy-context-spike.md`. Recommendation: don't merge as is; keep the `.venv/` ESLint ignore; take PortWatch forward as a direct ingest. Owner's call #data
 - [ ] **Take GA4 + Tag Manager live** — follow docs/HANDOFF-2026-10-04-analytics.md (branch analytics-gtm): consent, Preview, merge, deploy, publish (ask Narendra) #analytics
 
 ## Next
 
+- [ ] Announce: before publishing, re-check the Hormuz-closure dates (28 Feb–7 Apr 2026) — IMF PortWatch shows Hormuz tanker transits at ~1/day from March through 11 Oct 2026 (ODP spike) #launch
+- [ ] Ask copyright@imf.org whether PortWatch chokepoint transits (and PCPS prices) may be shown view-only on the site; ask the IEF the same for JODI (maintainer sends) #data
 - [ ] Announce: `docs/announce/` is drafted and re-verified (2026-09-21) but headed "DO NOT PUBLISH YET"; publishing is the maintainer's call #launch
 - [ ] Scheduled refresh: run `scripts/refresh/monthly.sh` by hand once, then load `scripts/refresh/space.marain.energymap.refresh.plist` into launchd (see `docs/refresh.md`) #data
 - [ ] Data-year judgement calls in `scripts/transform/build_disruption_routing.py` (Malacca headline year, Suez/Bab el-Mandeb LNG 2018 vintage, Keystone/Enbridge/CPC vintages, Argus/Reuters rows inferred): confirm or reverse each #data
 
 ## Later
 
+- [ ] Chokepoint traffic context: direct IMF PortWatch ingest (no ODP) → view-only `ScenarioContext` row, once the IMF says yes (see `docs/02-odp-energy-context-spike.md`) #data
 - [ ] Kirkuk–Ceyhan: held; needs a year-bounded share (pipeline shut 2023-03 to 2025-09) and the shipped Hormuz IRQ share moved 0.90 → 0.87 in the same commit #data
 - [ ] Inbound Hormuz exposure (needs an importer-wide route wildcard)
 - [ ] Pipelines as PMTiles

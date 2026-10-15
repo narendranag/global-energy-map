@@ -26,6 +26,7 @@ Global Energy Map is an open, inspectable model of oil and gas dependency: pick 
 | Document                                | What it covers                                                                  | Audience     |
 | --------------------------------------- | ------------------------------------------------------------------------------- | ------------ |
 | [01 Overview](01-overview.md)           | What the map is, the ideas behind it, scope, and where everything else lives    | Everyone     |
+| [02 ODP spike](02-odp-energy-context-spike.md) | Trial of OpenBB ODP for price and chokepoint-traffic context; licences; recommendation | Maintainer |
 
 ## Guides and runbooks
 
@@ -48,6 +49,7 @@ These keep their original paths. The app, its tests, `public/llms.txt` and GitHu
 
 Plans, specs, research and hand-offs stay as written, under `superpowers/` and `research/`.
 
+- [Spike: energy-price and flow context through OpenBB ODP, 2026-10-15](02-odp-energy-context-spike.md) (branch `spike/odp-energy-prices`, not merged)
 - [GA4 + Tag Manager go-live hand-off, 2026-10-04](HANDOFF-2026-10-04-analytics.md)
 - [Session hand-off, 2026-09-21](superpowers/HANDOFF.md)
 - [Original design, 2026-05-15](superpowers/specs/2026-05-15-global-energy-map-design.md)

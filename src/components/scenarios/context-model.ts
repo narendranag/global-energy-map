@@ -1,7 +1,8 @@
 /**
  * Pure model behind the scenario panel's "Context" block (T3, post-launch
- * UX plan): ties the two live, view-only layers (EU gas storage, UN
- * Comtrade recent imports) to an active LNG scenario's result. No React —
+ * UX plan): ties the live, view-only sources (EU gas storage, UN Comtrade
+ * recent imports, IMF PortWatch chokepoint transits) to an active scenario's
+ * result. No React —
  * unit-tested in tests/unit/scenarios/context-model.test.ts.
  *
  * Both inputs are honesty checks, never a recomputed exposure figure:
@@ -13,6 +14,7 @@
  *    `src/lib/data/recent-imports.ts` for why it can't be one (importer
  *    totals only, as-reported, not reconciled).
  */
+import type { ChokepointTransits } from "@/lib/data/chokepoint-transits";
 import type { GasStorageByCountry } from "@/lib/data/gas-storage";
 import { divergesFromBaci, isComplete, type RecentImportsData } from "@/lib/data/recent-imports";
 import type { Commodity, ScenarioId, ScenarioResult } from "@/lib/scenarios/types";
@@ -202,4 +204,32 @@ export function buildRecentImportsContextRows(
       diverges: r ? divergesFromBaci(r) : false,
     };
   });
+}
+
+/**
+ * The chokepoints this result closes that IMF PortWatch observes, in the
+ * order the panel names them (primary first). Pipeline scenarios have none;
+ * a combined run can have two. Observed traffic is the same whichever
+ * commodity axis or view is selected, so neither enters here.
+ */
+export function transitScenarioIds(
+  result: Pick<ScenarioResult, "scenarioId" | "scenarioIds">,
+  transits: ChokepointTransits,
+): readonly ScenarioId[] {
+  const ids = result.scenarioIds ?? [result.scenarioId];
+  return ids.filter((id, i) => ids.indexOf(id) === i && transits.has(id));
+}
+
+/** Chokepoint scenarios PortWatch observes (see scripts/ingest/portwatch_chokepoints.py). */
+export const TRANSIT_SCENARIOS: readonly ScenarioId[] = [
+  "hormuz",
+  "malacca",
+  "suez",
+  "bab_el_mandeb",
+  "turkish_straits",
+];
+
+/** True when the transits block has anything to show for this result. */
+export function showsTransitContext(result: Pick<ScenarioResult, "scenarioId" | "scenarioIds">): boolean {
+  return (result.scenarioIds ?? [result.scenarioId]).some((id) => TRANSIT_SCENARIOS.includes(id));
 }

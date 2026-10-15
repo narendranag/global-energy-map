@@ -1,6 +1,6 @@
 // tests/e2e/scenario-context.spec.ts — the scenario panel's "Context" block
-// (T3): EU gas-storage cover + a Comtrade recency check beside the active
-// scenario's own result.
+// (T3): EU gas-storage cover, a Comtrade recency check and IMF PortWatch
+// chokepoint traffic beside the active scenario's own result.
 import { SPEC_TIMEOUT, expect, gotoReady, test } from "./helpers";
 
 test.setTimeout(SPEC_TIMEOUT);
@@ -65,6 +65,29 @@ test.describe("Scenario context", () => {
     await expect(page.getByTestId("section-vintage-context-recent")).toContainText(
       /at-risk volume: BACI \(CEPII\) to \d{4}.*recent imports: UN Comtrade to /,
     );
+  });
+
+  test("Hormuz shows observed tanker transits from IMF PortWatch, with the AIS caveat", async ({ page }) => {
+    await gotoReady(page, "/?mode=scenarios&scenario=hormuz&commodity=oil&year=2024&layers=reserves");
+    await expect(page.getByTestId("ranked-importers").locator("li").first()).toBeVisible({
+      timeout: RESULT_TIMEOUT,
+    });
+    const transits = page.getByTestId("scenario-context-transits");
+    await expect(transits).toBeVisible({ timeout: RESULT_TIMEOUT });
+    await expect(transits).toContainText("Strait of Hormuz");
+    await expect(transits).toContainText("tankers/day");
+    // The count is AIS-observed; the caveat must travel with the number.
+    await expect(transits).toContainText("lower bound on real traffic");
+    await expect(transits).toContainText("does not change the exposure figures above");
+    await expect(page.getByTestId("section-vintage-context-transits")).toContainText(/IMF PortWatch.* to /);
+  });
+
+  test("a pipeline scenario shows no chokepoint traffic", async ({ page }) => {
+    await gotoReady(page, "/?mode=scenarios&scenario=druzhba&commodity=oil&year=2024&layers=reserves");
+    await expect(page.getByTestId("ranked-importers").locator("li").first()).toBeVisible({
+      timeout: RESULT_TIMEOUT,
+    });
+    await expect(page.getByTestId("scenario-context-transits")).toHaveCount(0);
   });
 
   test("is hidden under ?embed=1", async ({ page }) => {

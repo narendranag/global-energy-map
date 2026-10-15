@@ -155,6 +155,19 @@ uv run python -m scripts.build_all --only build_gie_daily && uv run python -m sc
 - **Storage fullness legitimately exceeds 100 %** — 2.8 % of rows, e.g. Belgium at 118 % through the 2022 gas crisis. It is `gasInStorage / workingGasVolume` and operators can hold more than nominal working volume. Verified against the components; do not clamp it, and do not build a colour ramp that assumes a 0–100 domain.
 - Licence is free-with-registration, not an open licence, so the file is **view-only** in the catalog.
 
+### IMF PortWatch chokepoint transits (weekly)
+
+No key. Refetches every chokepoint's full daily series each run, because PortWatch revises recent days.
+
+```bash
+uv run python -m scripts.ingest.portwatch_chokepoints
+uv run python -m scripts.build_all --only build_chokepoint_transits && uv run python -m scripts.build_all --from build_catalog
+```
+
+- Raw lands as one JSON per chokepoint under `data/raw/portwatch/` (5 chokepoints × ~3 pages, about a minute).
+- Only the chokepoints a scenario models are fetched (`CHOKEPOINTS` in the ingest). Adding a chokepoint scenario means adding its PortWatch id there.
+- View-only in the catalog (vessel data are Kpler's; see `LICENSE-DATA.md`).
+
 ### EIA STEO shale regions (monthly release)
 
 ```bash
@@ -260,6 +273,7 @@ The whole run happens in a `git worktree` under `~/Library/Caches/global-energy-
 
 - **GIE AGSI + ALSI:** EU gas storage and LNG send-out (daily, live layers). No per-day files, so `--force` refetches the whole pinned range every run (~48 calls).
 - **UN Comtrade:** Crude + LNG imports (monthly, backfills). Comtrade months arrive thin and backfill over roughly six months, so a plain re-run without `--force` would never pick up revisions to months already on disk. The script runs `--from <6 months ago> --to <last full month> --force` — forcing only a rolling 7-month window, not the whole series, since each call costs ~50s and the API rate-limits.
+- **IMF PortWatch:** daily chokepoint transits (no key). The full series is refetched every run, since PortWatch revises recent days.
 - **EIA STEO:** US shale-region production (annual pin, monthly release cadence). `--force` also refetches the static DPR county list and Census counties files every run — a few extra small requests, not worth a separate flag.
 
 Each ingest runs as documented in the per-source sections above; the script reads API keys from the sops store (`secrets env --only …`) and fails clearly if they are missing (checked before the worktree is created).

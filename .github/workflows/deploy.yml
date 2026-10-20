@@ -44,4 +44,4 @@ jobs:
     needs: deploy
     uses: ./.github/workflows/smoke.yml
     with:
-      url: ${{ vars.SMOKE_PRODUCTION_URL || 'https://global-energy-map.narendranag.workers.dev' }}
+      url: ${{ vars.SMOKE_PRODUCTION_URL || 'https://global-energy-map.narendranag-cd1.workers.dev' }}

@@ -66,3 +66,7 @@ data/derived/
 
 # agent worktrees
 .claude/worktrees/
+
+# OpenNext / wrangler build output
+/.open-next/
+/.wrangler/

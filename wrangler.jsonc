@@ -1,0 +1,27 @@
+// The Worker that serves energymap.marain.space, built by OpenNext (`pnpm run deploy`).
+// cloudflare/worker.mjs wraps OpenNext's handler for /data/* and /duckdb/* (cache headers,
+// byte ranges, the DuckDB wasm from R2). No secrets: the app reads none at runtime.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "global-energy-map",
+  "main": "cloudflare/worker.mjs",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".open-next/assets",
+    // Keep in sync with WORKER_FIRST_PREFIXES in src/lib/edge/static.ts.
+    "run_worker_first": ["/data/*", "/duckdb/*"]
+  },
+  // duckdb-{eh,mvp}.wasm are over the 25 MiB asset limit; scripts/cloudflare/upload-duckdb-wasm.mjs
+  // puts them here under duckdb/<package version>/ before each deploy.
+  "r2_buckets": [{ "binding": "DUCKDB_WASM", "bucket_name": "global-energy-map-assets" }],
+  "vars": {
+    // The @duckdb/duckdb-wasm version in package.json (tests/unit/edge/static.test.ts checks).
+    "DUCKDB_WASM_VERSION": "1.33.1-dev45.0"
+  },
+  // Staging: global-energy-map.<account>.workers.dev. The custom domain is added at cutover.
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": { "enabled": true }
+}

@@ -13,20 +13,23 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "cf:build": "opennextjs-cloudflare build && node scripts/cloudflare/prepare-assets.mjs",
+    "preview": "pnpm run cf:build && node scripts/cloudflare/upload-duckdb-wasm.mjs --local && opennextjs-cloudflare preview",
+    "deploy": "pnpm run cf:build && node scripts/cloudflare/upload-duckdb-wasm.mjs && opennextjs-cloudflare deploy"
   },
   "dependencies": {
     "@deck.gl/core": "^9.3.2",
     "@deck.gl/layers": "^9.3.2",
     "@deck.gl/mapbox": "^9.3.2",
     "@duckdb/duckdb-wasm": "1.33.1-dev45.0",
-    "@vercel/analytics": "^2.0.1",
+    "@opennextjs/cloudflare": "^1.20.12",
     "apache-arrow": "^21.1.0",
     "fzstd": "0.1.1",
     "hyparquet": "1.30.1",
     "maplibre-gl": "^5.24.0",
     "marked": "^18.0.12",
-    "next": "16.2.6",
+    "next": "16.4.2",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
@@ -48,6 +51,7 @@
     "tailwindcss": "^4.3.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.60.0",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.7",
+    "wrangler": "^4.151.2"
   }
 }

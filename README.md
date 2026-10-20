@@ -76,6 +76,20 @@ pnpm build && CI=1 pnpm test:e2e              # Playwright against a production 
 
 **Stack:** Next.js 16, React 19, TypeScript strict; deck.gl 9 inside MapLibre (OpenFreeMap basemap); Parquet read in the browser by hyparquet. DuckDB-WASM is self-hosted and loaded only on `/query` (a SQL console over the same catalog), never on the map's load path. There is no backend: data files are served as static assets with immutable, content-versioned caching. The build-time pipeline is Python (pandas, pyarrow, geopandas, duckdb). CI runs lint, typecheck, unit, Python and e2e tests (including an axe accessibility scan), plus a post-deploy smoke test.
 
+## Deploy (Cloudflare Workers)
+
+The site runs on Cloudflare Workers through OpenNext (`@opennextjs/cloudflare`); it moved from Vercel in October 2026. `wrangler.jsonc` points at `cloudflare/worker.mjs`, a thin wrapper that handles `/data/*` and `/duckdb/*` itself (year-long caching for `?v=` URLs, byte ranges, and the two DuckDB wasm modules streamed from the R2 bucket `global-energy-map-assets`, because they are over Workers' 25 MiB per-file limit) and passes everything else to Next. Every page is prerendered and served from the asset store.
+
+```bash
+pnpm run preview                 # OpenNext build → wasm into the local R2 → wrangler dev on :8787
+E2E_PORT=8787 pnpm test:e2e      # the e2e suite against that local Worker
+pnpm run deploy                  # OpenNext build → wasm into R2 → wrangler deploy
+scripts/smoke/run.sh <url>       # pages, catalog sizes + sha256, Range reads, one browser check
+pnpm exec wrangler tail global-energy-map --format json   # live request log
+```
+
+`.github/workflows/deploy.yml` does the same deploy and then runs the smoke workflow. It needs the repo secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. The app reads no secrets at runtime.
+
 ## Project status
 
 Phases 1–10 are complete: layers, scenarios, a correctness pass, consolidation, the product redesign, and launch hardening. Since then: a data-freshness upgrade added live EU gas storage, UN Comtrade recent imports and US shale-region production, and refreshed EI/GOGET/OSM/NETL/BACI to their latest releases; a post-launch UX pass added the `/query` SQL console, country-click profile panel, header search, trade-flow arcs, embed mode, and five more disruption scenarios (Malacca, Suez + SUMED, Bab el-Mandeb, Turkish Straits, Keystone/Enbridge/ESPO), plus partial-severity closures, two scenarios combined at once, and an exporter-side view of any scenario. Since 2026-10-15 every chokepoint scenario also shows observed traffic: IMF PortWatch's AIS-observed tanker transits over the latest 30 days against a year earlier (view-only; a lower bound when ships run with transponders off). Earlier post-launch work (2026-09-11): intra-Gulf Hormuz trade is no longer counted as exposed, LNG attribution uses only terminals in service that year, the map reads Parquet directly in the page (cold load ≈ 1.2 s at 40 Mb/s, down from ≈ 4.9 s), the storage layer drops EPA records that are not bulk storage, and the scenario panel flags BACI gaps for Iran (2019+) and Russia → Belarus (2022+). Most recently (2026-09-21): the year slider is gone from the UI (every layer shows its latest data by default; `?year=` still pins an older view behind an "as of" chip), the copy throughout leads with the scenario question rather than the asset inventory, and every information surface — scenario headline, layer badges, country panel, tooltips — now states the vintage of the data behind it. The history is in [`docs/history.md`](docs/history.md), and the roadmap and review in [`docs/superpowers/specs/`](docs/superpowers/specs/). Candidate next steps (coal, tanker AIS, per-basin production, pipelines as vector tiles) are in [`docs/data-sources.md`](docs/data-sources.md).

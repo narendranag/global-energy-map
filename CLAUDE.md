@@ -37,9 +37,9 @@ A public web app that lets serious analysts interrogate global energy dependenci
 - Outputs versioned Parquet/GeoParquet under `public/data/`
 
 **Hosting**
-- Vercel for the app, auto-deploys on push to `main`; Vercel Web Analytics (cookieless) via `<Analytics />` in `layout.tsx` — enabled in the Vercel project 2026-09-17. It was found switched off on 2026-09-17 despite an earlier note claiming otherwise, so there is **no traffic data before 2026-09-17**; `<Analytics />` is a no-op whenever the project toggle is off, and the only reliable check is the project's Analytics tab (the "Enable" CTA + "Demo Data" watermark = not collecting). Vercel serves the script and beacon from an obfuscated first-party path (`/<hash>/script.js`, `/<hash>/view`), not `/_vercel/insights/`; headless/automated browsers are ignored, so e2e and smoke runs don't count as visits
+- **Cloudflare Workers through OpenNext** (`@opennextjs/cloudflare`, ported from Vercel 2026-10-20; staged on `global-energy-map.<account>.workers.dev`, cutover of energymap.marain.space pending the maintainer's OK). `wrangler.jsonc` → `cloudflare/worker.mjs`, which runs first for `/data/*` and `/duckdb/*` (Cache-Control by `?v=` via `src/lib/edge/static.ts`, single byte ranges, and `duckdb-{eh,mvp}.wasm` streamed from R2 `global-energy-map-assets` under `duckdb/<pkg version>/` — both are over the 25 MiB per-asset limit, so `prepare-assets.mjs` adds them to `.assetsignore` and `upload-duckdb-wasm.mjs` puts them in R2 before each deploy) and hands everything else to Next. Pages are prerendered and served by OpenNext's static-assets incremental cache — **never add a page that revalidates or reads the filesystem at request time** without adding a real cache. `next.config.ts` `headers()` still sets the pages' `frame-ancestors`; it never sees asset-store responses. `vars.DUCKDB_WASM_VERSION` must equal the `@duckdb/duckdb-wasm` version (unit-tested). Deploys: `pnpm run deploy` or `.github/workflows/deploy.yml` (manual until cutover), which then calls `smoke.yml`. `GET /api/health` answers `{ok, version}`. Vercel Web Analytics was removed in the port (no traffic data from it after 2026-10-20; its replacement is the maintainer's call); the Vercel project stays only so `global-energy-map-one.vercel.app` keeps redirecting
 - **Google Analytics 4** (property 556124311, `G-YMXRSFHM6R`) through **Google Tag Manager** (container `GTM-PT8ZNQ7Z`), defined in `analytics.yaml` and loaded by `src/components/analytics/GoogleTagManager.tsx`. Sends nothing until the container version is published (`docs/HANDOFF-2026-10-04-analytics.md`). The component loads the container only on `energymap.marain.space`, sends one page view per later pathname (the stream's history-change page views, site search, form and video events are switched off, because `replaceState` fires on every slider tick), and never sends `/query`'s SQL — a visit that starts on `/query` never loads it, and `/query` is reported without its query string. Marketing events go through `track()` in `src/components/analytics/track.ts` (`file_download`, `select_content`, `share`, `search`, `view_item`), never with anything a visitor typed. `docs/legal/privacy.md` describes exactly this; change both together. Reports are readable through the `google-analytics` MCP server and `analytics report`
-- `.github/workflows/smoke.yml` runs after each successful deployment against the public alias (per-deployment `*.vercel.app` URLs sit behind Vercel login; previews need `VERCEL_AUTOMATION_BYPASS_SECRET`)
+- `.github/workflows/smoke.yml` runs after each deploy (called by `deploy.yml`) or by hand against any URL; `scripts/smoke/run.sh <url>` locally
 - Vercel Blob (or Cloudflare R2 if size demands) for any data exceeding ~25 MB single-file / ~100 MB total. Not in use for **runtime** data — the largest sidecar (pipelines.geojson) is ~8 MB after merging line fragments and simplifying (Phase 5, Phase 10).
 - **Cloudflare R2 bucket `global-energy-map-raw`** archives build inputs that can no longer be fetched from their publisher (GEM GOIT/GGIT snapshots, GOGET workbooks, the Cloudflare-gated EI workbook). Build-time only; the app never reads it. `MANIFEST.md` in the bucket lists every key with its sha256. Credentials are the `R2_*` vars in the sops store.
 
@@ -172,8 +172,8 @@ uv run python -m scripts.validate.lng_t3_vs_giignl        # LNG-T3 vs GIIGNL pub
 uv run python -m pytest tests/python -v                   # `python -m` form: bare `uv run pytest` fails to spawn on some machines
 
 # Deploy
-vercel                         # preview
-vercel --prod                  # production
+pnpm run preview               # OpenNext build + local Worker on :8787 (E2E_PORT=8787 pnpm test:e2e runs e2e against it)
+pnpm run deploy                # OpenNext build → DuckDB wasm into R2 → wrangler deploy
 ```
 
 CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typecheck` + `pnpm test` (Vitest) + `pnpm build` for the app; `uv sync --locked` + `ruff check` + `ruff format --check` + `python -m pytest tests/python` (schemas, fixtures, data integrity) for the Python pipeline; and a Playwright e2e job.
@@ -248,7 +248,7 @@ CI (`.github/workflows/ci.yml`) runs on every push/PR: `pnpm lint` + `pnpm typec
   tests and `public/llms.txt` point at them.
 - **Analytics:** GA4 + Tag Manager are defined in `analytics.yaml`; change it, then `analytics sync`,
   then the site. Marketing events only. Never `analytics publish` without asking Narendra.
-- **Deploys:** Vercel deploys every push to `main`, docs and brain files included.
+- **Deploys:** Cloudflare Workers via `pnpm run deploy` / `deploy.yml` (see Hosting); before cutover Vercel still deploys every push to `main`.
 - **Secrets:** from the fleet's sops store with `secrets exec --only NAME,… -- <cmd>`; never in a file.
 
 ## Workflow

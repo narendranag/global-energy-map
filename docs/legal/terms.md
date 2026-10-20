@@ -32,7 +32,7 @@ Please do not:
 
 ## Third-party services and links
 
-The basemap is provided by OpenFreeMap, with map data © OpenMapTiles and © OpenStreetMap contributors. The site is hosted by Vercel. The site links to external sources and documentation. We are not responsible for third-party services or sites, which have their own terms.
+The basemap is provided by OpenFreeMap, with map data © OpenMapTiles and © OpenStreetMap contributors. The site is hosted by Cloudflare. The site links to external sources and documentation. We are not responsible for third-party services or sites, which have their own terms.
 
 ## No warranty
 

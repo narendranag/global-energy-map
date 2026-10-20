@@ -6,6 +6,7 @@
 
 ## Now
 
+- [ ] **Cloudflare cutover** — staged at https://global-energy-map.narendranag-cd1.workers.dev (branch `cloudflare-workers`, 2026-10-20). Waiting on Narendra: OK for DNS + production deploy, repo secrets `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID`, and what replaces Vercel Web Analytics. Steps on the dashboard #deploy
 - [ ] **Take GA4 + Tag Manager live** — follow docs/HANDOFF-2026-10-04-analytics.md (branch analytics-gtm): consent, Preview, merge, deploy, publish (ask Narendra) #analytics
 
 ## Next

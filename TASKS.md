@@ -7,7 +7,6 @@
 ## Now
 
 - [ ] Cloudflare Web Analytics beacon (zone auto-install) loads on energymap from static.cloudflareinsights.com — not in privacy.md: keep it and disclose, or exclude the host (the store token has no RUM permission; dashboard step) #privacy
-- [ ] Vercel project: kept as fallback + vercel.app redirect; removing it (or the domain on it) is a separate yes from Narendra #deploy
 
 ## Next
 
@@ -27,6 +26,7 @@
 
 ## Done
 
+- [x] Vercel project global-energy-map deleted (2026-10-21, Narendra); the team-level marain.space domain stays for the marain project
 - [x] Cloudflare cutover (2026-10-21): energymap.marain.space is a Worker custom domain; deploy.yml on push to main, smoke green on the live host, https-check ok (the Worker 301s http)
 - [x] GA4 + Tag Manager live: container GTM-PT8ZNQ7Z published (gtm.js served, checked 2026-10-20); snippet in layout.tsx, production host only
 - [x] EIA API key: already in the sops store as `env.eia_api_key` (confirmed by name 2026-10-15)

@@ -6,7 +6,7 @@
 
 ## Now
 
-- [ ] **Cloudflare cutover** — staged at https://global-energy-map.narendranag-cd1.workers.dev (branch `cloudflare-workers`, 2026-10-20). Waiting on Narendra: OK for DNS + production deploy, repo secrets `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID`, and a yes to GA4 alone replacing Vercel Web Analytics (proposed). Steps on the dashboard #deploy
+- [ ] **Cloudflare cutover** — staged at https://global-energy-map.narendranag-cd1.workers.dev (branch `cloudflare-workers`, 2026-10-20). Repo secrets set 2026-10-21. Waiting on Narendra: OK for DNS + production deploy, and a yes to GA4 alone replacing Vercel Web Analytics (proposed). Steps on the dashboard #deploy
 
 ## Next
 

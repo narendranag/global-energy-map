@@ -9,6 +9,7 @@ ga:
   property: properties/556124311
   stream: properties/556124311/dataStreams/15854508944
   measurement_id: G-YMXRSFHM6R
+  google_signals: false
 events:
   # Fired by src/components/analytics/GoogleAnalytics.tsx on each client-side route change after the first
   # (the Google tag sends the first page view itself): page_view with the address, /query without its query string.

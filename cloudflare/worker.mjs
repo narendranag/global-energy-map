@@ -10,6 +10,8 @@ import {
   parseRange,
 } from "../src/lib/edge/static.ts";
 
+const isLocal = (host) => host === "localhost" || host === "127.0.0.1";
+
 /** The DuckDB wasm modules, from R2 (over the 25 MiB asset limit). */
 async function wasmFromR2(request, env, key) {
   const object = await env.DUCKDB_WASM.get(key, { range: request.headers, onlyIf: request.headers });
@@ -54,6 +56,12 @@ async function fromAssets(request, env) {
 const worker = {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    // DEV-GUIDELINES "HTTPS": plain http gets a 301, here rather than the zone-wide
+    // Always Use HTTPS setting. wrangler dev (localhost) stays on http.
+    if (url.protocol === "http:" && !isLocal(url.hostname)) {
+      url.protocol = "https:";
+      return Response.redirect(url.toString(), 301);
+    }
     if (!WORKER_FIRST_PREFIXES.some((p) => url.pathname.startsWith(p))) {
       return nextHandler.fetch(request, env, ctx);
     }

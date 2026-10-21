@@ -1,6 +1,6 @@
 # Global Energy Map — guide for researchers
 
-**Live map:** <https://energymap.marain.space> (the older `global-energy-map-one.vercel.app` address redirects there).
+**Live map:** <https://energymap.marain.space>.
 
 This guide is for academics, energy-policy analysts and IR/economics scholars who want to use the map as an instrument rather than a picture: to see how the world's oil and gas system is wired, how it changed between 1990 and 2024, and which importers, refineries and LNG terminals depend on a given chokepoint or pipeline. It explains what the numbers mean, where they come from, and where they stop being informative.
 

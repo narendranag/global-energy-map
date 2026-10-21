@@ -2,7 +2,7 @@
 # scripts/smoke/run.sh — the same post-deploy smoke the workflow runs, locally.
 #
 #   scripts/smoke/run.sh                                   # production
-#   scripts/smoke/run.sh https://<deployment>.vercel.app   # any deployment
+#   scripts/smoke/run.sh https://global-energy-map.narendranag-cd1.workers.dev   # any deployment
 #
 # Needs `pnpm install` and `pnpm exec playwright install chromium` once.
 # Optional: VERCEL_AUTOMATION_BYPASS_SECRET for protected preview URLs.

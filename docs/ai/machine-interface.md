@@ -6,7 +6,7 @@ The site has no API server, and doesn't need one. Everything an agent needs is a
 - the **catalog** is JSON listing every data file, with its licence, rows, size and sha256;
 - the **data** is Parquet and GeoJSON over HTTPS with range requests, readable from DuckDB, pandas, polars or any Arrow client.
 
-Base URL: **https://energymap.marain.space** (the old `global-energy-map-one.vercel.app` 308-redirects here, keeping path and query).
+Base URL: **https://energymap.marain.space**.
 
 ## 1. Building links to a view
 

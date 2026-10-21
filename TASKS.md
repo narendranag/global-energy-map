@@ -16,6 +16,7 @@
 
 ## Later
 
+- [ ] (owner) Zone-wide "Always Use HTTPS" on marain.space: the Worker 301s http for pages and /data, but hashed /_next/static files still answer on plain http; `https-check --fix` turns it on for the whole zone (every marain.space site) — your call. HSTS is a separate decision #deploy
 - [ ] Kirkuk–Ceyhan: held; needs a year-bounded share (pipeline shut 2023-03 to 2025-09) and the shipped Hormuz IRQ share moved 0.90 → 0.87 in the same commit #data
 - [ ] Inbound Hormuz exposure (needs an importer-wide route wildcard)
 - [ ] Pipelines as PMTiles

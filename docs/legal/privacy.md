@@ -5,8 +5,8 @@
 ## The short version
 
 - There are no accounts, no sign-up and no forms.
-- We count visits with Google Analytics, which sets first-party cookies only if you press Allow on the cookie banner. We see aggregate reports, not individuals.
-- Google Analytics never receives the SQL you write in the query console.
+- We count visits with two analytics tools: Cloudflare Web Analytics, which is cookieless, and Google Analytics, which sets first-party cookies only if you press Allow on the cookie banner. We see aggregate reports, not individuals.
+- Neither analytics tool receives the SQL you write in the query console.
 - Your browser fetches map tiles from OpenFreeMap, a third party, which sees your IP address like any web server does.
 - The map remembers one thing on your device: that you closed the intro card.
 - Everything you do on the map (filtering, scenarios, exports) runs in your browser. Nothing you select is sent to us.
@@ -17,6 +17,10 @@
 ### Hosting (Cloudflare)
 
 The site is hosted on [Cloudflare](https://www.cloudflare.com) (Cloudflare Workers). Like any web host, Cloudflare's servers receive each request, with your IP address, browser user agent, the page or file requested and the time. Cloudflare keeps operational logs to deliver the site and protect it from abuse, and we can see request logs for a few days to diagnose errors. We do not combine these logs with anything else or use them to identify visitors. Cloudflare's handling is described in its [privacy policy](https://www.cloudflare.com/privacypolicy/).
+
+### Analytics (Cloudflare Web Analytics)
+
+We use [Cloudflare Web Analytics](https://www.cloudflare.com/web-analytics/) to count page views and see how fast pages load. Your browser loads a small script from `static.cloudflareinsights.com`, which reports the page address without its query string (so never your SQL), the referring site, your browser and operating system, and page-load timings back to this site. It sets no cookies, stores nothing on your device, and does not track you across sites. We only see aggregate counts. Blocking the script does not affect how the map works.
 
 ### Analytics (Google Analytics)
 
@@ -58,7 +62,7 @@ If the map hits an error, the error panel offers a **Report an issue** link. It 
 
 ## Embedding
 
-The map can be embedded on third-party sites in an `<iframe>` (`?embed=1`). An embedded map behaves exactly as described above — no accounts, the same Google Analytics counting and the same OpenFreeMap tile requests — nothing changes about what is collected because the map is inside someone else's page. That page has its own privacy policy, which is not covered here; if you have concerns about a specific site that embeds the map, contact that site.
+The map can be embedded on third-party sites in an `<iframe>` (`?embed=1`). An embedded map behaves exactly as described above — no accounts, the same Cloudflare Web Analytics and Google Analytics counting and the same OpenFreeMap tile requests — nothing changes about what is collected because the map is inside someone else's page. That page has its own privacy policy, which is not covered here; if you have concerns about a specific site that embeds the map, contact that site.
 
 ## Links to other sites
 
@@ -66,7 +70,7 @@ The map and its pages link to data publishers, documentation and GitHub. Those s
 
 ## Your choices and rights
 
-Because the site holds no accounts or profiles, there is normally nothing we can look up about you. Depending on where you live, you may have rights to access, correct or delete personal data, or to object to its processing. To ask about any of this, or about Cloudflare's logs or Google's analytics as they relate to this site, email [privacy.officer@marain.space](mailto:privacy.officer@marain.space). We process the limited data above because we have a legitimate interest in running, securing and improving a free public research tool. The site is operated from Singapore, and we handle personal data in line with Singapore's Personal Data Protection Act 2012; privacy.officer@marain.space is the contact for data protection matters.
+Because the site holds no accounts or profiles, there is normally nothing we can look up about you. Depending on where you live, you may have rights to access, correct or delete personal data, or to object to its processing. To ask about any of this, or about Cloudflare's logs or analytics, or Google's analytics as they relate to this site, email [privacy.officer@marain.space](mailto:privacy.officer@marain.space). We process the limited data above because we have a legitimate interest in running, securing and improving a free public research tool. The site is operated from Singapore, and we handle personal data in line with Singapore's Personal Data Protection Act 2012; privacy.officer@marain.space is the contact for data protection matters.
 
 The site is intended for researchers and the general public, and is not directed at children.
 

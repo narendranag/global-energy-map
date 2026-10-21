@@ -1,8 +1,6 @@
 # Deploy to Cloudflare Workers (OpenNext), then smoke-test what was deployed.
-# Replaces Vercel's deploy-on-push. Until the cutover to energymap.marain.space this runs only by hand
-# (Actions → deploy → Run workflow) and targets the staging workers.dev address; at cutover add
-#   push: { branches: [main] }
-# and set vars.SMOKE_PRODUCTION_URL. DEV-GUIDELINES "CI": no migrations here, so push-to-main is right.
+# Replaces Vercel's deploy-on-push (DEV-GUIDELINES "CI": no migrations here, so push-to-main is right).
+# Smoke targets vars.SMOKE_PRODUCTION_URL, else the workers.dev address.
 #
 # Needs two repo secrets, set by the owner:
 #   CLOUDFLARE_API_TOKEN   a token from the "Edit Cloudflare Workers" template plus R2 edit, scoped to this account
@@ -10,6 +8,8 @@
 name: deploy
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:

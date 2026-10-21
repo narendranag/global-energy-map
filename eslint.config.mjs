@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 
 export default tseslint.config(
   {
-    ignores: [".next/", ".claude/", ".venv/", "node_modules/", "public/", "scripts/", "tests/e2e/.cache/"],
+    ignores: [".next/", ".open-next/", ".wrangler/", ".claude/", ".venv/", "node_modules/", "public/", "scripts/", "tests/e2e/.cache/"],
   },
   ...nextConfig,
   ...tseslint.configs.strictTypeChecked.map((config) => ({

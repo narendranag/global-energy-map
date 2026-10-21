@@ -283,7 +283,7 @@ Each ingest runs as documented in the per-source sections above; the script read
 - **Annual pin bumps:** EI Statistical Review (`history_through_year` in January; reserves frozen check), BACI release + download URL, GEM GOGET/GGIT tracker releases (form-gated).
   The app's year constants are no longer in this list: `YEAR_MIN`/`YEAR_MAX`, `RESERVES_LATEST_YEAR`, `TRADE_FIRST_YEAR`/`TRADE_LAST_YEAR` and `LNG_T3_FIRST_YEAR`/`LNG_T3_LAST_YEAR` all read catalog `coverage` (`src/lib/data-catalog/years.ts`). The EIA `history_through_year` pin stays manual — it is an ingest-side judgement about forecast vs history, not a statement of what the shipped data covers.
 - **PR merging:** the script opens (or updates) a PR and stops. A human reviews the data diff, runs spot checks, and merges.
-- **Pushing main:** the refresh branch never reaches `main` through git. The maintainer merges and deploys manually via `vercel --prod`.
+- **Pushing main:** the refresh branch never reaches `main` through git. The maintainer merges; the deploy workflow (or `pnpm run deploy`) ships it to Cloudflare.
 - **Deleting the local `refresh/<YYYY-MM>` branch** after it's merged — that's a manual `git branch -d` in the maintainer's own checkout once the PR lands; old month branches otherwise accumulate there (they're harmless, just clutter).
 
 ### Install and run

@@ -6,7 +6,7 @@
 
 ## Now
 
-- [ ] **Take GA4 + Tag Manager live** — follow docs/HANDOFF-2026-10-04-analytics.md (branch analytics-gtm): consent, Preview, merge, deploy, publish (ask Narendra) #analytics
+- [ ] **Cloudflare cutover** — staged at https://global-energy-map.narendranag-cd1.workers.dev (branch `cloudflare-workers`, 2026-10-20). Repo secrets set 2026-10-21. Waiting on Narendra: OK for DNS + production deploy, and a yes to GA4 alone replacing Vercel Web Analytics (proposed). Steps on the dashboard #deploy
 
 ## Next
 
@@ -26,6 +26,7 @@
 
 ## Done
 
+- [x] GA4 + Tag Manager live: container GTM-PT8ZNQ7Z published (gtm.js served, checked 2026-10-20); snippet in layout.tsx, production host only
 - [x] EIA API key: already in the sops store as `env.eia_api_key` (confirmed by name 2026-10-15)
 - [x] Chokepoint traffic context (2026-10-15): IMF PortWatch daily transits, direct ingest, view-only in the scenario panel's Context block — shipped before the IMF replied, at the maintainer's call
 - [x] Announcement Hormuz sentence (2026-10-15): cites CRS R45281 and EIA STEO Aug 2026; says "strikes", not "invasion" (no source found for a ground invasion)

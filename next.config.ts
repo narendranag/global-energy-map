@@ -8,8 +8,10 @@ import type { NextConfig } from "next";
  * is cached for a year; the same path without `?v=` (download links on
  * /data, catalog.json, anything uncatalogued) must revalidate every time.
  */
-export const IMMUTABLE = "public, max-age=31536000, immutable";
-export const REVALIDATE = "public, max-age=0, must-revalidate";
+// Shared with the Cloudflare Worker, which applies them on Workers (src/lib/edge/static.ts).
+import { IMMUTABLE, REVALIDATE } from "./src/lib/edge/static";
+
+export { IMMUTABLE, REVALIDATE };
 
 const VERSIONED = [{ type: "query" as const, key: "v" }];
 

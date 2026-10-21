@@ -1,0 +1,47 @@
+# Deploy to Cloudflare Workers (OpenNext), then smoke-test what was deployed.
+# Replaces Vercel's deploy-on-push (DEV-GUIDELINES "CI": no migrations here, so push-to-main is right).
+# Smoke targets vars.SMOKE_PRODUCTION_URL, else the workers.dev address.
+#
+# Needs two repo secrets, set by the owner:
+#   CLOUDFLARE_API_TOKEN   a token from the "Edit Cloudflare Workers" template plus R2 edit, scoped to this account
+#   CLOUDFLARE_ACCOUNT_ID  the account id (also in the secrets store as env.cloudflare_account_id)
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint && pnpm typecheck && pnpm test
+      # cf:build → the DuckDB wasm into R2 → wrangler deploy (package.json "deploy").
+      - run: pnpm run deploy
+
+  smoke:
+    needs: deploy
+    uses: ./.github/workflows/smoke.yml
+    with:
+      url: ${{ vars.SMOKE_PRODUCTION_URL || 'https://global-energy-map.narendranag-cd1.workers.dev' }}

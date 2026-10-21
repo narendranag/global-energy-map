@@ -20,7 +20,9 @@
     // The @duckdb/duckdb-wasm version in package.json (tests/unit/edge/static.test.ts checks).
     "DUCKDB_WASM_VERSION": "1.33.1-dev45.0"
   },
-  // Staging: global-energy-map.<account>.workers.dev. The custom domain is added at cutover.
+  // Custom domain since 2026-10-21: Cloudflare owns its DNS record and certificate.
+  // workers.dev stays on as the address the deploy smoke can fall back to.
+  "routes": [{ "pattern": "energymap.marain.space", "custom_domain": true }],
   "workers_dev": true,
   "preview_urls": false,
   "observability": { "enabled": true }

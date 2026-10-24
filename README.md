@@ -9,7 +9,7 @@ Built and maintained by [Narendra Nag](https://narendranag.com) as a project of 
 ## What it answers
 
 - **What exists, and since when?** Pipelines, extraction sites and LNG terminals carry a build year where it is known; every layer shows its latest data, and a pinned `?year=` link shows the numbers as of that year with an "as of" chip.
-- **Who depends on a chokepoint?** Close the Strait of Hormuz, Malacca, Suez + SUMED or Bab el-Mandeb (each on the oil or gas/LNG axis), the Turkish Straits, or cut Druzhba, Baku–Tbilisi–Ceyhan, CPC, Keystone, the Enbridge Mainline or the ESPO pipeline's Skovorodino-Mohe spur — 11 scenarios, some closable together, at partial severity, and viewable from either side of the cut (who loses supply vs. who loses the outlet). The map shades each importer by the share of its imports routed through it, and ranks the refineries and LNG terminals most exposed.
+- **Who depends on a chokepoint?** Close the Strait of Hormuz, Malacca, Suez + SUMED or Bab el-Mandeb (each on the oil or gas/LNG axis), the Turkish Straits, or cut Druzhba, Baku–Tbilisi–Ceyhan, CPC, Keystone, the Enbridge Mainline, the ESPO pipeline's Skovorodino-Mohe spur or Kirkuk–Ceyhan — 12 scenarios, some closable together, at partial severity, and viewable from either side of the cut (who loses supply vs. who loses the outlet). The map shades each importer by the share of its imports routed through it, and ranks the refineries and LNG terminals most exposed.
 - **Where does LNG actually go?** 17,592 AIS-derived voyages, 2020–2024. Country-to-country crude and LNG trade flows draw as arcs, and a live EU gas-storage layer and a UN Comtrade "recent imports" layer extend a few of the numbers past BACI's own most recent year.
 - **Where did a number come from?** Hover anything for its value, unit, year and source. `/methodology` explains each layer, `/data` lists every file with its licence and checksum, and `/query` is a SQL console over the same files for anyone who wants to ask their own question.
 
@@ -39,7 +39,7 @@ What it deliberately doesn't do: price responses, rerouting, strategic stocks, o
 | Recent monthly crude + LNG imports, 2025–2026 | 8,839 rows | UN Comtrade (view only) |
 | Daily chokepoint transits (Hormuz, Malacca, Suez, Bab el-Mandeb, Bosporus), 2019– | 14,205 rows | IMF PortWatch; vessel data Kpler, UN Global Platform (view only) |
 | Bilateral crude (HS 2709) and LNG (HS 271111) trade, 1995–2024 | 53,727 country-pair-years | CEPII BACI (Etalab Open Licence 2.0) |
-| Scenario route shares, 11 scenarios (15 oil/gas route-share sets) | 522 rows, each with a citation (plus 54 intra-Gulf Hormuz pairs and 3 Turkish-Straits pairs set to 0) | EIA / IEA and operator reports |
+| Scenario route shares, 12 scenarios (16 oil/gas route-share sets) | 527 rows, each with a citation (plus 54 intra-Gulf Hormuz pairs and 3 Turkish-Straits pairs set to 0) | EIA / IEA and operator reports |
 
 Known limits that matter:
 - reserves stop at 2020;

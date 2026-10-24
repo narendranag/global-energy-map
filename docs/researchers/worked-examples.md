@@ -42,25 +42,25 @@ By volume the order is Germany, Poland, Slovakia, Hungary, Czechia. The largest 
 
 **What to look at.** The ranked importers under both *Share* and *Volume*; the amber Iran note; the seven route shares.
 
-**Result, 2024.** 31 importers are ranked. 12,635 kb/d is at risk, 27.9 % of all crude imports recorded in BACI for 2024.
+**Result, 2024.** 31 importers are ranked. 12,984 kb/d is at risk, 28.6 % of all crude imports recorded in BACI for 2024.
 
 | By share | % at risk | At risk / total | | By volume | At risk | % at risk |
 |---|---|---|---|---|---|---|
-| Pakistan | 78.2 % | 156 / 199 kb/d | | China | 3,518 kb/d | 33.8 % |
-| Philippines | 77.1 % | 100 / 130 kb/d | | India | 1,877 kb/d | 38.6 % |
-| Japan | 73.3 % | 1,721 / 2,347 kb/d | | Japan | 1,721 kb/d | 73.3 % |
-| South Korea | 61.9 % | 1,699 / 2,743 kb/d | | South Korea | 1,699 kb/d | 61.9 % |
-| Malaysia | 51.7 % | 250 / 484 kb/d | | United States | 533 kb/d | 7.9 % |
-| Taiwan | 46.1 % | 491 / 1,067 kb/d | | Taiwan | 491 kb/d | 46.1 % |
+| Philippines | 78.5 % | 102 / 130 kb/d | | China | 3,646 kb/d | 35.1 % |
+| Pakistan | 78.2 % | 156 / 199 kb/d | | India | 1,978 kb/d | 40.7 % |
+| Japan | 73.3 % | 1,721 / 2,347 kb/d | | South Korea | 1,727 kb/d | 62.9 % |
+| South Korea | 62.9 % | 1,727 / 2,743 kb/d | | Japan | 1,721 kb/d | 73.3 % |
+| Malaysia | 51.7 % | 250 / 484 kb/d | | United States | 555 kb/d | 8.2 % |
+| Serbia | 46.3 % | 22 / 47 kb/d | | Taiwan | 493 kb/d | 46.2 % |
 
-Thailand (44.8 %), Poland (44.2 %), Serbia (41.7 %) and Greece (39.2 %) follow on share. On the refinery list, Japanese plants dominate capacity at risk (ExxonMobil Kawasaki 434 of 592 kb/d), with Reliance Jamnagar and ExxonMobil Singapore also near the top.
+Taiwan (46.2 %), Thailand (44.8 %), Poland (44.2 %) and Greece (42.7 %) follow on share. On the refinery list, Japanese plants dominate capacity at risk (ExxonMobil Kawasaki 434 of 592 kb/d), with Reliance Jamnagar and ExxonMobil Singapore also near the top.
 
-**How to read it.** The two orderings answer different questions: *share* is dependence (Japan relies on the Gulf for most of its crude), *volume* is scale (China imports the most Gulf crude but also buys heavily elsewhere). Saudi Arabia (88 % through Hormuz) contributes 5,464 kb/d of the at-risk total, Iraq (90 %) 3,136, the UAE (65 %) 2,390, Kuwait 971 and Qatar 674.
+**How to read it.** The two orderings answer different questions: *share* is dependence (Japan relies on the Gulf for most of its crude), *volume* is scale (China imports the most Gulf crude but also buys heavily elsewhere). Saudi Arabia (88 % through Hormuz) contributes 5,464 kb/d of the at-risk total, Iraq (100 % in 2024, see below) 3,484, the UAE (65 %) 2,390, Kuwait 971 and Qatar 674.
 
 **Caveats that apply.**
 
 - **Iran is invisible.** BACI records Iranian crude exports of roughly 0 in 2023 and 2024 (one near-zero pair each year), and far less than in the mid-2010s from 2019 onward (e.g. 81 kb/d in 2020, 629 kb/d in 2022). Buyers of Iranian crude — above all China — are therefore **understated**. Crude reported under another origin is attributed to that origin, whatever its real source.
-- **Iraq's share is the long-run 0.90**, which allows for the northern Kirkuk–Ceyhan route; that line was shut in 2023–24, so Iraqi exposure in those years is slightly understated.
+- **Iraq's share follows Kirkuk–Ceyhan.** The northern pipeline was shut from March 2023 to late September 2025, so for 2023–2025 all of Iraq's crude crosses the strait (1.00); through 2022 it is 0.87, and from 2026 0.88. Until 2026-10-24 one blended 0.90 covered every year, which put this result at 12,635 kb/d (27.9 %); the *Cut Kirkuk–Ceyhan pipeline* scenario is the same split from the other side.
 - **Saudi and UAE bypasses are fixed at their 2025 use** (Yanbu, Fujairah). The model does not ask whether the East–West or Habshan–Fujairah pipelines could carry more in a closure.
 - **Intra-Gulf trade is not exposed, and inbound trade is not counted.** Cargoes between Gulf states never pass the strait, so those pairs have share 0 (since 2026-09-11; before that, Kuwait's crude to Qatar counted, which is why Kuwait's contribution fell from 993 to 971 kb/d). Imports *into* the Gulf from outside do cross the strait but are out of scope.
 - **Quantities were repaired.** Before the repair, BACI's reported quantity for UAE → Thailand crude in 2024 was about 6.5× the value-consistent figure; Thailand no longer ranks second by volume. See [Data and coverage](data-and-coverage.md#things-that-will-mislead-you).

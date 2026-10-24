@@ -23,12 +23,12 @@ The measure is about **importers**. Exporters on the route (Saudi Arabia for Hor
 
 ## Route shares
 
-Every scenario is driven by a hand-set table, `disruption_route.parquet` (522 rows across 15 route-share sets drawn from the 11 scenarios: the original 18 hand-set shares behind Hormuz, Druzhba, BTC and CPC; the 54 intra-Gulf share-0 pairs; and region-expanded exporter→importer pairs for the five chokepoints added 2026-09-19 — Malacca, Suez+SUMED, Bab el-Mandeb, Turkish Straits — each still tied to a document. See [Methodology → Route shares](../methodology.md#route-shares) for the full breakdown). The table below covers the original four scenarios only. The panel's **Route shares used** list shows the rows for the active scenario with their citations; **How this share follows from the source** gives the arithmetic.
+Every scenario is driven by a hand-set table, `disruption_route.parquet` (527 rows across 16 route-share sets drawn from the 12 scenarios: the original 18 hand-set shares behind Hormuz, Druzhba, BTC and CPC; the 54 intra-Gulf share-0 pairs; and region-expanded exporter→importer pairs for the five chokepoints added 2026-09-19 — Malacca, Suez+SUMED, Bab el-Mandeb, Turkish Straits — each still tied to a document. See [Methodology → Route shares](../methodology.md#route-shares) for the full breakdown). The table below covers the original four scenarios only. The panel's **Route shares used** list shows the rows for the active scenario with their citations; **How this share follows from the source** gives the arithmetic.
 
 | Scenario | Exporter → importer | Share | Source (year) |
 |---|---|---|---|
 | Hormuz (crude) | Saudi Arabia → all | 0.88 | Argus Media, citing Kpler data (2026) |
-| | Iraq → all | 0.90 | IEA, *Strait of Hormuz* (2026) |
+| | Iraq → all | 0.87 through 2022, 1.00 for 2023–2025, 0.88 from 2026 | Reuters (2025), TRT World (2026), following Kirkuk–Ceyhan |
 | | UAE → all | 0.65 | IEA, *Strait of Hormuz* (2026) |
 | | Iran, Kuwait, Qatar, Bahrain → all | 1.00 | IEA, *Strait of Hormuz* (2026) |
 | Hormuz (LNG) | Qatar, UAE → all | 1.00 | IEA, *Strait of Hormuz* (2026) |
@@ -50,20 +50,20 @@ Two kinds of share:
 - **Directly quoted:** BTC 0.83 and CPC–Kazakhstan 0.80 are EIA's own percentages.
 - **Computed from quoted volumes:** Saudi Arabia 0.88 (≈ 5.5 mb/d via Hormuz vs ≈ 0.76 mb/d via Yanbu), UAE 0.65 (2.02 mb/d via Hormuz vs ≈ 1.1 mb/d via Fujairah), the Druzhba southern-branch 1.0s (≈ 250 kb/d branch vs 240 kb/d of Russian imports into Hungary, Slovakia and Czechia), and Poland/Germany 0.47 (≈ 500 kb/d northern branch allocated **pro rata** across their November 2021 Russian imports, because the IEA gives no split).
 - **Structural reasoning, cited for context:** Belarus 1.0 (landlocked, refineries pipeline-fed; rail volumes not quantified), LNG Qatar and UAE 1.0 (loading terminals inside the Gulf, no alternative), and the 1.0s for Iran, Kuwait, Qatar and Bahrain (the IEA says they rely on the strait for the "vast majority" of exports).
-- **Partly outside the cited source:** Iraq 0.90 — the northern-route volume used to set it is not from the IEA document.
+- **Computed from news reports:** Iraq's three windows — Kirkuk–Ceyhan's ≈ 450 kb/d before the March 2023 shutdown (Reuters), nothing for 2023–2025, and the two-step restart (Kurdish exports at 180–190 kb/d from September 2025, the federal line at 250 kb/d from March 2026) against ≈ 3.5 mb/d of Iraqi exports. The restart figures are restart-week rates, so the 2026 window is low confidence.
 - **Unsourced:** Russia → CPC 0.035, derived from CPC throughput minus Kazakh volumes against total Russian crude exports. It is flagged in the panel.
 
 Six shares were revised to source-derived values on 2026-09-10; the old values are recorded in each row's note.
 
 ## The two years on a share
 
-Every row carries both `source_year` (when the document was published) and `data_year` (the year of the flows or routing it describes). The site states the **data** year: the IEA Hormuz pages were published in 2026 but give 2025 routing, and dating them 2026 made a result read as more current than it is. 73 of the 522 rows have a data year. The rest are NULL on purpose — structural rows (the intra-Gulf share-0 pairs, the physical-geography wildcards behind Suez, Bab el-Mandeb and Malacca's Gulf rows), one capacity-derived row (the ESPO spur) and the three unsourced estimates are not dated facts, and a NULL implies nothing about them. Where none of a scenario's documents states a data year, the headline says "route shares published 2019" instead of naming a year it does not have; where some do and some do not, it names the data years and the disclosure says how many rows are dated only by publication.
+Every row carries both `source_year` (when the document was published) and `data_year` (the year of the flows or routing it describes). The site states the **data** year: the IEA Hormuz pages were published in 2026 but give 2025 routing, and dating them 2026 made a result read as more current than it is. 77 of the 527 rows have a data year. The rest are NULL on purpose — structural rows (the intra-Gulf share-0 pairs, the physical-geography wildcards behind Suez, Bab el-Mandeb and Malacca's Gulf rows), one capacity-derived row (the ESPO spur) and the three unsourced estimates are not dated facts, and a NULL implies nothing about them. Where none of a scenario's documents states a data year, the headline says "route shares published 2019" instead of naming a year it does not have; where some do and some do not, it names the data years and the disclosure says how many rows are dated only by publication.
 
-## Why route shares are static
+## Why route shares are (mostly) static
 
-Each share comes from a document describing one period (mostly 2016–2025). The same share is applied to every year from 1995 to 2024, because no open source gives exporter-by-route splits year by year. The consequences are predictable and worth checking whenever you compare results across a different pinned `year=`:
+Each share comes from a document describing one period (mostly 2016–2025). The same share is applied to every year from 1995 to 2024, because no open source gives exporter-by-route splits year by year. The exception is a route that demonstrably stopped and restarted inside the years we hold: since 2026-10-24 a row can carry a year window (`valid_from_year`, `valid_to_year`, inclusive, NULL = open), and a result reads only the rows valid in its trade year. Three keys use it: Kirkuk–Ceyhan and the Hormuz Iraq share it complements (through 2022 / 2023–2025 / from 2026), and Kazakh crude to Germany through the Turkish Straits (0.53 from 2023, when the overland Druzhba leg began; the 0.80 Kazakh wildcard before that). A year counts in the regime it spent most of: the pipeline ran for under three months of 2023 and about three of 2025, so both are shut years. The *Cut Kirkuk–Ceyhan pipeline* scenario says so in its shut years instead of quoting a 0 %. Everything else is static, and the consequences are predictable and worth checking whenever you compare results across a different pinned `year=`:
 
-- **Routes that changed.** Kirkuk–Ceyhan was shut in 2023–24 (Iraq's true share was close to 1.0 then); Germany and Poland largely ended Russian pipeline crude after 2022, but the 0.47 still applies to whatever Russian volume BACI records.
+- **Routes that changed.** Germany and Poland largely ended Russian pipeline crude after 2022, but the Druzhba 0.47 still applies to whatever Russian volume BACI records.
 - **Routes that did not exist yet.** The GEM pipeline data give start years of 2006 for Baku–Tbilisi–Ceyhan, 2001 for the Caspian Pipeline and 2012 for the Habshan–Fujairah bypass, yet a BTC scenario for 1998 still applies 0.83 to Azerbaijan's exports, and a Hormuz scenario for 2005 still lets 35 % of UAE crude bypass the strait. Scenario years before a route opened are not meaningful.
 - **Changes in the trade data carry the story.** Year-to-year movement in a result comes from BACI (who bought what from whom), never from the route.
 
@@ -105,14 +105,16 @@ These are choices, not oversights: each would need data (monthly flows, spare ca
 1. **Read the shares.** Open *Route shares used*: which exporters are in the scenario, at what share, from which document and year? A result can only be as good as the least certain share contributing to it.
 2. **Ask why.** Type the country into *Check a country*. It lists the suppliers carrying the exposure and their volumes, or says why the answer is zero (no BACI imports, not on the route, or an exporter).
 3. **Look at the trade rows.** Download `trade_flow.parquet` from [/data](https://energymap.marain.space/data). Check the importer's suppliers for the year; check `qty_imputed` (quantities re-estimated from value because BACI's quantity was implausible; the original is in `qty_reported`) and the implied unit value `value_usd / qty`. Missing reporters (Iran from 2019, near-total from 2023; Russia → Belarus from 2022) show up as absent or near-zero rows.
-4. **Move the year.** A jump from one year to the next should be explainable by trade (a new supplier, sanctions, a reporting gap). A jump that coincides with a known route change is *not* captured, because shares are static.
-5. **Compare to a published figure carefully.** The Hormuz crude scenario puts 27.9 % of 2024 world crude imports (as recorded in BACI) at risk. Published statements about Hormuz usually refer to total oil (crude and products) or to seaborne trade, so the denominators differ; the comparison checks the order of magnitude, not the digit.
+4. **Move the year.** A jump from one year to the next should be explainable by trade (a new supplier, sanctions, a reporting gap). A jump that coincides with a known route change is *not* captured unless the route has a year window (Kirkuk–Ceyhan, above).
+5. **Compare to a published figure carefully.** The Hormuz crude scenario puts 28.6 % of 2024 world crude imports (as recorded in BACI) at risk. Published statements about Hormuz usually refer to total oil (crude and products) or to seaborne trade, so the denominators differ; the comparison checks the order of magnitude, not the digit.
 6. **Recompute it.** Download the **scenario table** (Share / cite → Download → Scenario table): every importer's `total_qty`, `at_risk_qty` and `share_at_risk` in tonnes, with the inputs cited in the header. Or reproduce the importer figures directly with DuckDB (Python `duckdb` package or the CLI) from the two downloadable files:
 
 ```sql
 WITH r AS (
   SELECT exporter_iso3, importer_iso3, share
   FROM 'disruption_route.parquet' WHERE disruption_id = 'hormuz'   -- 'hormuz_lng' for LNG
+    -- a share can hold for some years only (valid_*_year, NULL = open)
+    AND COALESCE(valid_from_year, 2024) <= 2024 AND COALESCE(valid_to_year, 2024) >= 2024
 ),
 t AS (
   SELECT importer_iso3, exporter_iso3, COALESCE(qty, 0) AS qty

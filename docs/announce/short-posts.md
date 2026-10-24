@@ -1,6 +1,6 @@
 # Short posts — drafts only, nothing scheduled or sent
 
-Three platforms, three variants each, plus a Hacker News title + first comment. All reference the current **live** feature set: eleven disruption scenarios (chokepoints and pipelines, closable at partial severity, two combined, from either side of the cut), trade-flow arcs, the country panel, search, embed mode and `/query` — all live at https://energymap.marain.space.
+Three platforms, three variants each, plus a Hacker News title + first comment. All reference the current **live** feature set: twelve disruption scenarios (chokepoints and pipelines, closable at partial severity, two combined, from either side of the cut), trade-flow arcs, the country panel, search, embed mode and `/query` — all live at https://energymap.marain.space.
 
 ---
 
@@ -8,9 +8,9 @@ Three platforms, three variants each, plus a Hacker News title + first comment. 
 
 ### Variant 1 — the question it answers
 
-Who loses supply when a chokepoint closes or a pipeline is cut? I built a free, inspectable model of oil and gas dependency to answer that: pick any of eleven disruptions — Hormuz, Malacca, Suez + SUMED, Bab el-Mandeb, the Turkish Straits, or six pipelines including Druzhba, BTC and CPC — and see which importers, exporters, refineries and LNG terminals are exposed, and by how much.
+Who loses supply when a chokepoint closes or a pipeline is cut? I built a free, inspectable model of oil and gas dependency to answer that: pick any of twelve disruptions — Hormuz, Malacca, Suez + SUMED, Bab el-Mandeb, the Turkish Straits, or seven pipelines including Druzhba, BTC and CPC — and see which importers, exporters, refineries and LNG terminals are exposed, and by how much.
 
-If Hormuz closed, on 2024's trade: Japan's crude imports would be 73.3% at risk (1,721 of 2,347 kb/d), but China's 3,518 kb/d is the larger absolute number. Same data, one click apart.
+If Hormuz closed, on 2024's trade: Japan's crude imports would be 73.3% at risk (1,721 of 2,347 kb/d), but China's 3,646 kb/d is the larger absolute number. Same data, one click apart.
 
 Runs entirely in your browser, no backend, no account. Every number traces to a cited source (Energy Institute, Global Energy Monitor, CEPII BACI, NETL, LNG-T3), and every scenario states its trade year and route-share year, with a caveat when they're far apart — including where the trade data goes blind (Iranian crude, Russia→Belarus after 2022).
 
@@ -26,7 +26,7 @@ Feedback and error reports welcome — I'd rather hear about a wrong number now.
 
 Most energy maps show you infrastructure. This one also tells you what the data can't.
 
-Global Energy Map (energymap.marain.space) is an inspectable model of oil and gas dependency: eleven chokepoint and pipeline disruptions, modelled as exposure shares of a country's crude or LNG imports, sourced from CEPII's BACI trade data.
+Global Energy Map (energymap.marain.space) is an inspectable model of oil and gas dependency: twelve chokepoint and pipeline disruptions, modelled as exposure shares of a country's crude or LNG imports, sourced from CEPII's BACI trade data.
 
 Every scenario states two vintages in its own headline, not one — "Cut Druzhba pipeline — 2024 trade, 2021 route shares" is the shape of it — with a flag when the routing data is three-plus years older than the trade, and a "Data behind this result" disclosure listing every input's vintage and source.
 
@@ -40,7 +40,7 @@ https://energymap.marain.space
 
 ### Variant 3 — short and direct
 
-Who loses supply when a chokepoint closes or a pipeline is cut? New: a free, inspectable model of oil and gas dependency — eleven disruption scenarios (Hormuz, Malacca, Suez + SUMED, Bab el-Mandeb, the Turkish Straits, and six pipelines), closable at partial severity or two combined — over a map of pipelines, refineries, LNG terminals and reserves.
+Who loses supply when a chokepoint closes or a pipeline is cut? New: a free, inspectable model of oil and gas dependency — twelve disruption scenarios (Hormuz, Malacca, Suez + SUMED, Bab el-Mandeb, the Turkish Straits, and seven pipelines), closable at partial severity or two combined — over a map of pipelines, refineries, LNG terminals and reserves.
 
 Every number cites its source and states its own vintage — trade year and route-share year both, not just one. Free, no account, runs entirely in your browser.
 
@@ -65,7 +65,7 @@ energymap.marain.space
 
 ### Variant 2
 
-If Hormuz closed, on 2024's trade: Japan 73.3% of crude imports at risk, China the largest volume (3,518 kb/d). Same free map, one click apart — plus the caveat that Iranian crude barely shows up in trade data since 2019.
+If Hormuz closed, on 2024's trade: Japan 73.3% of crude imports at risk, China the largest volume (3,646 kb/d). Same free map, one click apart — plus the caveat that Iranian crude barely shows up in trade data since 2019.
 energymap.marain.space
 
 (234 characters)
@@ -81,7 +81,7 @@ energymap.marain.space
 
 1/ Who loses supply when a chokepoint closes or a pipeline is cut? I built a free, inspectable model of oil and gas dependency to answer that: energymap.marain.space. The map underneath — pipelines, refineries, LNG terminals, reserves — is the evidence, not the headline.
 
-2/ Eleven disruption scenarios: chokepoints (Hormuz, Malacca, Suez + SUMED, Bab el-Mandeb, Turkish Straits) and pipelines (Druzhba, BTC, CPC, Keystone, Enbridge Mainline, ESPO's Skovorodino-Mohe spur). Closable at partial severity, two combined, either side of the cut.
+2/ Twelve disruption scenarios: chokepoints (Hormuz, Malacca, Suez + SUMED, Bab el-Mandeb, Turkish Straits) and pipelines (Druzhba, BTC, CPC, Keystone, Enbridge Mainline, ESPO's Skovorodino-Mohe spur, Kirkuk–Ceyhan). Closable at partial severity, two combined, either side of the cut.
 
 3/ Every scenario states two vintages in its headline — trade year and route-share year — and flags it when they're far apart, plus known blind spots: Iranian crude nearly invisible in trade data since 2019, Russia→Belarus crude gone from 2022, reserves frozen at 2020.
 
@@ -105,6 +105,6 @@ DuckDB-WASM is bundled and self-hosted (sha256-pinned, no CDN dependency) but de
 
 The build-time data pipeline is Python (pandas/geopandas/pyarrow/duckdb) over public sources: Energy Institute reserves, Global Energy Monitor pipelines/terminals/extraction sites (CC BY 4.0), NETL's oil & gas infrastructure database (public domain), CEPII's BACI bilateral trade (Etalab open licence), and an AIS-derived LNG voyage dataset (LNG-T3, CC BY 4.0). Every transform in the pipeline drops its own prior output before re-appending, so a full rebuild is byte-identical across reruns — that made it possible to regenerate a licence/checksum manifest automatically instead of hand-maintaining one.
 
-Eleven disruption scenarios (four chokepoints with a separate oil/LNG route-share set each, the Turkish Straits, and six pipelines) are exposure accounting, not a market model: static route shares (each with its own source citation) applied to a year's bilateral trade volumes, closable individually, at partial severity, two at once, or from either side of the cut. No price response, no rerouting, no strategic-stock drawdown — the docs are explicit about this because I didn't want anyone mistaking a first-order exposure share for a forecast. There's also no year slider: every layer shows its own latest data, a scenario runs on the latest reconciled trade year, and it states both that year and the vintage of the route-share document it used, flagging it when the two are far apart.
+Twelve disruption scenarios (four chokepoints with a separate oil/LNG route-share set each, the Turkish Straits, and seven pipelines) are exposure accounting, not a market model: static route shares (each with its own source citation) applied to a year's bilateral trade volumes, closable individually, at partial severity, two at once, or from either side of the cut. No price response, no rerouting, no strategic-stock drawdown — the docs are explicit about this because I didn't want anyone mistaking a first-order exposure share for a forecast. There's also no year slider: every layer shows its own latest data, a scenario runs on the latest reconciled trade year, and it states both that year and the vintage of the route-share document it used, flagging it when the two are far apart.
 
 Open to critique on the data pipeline, the disruption model's assumptions, or anything that looks wrong on the map itself — code is MIT-licensed, data licences vary by source and are listed per-file.

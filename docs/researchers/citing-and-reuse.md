@@ -65,7 +65,7 @@ The rule (from [`LICENSE-DATA.md`](../../LICENSE-DATA.md)): a file is offered on
 | `basins.geojson` | basin polygons, simplified | public domain (credit NETL) | Yes |
 | `lng_voyage.parquet`, `lng_trade_daily.parquet`, `lng_terminal_daily.parquet` | LNG-T3 voyages and daily tables, 2020–2024 | CC BY 4.0 | Yes |
 | `trade_flow.parquet` | BACI HS 2709 + 271111 extract, 1995–2024, with the quantity repair | Etalab Open Licence 2.0 | Yes |
-| `disruption_route.parquet` | the route-share table: 522 rows across 15 route-share sets for the 11 scenarios, each tied to a cited document with a publication year (`source_year`) and, where stated, a data year (`data_year`, 73 rows) | project table; cite project and sources | Yes |
+| `disruption_route.parquet` | the route-share table: 527 rows across 16 route-share sets for the 12 scenarios, each tied to a cited document with a publication year (`source_year`) and, where stated, a data year (`data_year`, 77 rows); a few hold only for the years in `valid_from_year`/`valid_to_year` | project table; cite project and sources | Yes |
 | `countries.geojson` | Natural Earth 1:110m | public domain | Yes |
 | `assets.parquet` | the map's asset table, incl. 88 OSM refineries | mixed, includes ODbL | **No** — use `assets_open.parquet` |
 | `country_year_series.parquet` | EI reserves and production | EI terms | **No** — get it from the Energy Institute |

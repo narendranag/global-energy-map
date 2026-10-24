@@ -95,7 +95,7 @@ Layer by layer: where the data come from, how current and complete they are, wha
 
 ### Route shares and country polygons
 
-- **Route shares:** 522 rows across 15 route-share sets for the 11 scenarios — 18 hand-set shares with per-row citations, 54 intra-Gulf share-0 pairs (42 crude, 12 LNG) that keep cargoes which never leave the Gulf out of the Hormuz scenarios, and region-expanded exporter→importer pairs for the five chokepoints added 2026-09-19 (Malacca, Suez+SUMED, Bab el-Mandeb, Turkish Straits); each row carries a `source_year` (publication) and, where a document states one, a `data_year` (73 of 522 do). See [Scenario method](scenario-method.md#route-shares) and [Methodology](../methodology.md#route-shares).
+- **Route shares:** 527 rows across 16 route-share sets for the 12 scenarios — 18 hand-set shares with per-row citations, 54 intra-Gulf share-0 pairs (42 crude, 12 LNG) that keep cargoes which never leave the Gulf out of the Hormuz scenarios, and region-expanded exporter→importer pairs for the five chokepoints added 2026-09-19 (Malacca, Suez+SUMED, Bab el-Mandeb, Turkish Straits); each row carries a `source_year` (publication) and, where a document states one, a `data_year` (77 of 527 do); three keys are split into year windows (Kirkuk–Ceyhan, the Hormuz Iraq share, Kazakh crude to Germany). See [Scenario method](scenario-method.md#route-shares) and [Methodology](../methodology.md#route-shares).
 - **Countries:** Natural Earth 1:110m, 177 polygons. Small islands and city-states (Singapore, Bahrain, Hong Kong, …) have no polygon at this scale: they appear in scenario tables and the *Check a country* box but not as map fills.
 
 ## Things that will mislead you

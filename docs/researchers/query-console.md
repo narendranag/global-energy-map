@@ -13,7 +13,7 @@ One table per Parquet file the site ships, named after the file. The sidebar bes
 | Table | Rows | What it holds |
 |---|---|---|
 | `trade_flow` | 53,727 | BACI bilateral crude (HS 2709) and LNG (HS 271111) trade, 1995–2024, in tonnes |
-| `disruption_route` | 72 | the scenario route shares, one row per exporter (or exporter–importer pair), each with its citation |
+| `disruption_route` | 527 | the scenario route shares, one row per exporter (or exporter–importer pair) and year window, each with its citation — filter on `valid_from_year`/`valid_to_year` for your year |
 | `lng_voyage` | 17,592 | LNG-T3 voyages 2020–2024: dates, IMO, terminals, cargo, confidence |
 | `lng_trade_daily`, `lng_terminal_daily` | 16,691 / 16,115 | the same source aggregated by country pair and by terminal |
 | `assets` | 19,960 | extraction sites, refineries, storage, ports and LNG terminals (view-only: it mixes in OpenStreetMap rows) |

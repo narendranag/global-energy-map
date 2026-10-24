@@ -30,7 +30,7 @@ A public web app at <https://energymap.marain.space> that lets analysts interrog
 
 ## Scope
 
-In: oil and gas assets, bilateral crude and LNG trade, eleven disruption scenarios, exposure accounting. Out: prices, rerouting, strategic stocks, daily flows, and a market model of any kind. Coal and tanker AIS are deferred.
+In: oil and gas assets, bilateral crude and LNG trade, twelve disruption scenarios, exposure accounting. Out: prices, rerouting, strategic stocks, daily flows, and a market model of any kind. Coal and tanker AIS are deferred.
 
 ## Where to read next
 

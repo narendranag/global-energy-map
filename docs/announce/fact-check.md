@@ -7,10 +7,10 @@ Every figure or claim used in `announcement.md`, `short-posts.md` and `outreach-
 | Claim | Value used | Verification |
 |---|---|---|
 | Hormuz 2024, crude, Japan share | 73.3% (1,721 of 2,347 kb/d) | `docs/researchers/worked-examples.md` §2 (doc). Spot-checked: `select sum(qty) from trade_flow.parquet where hs_code='2709' and year=2024 and importer_iso3='JPN'` → 116,877,527.6 t → ×7.33 bbl/t ÷ 365 = 2,347 kb/d, matching the doc's denominator; 1,721/2,347 = 73.3%. |
-| Hormuz 2024, crude, South Korea share | 61.9% (1,699 of 2,743 kb/d) | `docs/researchers/worked-examples.md` §2 (doc). |
-| Hormuz 2024, crude, Pakistan / Philippines shares | 78.2%, 77.1% | `docs/researchers/worked-examples.md` §2 (doc). |
-| Hormuz 2024, crude, China volume at risk | 3,518 kb/d (33.8%) | `docs/researchers/worked-examples.md` §2 (doc). |
-| Hormuz 2024, crude, India volume at risk | 1,877 kb/d (38.6%) | `docs/researchers/worked-examples.md` §2 (doc). |
+| Hormuz 2024, crude, South Korea share | 62.9% (1,727 of 2,743 kb/d) | `docs/researchers/worked-examples.md` §2 (doc). |
+| Hormuz 2024, crude, Pakistan / Philippines shares | 78.2%, 78.5% | `docs/researchers/worked-examples.md` §2 (doc). |
+| Hormuz 2024, crude, China volume at risk | 3,646 kb/d (35.1%) | `docs/researchers/worked-examples.md` §2 (doc). |
+| Hormuz 2024, crude, India volume at risk | 1,978 kb/d (40.7%) | `docs/researchers/worked-examples.md` §2 (doc). |
 | Hormuz 2024 total ranked importers / total at risk | 32 importers, 12,657 kb/d, 27.9% of BACI 2024 crude imports | `docs/researchers/worked-examples.md` §2 (doc). |
 | Hormuz scenario route exists in `disruption_route.parquet` with IRN=1.00, Saudi/UAE partial shares, sources cited | confirmed | Queried `select * from disruption_route.parquet where disruption_id='hormuz'` directly in this session — IEA/EIA source URLs and notes present as quoted in `src/lib/scenarios/registry.ts`. |
 | Druzhba 2022, Slovakia | 95.1% (104 of 110 kb/d) | `docs/researchers/worked-examples.md` §1 (doc). Spot-checked: Slovakia total crude imports 2022 = 5,461,411 t (→ 109.7 kb/d); from RUS = 5,194,936 t (→ 104.3 kb/d); ratio 94.6–95.1% depending on rounding basis, consistent with the doc. |
@@ -42,7 +42,7 @@ Every figure or claim used in `announcement.md`, `short-posts.md` and `outreach-
 ## Not verified / not used
 
 - No figures from the pending Wave-1 research notes (`docs/superpowers/research/*.md` — chokepoint/pipeline share candidates such as Malacca, Suez, Bab el-Mandeb, Keystone, Enbridge shares) are quoted as numbers in the announcement copy, since those shares are explicitly gated on maintainer approval per the plan's status table and are not yet on `main`. The announcement only names the *scenarios* as upcoming, without citing their percentages.
-- The claim "China 3,518 kb/d... larger absolute number [than Japan]" is a comparison of two numbers already individually verified above; no separate verification needed beyond confirming 3,518 > 1,721.
+- The claim "China 3,646 kb/d... larger absolute number [than Japan]" is a comparison of two numbers already individually verified above; no separate verification needed beyond confirming 3,518 > 1,721.
 
 ## Re-verification, 2026-09-21
 
@@ -61,3 +61,5 @@ Every row above was re-checked against the current working tree on branch `route
 | Hormuz closure: "effectively closed or severely restricted since US and Israeli strikes on Iran began on 28 February 2026"; EIA 4.9 vs 21.6 million b/d (2Q26); PortWatch ~1 vs ~50 tankers/day | **resolved 2026-10-15, cited inline** | The earlier "February 28–April 7" window was CRS's first phase only: CRS R45281 (version 8, updated 7 Aug 2026) records the closure declared days after US-Israeli attacks began, a 7 Apr ceasefire under which Iran again halted traffic, a US blockade from 13 Apr, a 17 Jun MOU, and the blockade resumed in July. EIA STEO August 2026 (aug26.pdf) gives 4.9 million b/d through the strait in 2Q26 vs 21.6 before. PortWatch figures from `public/data/chokepoint_transits.parquet` (30 days to 11 Oct 2026: 0.8 tankers/day vs 49.5 a year earlier); Kpler/Vortexa via Reuters and EIA show ~10 vessels/day in Sept 2026 because they also see AIS-dark ships, so PortWatch is stated as a lower bound. The maintainer described the cause as a US invasion; CRS (7 Aug) and Military Times (9 Oct) both treat a ground war as hypothetical, so the draft says "strikes", not "invasion". |
 
 - **Resolved 2026-09-21:** the `worked-examples.md` Hormuz 2024 aggregate was wrong and is corrected to 31 importers ranked / 12,635 kb/d. The panel ranks importers with at-risk share > 0 *and* at least 0.1 % of world imports (`rankImportersByShare`), which is why 39 non-zero importers rank as 31; 12,635 is the engine's unfiltered sum and equals the doc's own by-exporter breakdown. No announce draft quotes either figure.
+
+- **Re-verified 2026-10-24 (Kirkuk–Ceyhan year windows):** Iraq's Hormuz share is now 1.00 for 2023–2025 (Kirkuk–Ceyhan shut), not the blended 0.90, so every Hormuz 2024 crude figure that involves Iraqi crude moved. Recomputed with the engine's rule over `trade_flow.parquet` and `disruption_route.parquet` filtered to rows valid in 2024, and matched against the running panel: 31 importers ranked, 12,984 kb/d at risk (28.6 %); Philippines 78.5 % (102/130), Pakistan 78.2 %, Japan 73.3 % (1,721/2,347), South Korea 62.9 % (1,727/2,743), China 3,646 kb/d (35.1 %), India 1,978 kb/d (40.7 %). The drafts now quote these; the Philippines overtakes Pakistan on share, so the by-share order in `announcement.md` was swapped. The older rows above keep their 0.90-era figures as the record of what was checked then. Twelve scenarios, sixteen route-share sets.

@@ -6,14 +6,10 @@
 
 ## Now
 
-- [ ] **Resume here:** (2026-10-24) Kirkuk–Ceyhan + year-bounded route shares is built on branch `kirkuk-ceyhan` (not pushed, not merged, not deployed): Vitest, pytest, lint and docs green, e2e run in this session (see the commit). Next: Narendra reviews the branch and says merge — a merge to `main` deploys and changes the published Hormuz 2024 headline (12,635 → 12,984 kb/d). Two plans still wait under `## Next` (inbound Hormuz, coal), three questions under `## Later`
+- [ ] **Resume here:** (2026-10-24) Kirkuk–Ceyhan + year-bounded route shares is live (merged and deployed at Narendra's word; deploy + smoke green, checked on energymap.marain.space). Two plans wait under `## Next` (inbound Hormuz, coal) and three questions under `## Later` (PMTiles, daily-throughput tooltip, AIS)
 
 ## Next
 
-- [ ] Kirkuk–Ceyhan scenario + year-bounded route shares — **built on branch `kirkuk-ceyhan`, waiting for Narendra's merge** #data
-  - Shipped on the branch: `valid_from_year`/`valid_to_year` on `disruption_route` (527 rows, 77 dated); `kirkuk_ceyhan` 0.13 ≤2022 / 0 2023–25 / 0.12 ≥2026; Hormuz IRQ 0.87 / 1.00 / 0.88; KAZ→DEU 0.53 from 2023 (0.80 wildcard before); scenario inactive 2023–25 with a note pointing at `year=2022`; windows stated in the panel, CSV and `/methodology`; `/query` examples and researcher SQL filter on the window; worked example, method docs and held announce drafts recomputed.
-  - Differs from the plan: the restart regime starts in **2026 at 0.12**, not 2025 at ~0.07 — the TRT article the research cited is the federal line's 18 Mar 2026 reopening (250 kb/d); Kurdish exports restarted 27 Sep 2025 at 180–190 kb/d (Al Jazeera). 2025 counts as shut (about three months open).
-  - On merge the live Hormuz 2024 result moves: 12,635 → 12,984 kb/d (27.9 → 28.6 %), most exposed by share Pakistan → Philippines (78.5 %). Shared `year=` links before 2023 move slightly too (Iraq 0.90 → 0.87).
 - [ ] Inbound Hormuz exposure — **plan ready, owner's OK**
   - The blocker named in Later is gone: the importer-wide wildcard shipped in S5 (`07a3677`, `src/lib/scenarios/shares.ts`: pair beats wildcards, then max of exporter- and importer-wide). What is missing is **data**: `disruption_route.parquet` has no importer-wide rows, and the routing script still says "imports into the Gulf from outside are out of scope" (a 2026-09-11 call).
   - What: importer-wide rows for `hormuz` and `hormuz_lng` — KWT, BHR, QAT, IRQ, IRN at 1.00 (no ports outside the strait); SAU and ARE partial (Red Sea / Fujairah receive part of their imports), each sourced or marked ESTIMATE as KAZ→DEU is. The 54 intra-Gulf share-0 pairs keep winning, so Gulf-to-Gulf trade stays at zero. Biggest real flow this reveals: Kuwait's LNG imports at Al Zour.
@@ -41,6 +37,7 @@
 
 ## Done
 
+- [x] Kirkuk–Ceyhan scenario + year-bounded route shares — live 2026-10-24 (`0b242f9`…`48827e3`, merged and deployed on Narendra's word; deploy + smoke green; live Hormuz 2024 now 12,984 kb/d, Philippines 78.5 % most exposed). Shares: Kirkuk–Ceyhan 0.13 ≤2022 / 0 2023–25 / 0.12 ≥2026, Hormuz IRQ the complement, KAZ→DEU 0.53 from 2023. Restart period starts in 2026 (federal line reopened 18 Mar 2026), not 2025 as first planned
 - [x] Vintage filter on scenario inputs (deferred at Phase 8) — closed 2026-10-24, already in place where the data allows it: the engine's only asset inputs are refineries and LNG import terminals (`src/components/scenarios/useScenario.ts:60`); LNG terminals are filtered by `lngTerminalsInService` (`src/lib/scenarios/engine.ts:159`, shipped in #23, `24fb880`), and refineries carry no vintage column, so a filter on them is a no-op. Extraction sites (the 78 % undated case the review worried about) never enter a scenario
 
 - [x] Cloudflare Web Analytics beacon kept and disclosed in privacy.md (2026-10-21, Narendra)

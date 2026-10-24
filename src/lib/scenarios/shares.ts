@@ -1,4 +1,5 @@
 import type { RouteRow, ScenarioId } from "./types";
+import { isRouteValidAt } from "./route-window";
 
 /** Share of a flow that moves on the disrupted route, 0–1. */
 export type ShareLookup = (exporter: string, importer: string) => number;
@@ -31,12 +32,18 @@ export type ShareLookup = (exporter: string, importer: string) => number;
  *
  * A row with neither side set is ignored: "everything, everywhere" is not a
  * route, and reading it as one would silently cut the whole world.
+ *
+ * Given a `year`, rows whose year window excludes it are ignored first
+ * (`isRouteValidAt`): a key split into windows (Kirkuk-Ceyhan's shut years)
+ * then has one row, as the maps below assume. Without one every row is read,
+ * which is only right for rows that carry no window.
  */
-export function resolveScenarioShare(rows: readonly RouteRow[]): ShareLookup {
+export function resolveScenarioShare(rows: readonly RouteRow[], year?: number): ShareLookup {
   const pair = new Map<string, number>();
   const byExporter = new Map<string, number>();
   const byImporter = new Map<string, number>();
   for (const r of rows) {
+    if (year !== undefined && !isRouteValidAt(r, year)) continue;
     // Read both sides as nullable: the union rules out (null, null) at compile
     // time, but the parquet these rows come from does not.
     const exporter: string | null = r.exporter_iso3;

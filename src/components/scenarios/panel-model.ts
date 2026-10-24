@@ -20,6 +20,7 @@ import { dataYearsPhrase } from "@/lib/scenarios/summary";
 import { routeYears, type DatedRouteRow } from "@/lib/scenarios/vintage";
 import type { ScenarioView } from "@/lib/url-state/encode";
 import { groupIdenticalPairShares, pairLabel } from "@/lib/scenarios/share-groups";
+import { isWindowed, routeWindowLabel } from "@/lib/scenarios/route-window";
 import { isUnsourced, type RouteCitation } from "@/lib/data/scenario-inputs";
 
 export type ImporterSort = "share" | "volume";
@@ -202,6 +203,8 @@ export interface RouteDisplayRow {
   readonly unsourced: boolean;
   /** Set when identical pair rows are listed as one entry: ["IRN→IRQ", …]. */
   readonly pairs: readonly string[] | null;
+  /** The trade years the share holds for ("through 2022"); "" = every year. */
+  readonly window: string;
 }
 
 type CitedRoute = RouteRow & Partial<RouteCitation>;
@@ -241,6 +244,7 @@ export function routeRowsForDisplay(
           year: r.source_year ?? null,
           dataYear: r.data_year ?? null,
           note: r.source_note ?? "",
+          window: routeWindowLabel(r),
           unsourced: title === "" || isUnsourced({ source_title: title }),
         };
       }),
@@ -327,7 +331,7 @@ export function routeDocumentDates(d: RouteDocument): string {
  */
 export function howComputedOptionsFor(
   result: { readonly scenarioId: ScenarioId; readonly scenarioIds?: readonly ScenarioId[]; readonly severity?: number } | null,
-  routes: (readonly (Pick<RouteRow, "exporter_iso3"> & DatedRouteRow)[]) | null,
+  routes: (readonly (Pick<RouteRow, "exporter_iso3" | "valid_from_year" | "valid_to_year"> & DatedRouteRow)[]) | null,
   view: ScenarioView,
 ): HowComputedOptions {
   return {
@@ -338,6 +342,7 @@ export function howComputedOptionsFor(
     // The share step says which year's routing it applied, from the rows
     // themselves — the same derivation the headline phrase uses.
     shareYears: routeYears(routes),
+    hasWindowedRoutes: routes?.some(isWindowed) ?? false,
   };
 }
 

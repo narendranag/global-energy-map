@@ -162,6 +162,12 @@ DISRUPTION_ROUTE_SCHEMA = pa.schema(
         # NULL). `source_year` above is the document's publication year.
         ("data_year", pa.int32()),
         ("source_note", _S),
+        # Nullable, inclusive: the trade years this row holds for. NULL on
+        # both = every year (all but a handful of rows). A row whose route
+        # changed within the years we hold (Kirkuk-Ceyhan shut 2023-2025) is
+        # split into rows with non-overlapping windows.
+        ("valid_from_year", pa.int32()),
+        ("valid_to_year", pa.int32()),
     ]
 )
 

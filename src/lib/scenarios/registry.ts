@@ -22,12 +22,14 @@ export interface ScenarioDef {
   /** `pipelines.geojson` `pipeline_id`s that make up this route, for map highlighting (S1). */
   readonly pipelineIds?: readonly string[];
   /**
-   * The years this scenario's share is meant to describe. Unset = the share
-   * holds for every trade year we hold, which is true of every scenario
-   * shipped today. Not yet consumed by any shipped scenario — added for a
-   * future year-bounded route (e.g. Kirkuk-Ceyhan, held pending this).
+   * The years this scenario describes a working route. Unset = every trade
+   * year we hold. One range, or several for a route that stopped and
+   * restarted (Kirkuk-Ceyhan: through 2022, and from 2026). Outside it the
+   * panel shows `inactiveNote`, the map mutes the mark and the country panel
+   * skips the scenario; the engine still runs on that year's route rows,
+   * which for a shut pipeline are share 0 — cutting it cuts nothing.
    */
-  readonly activeYears?: { readonly from?: number; readonly to?: number };
+  readonly activeYears?: YearRange | readonly YearRange[];
   /**
    * Shown in place of the scenario's numbers when the trade year the result
    * runs on falls outside `activeYears`.
@@ -42,13 +44,20 @@ export interface ScenarioDef {
   readonly inactiveNote?: string;
 }
 
-/** True when `year` falls inside `def.activeYears` (always true if unset). */
+/** An inclusive year range; an unset end is open. */
+export interface YearRange {
+  readonly from?: number;
+  readonly to?: number;
+}
+
+/** True when `year` falls inside `def.activeYears` — any of its ranges (always true if unset). */
 export function isScenarioActive(def: ScenarioDef, year: number): boolean {
-  const range = def.activeYears;
-  if (range === undefined) return true;
-  if (range.from !== undefined && year < range.from) return false;
-  if (range.to !== undefined && year > range.to) return false;
-  return true;
+  const ranges = def.activeYears;
+  if (ranges === undefined) return true;
+  const list: readonly YearRange[] = "length" in ranges ? ranges : [ranges];
+  return list.some(
+    (r) => (r.from === undefined || year >= r.from) && (r.to === undefined || year <= r.to),
+  );
 }
 
 export function scenarioDescription(def: ScenarioDef, commodity: Commodity): string {
@@ -226,6 +235,23 @@ export const SCENARIOS: readonly ScenarioDef[] = [
       text: "BACI's RUS→CHN total mixes true Skovorodino-Mohe/Kozmino-Pacific volumes with Western-Russia (Urals, Baltic/Black Sea) crude that has increasingly reached China by long-haul tanker since 2022 sanctions; the two cannot be separated in BACI, so this design-capacity share likely overstates the spur's true fraction of RUS→CHN trade in 2022–2024.",
     },
   },
+  {
+    id: "kirkuk_ceyhan",
+    label: "Cut Kirkuk-Ceyhan pipeline",
+    kind: "pipeline",
+    commodities: ["oil"],
+    description:
+      "Northern Iraq's export line to Turkey's Mediterranean port of Ceyhan — Iraq's one route around the Strait of Hormuz. It carried about 450 kb/d, roughly 13% of Iraqi crude exports, until Turkey stopped pumping on 25 March 2023; Kurdish exports restarted in September 2025 and the federal Kirkuk line in March 2026. Ceyhan is a loading port, so the cut falls on whoever buys Iraqi crude, not on Turkey.",
+    routeName: "the Kirkuk-Ceyhan pipeline",
+    // Oil-pipelines research, Part B: one clean feature. P0577 (Kirkuk-Baiji-
+    // Baghdad, IRQ->None, 40 kb/d) is a domestic feeder and is left out.
+    pipelineIds: ["P0547"],
+    // Shut 25 Mar 2023 to 27 Sep 2025; each of 2023-2025 is counted shut
+    // (the route rows in disruption_route.parquet use the same windows).
+    activeYears: [{ to: 2022 }, { from: 2026 }],
+    inactiveNote:
+      "The pipeline was shut from March 2023 until late September 2025, so in this year cutting it cuts nothing: every Iraqi export barrel already left through the Gulf, and Iraq's Hormuz share is 100% for these years. Open a link pinned to 2022 (year=2022) to see what the route carried before the shutdown.",
+  },
 ];
 
 /** First and last year LNG-T3 voyages cover (per-terminal attribution). */
@@ -256,6 +282,12 @@ export interface HowComputedOptions {
    * share's vintage is half of it.
    */
   readonly shareYears?: RouteYears;
+  /**
+   * True when a share in this run holds only for some trade years
+   * (`valid_*_year`). The rows the run read are the ones valid in its year,
+   * so "static across years" would no longer be true of all of them.
+   */
+  readonly hasWindowedRoutes?: boolean;
 }
 
 /**
@@ -307,7 +339,9 @@ export function howComputed(
   const years = options.shareYears;
   const describes = span(years?.data ?? []);
   const publishedOnly = span(years?.published ?? []);
-  const staticNote = ` they are static across years, so a ${year.toString()} result applies that routing to ${year.toString()} trade.`;
+  const staticNote = options.hasWindowedRoutes
+    ? ` most are static across years, and those that are not (a route that shut and reopened) are the ones stated for ${year.toString()}, so a ${year.toString()} result applies that routing to ${year.toString()} trade.`
+    : ` they are static across years, so a ${year.toString()} result applies that routing to ${year.toString()} trade.`;
   const shareVintage =
     describes !== ""
       ? ` The shares in this run describe ${describes} routing${

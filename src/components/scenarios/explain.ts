@@ -100,7 +100,7 @@ export function explainZeroExposure(
   // explanation cannot drift from the number it is explaining.
   const severity = clampSeverity(result.severity);
   const bounds = combineShares(
-    ids.map((id) => resolveScenarioShare(routes.filter((r) => r.disruption_id === id))),
+    ids.map((id) => resolveScenarioShare(routes.filter((r) => r.disruption_id === id), year)),
   );
   const lookup = (exp: string): number => bounds(exp, iso3).lower * severity;
 

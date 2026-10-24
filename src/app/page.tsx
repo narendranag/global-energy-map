@@ -299,7 +299,7 @@ function HomeInner() {
   const scenarioChipSummary = [
     ...scenarioSummaryParts({ scenario: scenarioId, scenario2, severity, view }, "Scenario", {
       tradeYear: year,
-      routes: bundledSharesFor(scenarioId, scenario2, commodity),
+      routes: bundledSharesFor(scenarioId, scenario2, commodity, year),
     }),
     commodity,
   ].join(" · ");

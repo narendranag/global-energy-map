@@ -9,7 +9,8 @@ export type ScenarioId =
   | "turkish_straits"
   | "keystone"
   | "enbridge_mainline"
-  | "espo_spur";
+  | "espo_spur"
+  | "kirkuk_ceyhan";
 
 export type Commodity = "oil" | "gas";
 
@@ -28,6 +29,9 @@ export interface DisruptionRouteRow {
   /** null = applies to all importers of this exporter */
   readonly importer_iso3: string | null;
   readonly share: number;
+  /** Inclusive trade-year window; null/absent = open-ended (see route-window.ts). */
+  readonly valid_from_year?: number | null;
+  readonly valid_to_year?: number | null;
 }
 
 /**
@@ -47,6 +51,8 @@ export interface InboundDisruptionRouteRow {
   readonly exporter_iso3: null;
   readonly importer_iso3: string;
   readonly share: number;
+  readonly valid_from_year?: number | null;
+  readonly valid_to_year?: number | null;
 }
 
 /** Any `disruption_route` row the engine accepts. */

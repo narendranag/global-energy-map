@@ -2,6 +2,7 @@ import citationsJson from "./citations.generated.json";
 import { formatSpan } from "@/lib/data/vintage";
 import type { Catalog, CatalogEntry } from "@/lib/data-catalog/types";
 import { routeKeyFor } from "@/lib/scenarios/registry";
+import { isRouteValidAt } from "@/lib/scenarios/route-window";
 import type { Commodity, ScenarioId } from "@/lib/scenarios/types";
 
 /**
@@ -49,6 +50,9 @@ export interface ShareCitation {
   /** Year of the flows it describes; null on structural/unsourced rows. */
   readonly data_year: number | null;
   readonly source_note: string | null;
+  /** Inclusive trade-year window the share holds for; null or absent = open-ended. */
+  readonly valid_from_year?: number | null;
+  readonly valid_to_year?: number | null;
 }
 
 interface CitationsFile {
@@ -80,19 +84,22 @@ export function sharesFor(
  * `build_catalog.py`, so a caller that only needs the shares' publication
  * years (the embed chip, the citation summary) can state them synchronously
  * instead of waiting on a parquet read. The engine's own result stays the
- * source of every number.
+ * source of every number. Only the rows valid in `year` are returned — the
+ * same filter `loadScenarioInputs` applies — so a windowed key (Kirkuk-Ceyhan)
+ * is dated by the share the result used, not by every regime it ever had.
  */
 export function bundledSharesFor(
   scenario: ScenarioId | null,
   scenario2: ScenarioId | null,
   commodity: Commodity,
+  year: number,
   rows: readonly ShareCitation[] = SCENARIO_SHARES,
 ): ShareCitation[] {
   if (scenario === null) return [];
   const ids = scenario2 === null || scenario2 === scenario ? [scenario] : [scenario, scenario2];
   return ids.flatMap((id) => {
     const key = routeKeyFor(id, commodity);
-    return key === null ? [] : sharesFor(key, rows);
+    return key === null ? [] : sharesFor(key, rows).filter((r) => isRouteValidAt(r, year));
   });
 }
 

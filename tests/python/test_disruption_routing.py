@@ -15,7 +15,6 @@ from scripts.transform.build_disruption_routing import (
 # to source-derived values on 2026-09-10 (user-approved); see row notes.
 EXPECTED_SHARES = {
     ("hormuz", "IRN", None): 1.00,
-    ("hormuz", "IRQ", None): 0.90,
     ("hormuz", "KWT", None): 1.00,
     ("hormuz", "QAT", None): 1.00,
     ("hormuz", "SAU", None): 0.88,
@@ -82,15 +81,34 @@ EXPECTED_SHARES[("turkish_straits", "KAZ", "CHN")] = 0.00
 # demonstrably avoid the Straits.
 # Germany is a partial carve-out, not a zero: KEBCO via Druzhba began only in
 # Feb 2023 and runs ~1.0-1.5 Mt/y against BACI's 3.1 Mt (2023) / 4.3 Mt (2024),
-# so ~2/3 of German volumes still transit. Interim estimate (0.80 x ~0.66)
-# pending a year-aware share; see the row's source_note.
-EXPECTED_SHARES[("turkish_straits", "KAZ", "DEU")] = 0.53
+# so ~2/3 of German volumes still transit. An estimate (0.80 x ~0.66), from
+# 2023 only — through 2022 the 0.80 wildcard applies (windowed, below).
 EXPECTED_SHARES[("turkish_straits", "KAZ", "UZB")] = 0.00
 EXPECTED_SHARES[("turkish_straits", "KAZ", "KGZ")] = 0.00
 
 EXPECTED_SHARES[("keystone", "CAN", "USA")] = 0.14
 EXPECTED_SHARES[("enbridge_mainline", "CAN", "USA")] = 0.60
 EXPECTED_SHARES[("espo_spur", "RUS", "CHN")] = 0.28
+
+# Every key above holds for every year. Year-windowed rows (2026-10-24) are
+# keyed by their window too: (id, exporter, importer, valid_from, valid_to).
+EXPECTED_SHARES = {k + (None, None): v for k, v in EXPECTED_SHARES.items()}
+# Iraq's Hormuz share is the complement of Kirkuk-Ceyhan's in each window:
+# open (through 2022), shut (2023-2025), reopened (2026 on).
+for _window, _k in (((None, 2022), 0.13), ((2023, 2025), 0.00), ((2026, None), 0.12)):
+    EXPECTED_SHARES[("kirkuk_ceyhan", "IRQ", None, *_window)] = _k
+    EXPECTED_SHARES[("hormuz", "IRQ", None, *_window)] = round(1 - _k, 2)
+EXPECTED_SHARES[("turkish_straits", "KAZ", "DEU", 2023, None)] = 0.53
+
+
+def _key(r):
+    return (
+        r["disruption_id"],
+        r["exporter_iso3"],
+        r["importer_iso3"],
+        r["valid_from_year"],
+        r["valid_to_year"],
+    )
 
 
 def test_every_row_is_cited():
@@ -105,9 +123,7 @@ def test_every_row_is_cited():
 
 
 def test_shares_unchanged():
-    got = {
-        (r["disruption_id"], r["exporter_iso3"], r["importer_iso3"]): r["share"] for r in all_rows()
-    }
+    got = {_key(r): r["share"] for r in all_rows()}
     assert got == EXPECTED_SHARES
 
 
@@ -117,9 +133,45 @@ def test_gulf_coastal_is_the_hormuz_exporter_set():
 
 def test_no_duplicate_disruption_route_keys():
     """Blocking fix (chokepoints.md verification): region expansion must never
-    emit two rows for the same (disruption_id, exporter, importer)."""
-    keys = [(r["disruption_id"], r["exporter_iso3"], r["importer_iso3"]) for r in all_rows()]
+    emit two rows for the same (disruption_id, exporter, importer) in the same
+    year. A key may repeat only across non-overlapping year windows."""
+    keys = [_key(r) for r in all_rows()]
     assert len(keys) == len(set(keys))
+    for year in range(1990, 2031):
+        live = [
+            k[:3] for k in keys if (k[3] is None or k[3] <= year) and (k[4] is None or year <= k[4])
+        ]
+        assert len(live) == len(set(live)), year
+
+
+def test_overlapping_windows_are_refused(monkeypatch):
+    import scripts.transform.build_disruption_routing as bdr
+
+    row = bdr._row("kirkuk_ceyhan", "pipeline", "IRQ", None, 0.1, "s", None, "n", valid_to=2023)
+    monkeypatch.setattr(bdr, "KIRKUK_CEYHAN", [*bdr.KIRKUK_CEYHAN, row])
+    import pytest
+
+    with pytest.raises(ValueError, match="overlapping years"):
+        bdr.all_rows()
+
+
+def test_windowed_keys_cover_every_year():
+    """A key split into windows must leave no year uncovered: a gap would
+    silently fall back to a wildcard (or to nothing) for that year. KAZ->DEU
+    is the one deliberate exception — before 2023 the KAZ wildcard applies."""
+    by_key = {}
+    for k in (_key(r) for r in all_rows()):
+        by_key.setdefault(k[:3], []).append(k[3:])
+    for key, windows in by_key.items():
+        if windows == [(None, None)] or key == ("turkish_straits", "KAZ", "DEU"):
+            continue
+        for year in range(1990, 2031):
+            hits = [
+                w
+                for w in windows
+                if (w[0] is None or w[0] <= year) and (w[1] is None or year <= w[1])
+            ]
+            assert len(hits) == 1, (key, year)
 
 
 def test_shares_are_in_unit_range():
@@ -137,7 +189,7 @@ def test_shares_are_in_unit_range():
 #
 # (rows with a data year, rows without), per route-share set.
 EXPECTED_DATA_YEAR_COUNTS = {
-    "hormuz": (6, 43),
+    "hormuz": (8, 43),
     "hormuz_lng": (0, 14),
     "druzhba": (5, 1),
     "btc": (1, 0),
@@ -152,6 +204,7 @@ EXPECTED_DATA_YEAR_COUNTS = {
     "keystone": (1, 0),
     "enbridge_mainline": (1, 0),
     "espo_spur": (0, 1),
+    "kirkuk_ceyhan": (2, 1),
 }
 
 

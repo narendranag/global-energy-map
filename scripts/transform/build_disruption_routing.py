@@ -1,7 +1,8 @@
 """Build disruption_route.parquet — chokepoint + pipeline disruptions.
 
 Each row: (disruption_id, kind, exporter_iso3, importer_iso3, share, source,
-           source_title, source_url, source_year, data_year, source_note)
+           source_title, source_url, source_year, data_year, source_note,
+           valid_from_year, valid_to_year)
 
 Share semantics:
 - chokepoint: fraction of exporter's seaborne crude that transits the chokepoint
@@ -39,6 +40,17 @@ updating the six that disagreed with their sources (IRQ, POL, DEU, CZE, AZE,
 RUS-CPC) to values derived from the cited figures. Each note records the
 derivation and the Phase 1/2 value it replaced. Rows no document supports
 directly are marked ``source_title = UNSOURCED``.
+
+Year windows (2026-10-24). A share holds for every trade year unless the row
+says otherwise: ``valid_from_year`` / ``valid_to_year`` (inclusive, NULL =
+open-ended) bound it. Where a route changed within the years we hold, one key
+is split into rows whose windows never overlap, and a reader keeps only the
+row valid at its trade year. A window counts a year in the regime it spent
+most of that year in: Kirkuk-Ceyhan stopped on 25 Mar 2023 and restarted in
+late Sep 2025, so 2023-2025 are its shut years. The window is a statement
+about the route; ``data_year`` stays the year of the flows the document
+describes, which can sit outside the window (a pre-shutdown rate quoted in
+2023 dates a share that holds through 2022).
 """
 
 from __future__ import annotations
@@ -174,6 +186,28 @@ DOWNS_USCC_2019 = Citation(
     2019,
     None,
 )
+# Reuters explainer (21 Feb 2025): "On March 25, 2023 Turkey stopped pumping
+# around 450,000 barrels per day (bpd) of Iraqi oil, including some 370,000
+# bpd of KRG crude, via the pipeline to Ceyhan." The rate it quotes is the
+# flow at the moment of the halt, so its data year is 2023.
+REUTERS_KIRKUK = Citation(
+    "Reuters, 'Explainer: Why oil flows through the Iraq-Turkey pipeline have been halted'",
+    "https://www.reuters.com/business/energy/"
+    "why-oil-flows-through-iraq-turkey-pipeline-have-been-halted-2025-02-21",
+    2025,
+    2023,
+)
+# TRT World (18 Mar 2026), carrying INA: the federal Kirkuk line resumed via
+# the Saralo pumping station "with an initial export capacity of 250,000
+# barrels per day". The Kurdish exports had already restarted on 27 Sep 2025
+# at 180,000-190,000 bpd (Al Jazeera, 27 Sep 2025, quoting Iraq's oil
+# minister); the restart rows add the two. Both are restart-week figures.
+TRT_KIRKUK_RESTART = Citation(
+    "TRT World, 'Iraq resumes oil exports through Türkiye as Kirkuk–Ceyhan pipeline reopens'",
+    "https://www.trtworld.com/article/2a59d74606f1",
+    2026,
+    2026,
+)
 
 
 def _row(
@@ -186,6 +220,9 @@ def _row(
     citation: Citation | None,
     note: str,
     data_year: int | None | _Inherit = INHERIT,
+    *,
+    valid_from: int | None = None,
+    valid_to: int | None = None,
 ) -> dict:
     """Create a disruption route row. ``citation=None`` marks it unsourced.
 
@@ -209,6 +246,8 @@ def _row(
         "source_year": year,
         "data_year": resolved,
         "source_note": note,
+        "valid_from_year": valid_from,
+        "valid_to_year": valid_to,
     }
 
 
@@ -231,21 +270,56 @@ HORMUZ = [
         _NO_BYPASS + " Iran's Goreh-Jask/Jask terminal is 'effectively non-operational' "
         "(one test cargo, late 2024).",
     ),
+    # Iraq's share follows Kirkuk-Ceyhan, its one route around the strait:
+    # three windows, each the complement of the kirkuk_ceyhan row for the
+    # same years (KIRKUK_CEYHAN below). Was one blended 0.90 for every year
+    # until 2026-10-24, and 1.00 before 2026-09-10.
     _row(
         "hormuz",
         "chokepoint",
         "IRQ",
         None,
-        0.90,
+        0.87,
         SRC_EIA,
-        IEA_HORMUZ,
-        _NO_BYPASS + " Iraq's northern Kirkuk-Ceyhan exports (roughly 0.4 mb/d before "
-        "the Mar 2023 shutdown; figure not from the cited source) bypass Hormuz, so 0.90 "
-        "is the long-run share; ~1.0 in 2023-24 while that line was shut (shares are "
-        "static across years). Was 1.00 before 2026-09-10.",
-        # No data year: 0.90 is explicitly a long-run blend of two regimes
-        # (Kirkuk-Ceyhan open and shut), not the routing of any one year.
+        REUTERS_KIRKUK,
+        _NO_BYPASS + " Iraq's one bypass is the Kirkuk-Ceyhan pipeline to the Mediterranean, "
+        "which carried about 450 kb/d until 25 Mar 2023 (Reuters) against ~3.5 mb/d of total "
+        "Iraqi crude exports (BACI 2021-22), so 1 - 0.13 = 0.87 of Iraq's exports cross "
+        "Hormuz while it runs. Holds through 2022. Was 0.90 for every year before 2026-10-24.",
+        valid_to=2022,
+    ),
+    _row(
+        "hormuz",
+        "chokepoint",
+        "IRQ",
+        None,
+        1.00,
+        SRC_EIA,
+        REUTERS_KIRKUK,
+        _NO_BYPASS + " Kirkuk-Ceyhan was shut from 25 Mar 2023 (Reuters) until the Kurdish "
+        "exports restarted on 27 Sep 2025 (Al Jazeera), so in 2023-2025 every Iraqi export "
+        "barrel left through the Gulf. Each of those years is counted shut: the line ran for "
+        "under three months of 2023 and about three of 2025.",
+        # Structural: the share follows from the line being shut, not from a
+        # measured flow in any one year.
         data_year=None,
+        valid_from=2023,
+        valid_to=2025,
+    ),
+    _row(
+        "hormuz",
+        "chokepoint",
+        "IRQ",
+        None,
+        0.88,
+        SRC_EIA,
+        TRT_KIRKUK_RESTART,
+        _NO_BYPASS + " Kirkuk-Ceyhan reopened in two steps: Kurdish exports at 180-190 kb/d "
+        "from 27 Sep 2025 (Al Jazeera) and the federal Kirkuk line at an initial 250 kb/d from "
+        "18 Mar 2026 (TRT World), about 435 kb/d together against ~3.5 mb/d, so 1 - 0.12 = "
+        "0.88. LOW confidence: both are restart-week figures, and no trade year we hold covers "
+        "2026 yet.",
+        valid_from=2026,
     ),
     _row("hormuz", "chokepoint", "KWT", None, 1.00, SRC_EIA, IEA_HORMUZ, _NO_BYPASS),
     _row("hormuz", "chokepoint", "QAT", None, 1.00, SRC_EIA, IEA_HORMUZ, _NO_BYPASS),
@@ -467,7 +541,7 @@ def _intra_gulf(disruption_id: str, exporters: list[dict]) -> list[dict]:
         _row(
             disruption_id,
             "chokepoint",
-            e["exporter_iso3"],
+            exporter,
             importer,
             0.0,
             SRC_EIA,
@@ -476,9 +550,12 @@ def _intra_gulf(disruption_id: str, exporters: list[dict]) -> list[dict]:
             # Geography, not a measurement: the pair is share 0 in every year.
             data_year=None,
         )
-        for e in exporters
+        # One pair set per exporter, however many year windows its wildcard
+        # is split into (Iraq's follows Kirkuk-Ceyhan): dict.fromkeys keeps
+        # first-seen order, so the file's row order is unchanged.
+        for exporter in dict.fromkeys(e["exporter_iso3"] for e in exporters)
         for importer in GULF_COASTAL
-        if importer != e["exporter_iso3"]
+        if importer != exporter
     ]
 
 
@@ -777,14 +854,12 @@ TURKISH_STRAITS = [
         "(Atasu-Alashankou), not by sea, so it never reaches Novorossiysk or the Straits.",
         data_year=None,
     ),
-    # INTERIM (2026-09-20, maintainer's call). Germany is the one Turkish
-    # Straits buyer with a material overland alternative, so it gets a partial
-    # share rather than the 0.80 wildcard or the share-0 row that shipped on
-    # 2026-09-19 and was reverted the next day. Replace this with a year-aware
-    # share (1.00 through 2022, ~0.65 from 2023) once `disruption_route`
-    # carries activeYears per row - the same schema change Kirkuk-Ceyhan waits
-    # on. Until then one number has to cover both regimes, and it is an
-    # estimate, not a sourced figure.
+    # Germany is the one Turkish Straits buyer with a material overland
+    # alternative. Interim from 2026-09-20 to 2026-10-24 this one row covered
+    # every year at 0.53; now it holds only from 2023, when the overland leg
+    # began, and before that the KAZ exporter wildcard (0.80) applies, which is
+    # what the note below always said the earlier years should read. The 0.53
+    # is still an estimate, not a sourced figure.
     _row(
         "turkish_straits",
         "chokepoint",
@@ -801,9 +876,11 @@ TURKISH_STRAITS = [
         "against BACI's 3.1 Mt (2023) and 4.3 Mt (2024) of KAZ->DEU crude, so roughly "
         "two-thirds of recent German volumes still transit the Straits; before 2023 "
         "essentially all of it did (2.0-2.7 Mt/y, 2018-2022). Derived as the 0.80 exporter "
-        "wildcard x ~0.66 non-overland = 0.53. This understates 1995-2022, when the true "
-        "value is nearer the full wildcard, and is close to right for 2023-24. A share-0 pair "
-        "would be wrong in every year: it deletes an exposure Germany demonstrably had.",
+        "wildcard x ~0.66 non-overland = 0.53, for 2023 on; through 2022 the 0.80 wildcard "
+        "applies, since essentially all of Germany's Kazakh crude transited the Straits. A "
+        "share-0 pair would be wrong in every year: it deletes an exposure Germany "
+        "demonstrably had. Until 2026-10-24 this 0.53 covered every year.",
+        valid_from=2023,
     ),
     _row(
         "turkish_straits",
@@ -871,6 +948,58 @@ ENBRIDGE_MAINLINE = [
     ),
 ]
 
+# ── Kirkuk-Ceyhan (Iraq -> Mediterranean) ───────────────────────────────────
+# Exporter-wide, not an IRQ->TUR pair: Ceyhan is a loading port, and BACI
+# records the crude's final buyer (IRQ->TUR has no HS 2709 rows after 1998).
+# Three windows, the complement of Hormuz's IRQ rows for the same years.
+KIRKUK_CEYHAN = [
+    _row(
+        "kirkuk_ceyhan",
+        "pipeline",
+        "IRQ",
+        None,
+        0.13,
+        SRC_IEA_PIPELINE,
+        REUTERS_KIRKUK,
+        "Reuters: 'On March 25, 2023 Turkey stopped pumping around 450,000 barrels per day "
+        "(bpd) of Iraqi oil, including some 370,000 bpd of KRG crude, via the pipeline to "
+        "Ceyhan.' 450 kb/d / ~3,500 kb/d (BACI IRQ crude exports 2021-22) = 0.13. Holds "
+        "through 2022 as a constant, which overstates the years the line was repeatedly "
+        "sabotaged (2003-2013) and does not track the 1990s sanctions years.",
+        valid_to=2022,
+    ),
+    _row(
+        "kirkuk_ceyhan",
+        "pipeline",
+        "IRQ",
+        None,
+        0.00,
+        SRC_IEA_PIPELINE,
+        REUTERS_KIRKUK,
+        "Structural: Turkey stopped pumping on 25 Mar 2023 after the ICC arbitration ruling "
+        "(Reuters), and Kurdish exports restarted only on 27 Sep 2025 (Al Jazeera). 2023-2025 "
+        "are counted shut, since the line ran for under three months of 2023 and about three "
+        "of 2025; cutting a shut pipeline cuts nothing.",
+        data_year=None,
+        valid_from=2023,
+        valid_to=2025,
+    ),
+    _row(
+        "kirkuk_ceyhan",
+        "pipeline",
+        "IRQ",
+        None,
+        0.12,
+        SRC_IEA_PIPELINE,
+        TRT_KIRKUK_RESTART,
+        "TRT World (18 Mar 2026): the federal Kirkuk line resumed 'with an initial export "
+        "capacity of 250,000 barrels per day'; Kurdish exports had restarted on 27 Sep 2025 at "
+        "180,000-190,000 bpd (Al Jazeera). ~435 kb/d / ~3,500 kb/d = 0.12. LOW confidence: "
+        "restart-week figures, not a settled rate, and no trade year we hold covers 2026 yet.",
+        valid_from=2026,
+    ),
+]
+
 # ── ESPO Skovorodino-Mohe spur (Russia -> China, direct pipeline only) ───────
 # The Kozmino seaborne leg is deliberately excluded: ESPO Blend loaded there
 # is sold FOB to Asian buyers generally (Argus: China lifts 65-80% of monthly
@@ -896,6 +1025,13 @@ ESPO_SPUR = [
 ]
 
 
+def _window(r: dict) -> tuple[float, float]:
+    """A row's inclusive year window, open ends as infinities."""
+    lo = r["valid_from_year"]
+    hi = r["valid_to_year"]
+    return (float("-inf") if lo is None else lo, float("inf") if hi is None else hi)
+
+
 def all_rows() -> list[dict]:
     rows = (
         HORMUZ
@@ -914,17 +1050,25 @@ def all_rows() -> list[dict]:
         + KEYSTONE
         + ENBRIDGE_MAINLINE
         + ESPO_SPUR
+        + KIRKUK_CEYHAN
     )
     # Blocking fix (verifier RV): the region-expansion loops above must never
     # emit two rows for the same (disruption_id, exporter, importer) key - the
     # M1/M2 collision the chokepoints verification caught, where a Map-based
-    # engine lookup would silently let the last-written row win.
-    seen: set[tuple[str, str, str | None]] = set()
+    # engine lookup would silently let the last-written row win. Since year
+    # windows (2026-10-24) a key may repeat, but never in the same year: the
+    # reader keeps the rows valid at its trade year, and two of them for one
+    # key would bring the collision back.
+    windows: dict[tuple[str, str, str | None], list[tuple[float, float]]] = {}
     for r in rows:
         key = (r["disruption_id"], r["exporter_iso3"], r["importer_iso3"])
-        if key in seen:
-            raise ValueError(f"duplicate disruption_route key: {key}")
-        seen.add(key)
+        lo, hi = _window(r)
+        if lo > hi:
+            raise ValueError(f"empty year window for {key}: {lo}-{hi}")
+        for a, b in windows.get(key, []):
+            if lo <= b and a <= hi:
+                raise ValueError(f"duplicate disruption_route key in overlapping years: {key}")
+        windows.setdefault(key, []).append((lo, hi))
         # S5 review finding 5: a share outside [0, 1] is nonsense on its own
         # (a route cannot carry 140% of a flow), and it used to break the
         # combined-scenario range in the browser - combineShares returned
@@ -943,6 +1087,8 @@ def main() -> None:
     # Nullable: a structural or unsourced row has no data year (see module
     # docstring). pandas' Int32 keeps the NULLs out of a float column.
     df["data_year"] = df["data_year"].astype("Int32")
+    df["valid_from_year"] = df["valid_from_year"].astype("Int32")
+    df["valid_to_year"] = df["valid_to_year"].astype("Int32")
     OUT.parent.mkdir(parents=True, exist_ok=True)
     pq.write_table(
         pa.Table.from_pandas(df, preserve_index=False),

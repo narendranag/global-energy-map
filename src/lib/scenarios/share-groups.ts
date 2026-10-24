@@ -9,6 +9,8 @@ export interface GroupableShare {
   readonly source_year?: number | null;
   readonly data_year?: number | null;
   readonly source_note?: string | null;
+  readonly valid_from_year?: number | null;
+  readonly valid_to_year?: number | null;
 }
 
 /** Rows that read as one entry; `rows.length > 1` only for identical pair rows. */
@@ -42,6 +44,9 @@ export function groupIdenticalPairShares<R extends GroupableShare>(
       // different statements, so they never read as one entry.
       r.data_year ?? null,
       r.source_note ?? "",
+      // Rows that hold for different years are different statements too.
+      r.valid_from_year ?? null,
+      r.valid_to_year ?? null,
     ]);
     const group = byKey.get(key);
     if (group) {

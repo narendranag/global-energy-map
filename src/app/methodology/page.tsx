@@ -8,6 +8,7 @@ import { BUNDLED_CATALOG } from "@/lib/data-catalog/bundled";
 import { attributionsFor, BASEMAP_ATTRIBUTION, SCENARIO_SHARES, UNSOURCED_TITLE } from "@/lib/export/citation";
 import { getScenario } from "@/lib/scenarios/registry";
 import { groupIdenticalPairShares, pairLabel } from "@/lib/scenarios/share-groups";
+import { routeWindowLabel } from "@/lib/scenarios/route-window";
 import type { ScenarioId } from "@/lib/scenarios/types";
 import { PROSE } from "@/components/ui/prose";
 import { SiteFooter } from "@/components/ui/SiteFooter";
@@ -75,8 +76,11 @@ function ScenarioSharesTable() {
             const r = rows[0];
             const pairs = rows.length > 1 ? rows.map(pairLabel) : null;
             const unsourced = r.source_title === UNSOURCED_TITLE;
+            // A key split by year (Kirkuk-Ceyhan's shut years) lists one row
+            // per window, each saying which trade years it holds for.
+            const window = routeWindowLabel(r);
             return (
-              <tr key={`${r.disruption_id}-${pairLabel(r)}`} className="align-top">
+              <tr key={`${r.disruption_id}-${pairLabel(r)}-${window}`} className="align-top">
                 <td className="border-t border-panel-border py-2 pr-4 whitespace-nowrap">
                   {scenarioLabelForDisruption(r.disruption_id)}
                 </td>
@@ -85,6 +89,7 @@ function ScenarioSharesTable() {
                 </td>
                 <td className="border-t border-panel-border py-2 pr-4 text-right whitespace-nowrap font-mono tabular-nums text-ink">
                   {pct(r.share)}
+                  {window && <span className="block text-xs font-sans text-ink-subtle">{window}</span>}
                 </td>
                 <td className="border-t border-panel-border py-2 pr-4 text-right whitespace-nowrap font-mono tabular-nums text-ink-muted">
                   {r.data_year ?? "—"}

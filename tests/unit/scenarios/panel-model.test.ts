@@ -286,6 +286,7 @@ describe("distinctRouteDocuments + routeDocumentDates", () => {
     year,
     dataYear,
     note: "",
+    window: "",
     unsourced: title === "",
   });
 

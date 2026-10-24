@@ -279,6 +279,14 @@
       {
         "name": "source_note",
         "type": "VARCHAR"
+      },
+      {
+        "name": "valid_from_year",
+        "type": "INTEGER"
+      },
+      {
+        "name": "valid_to_year",
+        "type": "INTEGER"
       }
     ],
     "/data/gie_daily.parquet": [

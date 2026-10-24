@@ -5,6 +5,7 @@ import type {
   TradeFlowRow,
 } from "@/lib/scenarios/types";
 import { routeKeyFor } from "@/lib/scenarios/registry";
+import { isRouteValidAt } from "@/lib/scenarios/route-window";
 import { cachedLoader } from "./cache";
 import { readParquet } from "./parquet";
 import { loadVoyages, type VoyageRow } from "./voyages";
@@ -57,6 +58,9 @@ export interface RouteCitation {
    */
   readonly data_year: number | null;
   readonly source_note: string;
+  /** Inclusive trade-year window the share holds for; null or absent = open-ended. */
+  readonly valid_from_year?: number | null;
+  readonly valid_to_year?: number | null;
 }
 
 /**
@@ -82,6 +86,7 @@ export { routeKeyFor };
 const ROUTE_COLUMNS = [
   "disruption_id", "kind", "exporter_iso3", "importer_iso3", "share",
   "source_title", "source_url", "source_year", "data_year", "source_note",
+  "valid_from_year", "valid_to_year",
 ] as const;
 
 /**
@@ -99,6 +104,8 @@ interface RouteFileRow {
   readonly source_year: number | null;
   readonly data_year: number | null;
   readonly source_note: string | null;
+  readonly valid_from_year: number | null;
+  readonly valid_to_year: number | null;
 }
 
 /** A file row as an engine row, or null for a row that names neither side. */
@@ -109,6 +116,8 @@ function toRouteShareRow(r: RouteFileRow, scenarioId: ScenarioId): RouteShareRow
     source_year: r.source_year,
     data_year: r.data_year,
     source_note: r.source_note ?? "",
+    valid_from_year: r.valid_from_year,
+    valid_to_year: r.valid_to_year,
   };
   // "Everything, everywhere" is not a route (see resolveScenarioShare).
   if (r.exporter_iso3 === null && r.importer_iso3 === null) return null;
@@ -168,7 +177,11 @@ export interface ScenarioInputs {
   readonly year: number;
   readonly commodity: Commodity;
   readonly tradeFlows: readonly TradeFlowRow[];
-  /** Route shares with citations (the engine ignores the citation fields). */
+  /**
+   * Route shares with citations (the engine ignores the citation fields) —
+   * only the rows valid in `year`, so every list built from these shows the
+   * shares the result actually used.
+   */
   readonly routes: readonly RouteShareRow[];
   /** LNG-T3 voyages for gas in 2020–2024; [] otherwise (engine uses BACI). */
   readonly lngVoyages: readonly VoyageRow[];
@@ -204,7 +217,7 @@ export async function loadScenarioInputs(
   const scenarioIds: ScenarioId[] = [];
   const routes: RouteShareRow[] = [];
   for (const [i, id] of wanted.entries()) {
-    const rows = routeSets[i] ?? [];
+    const rows = (routeSets[i] ?? []).filter((r) => isRouteValidAt(r, year));
     if (rows.length === 0) {
       // Never silently combine a scenario that contributes nothing: for the
       // primary that is the pre-existing "no rows for this axis" case the UI

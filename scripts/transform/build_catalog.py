@@ -447,6 +447,7 @@ REGISTRY: list[dict[str, Any]] = [
             "scenario:keystone",
             "scenario:enbridge_mainline",
             "scenario:espo_spur",
+            "scenario:kirkuk_ceyhan",
         ],
         # Etalab Open Licence 2.0 permits redistribution with attribution;
         # made downloadable 2026-09-10 (user decision, Phase 10).
@@ -463,7 +464,8 @@ REGISTRY: list[dict[str, Any]] = [
         "source_name": "EIA / IEA / Argus Media (Kpler) / GEM — see source_* columns",
         "source_url": "https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz",
         "license": "Hand-set shares derived from public reports; per-row citations",
-        "as_of": "2026-09-19",
+        # Kirkuk-Ceyhan rows and year windows added 2026-10-24.
+        "as_of": "2026-10-24",
         "layers": [
             "scenario:hormuz",
             "scenario:hormuz-lng",
@@ -480,6 +482,7 @@ REGISTRY: list[dict[str, Any]] = [
             "scenario:keystone",
             "scenario:enbridge_mainline",
             "scenario:espo_spur",
+            "scenario:kirkuk_ceyhan",
         ],
         "redistributable": True,
     },
@@ -805,6 +808,9 @@ def scenario_share_rows(path: Path = DISRUPTION_ROUTE) -> list[dict[str, Any]]:
             # state this and keep `source_year` as the secondary date.
             "data_year": None if pd.isna(r.data_year) else int(r.data_year),
             "source_note": text(r.source_note),
+            # The trade years the row holds for, inclusive; null = open-ended.
+            "valid_from_year": None if pd.isna(r.valid_from_year) else int(r.valid_from_year),
+            "valid_to_year": None if pd.isna(r.valid_to_year) else int(r.valid_to_year),
         }
         for r in df.itertuples(index=False)
     ]

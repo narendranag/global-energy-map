@@ -1,6 +1,6 @@
 {
   "version": 7,
-  "generated_at": "2026-10-15T00:00:00+00:00",
+  "generated_at": "2026-10-24T00:00:00+00:00",
   "entries": [
     {
       "id": "comtrade_monthly",
@@ -449,7 +449,8 @@
         "scenario:turkish_straits",
         "scenario:keystone",
         "scenario:enbridge_mainline",
-        "scenario:espo_spur"
+        "scenario:espo_spur",
+        "scenario:kirkuk_ceyhan"
       ],
       "attribution": "Data: CEPII BACI (release V202601); cite Gaulier & Zignago (2010)",
       "runtime": true,
@@ -467,7 +468,7 @@
       "source_name": "EIA / IEA / Argus Media (Kpler) / GEM — see source_* columns",
       "source_url": "https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz",
       "license": "Hand-set shares derived from public reports; per-row citations",
-      "as_of": "2026-09-19",
+      "as_of": "2026-10-24",
       "layers": [
         "scenario:hormuz",
         "scenario:hormuz-lng",
@@ -483,14 +484,15 @@
         "scenario:turkish_straits",
         "scenario:keystone",
         "scenario:enbridge_mainline",
-        "scenario:espo_spur"
+        "scenario:espo_spur",
+        "scenario:kirkuk_ceyhan"
       ],
       "runtime": true,
       "redistributable": true,
       "downloadable": true,
-      "rows": 522,
-      "bytes": 15987,
-      "sha256": "0e2ddc260fab5841843378f929d4b6c0241bc040c058b7f2b5f921f04705bdc5"
+      "rows": 527,
+      "bytes": 18081,
+      "sha256": "6d57818ca8c5ef1bd39c917247e87ad57d6c2811d7b81c75bca17b82a56dd492"
     },
     {
       "id": "natural_earth_countries",

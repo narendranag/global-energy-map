@@ -9,6 +9,7 @@ import { LNG_T3_FIRST_YEAR, LNG_T3_LAST_YEAR } from "@/lib/data/voyages";
 import type { ScenarioView } from "@/lib/url-state/encode";
 import { toCsv, type CsvValue } from "./csv";
 import { apaCitation, sharesFor, UNSOURCED_TITLE, type ShareCitation } from "./citation";
+import { isRouteValidAt, isWindowed, routeWindowLabel } from "@/lib/scenarios/route-window";
 
 /**
  * The active scenario as one tidy CSV — importer rows, then refinery (oil) or
@@ -103,7 +104,9 @@ export function shareCitationLine(r: ShareCitation, pairs: readonly ShareCitatio
   const years = `${String(r.source_year)}${dataYear === null ? "" : `, data ${String(dataYear)}`}`;
   const src = r.source_title === UNSOURCED_TITLE ? UNSOURCED_TITLE : `${r.source_title} (${years})`;
   const url = r.source_url ? ` ${r.source_url}` : "";
-  return `${route}: ${String(r.share)} — ${src}${url}`;
+  // A row that holds only for some trade years says which, after its share.
+  const window = routeWindowLabel(r);
+  return `${route}: ${String(r.share)}${window === "" ? "" : ` (${window})`} — ${src}${url}`;
 }
 
 export function scenarioRows(
@@ -220,7 +223,11 @@ export function scenarioHeader(result: ScenarioResult, ctx: ScenarioExportContex
     // routeKeyFor is null when the scenario does not model this commodity
     // (only reachable from a hand-typed URL). Cite the scenario's own rows
     // rather than a `_lng` id that has none (A1).
-    shares: sharesFor(routeKeyFor(id, result.commodity) ?? id, ctx.shares),
+    // Only the rows valid in the result's trade year: a windowed key
+    // (Kirkuk-Ceyhan's shut years) is cited by the share the numbers used.
+    shares: sharesFor(routeKeyFor(id, result.commodity) ?? id, ctx.shares).filter((r) =>
+      isRouteValidAt(r, result.year),
+    ),
   }));
   const shares = perScenario.flatMap((s) => s.shares);
   const exporterView = (ctx.view ?? "importers") === "exporters";
@@ -293,7 +300,11 @@ export function scenarioHeader(result: ScenarioResult, ctx: ScenarioExportContex
     );
   }
   lines.push(
-    `Route shares (disruption_route.parquet, ${String(shares.length)} rows; static across years).` +
+    // Worded differently only when a share in the run holds for some years
+    // alone, so every other scenario's file stays byte-identical.
+    (shares.some(isWindowed)
+      ? `Route shares (disruption_route.parquet, ${String(shares.length)} rows valid in ${String(result.year)}; static across years except where a row states its own years).`
+      : `Route shares (disruption_route.parquet, ${String(shares.length)} rows; static across years).`) +
       " Each line ends with the document, its publication year and, where the document states one," +
       " the year of the flows it describes (source_year, data_year):",
   );

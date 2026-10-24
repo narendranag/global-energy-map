@@ -233,7 +233,12 @@ def test_disruption_route_rows_are_cited():
     assert (dated["data_year"] >= 1990).all()
     assert (dated["data_year"] <= dated["source_year"]).all()
     assert dr.loc[dr["source_title"] == UNSOURCED, "data_year"].isna().all()
-    assert len(dated) == 73
+    assert len(dated) == 77
+    # Year windows: inclusive, never empty, null = open-ended.
+    for col in ("valid_from_year", "valid_to_year"):
+        assert col in dr.columns
+    both = dr[dr["valid_from_year"].notna() & dr["valid_to_year"].notna()]
+    assert (both["valid_from_year"] <= both["valid_to_year"]).all()
     sourced = dr[dr["source_title"] != UNSOURCED]
     assert sourced["source_url"].str.startswith("https://").all()
 

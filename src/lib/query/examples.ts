@@ -34,12 +34,15 @@ LIMIT 15`,
   {
     id: "hormuz",
     title: "Crude at risk if Hormuz closes, 2024",
-    note: "Reproduces the scenario panel: a pair share overrides the exporter-wide row, including the intra-Gulf pairs set to 0. Iranian crude is near-absent from BACI, so buyers of it are understated.",
+    note: "Reproduces the scenario panel: a pair share overrides the exporter-wide row, including the intra-Gulf pairs set to 0, and only the rows valid in 2024 are read (Iraq's share has one row per Kirkuk-Ceyhan period). Iranian crude is near-absent from BACI, so buyers of it are understated.",
     sql: `-- Hormuz exposure by importer (worked example 2)
 WITH route AS (
   SELECT exporter_iso3, importer_iso3, share
   FROM disruption_route
   WHERE disruption_id = 'hormuz'
+    -- A share can hold for some years only (valid_*_year, null = open).
+    AND coalesce(valid_from_year, 2024) <= 2024
+    AND coalesce(valid_to_year, 2024) >= 2024
 ),
 exposed AS (
   SELECT f.importer_iso3,
@@ -74,6 +77,8 @@ WITH route AS (
   SELECT exporter_iso3, importer_iso3, share
   FROM disruption_route
   WHERE disruption_id = 'druzhba'
+    AND coalesce(valid_from_year, 2022) <= 2022
+    AND coalesce(valid_to_year, 2022) >= 2022
 )
 SELECT f.importer_iso3,
        round(sum(f.qty * r.share) * 7.33 / 365 / 1000, 0) AS at_risk_kbpd,

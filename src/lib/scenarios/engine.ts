@@ -64,7 +64,10 @@ export function computeScenarioImpact(input: ScenarioInput): ScenarioResult {
   // excludes cannot be re-admitted by another's wildcard.
   const scenarioIds = scenarioIdsOf(input);
   const resolved = scenarioIds.map((id) =>
-    resolveScenarioShare(input.routes.filter((r) => r.disruption_id === id)),
+    resolveScenarioShare(
+      input.routes.filter((r) => r.disruption_id === id),
+      input.year,
+    ),
   );
   const bounds = combineShares(resolved);
   const lookupBounds = (exporter: string, importer: string): ShareBounds => {

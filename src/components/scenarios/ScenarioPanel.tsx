@@ -152,7 +152,10 @@ function RouteShareItem({
             ? `${row.pairs.length.toString()} exporter → importer pairs`
             : `${exporter} → ${importer}`}
         </span>
-        <span className="font-mono">{sharePct(row.share)}</span>
+        <span className="font-mono">
+          {sharePct(row.share)}
+          {row.window !== "" && <span className="ml-1 font-sans text-[11px] text-slate-600">({row.window})</span>}
+        </span>
       </div>
       {row.unsourced ? (
         <>

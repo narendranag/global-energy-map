@@ -231,8 +231,8 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
   // engine loads, so the citation can state them without waiting on a fetch.
   const scenarioActive = app?.scenario != null;
   const scenarioShares = useMemo(
-    () => bundledSharesFor(app?.scenario ?? null, app?.scenario2 ?? null, commodity),
-    [app?.scenario, app?.scenario2, commodity],
+    () => bundledSharesFor(app?.scenario ?? null, app?.scenario2 ?? null, commodity, year),
+    [app?.scenario, app?.scenario2, commodity, year],
   );
   const summary = [
     ...(scenarioActive ? [] : [String(year)]),

@@ -431,3 +431,26 @@ describe("scenario CSV — exporter view", () => {
     expect(scenarioRows(RESULT, null, "exporters")).toEqual([]);
   });
 });
+
+describe("scenario CSV — year-windowed route shares", () => {
+  const irq = (share: number, from: number | null, to: number | null): ShareCitation => ({
+    disruption_id: "hormuz", kind: "chokepoint", exporter_iso3: "IRQ", importer_iso3: null, share,
+    source_title: "Reuters explainer", source_url: "https://r.example", source_year: 2025, data_year: null,
+    source_note: null, valid_from_year: from, valid_to_year: to,
+  });
+  const shares = [irq(0.87, null, 2022), irq(1, 2023, 2025), irq(0.88, 2026, null)];
+  const hormuz: ScenarioResult = { ...RESULT, scenarioId: "hormuz", year: 2024, byRefinery: [] };
+
+  it("cites only the row valid in the result's year, with its window", () => {
+    const csv = scenarioCsv(hormuz, { viewUrl: "https://x/", exported: "2026-10-24", catalog: CATALOG, shares });
+    const header = csv.split("\n").filter((l) => l.startsWith("#")).join("\n");
+    expect(header).toContain("1 rows valid in 2024; static across years except where a row states its own years");
+    expect(header).toContain("IRQ -> all importers: 1 (2023–2025) — Reuters explainer");
+    expect(header).not.toContain("0.87");
+    expect(header).not.toContain("0.88");
+  });
+
+  it("keeps the old wording when no share in the run is windowed", () => {
+    expect(shareCitationLine(irq(0.5, null, null))).toBe("IRQ -> all importers: 0.5 — Reuters explainer (2025) https://r.example");
+  });
+});

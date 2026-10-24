@@ -96,7 +96,9 @@ test.describe("embed mode", () => {
     // An embed's one line is all a reader has, and the number it labels is
     // trade x route share — so it names the route shares' vintage too.
     const chip = page.getByRole("button", {
-      name: /Hormuz.*2022 trade, 2025 route shares.*oil/i,
+      // 2023–2025: at 2022 Iraq's Hormuz row is the pre-shutdown one, dated
+      // by Reuters' March 2023 flow (year windows, 2026-10-24).
+      name: /Hormuz.*2022 trade, 2023–2025 route shares.*oil/i,
     });
     await expect(chip).toBeVisible();
     await expect(page.getByTestId("scenario-slot")).toBeHidden();

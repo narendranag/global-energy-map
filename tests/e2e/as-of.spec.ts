@@ -104,8 +104,9 @@ test.describe("A scenario states the year it was run on", () => {
     // Both vintages, always: the number is trade x route share. The share
     // year is the year of the flows the documents describe (the IEA Hormuz
     // pages are published 2026 and give 2025 routing), not their publication
-    // year.
-    await expect(announcement).toContainText("2010 trade, 2025 route shares", {
+    // year. Before 2023 Iraq's share is the Kirkuk-Ceyhan-open row, dated by
+    // Reuters' March 2023 pre-halt flow, hence the 2023–2025 span.
+    await expect(announcement).toContainText("2010 trade, 2023–2025 route shares", {
       timeout: RESULT_TIMEOUT,
     });
     await expect(announcement).toContainText(/importers exposed/);

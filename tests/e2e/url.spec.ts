@@ -2,6 +2,7 @@
 import type { Page, Request } from "@playwright/test";
 import {
   SPEC_TIMEOUT,
+  URL_WRITE_TIMEOUT,
   expect,
   gotoReady,
   openLayers,
@@ -48,7 +49,7 @@ test.describe("URL state", () => {
     await expect(page.getByLabel("Storage hubs")).not.toBeChecked();
 
     await setChecked(page.getByLabel("Storage hubs"), true);
-    await expect(page).toHaveURL(/layers=[^&]*storage/);
+    await expect(page).toHaveURL(/layers=[^&]*storage/, { timeout: URL_WRITE_TIMEOUT });
   });
 
   test("lon/lat/z restore the camera (canvas probe)", async ({ page }) => {
@@ -90,7 +91,7 @@ test.describe("URL state", () => {
     await page.mouse.move(box.x + box.width / 2 - 200, box.y + box.height / 2 + 100, { steps: 10 });
     await page.mouse.up();
 
-    await expect(page).toHaveURL(/lon=/);
+    await expect(page).toHaveURL(/lon=/, { timeout: URL_WRITE_TIMEOUT });
     // Let any drag inertia finish and the debounced URL write settle.
     let last = "";
     await expect
@@ -155,8 +156,8 @@ test.describe("URL state", () => {
       "true",
     );
     // The debounced replaceState has landed …
-    await expect(page).toHaveURL(/commodity=gas/);
-    await expect(page).toHaveURL(/layers=[^&]*ports/);
+    await expect(page).toHaveURL(/commodity=gas/, { timeout: URL_WRITE_TIMEOUT });
+    await expect(page).toHaveURL(/layers=[^&]*ports/, { timeout: URL_WRITE_TIMEOUT });
     await waitForReady(page);
     // … without any navigation or RSC round-trip.
     expect(offending).toEqual([]);

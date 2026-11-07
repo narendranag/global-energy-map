@@ -40,6 +40,14 @@ export const READY_TIMEOUT = 120_000;
 // Navigation + ready signal
 // ---------------------------------------------------------------------------
 
+/**
+ * How long to wait for the store's debounced URL write after an interaction.
+ * The 250 ms timer cannot fire while the main thread renders the change: a
+ * layer toggle costs several seconds of deck.gl/MapLibre work under CI's
+ * software WebGL, past `toHaveURL`'s 5 s default (CI on dbf1d78, 2026-11-07).
+ */
+export const URL_WRITE_TIMEOUT = 30_000;
+
 /** How long `data-ready` must hold "true" before {@link waitForReady} trusts it. */
 export const READY_STABLE_MS = 500;
 

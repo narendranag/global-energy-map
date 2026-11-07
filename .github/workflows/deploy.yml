@@ -1,5 +1,6 @@
 # Deploy to Cloudflare Workers (OpenNext), then smoke-test what was deployed.
-# Replaces Vercel's deploy-on-push (DEV-GUIDELINES "CI": no migrations here, so push-to-main is right).
+# Runs only after CI is green on a push to main, and deploys that exact commit
+# (DEV-GUIDELINES "CI": deploy waits for green CI on the commit it ships).
 # Smoke targets vars.SMOKE_PRODUCTION_URL, else the workers.dev address.
 #
 # Needs two repo secrets, set by the owner:
@@ -8,7 +9,9 @@
 name: deploy
 
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -21,6 +24,11 @@ permissions:
 
 jobs:
   deploy:
+    # A by-hand run deploys the branch it is started on; workflow_run only a
+    # green CI run of a push (never a PR that happens to target main).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -28,6 +36,10 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # workflow_run checks out main's HEAD by default, which may be newer
+          # than the commit CI passed.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: pnpm/action-setup@v4
         with:
           version: 10

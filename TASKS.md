@@ -6,7 +6,7 @@
 
 ## Now
 
-- [ ] **Resume here:** (2026-10-24) Kirkuk–Ceyhan + year-bounded route shares is live (deploy + smoke green). First check that CI passed on `main` (`gh run list --branch main --workflow CI --limit 3`): the e2e job for `48827e3`/`b7fa59e` was still running at close; the previous `main` failure (`7b6c737`) was the stale `/privacy` assertion fixed in `338284f`. Then wait for Narendra on the `(owner)` items: the inbound-Hormuz and coal plans under `## Next`, and the PMTiles / daily-throughput tooltip / AIS questions under `## Later`
+- [ ] **Resume here:** (2026-11-08) CI red on main fixed and deploy now gated on green CI (see Done). Nothing half done; wait for Narendra on the `(owner)` items: the inbound-Hormuz and coal plans under `## Next`, and the PMTiles / daily-throughput tooltip / AIS / Always-Use-HTTPS questions under `## Later`
 
 ## Next
 
@@ -30,6 +30,7 @@
 
 ## Later
 
+- [ ] Audit e2e expects that follow a map-repainting interaction but use Playwright's default 5 s timeout (`toHaveURL`/`toBeVisible` in modes, embed, as-of specs); the url.spec one went red on dbf1d78 for that reason — widen to `URL_WRITE_TIMEOUT` where they wait on a debounced write #e2e
 - [ ] (owner) Zone-wide "Always Use HTTPS" on marain.space: the Worker 301s http for pages and /data, but hashed /_next/static files still answer on plain http; `https-check --fix` turns it on for the whole zone (every marain.space site) — your call. HSTS is a separate decision #deploy
 - [ ] (owner) Pipelines as PMTiles — waiting on Narendra. **Question:** drop it, or keep it deferred? **Proposed default: keep deferred, no work.** `docs/superpowers/research/pmtiles-and-console.md` ruled it "not worth doing now" (one cached ~1.25 MB brotli fetch per data version, tippecanoe not installable here, a second geometry path to keep in step). Re-measured on Cloudflare 2026-10-24: `pipelines.geojson` is 8.1 MB raw, served brotli at 1.94 MB (Cloudflare compresses less hard than Vercel did) — worse, still a once-per-version cost. Revisit if the sidecar passes ~15 MB raw or pipelines go per-segment
 - [ ] (owner) Daily-throughput tooltip — waiting on Narendra. **Question:** close it? **Proposed default: close as superseded.** The 2026-09-10 review deferred it until there was a daily time axis; the 2026-09-21 call removed every year control, so a daily axis is off the table. The LNG terminal tooltip already shows LNG-T3's "Total processed 2020–2024". `lng_terminal_daily.parquet` (not read at runtime) is sparse — 159 terminals, a median 13 days with throughput per terminal-year — so a "processed in 2024" line would read as complete when it is not

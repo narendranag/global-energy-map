@@ -25,5 +25,8 @@
   "routes": [{ "pattern": "energymap.marain.space", "custom_domain": true }],
   "workers_dev": true,
   "preview_urls": false,
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  // crashyard (crashyard.marain.space) is this Worker's Tail Worker: a run that throws or is
+  // stopped for CPU/memory becomes an issue there. Successful runs send nothing.
+  "tail_consumers": [{ "service": "crashyard" }]
 }

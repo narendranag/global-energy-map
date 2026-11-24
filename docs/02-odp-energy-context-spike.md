@@ -18,7 +18,7 @@ answers:
 
 # Spike: energy-price and flow context through OpenBB ODP
 
-Branch `spike/odp-energy-prices`, run on `mini` on 2026-10-15. Prompted by the explore note `~/projects/explore/open-data-platform/open-data-platform.md`. Its best use case was "energy price context for global-energy-map" (EIA and JODI series beside the map's volumes), scored 3/5.
+Branch `spike/odp-energy-prices`, run on `mini` on 2026-10-15. Prompted by the explore note `~/explore/open-data-platform/open-data-platform.md`. Its best use case was "energy price context for global-energy-map" (EIA and JODI series beside the map's volumes), scored 3/5.
 
 ## Recommendation
 

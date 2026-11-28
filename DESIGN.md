@@ -10,7 +10,7 @@ House match in one line: light-only, tabular figures, a 2px focus ring offset 2p
 
 ## Tokens
 
-Defined on `:root` in `src/app/globals.css` and exposed to Tailwind v4 through `@theme inline` (`bg-panel`, `border-panel-border`, `text-ink`, `text-ink-muted`, `text-ink-subtle`, `text-2xs`). **Light only, by decision** (2026-09-10): `color-scheme: light`, no `prefers-color-scheme` block, because the basemap is a light style and a dark body made a void behind it.
+Defined on `:root` in `src/app/globals.css` and exposed to Tailwind v4 through `@theme inline` (`bg-panel`, `border-panel-border`, `border-panel-divider`, `text-ink`, `text-ink-muted`, `text-ink-subtle`, `text-link`, `text-2xs`), plus one utility, `section-label`. **Light only, by decision** (2026-09-10): `color-scheme: light`, no `prefers-color-scheme` block, because the basemap is a light style and a dark body made a void behind it.
 
 | Token | Value | For |
 | --- | --- | --- |
@@ -21,13 +21,13 @@ Defined on `:root` in `src/app/globals.css` and exposed to Tailwind v4 through `
 | `--panel` | `rgb(255 255 255 / 0.94)` | floating panels over the map |
 | `--panel-solid` | `#ffffff` | panels that must be opaque |
 | `--panel-border` | `#e3e4e0` | panel borders, rules, table lines |
-| `--panel-divider` | `#ecedea` | rules inside a panel (defined, unused) |
-| `--accent` | `#1c1f23` | (defined, unused) |
+| `--panel-divider` | `#ecedea` | rules inside a panel (section separators, list and table row lines) |
+| `--link` / `--link-hover` | `#075985` / `#082f49` | links (`text-link`, `hover:text-link-hover`) |
 | `--focus` | `#2f4fa6` | the focus ring |
 
-In practice the components also use Tailwind v4's default scales directly (see Drift): slate for chrome (`text-slate-600/700/800/900`, `border-slate-200/300`, `bg-slate-50/100`, `bg-slate-800` for a selected or primary control), sky for links (`text-sky-800`, hover `text-sky-950`; `bg-sky-100` for an active search row or chip), amber for attention (`bg-amber-50`, `border-amber-600`, `text-amber-900`), emerald for a confirmation (`text-emerald-800`, the "copied" status; `bg-emerald-100 text-emerald-900` for a downloadable badge), red for an error box (`border-red-300 bg-red-50`).
+Use the tokens, not raw slate: `text-ink` for text that slate-800/900 used to carry, `text-ink-muted` for slate-600/700, `border-panel-border` for slate-200/300 borders (2026-11-28; a handful of raw slate remains in ModeTabs, SearchBox and a few controls, and moves to tokens when those files are next touched). Tailwind's default scales stay for what has no token: slate backgrounds (`bg-slate-50/100` for hover and code), sky for a selected row or chip (`bg-sky-100`, `text-sky-900`) and the "live" badge, amber for attention (`bg-amber-50`, `border-amber-600`, `text-amber-900`), emerald for a confirmation (`text-emerald-800`, the "copied" status; `bg-emerald-100 text-emerald-900` for a downloadable badge), red for an error box (`border-red-300 bg-red-50`).
 
-Text contrast: at least 4.5:1 composited over black (the worst case for a translucent panel); `slate-500` fails, so `slate-600` is the lightest slate used for text. Tested by `tests/e2e/a11y.spec.ts` (axe, zero serious/critical).
+Text contrast: at least 4.5:1 composited over black (the worst case for a translucent panel); `slate-500` fails; `ink-subtle` is the lightest text allowed. Tested by `tests/e2e/a11y.spec.ts` (axe, zero serious/critical).
 
 ### Map palette
 
@@ -56,37 +56,37 @@ Basemap: OpenFreeMap Positron (land `#f2f3f0`, water `#c2c8ca`), not ours, label
 | `text-2xs` | 11px / 16px | captions, legend notes, the footer, figures in rows |
 | `text-xs` | 12px | legend rows, secondary panel text, section labels, header nav |
 | `text-sm` | 14px | panel body, controls, tables in prose |
-| `text-base` | 16px | reading pages' body (`leading-relaxed`) |
+| `text-base` | 16px | reading pages' body (`leading-relaxed`); the app's name in the header |
 | `text-lg` | 18px | prose h3 |
 | `text-2xl` | 24px | prose h2, ruled underneath |
 | `text-3xl` | 30px | page title on reading pages |
-| 15px | | the app's name in the header |
 
 - **Weights:** 400 body, 500 (`font-medium`) for controls and labels, 600 (`font-semibold`) for titles, headings and emphasised figures. Titles take `tracking-tight`.
-- **Section labels:** 12px, 500, uppercase, `tracking-wide`, `slate-600` (scenario, country and layer panels); 11px, 600, `tracking-wider` for group heads inside a panel.
+- **Section labels:** one style, the `section-label` utility in `globals.css`: 11px, 600, uppercase, `tracking-wider` (0.05em), `ink-subtle`. Every panel section, layer group, legend head, share-menu section, the intro card's "Try a question", the methodology contents and the `/data` table header use it. Never restyle a label inline.
+- **No arbitrary sizes:** `text-2xs`, never `text-[11px]`. (`text-[13px]` survives on the SQL editor, the schema sidebar and one intro-card line.)
 
 ## Shape and space
 
 - **Radius:** 4px (`rounded`) for buttons, inputs, code, small chips; 6px (`rounded-md`) for floating panels, the mode tabs' track and dialogs; 8px (`rounded-lg`) for the share menu and the as-of chip; full for the loading pill.
-- **Shadow:** floating panels `shadow-lg` (dialogs, the intro card and the share menu `shadow-xl`); the header, buttons and the selected tab `shadow-sm`. Panels over the map add `backdrop-blur` on a 90–95% white.
-- **Borders:** 1px `--panel-border` or `slate-200/300`.
+- **Shadow:** floating panels (layers, scenario, country, intro card) `shadow-lg`; dialogs and menus (share menu, error panel) `shadow-xl`; the header, buttons and the selected tab `shadow-sm`. Panels over the map add `backdrop-blur` on `bg-panel`.
+- **Borders:** 1px `border-panel-border` round every panel, button and input; `border-panel-divider` for rules inside a panel.
 - **Spacing:** Tailwind's 4px grid. Panels sit 16px (`left-4`/`right-4`/`top-4`) from the map's edges, padding 12px (`p-3`) or 16px for the intro card and dialogs. Reading pages: `max-w-7xl` (1280px) frame with 24px gutters and 40px top and bottom, prose held to `max-w-3xl` (768px); legal pages are `max-w-3xl` throughout.
 - **Panel widths:** layers 288px (`w-72`), scenario 320px (`w-80`), country `min(21rem, 100% − 2rem)`, intro card up to 24rem between them, share menu 28rem.
 
 ## Layout
 
 - **The map page** is full-bleed: a 1-line header on top, the map filling the rest, one canvas (MapLibre with deck.gl interleaved). Floating over it: the layer panel top left, the scenario panel or country panel top right, the intro card between them, the as-of chip bottom centre, the map footer bottom left. Panels never overlap what the camera fits to: `panelPadding()` makes each panel's width a camera inset.
-- **Header:** white, a bottom border and `shadow-sm`; the app name (15px, 600) with a one-line tagline from `xl` up; the mode tabs; a loading pill while layers fetch; the search box; site links (Methodology, Data, Query) right-aligned in `sky-800`.
+- **Header:** white, a bottom border and `shadow-sm`; the app name (`text-base`, 600) with a one-line tagline from `xl` up; the mode tabs; a loading pill while layers fetch; the search box; site links (Methodology, Data, Query) right-aligned in `text-link`.
 - **Reading pages** (`/methodology`, `/data`, `/terms`, `/privacy`, `/query`): a white page, left-aligned, 30px title, then prose styled by `PROSE` (`src/components/ui/prose.ts`); `SiteFooter` underneath.
 - **Phone:** a one-line amber "best viewed on a desktop" banner, panels collapsed, the map still pannable. Not a designed phone layout.
 - **Embed** (`?embed=1`): header, intro card, banner and full footer give way to an attribution bar; the as-of chip always stays.
 
 ## Components
 
-- **Floating panel:** `bg-white/95`, `rounded-md`, `shadow-lg`, `backdrop-blur`, `p-3`, `text-sm text-slate-800`; collapsible to a one-line uppercase label button. Sections inside separated by an uppercase label.
+- **Floating panel:** `bg-panel`, `border border-panel-border`, `rounded-md`, `shadow-lg`, `backdrop-blur`, `p-3`, `text-sm text-ink`; collapsible to a one-line uppercase label button. Sections inside separated by a `section-label` and, where ruled, `border-panel-divider`.
 - **Mode tabs (segmented control):** `slate-100` track with a `slate-300` border, `rounded-md`, 2px padding, 12px 500 text; the active tab white with `shadow-sm` and a `slate-300` ring. Arrow keys, Home and End move between tabs.
-- **Commodity toggle and citation format picker:** a joined pair of buttons; the active one `bg-slate-800 text-white`.
-- **Button:** `rounded`, 1px `slate-300`, white, 12px 500, `px-2.5 py-1`, `shadow-sm`, hover `slate-50`. Primary: `bg-slate-800` (or `bg-ink`) with white text. Outline primary (consent banner): `border-ink`, inverting on hover.
+- **Commodity toggle, citation format picker, scenario view and sort:** joined buttons; the active one `bg-ink text-white`. Their focus ring is inset (`focus-visible:-outline-offset-2`) so the group's `overflow-hidden` cannot clip it.
+- **Button:** `rounded`, 1px `panel-border`, white, 12px 500, `px-2.5 py-1`, `shadow-sm`, hover `slate-50`. Primary: `bg-ink` with white text, hover `bg-ink-muted`. Outline primary (consent banner): `border-ink`, inverting on hover.
 - **Ranked row:** a real button; label truncated with an ellipsis, a mono 11px figure in a fixed `min-w-[4.5rem]` column, a bar or swatch. Pointer hover and keyboard focus both highlight the country on the map.
 - **Layer row:** checkbox, label (truncated), a small vintage badge ("to 2024", "as of 9 Apr 2025", "live" in sky, "old" past 18 months).
 - **Legend:** generated from `legendSections()`; swatches are gradients, fills, lines, dots, triangles (filled = export, hollow = import), the anchor glyph for ports, and arcs.
@@ -94,7 +94,7 @@ Basemap: OpenFreeMap Positron (land `#f2f3f0`, water `#c2c8ca`), not ours, label
 - **Section vintage line:** one 11px line under each panel section stating source and vintage ("data to 2024 (released 2026-01-01)"), with "(old)" past 18 months.
 - **Map glyphs:** the disruption mark (white halo disc, red ring, red centre dot); a cut route (red line on a 6px white casing); the focus outline (near-black on a white halo); a hover (white wash and a thin dark edge). Casing is the rule wherever a line must read on both the pale basemap and the darkest fill.
 - **Error panel:** white, `rounded-md`, `shadow-xl`, `max-w-md`, reload and report-an-issue buttons. Errors always surface; never a blank or forever-loading map.
-- **Focus:** `outline: 2px solid var(--focus); outline-offset: 2px` on every `:focus-visible`; on the map canvas, inset (`-3px`) and `!important` against deck.gl's inline `outline: none`.
+- **Focus:** `outline: 2px solid var(--focus); outline-offset: 2px` on every `:focus-visible` (buttons, links, inputs, selects, textareas, summaries, `[tabindex]`). Controls never set their own ring colour or width; the only per-control override is the inset offset on joined buttons. on the map canvas, inset (`-3px`) and `!important` against deck.gl's inline `outline: none`.
 - **Icons:** inline SVG only (chevron, legend swatches, the anchor and triangle glyphs), in `currentColor` or palette colours. No icon font, no emoji; the intro card's close is a plain `×`.
 
 ## Motion
@@ -109,14 +109,11 @@ None. No photographs, illustrations or hero art: the map is the only picture, an
 
 Plain, exact, written for researchers. The lead is the question the map answers ("Who loses supply when a chokepoint closes or a pipeline is cut?"). Sentence case; numbers with units; en dash in year ranges ("2018–2025"). Every figure states its vintage and source, derived from the catalog, never hand-typed. Honest about gaps: "No reserves data in source", "Not reported to GIE", "a data gap, not 'safe'", lower bounds called lower bounds. Labels describe what is shown, not what a control does ("to 2020", not "responds to the slider"). No marketing adjectives, no exclamation marks.
 
+## Decided
+
+- **Violet search highlight** (`#7c3aed`, 2026-11-28): it goes against the house's "no purple", deliberately: it is the one hue no data layer owns, so a search result can never be read as data. Keep it; do not "fix" it.
+- **Drift fixes 1–8** (2026-11-28, branch `design-drift`): tokens over raw slate, the `--link` token, the global focus ring, `bg-ink` as the one primary, one section-label style, no arbitrary sizes, matching panels, and `--panel-divider` in use (`--accent` deleted). The rules above describe the result.
+
 ## Drift to decide
 
-1. **Tokens versus raw slate.** `globals.css` asks for the tokens, but components use raw Tailwind slate far more (`text-slate-600` 43×, `text-slate-700` 33×, `border-slate-300` 30×, against `text-ink-muted` 39×, `border-panel-border` 36×). Recommend: map slate-600/700 → `ink-muted`, slate-800/900 → `ink`, slate-200/300 borders → `panel-border`, as files are touched, not in one sweep.
-2. **Links have no token.** `sky-800` / `sky-950` is typed in 28 places each. Recommend a `--link` token (`#075985`-ish) and `text-link`.
-3. **Focus colour overridden.** `--focus` is `#2f4fa6`, but about 20 controls set their own `focus-visible:outline-sky-700` (or slate). Recommend deleting the overrides so the global ring applies.
-4. **Two primaries.** Primary buttons are `bg-slate-800` in the intro card, commodity toggle and share menu, `bg-ink` in the error panel and consent banner. Recommend `bg-ink` everywhere.
-5. **Section labels in four styles.** 12px 500 `tracking-wide` slate-600 (panels), 11px 600 `tracking-wider` (layer groups, intro card), 11px 500 `tracking-wider` `ink-subtle` (legend), 12px 600 `ink-muted` (share menu). Recommend one: 11px 600 uppercase `tracking-wider` `ink-subtle`, as a shared class.
-6. **Arbitrary sizes.** `text-[11px]` appears where `text-2xs` is the same size; the header title is `text-[15px]`. Recommend `text-2xs`, and either a named step for the title or `text-base`.
-7. **Panels don't match.** The layer panel and intro card have a `slate-200` border, the scenario and country panels none; shadows vary between `lg` and `xl`. Recommend: border on all, `shadow-lg` for panels, `shadow-xl` for dialogs and menus only. `bg-panel` (the token for exactly this) is used twice; the rest type `bg-white/95`.
-8. **Unused tokens.** `--accent` and `--panel-divider` are defined and never used. Recommend using `--panel-divider` for in-panel rules or deleting both.
-9. **Violet search highlight** goes against the house's "no purple", but here it is deliberate (the one hue no data layer owns). Recommend keeping it; recorded so nobody "fixes" it.
+None open.

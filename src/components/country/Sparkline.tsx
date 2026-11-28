@@ -34,7 +34,7 @@ export function Sparkline({ series, caption }: SparklineProps) {
         aria-label={describeSeries(series)}
         viewBox={`0 0 ${String(WIDTH)} ${String(HEIGHT)}`}
         preserveAspectRatio="none"
-        className="block h-8 w-full text-slate-700"
+        className="block h-8 w-full text-ink-muted"
         data-testid="sparkline"
       >
         <path
@@ -65,7 +65,7 @@ export function Sparkline({ series, caption }: SparklineProps) {
           </>
         )}
       </svg>
-      <p className="text-[11px] leading-snug text-slate-600">{caption ?? span}</p>
+      <p className="text-2xs leading-snug text-ink-muted">{caption ?? span}</p>
     </div>
   );
 }

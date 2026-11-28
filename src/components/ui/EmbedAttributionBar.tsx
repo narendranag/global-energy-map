@@ -40,9 +40,9 @@ export function EmbedAttributionBar({ state }: { readonly state: AppState }) {
   return (
     <div
       data-testid="embed-attribution"
-      className="pointer-events-auto absolute bottom-2 left-2 right-2 z-10 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 rounded bg-white/90 px-2 py-1 text-[11px] leading-snug text-slate-700 shadow-sm backdrop-blur"
+      className="pointer-events-auto absolute bottom-2 left-2 right-2 z-10 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 rounded bg-white/90 px-2 py-1 text-2xs leading-snug text-ink-muted shadow-sm backdrop-blur"
     >
-      <span className="shrink-0 font-semibold text-slate-900">Global Energy Map</span>
+      <span className="shrink-0 font-semibold text-ink">Global Energy Map</span>
       <span className="min-w-0 flex-1">
         Data: Global Energy Monitor (CC BY 4.0) · LNG-T3, C. Zhou 2026 (CC BY 4.0) · NETL (US DOE) · Energy
         Institute Statistical Review · CEPII BACI · © OpenStreetMap contributors (ODbL) · Basemap © OpenFreeMap
@@ -52,7 +52,7 @@ export function EmbedAttributionBar({ state }: { readonly state: AppState }) {
         href={fullMapUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="shrink-0 whitespace-nowrap font-medium text-sky-800 underline underline-offset-2 hover:text-sky-950"
+        className="shrink-0 whitespace-nowrap font-medium text-link underline underline-offset-2 hover:text-link-hover"
       >
         Open full map ↗
       </a>

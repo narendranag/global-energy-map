@@ -33,7 +33,7 @@ export function CitationBlock() {
         To cite a specific map view, open <strong>Share / cite</strong>{" "}on the map: it adds the view URL, the
         access date and the as-of date of every source behind the visible layers. Cite the underlying datasets
         to their publishers as well — each file&apos;s source is on the{" "}
-        <a href="/data" className="text-sky-800 underline underline-offset-2 hover:text-sky-950">
+        <a href="/data" className="text-link underline underline-offset-2 hover:text-link-hover">
           Data page
         </a>{" "}
         and in <code className="font-mono text-[0.85em]">CITATION.cff</code>{" "}({SITE_CITATION.title}{" "}

@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 import { readChoice, setChoice, subscribeChoice, type Choice } from "./consent";
 
 const BUTTON =
-  "min-h-9 flex-1 rounded border border-ink px-3 py-1 text-sm font-medium text-ink hover:bg-ink hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:flex-none";
+  "min-h-9 flex-1 rounded border border-ink px-3 py-1 text-sm font-medium text-ink hover:bg-ink hover:text-white sm:flex-none";
 
 /**
  * Shown only on a measured visit (see `GoogleTagManager`) with no stored choice.
@@ -24,7 +24,7 @@ export function ConsentBanner() {
     >
       <p className="m-0">
         This site uses Google Analytics cookies to see which pages are read, only if you allow it.{" "}
-        <Link href="/privacy" className="text-sky-800 underline underline-offset-2 hover:text-sky-950">
+        <Link href="/privacy" className="text-link underline underline-offset-2 hover:text-link-hover">
           Privacy
         </Link>
       </p>

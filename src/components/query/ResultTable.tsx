@@ -28,7 +28,7 @@ export function ResultTable({
         <p className="mt-2 text-sm text-ink-muted">No rows.</p>
       ) : (
         <>
-          <div className="mt-2 max-h-[32rem] overflow-auto rounded border border-slate-200">
+          <div className="mt-2 max-h-[32rem] overflow-auto rounded border border-panel-border">
             <table className="w-full text-sm">
               <caption className="sr-only">
                 Query result: {rows.length} rows, {columns.length} columns
@@ -39,7 +39,7 @@ export function ResultTable({
                     <th
                       key={c}
                       scope="col"
-                      className="whitespace-nowrap border-b border-slate-200 px-3 py-2 font-mono text-xs font-semibold text-ink"
+                      className="whitespace-nowrap border-b border-panel-border px-3 py-2 font-mono text-xs font-semibold text-ink"
                     >
                       {c}
                     </th>
@@ -53,7 +53,7 @@ export function ResultTable({
                     {columns.map((c) => (
                       <td
                         key={c}
-                        className="whitespace-nowrap border-b border-slate-100 px-3 py-1.5 font-mono text-xs text-ink tabular-nums"
+                        className="whitespace-nowrap border-b border-panel-divider px-3 py-1.5 font-mono text-xs text-ink tabular-nums"
                       >
                         {format(row[c])}
                       </td>

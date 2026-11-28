@@ -77,9 +77,9 @@ const ROWS: readonly Row[] = [
 ];
 
 const BADGE_CLASS: Record<"yes" | "partial" | "no" | "live", string> = {
-  yes: "border-slate-400 bg-slate-100 text-slate-700",
-  partial: "border-slate-300 bg-white text-slate-600",
-  no: "border-transparent text-slate-600",
+  yes: "border-slate-400 bg-slate-100 text-ink-muted",
+  partial: "border-panel-border bg-white text-ink-muted",
+  no: "border-transparent text-ink-muted",
   // Cool tint, matching the layer's own ramp, to read as "this is current".
   live: "border-sky-600 bg-sky-50 text-sky-900",
 };
@@ -102,7 +102,7 @@ function TradeFlowsNoDataBadge({ enabled, year }: { enabled: boolean; year: numb
     <span
       title={note}
       data-testid="trade-flows-no-data"
-      className="shrink-0 whitespace-nowrap rounded border border-amber-600 bg-amber-50 px-1 text-[11px] leading-4 text-amber-900"
+      className="shrink-0 whitespace-nowrap rounded border border-amber-600 bg-amber-50 px-1 text-2xs leading-4 text-amber-900"
     >
       no data<span className="sr-only">: {note}</span>
     </span>
@@ -118,7 +118,7 @@ function StaleBadge({ layer, today }: { layer: keyof LayerState; today: string |
     <span
       title={note}
       data-testid={`stale-badge-${layer}`}
-      className="shrink-0 whitespace-nowrap rounded border border-amber-600 bg-amber-50 px-1 text-[11px] leading-4 text-amber-900"
+      className="shrink-0 whitespace-nowrap rounded border border-amber-600 bg-amber-50 px-1 text-2xs leading-4 text-amber-900"
     >
       old<span className="sr-only">: {note}</span>
     </span>
@@ -154,13 +154,13 @@ export function LayerPanel({
   return (
     <section
       aria-label="Layers and legend"
-      className="pointer-events-auto absolute left-4 top-4 z-10 flex max-h-[calc(100%-9rem)] w-72 flex-col rounded-md border border-slate-200 bg-white/95 text-sm text-slate-800 shadow-lg backdrop-blur max-md:max-h-[calc(100%-16rem)] max-md:w-auto max-md:max-w-[calc(100%-2rem)]"
+      className="pointer-events-auto absolute left-4 top-4 z-10 flex max-h-[calc(100%-9rem)] w-72 flex-col rounded-md border border-panel-border bg-panel text-sm text-ink shadow-lg backdrop-blur max-md:max-h-[calc(100%-16rem)] max-md:w-auto max-md:max-w-[calc(100%-2rem)]"
     >
       {/* Phone-only header (or always, in embed mode): the whole card collapses to this. */}
       <button
         type="button"
         className={
-          "flex items-center gap-2 px-3 py-2 text-xs font-medium uppercase tracking-wide text-slate-700 " +
+          "flex items-center gap-2 px-3 py-2 text-xs font-medium uppercase tracking-wide text-ink-muted " +
           (embedded ? "" : "md:hidden")
         }
         aria-expanded={phoneOpen}
@@ -182,7 +182,7 @@ export function LayerPanel({
       >
         <button
           type="button"
-          className="flex w-full items-center gap-2 text-left text-xs font-medium uppercase tracking-wide text-slate-600 hover:text-slate-900"
+          className="flex w-full items-center gap-2 text-left section-label hover:text-ink"
           aria-expanded={open}
           aria-controls={listId}
           onClick={() => {
@@ -191,7 +191,7 @@ export function LayerPanel({
         >
           <Chevron open={open} />
           <span>Layers</span>
-          <span className="ml-auto text-[11px] font-normal normal-case tracking-normal text-slate-600">
+          <span className="ml-auto text-2xs font-normal normal-case tracking-normal text-ink-muted">
             {activeCount} on
           </span>
         </button>
@@ -200,7 +200,7 @@ export function LayerPanel({
             r.kind === "group" ? (
               <div
                 key={`group-${String(idx)}`}
-                className="pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-600"
+                className="pt-1.5 section-label"
               >
                 {r.label}
               </div>
@@ -225,7 +225,7 @@ export function LayerPanel({
                   title={TIME_AWARE_NOTE[r.key]}
                   data-testid={`time-badge-${r.key}`}
                   className={
-                    "shrink-0 whitespace-nowrap rounded border px-1 text-[11px] leading-4 " +
+                    "shrink-0 whitespace-nowrap rounded border px-1 text-2xs leading-4 " +
                     BADGE_CLASS[TIME_AWARE[r.key]]
                   }
                 >
@@ -235,8 +235,8 @@ export function LayerPanel({
             ),
           )}
         </div>
-        <div className="mt-3 border-t border-slate-200 pt-2">
-          <h2 className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-600">Legend</h2>
+        <div className="mt-3 border-t border-panel-divider pt-2">
+          <h2 className="mb-1 section-label">Legend</h2>
           <Legend
             layers={state}
             scenarioNoun={scenarioNoun}
@@ -244,10 +244,10 @@ export function LayerPanel({
             scenarioView={scenarioView}
           />
         </div>
-        <div className="mt-3 border-t border-slate-200 pt-2">
+        <div className="mt-3 border-t border-panel-divider pt-2">
           <button
             type="button"
-            className="flex w-full items-center gap-2 text-left text-xs font-medium uppercase tracking-wide text-slate-600 hover:text-slate-900"
+            className="flex w-full items-center gap-2 text-left section-label hover:text-ink"
             aria-expanded={vintageOpen}
             aria-controls={vintageId}
             onClick={() => {
@@ -259,7 +259,7 @@ export function LayerPanel({
           </button>
           {/* Generated from catalog.json, so it cannot drift from the data. */}
           <div id={vintageId} hidden={!vintageOpen} className="mt-2" data-testid="data-vintage">
-            <p className="mb-1.5 text-[11px] leading-4 text-slate-600">
+            <p className="mb-1.5 text-2xs leading-4 text-ink-muted">
               When each layer&apos;s data ends (&ldquo;as of&rdquo; for snapshots). Older than{" "}
               {STALE_AFTER_MONTHS} months is marked old.
             </p>
@@ -267,10 +267,10 @@ export function LayerPanel({
               {VINTAGES.map((v) => {
                 const stale = today !== null && isStale(v, today);
                 return (
-                  <div key={v.key} className="flex items-baseline gap-2 text-[11px] leading-4">
-                    <dt className="min-w-0 flex-1 truncate text-slate-700">{v.label}</dt>
+                  <div key={v.key} className="flex items-baseline gap-2 text-2xs leading-4">
+                    <dt className="min-w-0 flex-1 truncate text-ink-muted">{v.label}</dt>
                     <dd
-                      className={"shrink-0 tabular-nums " + (stale ? "font-medium text-amber-900" : "text-slate-600")}
+                      className={"shrink-0 tabular-nums " + (stale ? "font-medium text-amber-900" : "text-ink-muted")}
                       title={stale ? staleNote(v, today) : undefined}
                     >
                       {formatVintage(v)}

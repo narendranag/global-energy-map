@@ -24,10 +24,10 @@ import { exposureBaselineNote, type ScenarioAdjustment } from "./exposure-note";
 
 const CATALOG = catalogJson as unknown as Catalog;
 
-const HEADING = "text-xs font-medium uppercase tracking-wide text-slate-600";
-const NOTE = "text-[11px] leading-snug text-slate-600";
+const HEADING = "section-label";
+const NOTE = "text-2xs leading-snug text-ink-muted";
 const LINK =
-  "rounded text-[11px] font-medium text-sky-800 underline decoration-dotted underline-offset-2 hover:text-sky-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-700";
+  "rounded text-2xs font-medium text-link underline decoration-dotted underline-offset-2 hover:text-link-hover";
 
 export interface CountryPanelProps {
   /** The focused country (ISO3). The panel is only rendered when one is set. */
@@ -76,7 +76,7 @@ function Section({
   testId?: string;
 }) {
   return (
-    <section className="mt-3 border-t border-slate-200 pt-2" aria-label={label} data-testid={testId}>
+    <section className="mt-3 border-t border-panel-divider pt-2" aria-label={label} data-testid={testId}>
       <h3 className={`mb-1 ${HEADING}`}>{label}</h3>
       {children}
       {vintage !== undefined && vintageId !== undefined && (
@@ -90,10 +90,10 @@ function Metric({ series }: { series: CountryTimeSeries }) {
   return (
     <div className="mb-2 last:mb-0">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-xs text-slate-700">{series.label}</span>
+        <span className="text-xs text-ink-muted">{series.label}</span>
         <span className="font-mono text-sm">
           {series.value === null ? "—" : formatSeriesValue(series.value)}{" "}
-          <span className="text-[11px] text-slate-600">{series.unit}</span>
+          <span className="text-2xs text-ink-muted">{series.unit}</span>
         </span>
       </div>
       {series.staleNote !== null && <p className={NOTE}>{series.staleNote}</p>}
@@ -159,14 +159,14 @@ function PartnerList({
               if (isKeyboardClick(e)) setFocusIntent("keyboard");
               onFocus(r.iso3);
             }}
-            className="flex w-full items-baseline justify-between gap-2 rounded px-1 py-0.5 text-left text-xs hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-700"
+            className="flex w-full items-baseline justify-between gap-2 rounded px-1 py-0.5 text-left text-xs hover:bg-slate-100"
           >
             <span className="min-w-0 truncate">
-              {r.name} <span className="font-mono text-[11px] text-slate-600">{r.iso3}</span>
+              {r.name} <span className="font-mono text-2xs text-ink-muted">{r.iso3}</span>
             </span>
             <span className="shrink-0 text-right">
               <span className="font-mono">{pct(r.share)}</span>{" "}
-              <span className="ml-1.5 inline-block min-w-[4.5rem] font-mono text-[11px] text-slate-600">
+              <span className="ml-1.5 inline-block min-w-[4.5rem] font-mono text-2xs text-ink-muted">
                 {formatVolume(r.qty, commodity)}
               </span>
             </span>
@@ -312,23 +312,23 @@ export function CountryPanel({
     <section
       aria-labelledby={headingId}
       data-testid="country-panel"
-      className="pointer-events-auto absolute right-4 top-4 w-[min(21rem,calc(100%-2rem))] rounded-md bg-white/95 p-3 text-sm text-slate-800 shadow-lg backdrop-blur"
+      className="pointer-events-auto absolute right-4 top-4 w-[min(21rem,calc(100%-2rem))] rounded-md border border-panel-border bg-panel p-3 text-sm text-ink shadow-lg backdrop-blur"
     >
       <div className="flex items-start justify-between gap-2">
         <h2
           id={headingId}
           ref={headingRef}
           tabIndex={-1}
-          className="min-w-0 text-base font-semibold leading-tight text-slate-900 outline-offset-2"
+          className="min-w-0 text-base font-semibold leading-tight text-ink outline-offset-2"
         >
           {profile?.name ?? iso3}{" "}
-          <span className="font-mono text-xs font-normal text-slate-600">{iso3}</span>
+          <span className="font-mono text-xs font-normal text-ink-muted">{iso3}</span>
         </h2>
         <button
           type="button"
           onClick={onClose}
           aria-label={`Close ${profile?.name ?? iso3} and clear the selection`}
-          className="-mr-1 -mt-1 shrink-0 rounded px-2 py-1 text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-700"
+          className="-mr-1 -mt-1 shrink-0 rounded px-2 py-1 text-ink-muted hover:bg-slate-100 hover:text-ink"
         >
           <span aria-hidden="true">✕</span>
         </button>
@@ -475,12 +475,12 @@ export function CountryPanel({
                     <button
                       type="button"
                       onClick={() => { onScenario(e.scenarioId); }}
-                      className="flex w-full items-baseline justify-between gap-2 rounded px-1 py-0.5 text-left text-xs hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-700"
+                      className="flex w-full items-baseline justify-between gap-2 rounded px-1 py-0.5 text-left text-xs hover:bg-slate-100"
                     >
                       <span className="min-w-0 truncate">{e.label}</span>
                       <span className="shrink-0 text-right">
                         <span className="font-mono">{pct(e.shareAtRisk)}</span>{" "}
-                        <span className="ml-1.5 inline-block min-w-[4.5rem] font-mono text-[11px] text-slate-600">
+                        <span className="ml-1.5 inline-block min-w-[4.5rem] font-mono text-2xs text-ink-muted">
                           {formatVolume(e.atRiskQty, commodity)}
                         </span>
                       </span>
@@ -566,7 +566,7 @@ export function CountryPanel({
           )}
 
           {plan !== null && plan.excluded.length > 0 && (
-            <p className={`mt-3 border-t border-slate-200 pt-2 ${NOTE}`} data-testid="country-csv-note">
+            <p className={`mt-3 border-t border-panel-divider pt-2 ${NOTE}`} data-testid="country-csv-note">
               The CSV leaves out {plan.excluded.map((s) => s.section).join(", ")}: their sources do
               not allow redistribution. The file says so in its header.
             </p>

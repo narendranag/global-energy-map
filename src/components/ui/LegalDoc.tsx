@@ -5,7 +5,7 @@ import { renderDoc } from "@/app/methodology/markdown";
 import { PROSE } from "./prose";
 import { SiteFooter } from "./SiteFooter";
 
-const CRUMB = "text-sky-800 underline-offset-2 hover:text-sky-950 hover:underline";
+const CRUMB = "text-link underline-offset-2 hover:text-link-hover hover:underline";
 
 /**
  * A legal page rendered at build time from `docs/legal/<file>.md` (the repo

@@ -36,7 +36,7 @@ function fileName(p: string): string {
   return p.split("/").pop() ?? p;
 }
 
-const LINK = "text-sky-800 underline underline-offset-2 hover:text-sky-950";
+const LINK = "text-link underline underline-offset-2 hover:text-link-hover";
 
 /**
  * Attribution lines for entries that carry none of their own: the open asset
@@ -105,7 +105,7 @@ function EntryRow({ e, tenants }: { e: CatalogEntry; tenants: readonly CatalogEn
               text={e.sha256}
               label="Copy"
               ariaLabel={`Copy sha256 of ${fileName(e.path)}`}
-              className="rounded border border-slate-300 bg-white px-1.5 text-2xs text-ink-muted hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-700"
+              className="rounded border border-panel-border bg-white px-1.5 text-2xs text-ink-muted hover:bg-slate-50"
             />
           </div>
         )}
@@ -116,7 +116,7 @@ function EntryRow({ e, tenants }: { e: CatalogEntry; tenants: readonly CatalogEn
             href={dataUrl(e.path)}
             download={fileName(e.path)}
             data-analytics-download
-            className="inline-block whitespace-nowrap rounded border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-ink hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-700"
+            className="inline-block whitespace-nowrap rounded border border-panel-border bg-white px-2.5 py-1 text-xs font-medium text-ink hover:bg-slate-50"
             data-testid={`download-${e.id}`}
           >
             Download
@@ -144,13 +144,13 @@ export default function DataPage() {
     <div className="w-full bg-white text-ink">
       <main className="mx-auto w-full max-w-7xl px-6 py-10">
         <nav aria-label="Breadcrumb" className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-          <Link href="/" className="text-sky-800 underline-offset-2 hover:text-sky-950 hover:underline">
+          <Link href="/" className="text-link underline-offset-2 hover:text-link-hover hover:underline">
             ← Back to map
           </Link>
-          <Link href="/methodology" className="text-sky-800 underline-offset-2 hover:text-sky-950 hover:underline">
+          <Link href="/methodology" className="text-link underline-offset-2 hover:text-link-hover hover:underline">
             Methodology
           </Link>
-          <a href={LICENSE_DATA_URL} className="text-sky-800 underline-offset-2 hover:text-sky-950 hover:underline">
+          <a href={LICENSE_DATA_URL} className="text-link underline-offset-2 hover:text-link-hover hover:underline">
             Data licences (LICENSE-DATA.md)
           </a>
         </nav>
@@ -202,7 +202,7 @@ export default function DataPage() {
           <table className="w-full min-w-[60rem] text-sm">
             <caption className="sr-only">Datasets, licences and downloads</caption>
             <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-ink-subtle">
+              <tr className="section-label text-left">
                 <th scope="col" className="pb-2 pr-4 font-semibold">Dataset · layers</th>
                 <th scope="col" className="pb-2 pr-4 font-semibold">Source · licence</th>
                 <th scope="col" className="pb-2 pr-4 font-semibold">As of</th>
@@ -253,7 +253,7 @@ export default function DataPage() {
               tabIndex={0}
               role="region"
               aria-label="Embed code"
-              className="overflow-x-auto rounded border border-panel-border bg-slate-50 p-2 font-mono text-xs leading-snug text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-700"
+              className="overflow-x-auto rounded border border-panel-border bg-slate-50 p-2 font-mono text-xs leading-snug text-ink"
             >
               {embedSnippet(`${CANONICAL_ORIGIN}/?mode=scenarios&scenario=hormuz&commodity=oil&year=2023`)}
             </pre>

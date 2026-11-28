@@ -26,9 +26,9 @@ import { ResultTable } from "./ResultTable";
 const ROW_LIMITS = [100, 1_000, 5_000] as const;
 const DEFAULT_LIMIT = 1_000;
 
-const LINK = "text-sky-800 underline underline-offset-2 hover:text-sky-950";
+const LINK = "text-link underline underline-offset-2 hover:text-link-hover";
 const BUTTON =
-  "rounded border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-ink hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-700 disabled:cursor-not-allowed disabled:opacity-60";
+  "rounded border border-panel-border bg-white px-3 py-1.5 text-sm font-medium text-ink hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60";
 
 export function QueryConsole() {
   const tables = useMemo(() => queryTables(), []);
@@ -112,15 +112,15 @@ export function QueryConsole() {
           </label>
           <p id={hintId} className="mt-1 text-xs text-ink-muted">
             One SELECT statement over the tables listed beside this box. Press{" "}
-            <kbd className="rounded border border-slate-300 bg-slate-50 px-1 font-mono text-2xs">
+            <kbd className="rounded border border-panel-border bg-slate-50 px-1 font-mono text-2xs">
               Ctrl
             </kbd>
             {" / "}
-            <kbd className="rounded border border-slate-300 bg-slate-50 px-1 font-mono text-2xs">
+            <kbd className="rounded border border-panel-border bg-slate-50 px-1 font-mono text-2xs">
               ⌘
             </kbd>
             {" + "}
-            <kbd className="rounded border border-slate-300 bg-slate-50 px-1 font-mono text-2xs">
+            <kbd className="rounded border border-panel-border bg-slate-50 px-1 font-mono text-2xs">
               Enter
             </kbd>{" "}
             to run. Everything runs in your browser; nothing is sent anywhere.
@@ -142,7 +142,7 @@ export function QueryConsole() {
               }
             }}
             data-testid="query-editor"
-            className="mt-2 w-full resize-y rounded border border-slate-300 bg-white p-3 font-mono text-[13px] leading-relaxed text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-700"
+            className="mt-2 w-full resize-y rounded border border-panel-border bg-white p-3 font-mono text-[13px] leading-relaxed text-ink"
           />
 
           <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -156,7 +156,7 @@ export function QueryConsole() {
                 onChange={(e) => {
                   setLimit(Number(e.target.value));
                 }}
-                className="rounded border border-slate-300 bg-white px-2 py-1 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-700"
+                className="rounded border border-panel-border bg-white px-2 py-1 text-sm text-ink"
               >
                 {ROW_LIMITS.map((n) => (
                   <option key={n} value={n}>
@@ -258,7 +258,7 @@ export function QueryConsole() {
                     setSql(ex.sql);
                     editor.current?.focus();
                   }}
-                  className="w-full rounded border border-slate-200 bg-white p-3 text-left hover:border-slate-400 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-700"
+                  className="w-full rounded border border-panel-border bg-white p-3 text-left hover:border-slate-400"
                 >
                   <span className="block text-sm font-medium text-ink">{ex.title}</span>
                   <span className="mt-0.5 block text-xs leading-snug text-ink-muted">

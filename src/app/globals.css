@@ -8,8 +8,9 @@
  *
  * Design tokens (Phase 9): light, editorial, restrained. Use the Tailwind
  * utilities generated from `@theme` below — `bg-panel`, `border-panel-border`,
- * `text-ink`, `text-ink-muted`, `text-ink-subtle`, `text-2xs` — rather than
- * ad-hoc slate shades, so panels read as one system.
+ * `text-ink`, `text-ink-muted`, `text-ink-subtle`, `text-link`, `text-2xs`,
+ * and the `section-label` utility — rather than ad-hoc slate shades, so
+ * panels read as one system.
  *
  * Type scale (never below 11 px anywhere):
  *   2xs 11 px  captions, legend notes, tick labels
@@ -28,7 +29,8 @@
   --ink: #1c1f23; /* 16.1:1 on white */
   --ink-muted: #4b5058; /* 8.0:1 on white */
   --ink-subtle: #686d75; /* 5.3:1 on white — the lightest text allowed */
-  --accent: #1c1f23;
+  --link: #075985;
+  --link-hover: #082f49;
   --focus: #2f4fa6;
 
   color-scheme: light;
@@ -44,7 +46,8 @@
   --color-ink: var(--ink);
   --color-ink-muted: var(--ink-muted);
   --color-ink-subtle: var(--ink-subtle);
-  --color-accent: var(--accent);
+  --color-link: var(--link);
+  --color-link-hover: var(--link-hover);
   --color-focus: var(--focus);
 
   --text-2xs: 0.6875rem; /* 11px */
@@ -61,13 +64,23 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* The one uppercase section/group label: 11 px, 600, tracked, subtle ink. */
+@utility section-label {
+  font-size: 0.6875rem; /* = --text-2xs; literal because `@theme inline` may not emit the variable */
+  line-height: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-subtle);
+}
+
 /* Tabular figures wherever numbers line up (years, values, percentages). */
 .tabular {
   font-variant-numeric: tabular-nums;
 }
 
 /* One visible focus ring for every control. */
-:where(button, a, input, select, summary, [tabindex]):focus-visible {
+:where(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }

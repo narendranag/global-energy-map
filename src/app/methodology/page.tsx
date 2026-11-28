@@ -57,9 +57,9 @@ function ScenarioSharesTable() {
         <caption className="sr-only">Route shares used by the disruption scenarios, with sources</caption>
         <thead>
           <tr className="text-left text-ink">
-            <th scope="col" className="border-b border-slate-300 py-1.5 pr-4 font-semibold">Scenario</th>
-            <th scope="col" className="border-b border-slate-300 py-1.5 pr-4 font-semibold">Exporter → importer</th>
-            <th scope="col" className="border-b border-slate-300 py-1.5 pr-4 text-right font-semibold">Share</th>
+            <th scope="col" className="border-b border-panel-border py-1.5 pr-4 font-semibold">Scenario</th>
+            <th scope="col" className="border-b border-panel-border py-1.5 pr-4 font-semibold">Exporter → importer</th>
+            <th scope="col" className="border-b border-panel-border py-1.5 pr-4 text-right font-semibold">Share</th>
             {/*
               Two years, and they are not the same thing: the year of the
               flows the document describes, and the year it was published
@@ -67,8 +67,8 @@ function ScenarioSharesTable() {
               row — geography, not a measurement — has no data year, and says
               so with an em dash rather than borrowing the publication year.
             */}
-            <th scope="col" className="border-b border-slate-300 py-1.5 pr-4 text-right font-semibold">Data year</th>
-            <th scope="col" className="border-b border-slate-300 py-1.5 pr-4 font-semibold">Source and derivation</th>
+            <th scope="col" className="border-b border-panel-border py-1.5 pr-4 text-right font-semibold">Data year</th>
+            <th scope="col" className="border-b border-panel-border py-1.5 pr-4 font-semibold">Source and derivation</th>
           </tr>
         </thead>
         <tbody className="text-ink-muted">
@@ -98,7 +98,7 @@ function ScenarioSharesTable() {
                   {unsourced ? (
                     <span className="font-semibold text-amber-800">{UNSOURCED_TITLE}</span>
                   ) : r.source_url ? (
-                    <a href={r.source_url} className="text-sky-800 underline underline-offset-2 hover:text-sky-950">
+                    <a href={r.source_url} className="text-link underline underline-offset-2 hover:text-link-hover">
                       {r.source_title}
                     </a>
                   ) : (
@@ -128,7 +128,7 @@ function RecencyTable() {
   const rows = BUNDLED_CATALOG.entries
     .filter((e) => e.runtime !== false)
     .toSorted((a, b) => (dataEnd(a) < dataEnd(b) ? 1 : dataEnd(a) > dataEnd(b) ? -1 : 0));
-  const th = "border-b border-slate-300 py-1.5 pr-4 font-semibold";
+  const th = "border-b border-panel-border py-1.5 pr-4 font-semibold";
   const td = "border-t border-panel-border py-2 pr-4";
   return (
     <div className="mt-4 overflow-x-auto" data-testid="recency">
@@ -194,7 +194,7 @@ const GENERATED: Record<string, () => ReactNode> = {
 function Toc({ items }: { items: readonly TocItem[] }) {
   return (
     <nav aria-label="Contents" className="text-sm">
-      <div className="text-xs font-semibold uppercase tracking-wide text-ink-subtle">Contents</div>
+      <div className="section-label">Contents</div>
       <ol className="mt-2 space-y-1">
         {items.map((t) => (
           <li key={t.id} className={t.depth === 3 ? "pl-3" : ""}>
@@ -225,13 +225,13 @@ export default async function MethodologyPage() {
         </aside>
         <main className="min-w-0 max-w-3xl">
           <nav aria-label="Breadcrumb" className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-            <Link href="/" className="text-sky-800 underline-offset-2 hover:text-sky-950 hover:underline">
+            <Link href="/" className="text-link underline-offset-2 hover:text-link-hover hover:underline">
               ← Back to map
             </Link>
-            <Link href="/data" className="text-sky-800 underline-offset-2 hover:text-sky-950 hover:underline">
+            <Link href="/data" className="text-link underline-offset-2 hover:text-link-hover hover:underline">
               Data and downloads
             </Link>
-            <a href={HISTORY_URL} className="text-sky-800 underline-offset-2 hover:text-sky-950 hover:underline">
+            <a href={HISTORY_URL} className="text-link underline-offset-2 hover:text-link-hover hover:underline">
               Phase history
             </a>
           </nav>

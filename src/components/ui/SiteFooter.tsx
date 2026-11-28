@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CookieSettingsLink } from "@/components/analytics/CookieSettingsLink";
 import { AUTHOR_NAME, AUTHOR_URL, PRACTICE_NAME, PRACTICE_URL, SOURCE_URL } from "./provenance";
 
-const LINK = "text-sky-800 underline underline-offset-2 hover:text-sky-950";
+const LINK = "text-link underline underline-offset-2 hover:text-link-hover";
 
 /**
  * Provenance + legal footer for the content pages (/methodology, /data,

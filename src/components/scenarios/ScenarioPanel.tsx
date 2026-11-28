@@ -91,12 +91,12 @@ function findScenario(id: ScenarioId): ScenarioDef | undefined {
 
 const LEGEND_GRADIENT = gradientCss(EXPOSURE_LEGEND_STOPS);
 
-const HEADING = "text-xs font-medium uppercase tracking-wide text-slate-600";
-const NOTE = "text-[11px] leading-snug text-slate-600";
+const HEADING = "section-label";
+const NOTE = "text-2xs leading-snug text-ink-muted";
 const SEGMENT =
-  "border border-slate-300 px-1.5 py-0.5 first:rounded-l last:rounded-r focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-700";
-const SEGMENT_ON = "bg-slate-700 text-white";
-const SEGMENT_OFF = "bg-white text-slate-700 hover:bg-slate-100";
+  "border border-panel-border px-1.5 py-0.5 first:rounded-l last:rounded-r focus-visible:-outline-offset-2";
+const SEGMENT_ON = "bg-ink text-white";
+const SEGMENT_OFF = "bg-white text-ink-muted hover:bg-slate-100";
 
 function ShowAllButton({
   expanded,
@@ -118,7 +118,7 @@ function ShowAllButton({
       aria-expanded={expanded}
       aria-controls={controls}
       onClick={onToggle}
-      className="mt-1 rounded text-[11px] font-medium text-sky-800 underline decoration-dotted underline-offset-2 hover:text-sky-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-700"
+      className="mt-1 rounded text-2xs font-medium text-link underline decoration-dotted underline-offset-2 hover:text-link-hover"
     >
       {expanded ? `Show top ${TOP_N.toString()} only` : `Show all ${total.toString()} ${noun}`}
     </button>
@@ -140,11 +140,11 @@ function RouteShareItem({
   const importer = row.importer === null ? "all importers" : nameOf(row.importer);
   const exporter = row.exporter === null ? "all exporters" : nameOf(row.exporter);
   return (
-    <li className="border-t border-slate-200 pt-1 first:border-t-0 first:pt-0">
+    <li className="border-t border-panel-divider pt-1 first:border-t-0 first:pt-0">
       <div className="flex justify-between gap-2 text-xs">
         <span className="min-w-0 truncate">
           {showScenario && (
-            <span className="mr-1 rounded bg-slate-100 px-1 text-[11px] text-slate-700">
+            <span className="mr-1 rounded bg-slate-100 px-1 text-2xs text-ink-muted">
               {getScenario(row.scenarioId).label}
             </span>
           )}
@@ -154,25 +154,25 @@ function RouteShareItem({
         </span>
         <span className="font-mono">
           {sharePct(row.share)}
-          {row.window !== "" && <span className="ml-1 font-sans text-[11px] text-slate-600">({row.window})</span>}
+          {row.window !== "" && <span className="ml-1 font-sans text-2xs text-ink-muted">({row.window})</span>}
         </span>
       </div>
       {row.unsourced ? (
         <>
-          <span className="mt-0.5 inline-block rounded bg-amber-100 px-1 text-[11px] font-medium text-amber-900">
+          <span className="mt-0.5 inline-block rounded bg-amber-100 px-1 text-2xs font-medium text-amber-900">
             Analyst estimate (unsourced)
           </span>
           {row.note && <p className={`mt-0.5 ${NOTE}`}>{row.note}</p>}
         </>
       ) : (
         <>
-          <p className="mt-0.5 text-[11px] leading-snug text-slate-700">
+          <p className="mt-0.5 text-2xs leading-snug text-ink-muted">
             {row.url ? (
               <a
                 href={row.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sky-800 underline decoration-dotted underline-offset-2 hover:text-sky-950"
+                className="text-link underline decoration-dotted underline-offset-2 hover:text-link-hover"
               >
                 {row.title}
               </a>
@@ -183,7 +183,7 @@ function RouteShareItem({
           </p>
           {row.note && (
             <details className="mt-0.5">
-              <summary className="cursor-pointer text-[11px] text-slate-600 hover:text-slate-800">
+              <summary className="cursor-pointer text-2xs text-ink-muted hover:text-ink">
                 How this share follows from the source
               </summary>
               <p className={`mt-0.5 ${NOTE}`}>{row.note}</p>
@@ -407,7 +407,7 @@ export function ScenarioPanel({
   return (
     <section
       aria-labelledby={headingId}
-      className="pointer-events-auto absolute right-4 top-4 z-10 w-80 rounded-md bg-white/95 p-3 text-sm text-slate-800 shadow-lg backdrop-blur"
+      className="pointer-events-auto absolute right-4 top-4 z-10 w-80 rounded-md border border-panel-border bg-panel p-3 text-sm text-ink shadow-lg backdrop-blur"
     >
       <h2 id={headingId} className="sr-only">
         Disruption scenario
@@ -424,7 +424,7 @@ export function ScenarioPanel({
         aria-live="polite"
         data-testid="scenario-announcement"
         className={
-          announcement.text === "" ? "sr-only" : "mb-2 text-sm leading-snug text-slate-800"
+          announcement.text === "" ? "sr-only" : "mb-2 text-sm leading-snug text-ink"
         }
       >
         {announcement.lead !== "" && (
@@ -444,7 +444,7 @@ export function ScenarioPanel({
       {vintage?.shareGapNote != null && (
         <p
           data-testid="scenario-vintage-caveat"
-          className="mb-2 text-[11px] leading-snug text-amber-900"
+          className="mb-2 text-2xs leading-snug text-amber-900"
         >
           {vintage.shareGapNote}
         </p>
@@ -459,7 +459,7 @@ export function ScenarioPanel({
       */}
       {def === undefined && !embedded && (
         <div className="mb-3" data-testid="scenario-empty">
-          <p className="text-sm font-medium leading-snug text-slate-800">
+          <p className="text-sm font-medium leading-snug text-ink">
             Who loses supply if a route closes?
           </p>
           <p className={`mt-1 ${NOTE}`}>Start with a question, or pick a route below.</p>
@@ -469,7 +469,7 @@ export function ScenarioPanel({
                 <button
                   type="button"
                   onClick={() => { applyExample(q); }}
-                  className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-left text-xs leading-snug text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-700"
+                  className="w-full rounded border border-panel-border bg-white px-2 py-1 text-left text-xs leading-snug text-ink-muted hover:bg-slate-50"
                 >
                   {q.label}
                 </button>
@@ -488,7 +488,7 @@ export function ScenarioPanel({
           const v = e.target.value;
           onChange(v === "" ? null : (v as ScenarioId));
         }}
-        className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-800"
+        className="w-full rounded border border-panel-border bg-white px-2 py-1 text-sm text-ink"
       >
         <option value="">None</option>
         {visibleScenarios.map((s) => (
@@ -496,7 +496,7 @@ export function ScenarioPanel({
         ))}
       </select>
       {def && (
-        <p className="mt-2 text-xs leading-snug text-slate-700">
+        <p className="mt-2 text-xs leading-snug text-ink-muted">
           {scenarioDescription(def, commodity)}
         </p>
       )}
@@ -519,7 +519,7 @@ export function ScenarioPanel({
               const v = e.target.value;
               onSecondChange(v === "" ? null : (v as ScenarioId));
             }}
-            className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-800"
+            className="w-full rounded border border-panel-border bg-white px-2 py-1 text-sm text-ink"
           >
             <option value="">None (one route)</option>
             {combinable.map((s) => (
@@ -550,7 +550,7 @@ export function ScenarioPanel({
               htmlFor={severityId}
               aria-live="off"
               data-testid="severity-value"
-              className="w-12 shrink-0 text-right font-mono text-xs text-slate-700"
+              className="w-12 shrink-0 text-right font-mono text-xs text-ink-muted"
             >
               {severityPct(severity)}
             </output>
@@ -565,34 +565,34 @@ export function ScenarioPanel({
       {/* A year the scenario does not describe (`activeYears`): say so rather
           than quote numbers for it. The map mutes the mark to match. */}
       {def && current && !isScenarioActive(def, current.year) && def.inactiveNote !== undefined && (
-        <p className="mt-2 text-[11px] leading-snug text-amber-800" data-testid="scenario-inactive">
+        <p className="mt-2 text-2xs leading-snug text-amber-800" data-testid="scenario-inactive">
           {def.inactiveNote}
         </p>
       )}
       {def && current && sourceGapNote(def, commodity, current.year) && (
-        <p className="mt-2 text-[11px] leading-snug text-amber-800" data-testid="source-gap">
+        <p className="mt-2 text-2xs leading-snug text-amber-800" data-testid="source-gap">
           {sourceGapNote(def, commodity, current.year)}
         </p>
       )}
       {def && (
         <div className="mt-3" data-testid="scenario-metric">
-          <p className="text-xs leading-snug text-slate-700">
+          <p className="text-xs leading-snug text-ink-muted">
             <span className="font-medium">% at risk</span> = share of each {side}&apos;s{" "}
             {current ? `${current.year.toString()} ` : ""}
             {noun} (BACI, by volume) routed through {routesLabel}
             {severity < 1 ? `, ${severityPct(severity)} of it cut` : ""}.
           </p>
           <div
-            className="mt-1 h-2 w-full rounded border border-slate-200"
+            className="mt-1 h-2 w-full rounded border border-panel-border"
             style={{ background: LEGEND_GRADIENT }}
             aria-hidden="true"
           />
-          <div className="flex justify-between text-[11px] text-slate-600">
+          <div className="flex justify-between text-2xs text-ink-muted">
             <span>0%</span>
             <span>100% of {noun}</span>
           </div>
           <details className="mt-1" data-testid="how-computed">
-            <summary className="cursor-pointer text-[11px] font-medium text-slate-700 hover:text-slate-900">
+            <summary className="cursor-pointer text-2xs font-medium text-ink-muted hover:text-ink">
               How this is computed
             </summary>
             <ul className="mt-1 list-disc space-y-0.5 pl-4">
@@ -625,17 +625,17 @@ export function ScenarioPanel({
           */}
           {vintage && (
             <details className="mt-1" data-testid="scenario-vintage" open>
-              <summary className="cursor-pointer text-[11px] font-medium text-slate-700 hover:text-slate-900">
+              <summary className="cursor-pointer text-2xs font-medium text-ink-muted hover:text-ink">
                 Data behind this result — {vintage.summary}
               </summary>
               <ul className="mt-1 space-y-1">
                 {vintage.rows.map((r) => (
                   <li key={r.role}>
-                    <div className="flex items-baseline justify-between gap-2 text-[11px] leading-snug text-slate-700">
+                    <div className="flex items-baseline justify-between gap-2 text-2xs leading-snug text-ink-muted">
                       <span className="min-w-0">
                         {r.label}
                         {r.sources.length > 0 && (
-                          <span className="text-slate-600"> — {r.sources.join(", ")}</span>
+                          <span className="text-ink-muted"> — {r.sources.join(", ")}</span>
                         )}
                       </span>
                       <span className="flex shrink-0 items-baseline gap-1">
@@ -644,7 +644,7 @@ export function ScenarioPanel({
                           tradeYear: vintage.tradeYear,
                           latestTradeYear: TRADE_LAST_YEAR,
                         }) && (
-                          <span className="whitespace-nowrap rounded border border-amber-600 bg-amber-50 px-1 text-[11px] leading-4 text-amber-900">
+                          <span className="whitespace-nowrap rounded border border-amber-600 bg-amber-50 px-1 text-2xs leading-4 text-amber-900">
                             old
                           </span>
                         )}
@@ -668,7 +668,7 @@ export function ScenarioPanel({
                                 href={d.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-sky-800 underline decoration-dotted underline-offset-2 hover:text-sky-950"
+                                className="text-link underline decoration-dotted underline-offset-2 hover:text-link-hover"
                               >
                                 {d.title}
                               </a>
@@ -676,7 +676,7 @@ export function ScenarioPanel({
                               d.title
                             )}
                             {" "}
-                            <span className="text-slate-600">({routeDocumentDates(d)})</span>
+                            <span className="text-ink-muted">({routeDocumentDates(d)})</span>
                           </li>
                         ))}
                       </ul>
@@ -707,7 +707,7 @@ export function ScenarioPanel({
                 <h3 className={HEADING}>
                   {exporterView ? "Top exporters at risk" : "Top importers at risk"}
                 </h3>
-                <div className="flex gap-2 text-[11px]">
+                <div className="flex gap-2 text-2xs">
                   {/* Which side of the cut — who loses supply, or who loses
                       the outlet. Two readings of the same rows. */}
                   <div role="group" aria-label="Show" className="flex" data-testid="view-toggle">
@@ -765,11 +765,11 @@ export function ScenarioPanel({
                         <span className="flex justify-between gap-2">
                           <span className="min-w-0 truncate">
                             {nameOf(r.iso3)}{" "}
-                            <span className="font-mono text-[11px] text-slate-600">{r.iso3}</span>
+                            <span className="font-mono text-2xs text-ink-muted">{r.iso3}</span>
                           </span>
                           <span className="shrink-0 text-right">
                             <span className="font-mono">{pctRange(r)}</span>{" "}
-                            <span className="ml-1.5 inline-block min-w-[4.5rem] font-mono text-[11px] text-slate-600">
+                            <span className="ml-1.5 inline-block min-w-[4.5rem] font-mono text-2xs text-ink-muted">
                               {volumeRange(r, commodity)}
                             </span>
                           </span>
@@ -842,11 +842,11 @@ export function ScenarioPanel({
                             <span className="flex justify-between gap-2">
                               <span className="min-w-0 truncate">
                                 {a.name ?? a.asset_id}{" "}
-                                <span className="font-mono text-[11px] text-slate-600">{a.iso3}</span>
+                                <span className="font-mono text-2xs text-ink-muted">{a.iso3}</span>
                               </span>
                               <span className="shrink-0 font-mono">{pct(a.shareAtRisk)}</span>
                             </span>
-                            <span className="flex justify-between gap-2 text-[11px] text-slate-600">
+                            <span className="flex justify-between gap-2 text-2xs text-ink-muted">
                               <span>
                                 {cov && (
                                   <span
@@ -854,7 +854,7 @@ export function ScenarioPanel({
                                     className={`rounded px-1 ${
                                       a.coverage === "measured"
                                         ? "bg-sky-100 text-sky-900"
-                                        : "bg-slate-100 text-slate-700"
+                                        : "bg-slate-100 text-ink-muted"
                                     }`}
                                   >
                                     {cov.text}
@@ -949,14 +949,14 @@ export function ScenarioPanel({
             onChange={(e) => { setLookup(e.target.value); }}
             placeholder="Country name or ISO3, e.g. France"
             autoComplete="off"
-            className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 placeholder:text-slate-500"
+            className="w-full rounded border border-panel-border bg-white px-2 py-1 text-xs text-ink placeholder:text-slate-500"
           />
           <datalist id={datalistId}>
             {countryOptions.map(([iso3, n]) => (
               <option key={iso3} value={n} />
             ))}
           </datalist>
-          <p aria-live="polite" className="mt-1 text-xs leading-snug text-slate-700">
+          <p aria-live="polite" className="mt-1 text-xs leading-snug text-ink-muted">
             {lookup.trim() === ""
               ? ""
               : lookupIso3 === null

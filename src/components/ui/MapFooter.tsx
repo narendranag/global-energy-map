@@ -4,7 +4,7 @@ import { AUTHOR_NAME, AUTHOR_URL, PRACTICE_URL } from "./provenance";
 
 const LICENSE_DATA_URL = "https://github.com/narendranag/global-energy-map/blob/main/LICENSE-DATA.md";
 
-const LINK = "text-sky-800 underline underline-offset-2 hover:text-sky-950";
+const LINK = "text-link underline underline-offset-2 hover:text-link-hover";
 
 /**
  * Data attribution line, bottom-left of the map: every source visible on the
@@ -18,7 +18,7 @@ const LINK = "text-sky-800 underline underline-offset-2 hover:text-sky-950";
 export function MapFooter() {
   return (
     <div
-      className="pointer-events-auto absolute bottom-2 left-4 z-10 max-w-72 rounded bg-white/90 px-2 py-1 text-[11px] leading-snug text-slate-700 shadow-sm backdrop-blur max-md:bottom-24"
+      className="pointer-events-auto absolute bottom-2 left-4 z-10 max-w-72 rounded bg-white/90 px-2 py-1 text-2xs leading-snug text-ink-muted shadow-sm backdrop-blur max-md:bottom-24"
       data-testid="map-footer"
     >
       <p className="mb-0.5">

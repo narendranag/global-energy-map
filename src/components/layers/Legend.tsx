@@ -195,7 +195,7 @@ export function Legend({
     <div className={`space-y-2.5 text-xs leading-snug text-ink-muted ${card}`} data-testid="legend">
       {sections.map((s) => (
         <section key={s.title} aria-label={`${s.title} legend`}>
-          <h3 className="mb-1 text-2xs font-medium uppercase tracking-wider text-ink-subtle">{s.title}</h3>
+          <h3 className="mb-1 section-label">{s.title}</h3>
           <ul className="space-y-1">
             {s.items.map((item) => (
               <Row key={item.label} item={item} />

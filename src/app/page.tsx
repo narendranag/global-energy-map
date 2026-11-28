@@ -360,7 +360,7 @@ function HomeInner() {
             <button
               type="button"
               className={
-                "pointer-events-auto absolute right-4 top-4 z-10 flex items-center gap-2 rounded-md border border-slate-200 bg-white/95 px-3 py-2 text-xs font-medium uppercase tracking-wide text-slate-700 shadow-lg " +
+                "pointer-events-auto absolute right-4 top-4 z-10 flex items-center gap-2 rounded-md border border-panel-border bg-panel px-3 py-2 text-xs font-medium uppercase tracking-wide text-ink-muted shadow-lg " +
                 (collapseScenario ? "" : "md:hidden")
               }
               aria-expanded={scenarioOpenOnPhone}
@@ -420,7 +420,7 @@ function HomeInner() {
                 // scenario panel is open behind the country panel, and a
                 // toggle the scenario panel covers is a toggle nobody can
                 // press (B4).
-                "pointer-events-auto absolute right-4 z-30 flex items-center gap-2 rounded-md border border-slate-200 bg-white/95 px-3 py-2 text-xs font-medium uppercase tracking-wide text-slate-700 shadow-lg " +
+                "pointer-events-auto absolute right-4 z-30 flex items-center gap-2 rounded-md border border-panel-border bg-panel px-3 py-2 text-xs font-medium uppercase tracking-wide text-ink-muted shadow-lg " +
                 (showScenarioPanel ? "top-16 min-[1100px]:hidden " : "top-4 md:hidden ")
               }
               aria-expanded={countryOpenOnPhone}

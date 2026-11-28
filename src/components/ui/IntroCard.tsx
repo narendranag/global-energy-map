@@ -110,22 +110,22 @@ export function IntroCard({ onPick }: IntroCardProps) {
       ref={cardRef}
       aria-labelledby="intro-title"
       data-testid="intro-card"
-      className="pointer-events-auto absolute z-30 rounded-md border border-slate-200 bg-white/95 p-4 text-sm text-slate-800 shadow-xl backdrop-blur max-lg:inset-x-4 max-lg:top-16 max-lg:mx-auto max-lg:max-w-xl max-md:top-14 lg:left-[20rem] lg:top-4 lg:w-[min(24rem,calc(100%-20rem-22rem))]"
+      className="pointer-events-auto absolute z-30 rounded-md border border-panel-border bg-panel p-4 text-sm text-ink shadow-lg backdrop-blur max-lg:inset-x-4 max-lg:top-16 max-lg:mx-auto max-lg:max-w-xl max-md:top-14 lg:left-[20rem] lg:top-4 lg:w-[min(24rem,calc(100%-20rem-22rem))]"
     >
       <div className="flex items-start justify-between gap-3">
-        <h2 id="intro-title" className="text-sm font-semibold text-slate-900">
+        <h2 id="intro-title" className="text-sm font-semibold text-ink">
           What this map can answer
         </h2>
         <button
           type="button"
           onClick={dismiss}
           aria-label="Dismiss introduction"
-          className="-mr-1 -mt-1 rounded px-1.5 text-base leading-none text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          className="-mr-1 -mt-1 rounded px-1.5 text-base leading-none text-ink-muted hover:bg-slate-100 hover:text-ink"
         >
           ×
         </button>
       </div>
-      <p className="mt-2 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+      <p className="mt-2 section-label">
         Try a question
       </p>
       <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -138,39 +138,39 @@ export function IntroCard({ onPick }: IntroCardProps) {
               onPick(q);
               dismiss();
             }}
-            className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-left text-xs leading-snug text-slate-700 hover:border-slate-500 hover:bg-slate-50 hover:text-slate-900"
+            className="rounded-full border border-panel-border bg-white px-2.5 py-1 text-left text-xs leading-snug text-ink-muted hover:border-slate-500 hover:bg-slate-50 hover:text-ink"
           >
             {q.label}
           </button>
         ))}
       </div>
-      <ul className="mt-3 list-disc space-y-1 pl-4 text-[13px] leading-snug text-slate-700">
+      <ul className="mt-3 list-disc space-y-1 pl-4 text-[13px] leading-snug text-ink-muted">
         <li>
-          <span className="font-medium text-slate-900">Ask a disruption question</span> — close
+          <span className="font-medium text-ink">Ask a disruption question</span> — close
           Hormuz, cut Druzhba, throttle a route to 40%: see which importers, exporters, refineries
           and LNG terminals are exposed, and by how much.
         </li>
         <li>
-          <span className="font-medium text-slate-900">Every number says what year it is from</span>{" "}
+          <span className="font-medium text-ink">Every number says what year it is from</span>{" "}
           — each layer shows its latest data, and a scenario lists the vintage of everything behind
           its result.
         </li>
         <li>
-          <span className="font-medium text-slate-900">Hover</span> any country, pipeline or
+          <span className="font-medium text-ink">Hover</span> any country, pipeline or
           terminal for its value, year and source.
         </li>
         <li>
-          <span className="font-medium text-slate-900">Search</span> for a country, pipeline or
+          <span className="font-medium text-ink">Search</span> for a country, pipeline or
           terminal; select a country for its trade, suppliers and exposure — or write SQL against
           the same files on the Query page.
         </li>
       </ul>
       {HORIZON.beyond.length > 0 && (
-        <p className="mt-2 text-[12px] leading-snug text-slate-600" data-testid="intro-coverage">
+        <p className="mt-2 text-[12px] leading-snug text-ink-muted" data-testid="intro-coverage">
           Scenarios run on reconciled trade through {HORIZON.timeline.through};{" "}
           {HORIZON.beyond.length} {HORIZON.beyond.length === 1 ? "layer carries" : "layers carry"}{" "}
           newer data, to {HORIZON.beyond[0]?.through}.{" "}
-          <a className="underline hover:text-slate-900" href="/methodology#how-current-each-layer-is">
+          <a className="underline hover:text-ink" href="/methodology#how-current-each-layer-is">
             How current each layer is →
           </a>
         </p>
@@ -179,7 +179,7 @@ export function IntroCard({ onPick }: IntroCardProps) {
         <button
           type="button"
           onClick={dismiss}
-          className="rounded bg-slate-800 px-3 py-1 text-xs font-medium text-white hover:bg-slate-900"
+          className="rounded bg-ink px-3 py-1 text-xs font-medium text-white hover:bg-slate-900"
         >
           Got it
         </button>

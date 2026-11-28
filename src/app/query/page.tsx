@@ -4,7 +4,7 @@ import { QueryConsole } from "@/components/query/QueryConsole";
 import { SiteFooter } from "@/components/ui/SiteFooter";
 
 const LICENSE_DATA_URL = "https://github.com/narendranag/global-energy-map/blob/main/LICENSE-DATA.md";
-const LINK = "text-sky-800 underline underline-offset-2 hover:text-sky-950";
+const LINK = "text-link underline underline-offset-2 hover:text-link-hover";
 
 export const metadata: Metadata = {
   title: "Query console",
@@ -17,13 +17,13 @@ export default function QueryPage() {
     <div className="w-full bg-white text-ink">
       <main className="mx-auto w-full max-w-7xl px-6 py-10">
         <nav aria-label="Breadcrumb" className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-          <Link href="/" className="text-sky-800 underline-offset-2 hover:text-sky-950 hover:underline">
+          <Link href="/" className="text-link underline-offset-2 hover:text-link-hover hover:underline">
             ← Back to map
           </Link>
-          <Link href="/methodology" className="text-sky-800 underline-offset-2 hover:text-sky-950 hover:underline">
+          <Link href="/methodology" className="text-link underline-offset-2 hover:text-link-hover hover:underline">
             Methodology
           </Link>
-          <Link href="/data" className="text-sky-800 underline-offset-2 hover:text-sky-950 hover:underline">
+          <Link href="/data" className="text-link underline-offset-2 hover:text-link-hover hover:underline">
             Data
           </Link>
         </nav>

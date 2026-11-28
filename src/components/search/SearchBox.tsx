@@ -184,7 +184,7 @@ export function SearchBox() {
         type="button"
         aria-label="Search"
         aria-expanded={expandedOnPhone}
-        className="rounded p-1.5 text-slate-700 hover:bg-slate-100 md:hidden"
+        className="rounded p-1.5 text-ink-muted hover:bg-slate-100 md:hidden"
         onClick={() => {
           setExpandedOnPhone(true);
           setEverFocused(true);
@@ -232,7 +232,7 @@ export function SearchBox() {
             if (next.trim() === "") setSearchHighlight(null);
           }}
           onKeyDown={onKeyDown}
-          className="w-44 rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 placeholder:text-slate-500 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-700 sm:w-56 md:w-64"
+          className="w-44 rounded border border-panel-border bg-white px-2 py-1 text-xs text-ink placeholder:text-slate-500 sm:w-56 md:w-64"
         />
         {/*
           Portalled to <body>, not left inside <header>: the a11y focus-order
@@ -259,17 +259,17 @@ export function SearchBox() {
           role="listbox"
           aria-label="Search results"
           hidden={!showList}
-          className="absolute left-0 top-full z-30 mt-1 max-h-72 w-64 overflow-y-auto rounded border border-slate-200 bg-white text-xs shadow-lg sm:w-72"
+          className="absolute left-0 top-full z-30 mt-1 max-h-72 w-64 overflow-y-auto rounded border border-panel-border bg-white text-xs shadow-lg sm:w-72"
         >
           {showList &&
             (items === null ? (
               // role="option" (disabled) keeps the listbox's required-children
               // structure valid even while it holds only a status message.
-              <li role="option" aria-selected={false} aria-disabled="true" className="px-2 py-1.5 text-slate-600">
+              <li role="option" aria-selected={false} aria-disabled="true" className="px-2 py-1.5 text-ink-muted">
                 Loading names…
               </li>
             ) : results.length === 0 ? (
-              <li role="option" aria-selected={false} aria-disabled="true" className="px-2 py-1.5 text-slate-600">
+              <li role="option" aria-selected={false} aria-disabled="true" className="px-2 py-1.5 text-ink-muted">
                 No matches
               </li>
             ) : (
@@ -293,8 +293,8 @@ export function SearchBox() {
                     commit(item);
                   }}
                 >
-                  <div className="truncate font-medium text-slate-800">{item.name}</div>
-                  <div className="truncate text-slate-600">{searchResultSubtitle(item)}</div>
+                  <div className="truncate font-medium text-ink">{item.name}</div>
+                  <div className="truncate text-ink-muted">{searchResultSubtitle(item)}</div>
                 </li>
               ))
             ))}

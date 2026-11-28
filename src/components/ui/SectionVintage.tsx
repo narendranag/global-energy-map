@@ -22,7 +22,7 @@ export function SectionVintageLine({ info, id, extra }: SectionVintageLineProps)
   if (info === null) return null;
   return (
     <p
-      className="mt-1 text-[11px] leading-snug text-slate-600"
+      className="mt-1 text-2xs leading-snug text-ink-muted"
       data-testid={`section-vintage-${id}`}
       title={info.title ?? undefined}
     >

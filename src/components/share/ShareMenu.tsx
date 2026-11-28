@@ -58,7 +58,7 @@ function viewUrlFor(app: AppState, view: MapView): string {
 }
 
 const btn =
-  "rounded border border-slate-300 bg-white px-2 py-0.5 text-xs font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-700 disabled:cursor-not-allowed disabled:opacity-50";
+  "rounded border border-panel-border bg-white px-2 py-0.5 text-xs font-medium text-ink-muted hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50";
 
 // ---------------------------------------------------------------------------
 // Menu
@@ -152,7 +152,7 @@ export function ShareMenu({ scenario }: { scenario: ScenarioResult | null }) {
         onClick={() => {
           setOpen((o) => !o);
         }}
-        className="rounded border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-ink shadow-sm hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-700 aria-expanded:bg-slate-100"
+        className="rounded border border-panel-border bg-white px-2.5 py-1 text-xs font-medium text-ink shadow-sm hover:bg-slate-50 aria-expanded:bg-slate-100"
         data-testid="share-button"
       >
         Share / cite
@@ -354,7 +354,7 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
 
       {/* ---- Link ---- */}
       <section aria-label="Link to this view">
-        <div className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Link to this view</div>
+        <div className="section-label">Link to this view</div>
         <div className="mt-1.5 flex items-center gap-2">
           <input
             readOnly
@@ -363,7 +363,7 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
             onFocus={(e) => {
               e.currentTarget.select();
             }}
-            className="min-w-0 flex-1 rounded border border-slate-300 bg-slate-50 px-2 py-1 font-mono text-2xs text-slate-700"
+            className="min-w-0 flex-1 rounded border border-panel-border bg-slate-50 px-2 py-1 font-mono text-2xs text-ink-muted"
           />
           <CopyButton
             text={() => viewUrl}
@@ -380,8 +380,8 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
       </section>
 
       {/* ---- Embed ---- */}
-      <section aria-label="Embed this view" className="mt-4 border-t border-panel-border pt-3">
-        <div className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Embed this view</div>
+      <section aria-label="Embed this view" className="mt-4 border-t border-panel-divider pt-3">
+        <div className="section-label">Embed this view</div>
         <label className="mt-1.5 flex items-center gap-1.5 text-xs text-ink">
           <input
             type="checkbox"
@@ -416,10 +416,10 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
       </section>
 
       {/* ---- Cite ---- */}
-      <section aria-label="Cite this view" className="mt-4 border-t border-panel-border pt-3">
+      <section aria-label="Cite this view" className="mt-4 border-t border-panel-divider pt-3">
         <div className="flex items-center justify-between gap-2">
-          <div className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Cite this view</div>
-          <div role="group" aria-label="Citation format" className="flex overflow-hidden rounded border border-slate-300 text-2xs">
+          <div className="section-label">Cite this view</div>
+          <div role="group" aria-label="Citation format" className="flex overflow-hidden rounded border border-panel-border text-2xs">
             {(
               [
                 ["view", "View + sources"],
@@ -434,8 +434,8 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
                 onClick={() => {
                   setFormat(f);
                 }}
-                className={`px-2 py-0.5 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-sky-700 ${
-                  format === f ? "bg-slate-800 text-white" : "bg-white text-slate-700 hover:bg-slate-50"
+                className={`px-2 py-0.5 focus-visible:-outline-offset-2 ${
+                  format === f ? "bg-ink text-white" : "bg-white text-ink-muted hover:bg-slate-50"
                 }`}
               >
                 {label}
@@ -469,8 +469,8 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
       </section>
 
       {/* ---- Download ---- */}
-      <section aria-label="Download" className="mt-4 border-t border-panel-border pt-3">
-        <div className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Download</div>
+      <section aria-label="Download" className="mt-4 border-t border-panel-divider pt-3">
+        <div className="section-label">Download</div>
         <ul className="mt-1.5 space-y-2 text-xs">
           <li>
             <div className="flex items-center justify-between gap-2">
@@ -546,7 +546,7 @@ function SharePanel({ ref, id, scenario, anchor, onKeyDown }: SharePanelProps) {
         <p className="mt-3 text-2xs leading-snug text-ink-subtle">
           Exports include only CC BY 4.0, public-domain and project-derived rows, each with its source,
           licence and as-of date.{" "}
-          <Link href="/data" className="text-sky-800 underline underline-offset-2 hover:text-sky-950">
+          <Link href="/data" className="text-link underline underline-offset-2 hover:text-link-hover">
             All datasets and licences
           </Link>
         </p>

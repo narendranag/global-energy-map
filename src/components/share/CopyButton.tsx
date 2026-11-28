@@ -42,7 +42,7 @@ export function CopyButton({ text, label = "Copy", ariaLabel, className, onCopie
       aria-label={ariaLabel}
       className={
         className ??
-        "rounded border border-slate-300 bg-white px-2 py-0.5 text-xs font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-700"
+        "rounded border border-panel-border bg-white px-2 py-0.5 text-xs font-medium text-ink-muted hover:bg-slate-50"
       }
     >
       <span aria-live="polite">{state === "copied" ? "Copied" : state === "failed" ? "Copy failed" : label}</span>

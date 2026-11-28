@@ -49,7 +49,7 @@ export function RankedRow({
       onPointerLeave={leave}
       onFocus={enter}
       onBlur={leave}
-      className={`block w-full rounded px-1 py-0.5 text-left text-xs hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-700 ${
+      className={`block w-full rounded px-1 py-0.5 text-left text-xs hover:bg-slate-100 ${
         active ? "bg-slate-200" : ""
       }`}
     >

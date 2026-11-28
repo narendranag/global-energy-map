@@ -21,12 +21,12 @@ export interface HeaderProps {
  */
 export function Header({ mode, onModeChange, pending, actions }: HeaderProps) {
   return (
-    <header className="relative z-20 flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1.5 border-b border-slate-200 bg-white px-4 py-2 text-slate-800 shadow-sm">
+    <header className="relative z-20 flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1.5 border-b border-panel-border bg-white px-4 py-2 text-ink shadow-sm">
       <div className="min-w-0">
-        <h1 className="text-[15px] font-semibold leading-tight tracking-tight text-slate-900">
+        <h1 className="text-base font-semibold leading-tight tracking-tight text-ink">
           Global Energy Map
         </h1>
-        <p className="hidden text-xs leading-snug text-slate-600 xl:block">
+        <p className="hidden text-xs leading-snug text-ink-muted xl:block">
           Who loses supply when a chokepoint closes — over the world&apos;s oil &amp; gas
           infrastructure and trade.
         </p>
@@ -37,7 +37,7 @@ export function Header({ mode, onModeChange, pending, actions }: HeaderProps) {
           {pending > 0 && (
             <span
               role="status"
-              className="inline-block whitespace-nowrap rounded-full bg-slate-800 px-2.5 py-0.5 text-[11px] font-medium text-white"
+              className="inline-block whitespace-nowrap rounded-full bg-ink px-2.5 py-0.5 text-2xs font-medium text-white"
             >
               Loading {pending} {pending === 1 ? "layer" : "layers"}…
             </span>
@@ -49,19 +49,19 @@ export function Header({ mode, onModeChange, pending, actions }: HeaderProps) {
         {actions}
         <Link
           href="/methodology"
-          className="text-sky-800 underline-offset-2 hover:text-sky-950 hover:underline"
+          className="text-link underline-offset-2 hover:text-link-hover hover:underline"
         >
           Methodology
         </Link>
         <Link
           href="/data"
-          className="text-sky-800 underline-offset-2 hover:text-sky-950 hover:underline"
+          className="text-link underline-offset-2 hover:text-link-hover hover:underline"
         >
           Data
         </Link>
         <Link
           href="/query"
-          className="text-sky-800 underline-offset-2 hover:text-sky-950 hover:underline"
+          className="text-link underline-offset-2 hover:text-link-hover hover:underline"
         >
           Query
         </Link>

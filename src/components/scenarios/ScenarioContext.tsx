@@ -44,8 +44,8 @@ export interface ScenarioContextProps {
 /** Rows shown before truncation — this block is a check, not the main list. */
 const CONTEXT_TOP_N = 5;
 
-const HEADING = "text-xs font-medium uppercase tracking-wide text-slate-600";
-const NOTE = "text-[11px] leading-snug text-slate-600";
+const HEADING = "section-label";
+const NOTE = "text-2xs leading-snug text-ink-muted";
 const NON_FATAL = { fatal: false } as const;
 
 function fmtTwh(n: number): string {
@@ -138,7 +138,7 @@ export function ScenarioContext({ result, view = "importers" }: ScenarioContextP
   const caption = contextCaption(result, view);
 
   return (
-    <section className="mt-3 border-t border-slate-200 pt-3" aria-label="Context" data-testid="scenario-context">
+    <section className="mt-3 border-t border-panel-divider pt-3" aria-label="Context" data-testid="scenario-context">
       <h3 className={`mb-1 ${HEADING}`}>Context</h3>
       <p className={`mb-2 ${NOTE}`}>
         View-only figures from live sources, shown beside this scenario&apos;s own result as a
@@ -152,7 +152,7 @@ export function ScenarioContext({ result, view = "importers" }: ScenarioContextP
 
       {wantsTransits && (
         <div className="mb-3" data-testid="scenario-context-transits">
-          <h4 className="mb-1 text-[11px] font-medium text-slate-700">Observed chokepoint traffic</h4>
+          <h4 className="mb-1 text-2xs font-medium text-ink-muted">Observed chokepoint traffic</h4>
           {transitsState.error !== null ? (
             <p className={NOTE} data-testid="scenario-context-transits-error">
               Could not load chokepoint traffic data.
@@ -166,7 +166,7 @@ export function ScenarioContext({ result, view = "importers" }: ScenarioContextP
                   <li key={t.scenarioId} className="text-xs">
                     <div className="flex justify-between gap-2">
                       <span className="min-w-0 truncate font-medium">{t.chokepoint}</span>
-                      <span className="shrink-0 font-mono text-[11px] text-slate-600">
+                      <span className="shrink-0 font-mono text-2xs text-ink-muted">
                         {fmtPerDay(t.recent.tankersPerDay)} tankers/day
                         {t.tankerChangePct !== null ? ` (${fmtChange(t.tankerChangePct)})` : ""}
                       </span>
@@ -202,7 +202,7 @@ export function ScenarioContext({ result, view = "importers" }: ScenarioContextP
 
       {wantsStorage && (
         <div className="mb-3" data-testid="scenario-context-storage">
-          <h4 className="mb-1 text-[11px] font-medium text-slate-700">EU gas storage cover</h4>
+          <h4 className="mb-1 text-2xs font-medium text-ink-muted">EU gas storage cover</h4>
           {storageState.error !== null ? (
             <p className={NOTE} data-testid="scenario-context-storage-error">
               Could not load gas storage data.
@@ -218,7 +218,7 @@ export function ScenarioContext({ result, view = "importers" }: ScenarioContextP
                   <li key={r.iso3} className="text-xs">
                     <div className="flex justify-between gap-2">
                       <span className="min-w-0 truncate font-medium">{nameOf(r.iso3)}</span>
-                      <span className="shrink-0 font-mono text-[11px] text-slate-600">
+                      <span className="shrink-0 font-mono text-2xs text-ink-muted">
                         {fmtMt(r.atRiskMt)} Mt at risk ({r.baciYear})
                       </span>
                     </div>
@@ -250,7 +250,7 @@ export function ScenarioContext({ result, view = "importers" }: ScenarioContextP
 
       {wantsRecent && (
         <div data-testid="scenario-context-recent">
-          <h4 className="mb-1 text-[11px] font-medium text-slate-700">Recent imports check</h4>
+          <h4 className="mb-1 text-2xs font-medium text-ink-muted">Recent imports check</h4>
           {recentState.error !== null ? (
             <p className={NOTE} data-testid="scenario-context-recent-error">
               Could not load recent-imports data.
@@ -263,7 +263,7 @@ export function ScenarioContext({ result, view = "importers" }: ScenarioContextP
                 {recentRows.map((r) => (
                   <li key={r.iso3} className="flex justify-between gap-2 text-xs">
                     <span className="min-w-0 truncate">{nameOf(r.iso3)}</span>
-                    <span className="shrink-0 text-right font-mono text-[11px] text-slate-600">
+                    <span className="shrink-0 text-right font-mono text-2xs text-ink-muted">
                       {r.comtradeMt === null ? (
                         "no monthly reports"
                       ) : (

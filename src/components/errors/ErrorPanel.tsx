@@ -18,7 +18,7 @@ function subject(): string {
 }
 
 const BUTTON =
-  "rounded-md border px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-2";
+  "rounded-md border px-3 py-1.5 text-sm font-medium transition-colors";
 
 /**
  * Friendly replacement for a blank map: what happened, reload, report. Sets

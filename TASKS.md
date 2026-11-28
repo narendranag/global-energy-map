@@ -10,6 +10,7 @@
 
 ## Next
 
+- [ ] CI runs only the jobs a commit can affect (fleet rule, 2026-11-28; DEV-GUIDELINES CI row): copy `~/claude-computer/templates/_shared/scripts/ci-changes.sh` into `scripts/`, add the `changes` job (fetch-depth 0, `permissions: actions: read`, GH_TOKEN), an always-on `docs` job, and `needs: changes` + `if: needs.changes.outputs.code == 'true'` on the rest (template: `~/claude-computer/templates/web/.github/workflows/ci.yml`). First check what your code, tests and build read: narrow SKIP or extend KEEP so no Markdown they read is skipped. Then one notes-only commit to prove only `docs` runs and the run is green. Batch notes commits from now on. #ci
 - [ ] (owner) Inbound Hormuz exposure — **plan ready, owner's OK**: say go or not
   - The blocker named in Later is gone: the importer-wide wildcard shipped in S5 (`07a3677`, `src/lib/scenarios/shares.ts`: pair beats wildcards, then max of exporter- and importer-wide). What is missing is **data**: `disruption_route.parquet` has no importer-wide rows, and the routing script still says "imports into the Gulf from outside are out of scope" (a 2026-09-11 call).
   - What: importer-wide rows for `hormuz` and `hormuz_lng` — KWT, BHR, QAT, IRQ, IRN at 1.00 (no ports outside the strait); SAU and ARE partial (Red Sea / Fujairah receive part of their imports), each sourced or marked ESTIMATE as KAZ→DEU is. The 54 intra-Gulf share-0 pairs keep winning, so Gulf-to-Gulf trade stays at zero. Biggest real flow this reveals: Kuwait's LNG imports at Al Zour.

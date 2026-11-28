@@ -6,10 +6,11 @@
 
 ## Now
 
-- [ ] **Resume here:** (2026-11-24) Worker errors now go to crashyard (see Done). Nothing half done; wait for Narendra on the `(owner)` items: the inbound-Hormuz and coal plans under `## Next`, and the PMTiles / daily-throughput tooltip / AIS / Always-Use-HTTPS questions under `## Later`
+- [ ] **Resume here:** (2026-11-28) DESIGN.md drift 1–9 fixed and deployed (d7ac2d3); Next.js 16.4.6 security bump deployed (3798e8f). Nothing half done; maplibre-gl security upgrade is first under `## Next`; wait for Narendra on the `(owner)` items: the inbound-Hormuz and coal plans under `## Next`, and the PMTiles / daily-throughput tooltip / AIS / Always-Use-HTTPS questions under `## Later`
 
 ## Next
 
+- [ ] maplibre-gl 5.24 → ≥6.4.1 for the critical XSS sanitizer bypass (GHSA-jrc7-96c5-q579; no 5.x fix, latest 6.20). Major upgrade on its own branch: check MapShell, `style.ts`, the deck.gl `MapboxOverlay` interleave and the e2e pixel probes; full e2e before merge. Smaller transitive advisories (OpenNext/wrangler build tooling, duckdb-wasm `qs`) ride along with their own upgrades. #security
 - [ ] CI runs only the jobs a commit can affect (fleet rule, 2026-11-28; DEV-GUIDELINES CI row): copy `~/claude-computer/templates/_shared/scripts/ci-changes.sh` into `scripts/`, add the `changes` job (fetch-depth 0, `permissions: actions: read`, GH_TOKEN), an always-on `docs` job, and `needs: changes` + `if: needs.changes.outputs.code == 'true'` on the rest (template: `~/claude-computer/templates/web/.github/workflows/ci.yml`). First check what your code, tests and build read: narrow SKIP or extend KEEP so no Markdown they read is skipped. Then one notes-only commit to prove only `docs` runs and the run is green. Batch notes commits from now on. #ci
 - [ ] (owner) Inbound Hormuz exposure — **plan ready, owner's OK**: say go or not
   - The blocker named in Later is gone: the importer-wide wildcard shipped in S5 (`07a3677`, `src/lib/scenarios/shares.ts`: pair beats wildcards, then max of exporter- and importer-wide). What is missing is **data**: `disruption_route.parquet` has no importer-wide rows, and the routing script still says "imports into the Gulf from outside are out of scope" (a 2026-09-11 call).
